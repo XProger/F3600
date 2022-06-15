@@ -25,7 +25,7 @@ int SectionSearch(ShipData *playerShip)
    int mag;
    int i, index;
    short juncChecked = 0;
-   TrackSection *junc;
+   TrackSection *junc = NULL;
 
    trk = playerShip->nearTrkSect;
 
@@ -122,7 +122,7 @@ TrackSection* FindNearestSection(TrackSection *trk, VECTOR pos)
    int mag;
    int i, index;
    short juncChecked = 0;
-   TrackSection *junc;
+   TrackSection *junc = NULL;
 
 
    /****** Start search several sections before current section ******/

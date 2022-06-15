@@ -163,7 +163,7 @@ Congrats       con[ 30 ];
 
 TrackSection* FindAllNearestSection( VECTOR pos )
 {
-   TrackSection   *nearSection;
+   TrackSection   *nearSection = NULL;
    TrackSection   *trk;
    VECTOR         distance;
 // long long      smallestMag = 32767 * 32767;
@@ -211,7 +211,7 @@ TrackSection* FindAllNearestSection( VECTOR pos )
 void UpdateShipRemote(register ShipData *shipIndex, Object** shipShapes, int shipNo, WeaponData *weaponIndex)
 {
    ShipData          *myShip , *remoteShip;
-   Face              *facePtr ;
+   Face              *facePtr = NULL;
    TrackSection      *nextSection, *section ;
    int               i;
    VECTOR            targetVector, bestPath;

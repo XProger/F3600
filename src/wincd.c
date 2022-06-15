@@ -82,7 +82,7 @@ void CdInit()
 
    if (dosound)
       return;
-
+/*TODO
 
    mci_open_parms.lpstrDeviceType = "cdaudio";
    if (retval = mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_TYPE,
@@ -202,6 +202,7 @@ void CdInit()
       if (caps.dwSupport & AUXCAPS_VOLUME)
          auxDeviceID = i;
    }
+*/
 }
 
 
@@ -335,6 +336,7 @@ char CDPaused()
 
 void CDResume()
 {
+/*TODO
    if (dosound)
    {
       if (retval = mciSendCommand(wDeviceID, MCI_RESUME, NULL, NULL))
@@ -343,6 +345,7 @@ void CDResume()
          return;
       }
    }
+*/
 }
 
 /************************************************************************
@@ -353,6 +356,7 @@ void CDResume()
 
 void CDPause()
 {
+/*TODO
    if (dosound)
    {
       if (retval = mciSendCommand(wDeviceID, MCI_PAUSE, NULL, NULL))
@@ -361,6 +365,7 @@ void CDPause()
          return;
       }
    }
+*/
 }
 
 /************************************************************************
@@ -371,6 +376,7 @@ void CDPause()
 
 void CDStop()
 {
+/*TODO
    if (dosound)
    {
       if (retval = mciSendCommand(wDeviceID, MCI_STOP, NULL, NULL))
@@ -378,15 +384,18 @@ void CDStop()
          //mciSendCommand(wDeviceID, MCI_CLOSE, 0, NULL);
       }
    }
+*/
 }
 
 void CDRestart(void)
 {
+/*TODO
    if (dosound)
    {
       CDStop();
       CDPlay(CurrTrkNo);
    }
+*/
 }
 
 /************************************************************************
@@ -400,6 +409,7 @@ void CDRestart(void)
 
 void CDPlay(short int CurrTrackNo)
 {
+/*TODO
    MCI_PLAY_PARMS mci_play_parms;
 
    if (dosound)
@@ -430,6 +440,7 @@ void CDPlay(short int CurrTrackNo)
       CurrTrkNo = CurrTrackNo;
       dosound = TRUE;
    }
+*/
 }
 
 /************************************************************************
@@ -446,6 +457,7 @@ void CDPlay(short int CurrTrackNo)
 
 void CDLoopCheck()
 {
+/*TODO
    if (dosound)
    {
       mci_status_parms.dwItem = MCI_STATUS_MODE;
@@ -459,6 +471,7 @@ void CDLoopCheck()
       if (mci_status_parms.dwReturn == MCI_MODE_STOP)
          CDPlay(CurrTrkNo);
    }
+*/
 }
 /************************************************************************
 *                                                     *
@@ -473,8 +486,9 @@ void CDLoopCheck()
 *                                                     *
 ************************************************************************/
 
-int CdControl(unsigned char Cmd, unsigned char *parm1, unsigned char  *parm2)
+int CdControl(unsigned char Cmd, struct CdlPos* parm1, unsigned char* parm2)
 {
+/*TODO
    if (dosound)
    {
       switch (Cmd)
@@ -522,6 +536,8 @@ int CdControl(unsigned char Cmd, unsigned char *parm1, unsigned char  *parm2)
       }
    }
    return(1);
+*/
+   return 1;
 }
 
 /************************************************************************
@@ -534,17 +550,9 @@ int CdControl(unsigned char Cmd, unsigned char *parm1, unsigned char  *parm2)
 *  RETURNS: No of Audio Tracks                                 *
 *                                                     *
 ************************************************************************/
-int numTracks(void)
-{
-   int num;
-
-   num = CdGetToc2(0, (struct CdlPos *)NULL);
-   return num;
-}
-
-
 int CdGetToc2(int sess, struct CdlPos *table)
 {
+/*TODO
    if (dosound)
    {
       mci_status_parms.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
@@ -563,7 +571,16 @@ int CdGetToc2(int sess, struct CdlPos *table)
 
       return(mci_status_parms.dwReturn);
    }
+*/
    return 0;
+}
+
+int numTracks(void)
+{
+   int num;
+
+   num = CdGetToc2(0, (struct CdlPos*)NULL);
+   return num;
 }
 
 void CdSetVol(long newVol)

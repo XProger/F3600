@@ -1,5 +1,5 @@
 /* Source File: pmkey.c */
-#include "\wipesrc\win95\markk\input.h"
+#include "wipesrc\win95\markk\input.h"
 
 void pmkey(char ScanCode, char KeyDown)
 {

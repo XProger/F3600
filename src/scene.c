@@ -644,7 +644,7 @@ Object* LoadPrm( char* name, short textureStart )
                break;
 
             default :
-               sprintf( errorString, "Bad primitive type %x in $%x \n", prm.f3->type, name );
+               sprintf( errorString, "Bad primitive type %x in %s \n", prm.f3->type, name );
                Error( errorString, Fatal );
                break;
 

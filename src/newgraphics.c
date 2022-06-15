@@ -43,6 +43,7 @@ int TextureStages = 0;
 static HRESULT WINAPI EnumZBufferCallback( DDPIXELFORMAT* pddpf,
                                  VOID* pddpfDesired )
 {
+/*TOOD
    if( pddpf->dwFlags == DDPF_ZBUFFER )
    {
       memcpy( pddpfDesired, pddpf, sizeof(DDPIXELFORMAT) );
@@ -50,7 +51,7 @@ static HRESULT WINAPI EnumZBufferCallback( DDPIXELFORMAT* pddpf,
       // Return with D3DENUMRET_CANCEL to end the search.
       return D3DENUMRET_CANCEL;
    }
-
+*/
    // Return with D3DENUMRET_OK to continue the search.
    return D3DENUMRET_OK;
 }
@@ -63,6 +64,7 @@ static HRESULT WINAPI EnumZBufferCallback( DDPIXELFORMAT* pddpf,
 HRESULT Initialize3DEnvironment( HWND hWnd, GUID* pDriverGUID,
                          const GUID* pDeviceGUID )
 {
+/*TODO
    HRESULT hr;
    DDSURFACEDESC2 ddsd;
 
@@ -327,6 +329,7 @@ HRESULT Initialize3DEnvironment( HWND hWnd, GUID* pDriverGUID,
    g_pd3dDevice->SetTextureStageState(0, D3DTSS_ADDRESSU,D3DTADDRESS_CLAMP);
    g_pd3dDevice->SetTextureStageState(0, D3DTSS_ADDRESSV,D3DTADDRESS_CLAMP);
    // Finish by setting up our scene
+*/
    return S_OK;
 }
 
@@ -342,6 +345,7 @@ HRESULT Initialize3DEnvironment( HWND hWnd, GUID* pDriverGUID,
 //-----------------------------------------------------------------------------
 HRESULT Cleanup3DEnvironment()
 {
+/*TODO
    // Release the DDraw and D3D objects used by the app
    if( g_pvViewport )
       g_pvViewport->Release();
@@ -380,22 +384,25 @@ HRESULT Cleanup3DEnvironment()
    g_pddsPrimary   = NULL;
    g_pDD4          = NULL;
    g_pDD1          = NULL;
-
+*/
    return S_OK;
 }
 
 BOOL WINAPI Enumerate2ndCard(GUID FAR *lpGUID,LPSTR desc, LPSTR name,LPVOID context,HMONITOR hm)
 {
+/*TODO
    GUID *myGUID = (GUID *)context;
 
    if(lpGUID == NULL)
       return TRUE;
    *myGUID = *lpGUID;
+*/
    return FALSE;
 }
 
 BOOL renderInitialise(HWND hWnd, BOOL b_fullScreen, BOOL Voodoo, BOOL softwareOnly)
 {
+/*TODO
    GUID myGuid;
    GUID *pGuid=NULL;
 
@@ -429,14 +436,18 @@ BOOL renderInitialise(HWND hWnd, BOOL b_fullScreen, BOOL Voodoo, BOOL softwareOn
 
    // Else, return failure
    return E_FAIL;
+*/
+   return S_OK;
 }
 
 void renderFlipSurface(void)
 {
+   Sleep(33);
+/*TODO
    if(g_bAppUseFullScreen)
       g_pddsPrimary->Flip( NULL, DDFLIP_WAIT  | DDFLIP_NOVSYNC );
    else
       g_pddsPrimary->Blt( &g_rcScreenRect, g_pddsBackBuffer,
                         &g_rcViewportRect, DDBLT_WAIT, NULL );
+*/
 }
-

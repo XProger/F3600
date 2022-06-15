@@ -1,6 +1,6 @@
 /* This function stops controller status reading and removes the
    appropriate handler routine. */
-#include "\wipesrc\win95\markk\libapi.h"
+#include "wipesrc\win95\markk\libapi.h"
 
 void  StopPAD(void)
 {

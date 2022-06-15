@@ -466,6 +466,7 @@ extern void     finiSndObjects(void);
 
 static void restoreObjects(void)
 {
+/*TODO
    g_pddsPrimary->Restore();
    if(lpBack_Buffer)
       lpBack_Buffer->Restore();
@@ -577,11 +578,12 @@ static void restoreObjects(void)
    JJSLoadSprites();
    Swap();
    Swap();
-
+*/
 }
 
 static void restoreTextures(void)
 {
+/*TODO
    switch (trackNum)
    {
    case 0:
@@ -640,7 +642,7 @@ static void restoreTextures(void)
       LoadPilotIntoVram(globalPilot) ;
    Swap();
    Swap();
-
+*/
 }
 
 /*
@@ -659,6 +661,7 @@ static void     finiObjects(void)
 
 void changeScreen(void)
 {
+/*TODO
    int i;
 
    if (g_pddsPrimary != NULL)
@@ -678,6 +681,7 @@ void changeScreen(void)
          gTex[i].lpDDSTex->Release();
          gTex[i].lpDDSTex = NULL;
       }
+*/
    WinWidth = reses[screenres].xsize;
    WinHeight = reses[screenres].ysize;
    WinHeightX2 = WinHeight * 2;
@@ -1064,6 +1068,7 @@ long FAR PASCAL WndProc(HWND hWnd, UINT message,
 
 void setupScreens(void)
 {
+/*TODO
    HRESULT   ddrval=DD_OK,ddretval;
    int i;
 
@@ -1086,6 +1091,7 @@ void setupScreens(void)
       gTex[i].lpDDSTex->QueryInterface(IID_IDirect3DTexture2, (void **)&gTex[i].Texture);
    }
    JJSLoadSprites();
+*/
 }
 /*
  * doInit - do work required for every instance of the application: create
@@ -1226,11 +1232,11 @@ int PASCAL      WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance,
    // Save the window size/pos for switching modes
    GetWindowRect( hWnd, &g_rcWindow );
 
-   if( FAILED( renderInitialise( hWnd ,!g_bWindowed,b_Voodoo)))
-    {
-       Cleanup3DEnvironment();
-        return 0;
-    }
+   if( FAILED( renderInitialise(hWnd, !g_bWindowed, b_Voodoo, FALSE)))
+   {
+      Cleanup3DEnvironment();
+      return 0;
+   }
 
    tmp=vRamSize();
    initrandy();
@@ -1260,7 +1266,9 @@ int PASCAL      WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance,
    if (retval != ERROR_SUCCESS)
       strcpy(MovieDirBase, "c:\\");
 
+   /*TODO
    chdir(DataDirBase);
+   */
    // Initialise Direct Draw
    if (!doInit(hInst, nCmdShow))
    {
@@ -1319,6 +1327,7 @@ int        old_pitch = 0;
 
 int        LockBackBuffer(void)
 {
+/*TODO
    LPBYTE     ptr;
    // int         i;
    HRESULT   ddrval;
@@ -1366,7 +1375,7 @@ int        LockBackBuffer(void)
 #endif
       backLocked=TRUE;
    }
-
+*/
    return (0);
 
 }
@@ -1378,6 +1387,7 @@ void      WinBeep(void)
 
 void      UnlockBackBuffer(void)
 {
+/*TODO
 #if DEBUG_LOCKED
    RECT      rect;
 
@@ -1395,12 +1405,14 @@ void      UnlockBackBuffer(void)
       g_pddsBackBuffer->Unlock(NULL);
       backLocked = FALSE;
    }
+*/
 }
 
 
 
 void      BltClearToScreen(void)
 {
+/*TODO
    RECT      dest_rect, src_rect;
    DWORD    dwFlags;
    DDBLTFX   DDBltFX;
@@ -1441,6 +1453,7 @@ void      BltClearToScreen(void)
       }
       ;
    }
+*/
 }
 
 void      DDSwap(void)
@@ -1453,6 +1466,7 @@ void      DDSwap(void)
 
 void      DrawIT(void)
 {
+/*TODO
    DDSURFACEDESC2   ddsd;
    LPBYTE     ptr;
    // int         i;
@@ -1510,10 +1524,7 @@ void      DrawIT(void)
          }
       }
    }
-
-
-
-
+*/
 }
 
 void      WinQuit(void)
@@ -1528,12 +1539,14 @@ void      WinQuit(void)
 
 void      WinClearScreen(char colour)
 {
+/*TODO
    DDBLTFX   ddbltfx;
 
    memset(&ddbltfx,0,sizeof(ddbltfx));
    ddbltfx.dwSize = sizeof(ddbltfx);
    ddbltfx.dwFillColor = colour;
    g_pddsBackBuffer->Blt(NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
+*/
 }
 
 void      PitchMemCpy(char *dest, char *source, RECT * rect)
@@ -1571,6 +1584,7 @@ long numsmall=0;
 
 void setRenderBegin(void)
 {
+/*TODO
    g_pd3dDevice->BeginScene();
    if(!Rendering)
    {
@@ -1591,17 +1605,20 @@ void setRenderBegin(void)
 //       ATI3DCIF_ContextSetState(ghRC, C3D_ERS_TMAP_FILTER, &eTexFilteroff);
       trans = FALSE;
    }
+*/
 }
 
 
 void setRenderEnd(void)
 {
+/*TODO
    g_pd3dDevice->EndScene();
    if(Rendering)
    {
 //    ATI3DCIF_RenderEnd();
       Rendering=FALSE;
    }
+*/
 }
 
 
@@ -1748,6 +1765,7 @@ short GetThePage(short page,short u,short v)
 
 void JJSDrawSprite(SPRT_8 *sp,short w, short h)
 {
+/*TODO
    static D3DTLVERTEX vert[4]={0},*v;
    vert[0].color=vert[1].color=vert[2].color=vert[3].color=RGB_MAKE(255,255,255);
 // C3D_PVTCF       v;
@@ -1820,6 +1838,7 @@ void JJSDrawSprite(SPRT_8 *sp,short w, short h)
    v->tv = (nv+h+0.5f)/256.0f;
    v->rhw = 1.0;
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, D3DFVF_TLVERTEX , vert, 4, D3DDP_DONOTCLIP);
+*/
 }
 
 void JJS_Sprite(SPRT *sp)
@@ -1873,6 +1892,7 @@ void SetColor(D3DTLVERTEX *v,char r, char g, char b)
 
 void      JJSDrawPolyF4(POLY_F4 * p)
 {
+/*TODO
    static D3DTLVERTEX vert[4]={0},*v;
 
    g_pd3dDevice->SetTextureStageState(0,D3DTSS_COLOROP,D3DTOP_DISABLE);
@@ -1905,10 +1925,12 @@ void      JJSDrawPolyF4(POLY_F4 * p)
    v->sz = 0;
    SetColor(v,p->r0,p->g0,p->b0);
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, D3DFVF_TLVERTEX , vert, 4, D3DDP_DONOTLIGHT);
+*/
 }
 
 void      JJSDrawPolyG4(POLY_G4 * p)
 {
+/*TODO
    static D3DTLVERTEX vert[4]={0},*v;
 // C3D_PVTCF       v;
 
@@ -1940,6 +1962,7 @@ void      JJSDrawPolyG4(POLY_G4 * p)
    v->sz = 0;
    SetColor(v,p->r2,p->g2,p->b2);
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, D3DFVF_TLVERTEX , vert, 4, D3DDP_DONOTLIGHT);
+*/
 }
 
 void setst(D3DTLVERTEX *vv,short u,short v,short page)
@@ -1961,6 +1984,7 @@ void setst(D3DTLVERTEX *vv,short u,short v,short page)
 
 void      JJSDrawPolyFT4(POLY_FT4 * p)
 {
+/*TODO
    static D3DTLVERTEX vert[4]={0},*v;
    vert[0].color=vert[1].color=vert[2].color=vert[3].color=RGB_MAKE(255,255,255);
 // C3D_PVTCF       v;
@@ -2093,10 +2117,12 @@ void      JJSDrawPolyFT4(POLY_FT4 * p)
       SetColor(v,p->r0,p->g0,p->b0);
 
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, D3DFVF_TLVERTEX , vert, 4, D3DDP_DONOTLIGHT);
+*/
 }
 
 void      JJSDrawPolyF3(POLY_F4 * p)
 {
+/*TODO
    static D3DTLVERTEX vert[3]={0},*v;
 // C3D_PVTCF       v;
 
@@ -2123,10 +2149,12 @@ void      JJSDrawPolyF3(POLY_F4 * p)
    v->sz = 0;
    SetColor(v,p->r0,p->g0,p->b0);
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX , vert, 3, D3DDP_DONOTLIGHT);
+*/
 }
 
 void      JJSDrawPolyG3(POLY_G3 * p)
 {
+/*TODO
    static D3DTLVERTEX vert[3]={0},*v;
 // C3D_PVTCF       v;
 
@@ -2153,10 +2181,12 @@ void      JJSDrawPolyG3(POLY_G3 * p)
    v->sz = 0;
    SetColor(v,p->r2,p->g2,p->b2);
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX , vert, 3, D3DDP_DONOTLIGHT);
+*/
 }
 
 void      JJSDrawPolyFT3(POLY_FT3 * p)
 {
+/*TODO
    static D3DTLVERTEX vert[3]={0},*v;
    vert[0].color=vert[1].color=vert[2].color=RGB_MAKE(255,255,255);
 // C3D_PVTCF       v;
@@ -2230,10 +2260,12 @@ void      JJSDrawPolyFT3(POLY_FT3 * p)
       if (p->g0)
          SetColor(v,p->r0,p->g0,p->b0);
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX , vert, 3, D3DDP_DONOTLIGHT);
+*/
 }
 
 void      JJSDrawPolyGT3(POLY_GT3 * p)
 {
+/*TODO
    static   D3DTLVERTEX vert[3]={0},*v;
    vert[0].color=vert[1].color=vert[2].color=RGB_MAKE(255,255,255);
    // C3D_PVTCF       v;
@@ -2307,10 +2339,12 @@ void      JJSDrawPolyGT3(POLY_GT3 * p)
    setst(v,p->u2,p->v2,temp);
 // v->color=RGB_MAKE(p->r2,p->g2,p->b2);
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX , vert, 3, D3DDP_DONOTLIGHT);
+*/
 }
 
 void      JJSDrawPolyGT4(POLY_GT4 * p)
 {
+/*TODO
    static   D3DTLVERTEX vert[4]={0},*v;
    vert[0].color=vert[1].color=vert[2].color=vert[3].color=RGB_MAKE(255,255,255);
    // C3D_PVTCF       v;
@@ -2403,6 +2437,7 @@ void      JJSDrawPolyGT4(POLY_GT4 * p)
    setst(v,p->u2,p->v2,temp);
 // v->color=RGB_MAKE(p->r2,p->g2,p->b2);
    g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, D3DFVF_TLVERTEX , vert, 4, 0);
+*/
 }
 
 
@@ -2411,6 +2446,7 @@ void      JJSDrawPolyGT4(POLY_GT4 * p)
  */
 BOOL UnloadTexture (PTEXTURE pTex)
 {
+/*TODO
    if (!pTex)
    {
       wsprintf (gszErrMsg, "UnloadTexture: invalid pointer");
@@ -2423,12 +2459,13 @@ BOOL UnloadTexture (PTEXTURE pTex)
       pTex->lpDDSTex->Release ();
       pTex->lpDDSTex = NULL;
    }
-
-   return TRUE;;
+*/
+   return TRUE;
 }
 
 char *LockPilot(void)
 {
+/*TODO
    HRESULT             ddretval;
 
    // lock texture to fill ddsd member
@@ -2443,13 +2480,17 @@ char *LockPilot(void)
          gTex[420].lpDDSTex->Restore ();
    }
    return((char *)gTex[420].ddsd.lpSurface);
+*/
+   return NULL;
 }
 
 void UnlockPilot(void)
 {
+/*TODO
    HRESULT             ddretval;
 
    ddretval = gTex[420].lpDDSTex->Unlock (NULL);
+*/
 }
 
 void ChopUp(char *to, void *from , int which)
@@ -2473,6 +2514,7 @@ void ChopUp(char *to, void *from , int which)
 
 void SetupbackBuffer(void)
 {
+/*TODO
    if(!lpBack_Buffer)
    {
       DDSURFACEDESC2       ddsd;
@@ -2494,6 +2536,7 @@ void SetupbackBuffer(void)
          ShowErrorMessage(4002);
       }
    }
+*/
 }
 /*
  *  LoadTexture - load a texture map from a file into a texture surface
@@ -2501,7 +2544,8 @@ void SetupbackBuffer(void)
 
 BOOL SJRLoadTextureBMPmenu (const char* lpszTexFilename)
 {
-   int fp;
+/*TODO
+   FILE* fp;
    HRESULT             ddretval;
    int               i;
    int   whichSurface,reals;
@@ -2547,15 +2591,15 @@ BOOL SJRLoadTextureBMPmenu (const char* lpszTexFilename)
 
    if(strcmp(lastfile,lpszTexFilename))
    {
-      fp = open(lpszTexFilename, O_RDONLY | O_BINARY);
-      if (fp<0)
+      fp = fopen(lpszTexFilename, "rb");
+      if (!fp)
       {
          ShowErrorMessage(2002);
          return FALSE;
       }
 
-      read(fp, (void *)TextureBuffer, TEXTURESJR);
-      close(fp);
+      fread((void *)TextureBuffer, TEXTURESJR, 1, fp);
+      fclose(fp);
       strcpy(lastfile,lpszTexFilename);
    }
 
@@ -2606,6 +2650,7 @@ BOOL SJRLoadTextureBMPmenu (const char* lpszTexFilename)
       }
       gTex[reals].lpDDSTex->QueryInterface(IID_IDirect3DTexture2, (void **)&gTex[reals].Texture);
    }
+*/
    return TRUE;
 }
 
@@ -2615,7 +2660,8 @@ BOOL SJRLoadTextureBMPmenu (const char* lpszTexFilename)
 
 BOOL SJRLoadTextureBMP (const char* lpszTexFilename)
 {
-   int fp;
+/*TODO
+   FILE* fp;
     HRESULT             ddretval;
    int               i;
    int   whichSurface,reals;
@@ -2666,15 +2712,15 @@ BOOL SJRLoadTextureBMP (const char* lpszTexFilename)
 
    if(strcmp(lastfile,lpszTexFilename))
    {
-      fp = open(lpszTexFilename, O_RDONLY | O_BINARY);
-      if (fp<0)
+      fp = fopen(lpszTexFilename, "rb");
+      if (!fp)
       {
          ShowErrorMessage(2002);
          return FALSE;
       }
 
-      read(fp, (void *)TextureBuffer, TEXTURESJR);
-      close(fp);
+      fread((void *)TextureBuffer, TEXTURESJR, 1, fp);
+      fclose(fp);
       strcpy(lastfile,lpszTexFilename);
    }
 
@@ -2733,6 +2779,7 @@ BOOL SJRLoadTextureBMP (const char* lpszTexFilename)
 
       gTex[reals].lpDDSTex->QueryInterface(IID_IDirect3DTexture2, (void **)&gTex[reals].Texture);
    }
+*/
    return TRUE;
 }
 
@@ -2742,7 +2789,8 @@ BOOL SJRLoadTextureBMP (const char* lpszTexFilename)
 
 int JJSLoadSprites (void)
 {
-   int fp;
+/*TODO
+   FILE* fp;
     HRESULT             ddretval;
    int         bufsize;
    int   sp;
@@ -2766,16 +2814,16 @@ int JJSLoadSprites (void)
 
    for(sp=0;sp<3;++sp)
    {
-      fp = open(lpszTexFilename[sp], O_RDONLY | O_BINARY);
-      if (fp<0)
+      fp = fopen(lpszTexFilename[sp], "rb");
+      if (!fp)
       {
          ShowErrorMessage(2002);
          wsprintf (gszErrMsg, "Could not open texture map file");
          return FALSE;
       }
-      read(fp, (void *)bmpdata, 55);
-      read(fp, (void *)bmpdata, bufsize);
-      close(fp);
+      fread((void *)bmpdata, 55, 1, fp);
+      fread((void *)bmpdata, bufsize, 1, fp);
+      fclose(fp);
 
    {
       WORD *tp,temp;
@@ -2818,6 +2866,7 @@ int JJSLoadSprites (void)
    }
 
    free(ptr);
+*/
    winLoseIn = 0;
    return TRUE;
 }
@@ -3158,6 +3207,7 @@ void ShowWarningMessage(UINT StrNum)
 
 TimData *JJSLoad16BitTexture(char *filename, char location)
 {
+/*TODO
    TimData  *timSize;
 
    DDSURFACEDESC2       ddsd;
@@ -3213,6 +3263,8 @@ TimData *JJSLoad16BitTexture(char *filename, char location)
    tbuf->Release();
 
    return (timSize) ;
+*/
+   return 0;
 }
 
 

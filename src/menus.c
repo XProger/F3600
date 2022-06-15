@@ -42,12 +42,11 @@
 #include <stdio.h>         // PCwipeout
 #include <stdlib.h>     // PCwipeout
 #include <string.h>
-#include "..\win95\andyy\pallette.h"
-#include "..\win95\chrise\utypes.h"
-#include "..\win95\chrise\sfx.h"
-
-#include "..\win95\markk\multiwo.h"
-#include "..\win95\markk\merror.h"
+#include "wipesrc\win95\andyy\pallette.h"
+#include "wipesrc\win95\chrise\utypes.h"
+#include "wipesrc\win95\chrise\sfx.h"
+#include "wipesrc\win95\markk\multiwo.h"
+#include "wipesrc\win95\markk\merror.h"
 #define  FN_DEBUG
 //#include "..\markk\debug.h"
 
@@ -87,7 +86,7 @@ short globalvol;
 TimData  *menuScreen ;
 
 // temporary test stuff
-#include "\wipesrc\win95\markk\libetc.h"  // PCwipeout
+#include "wipesrc\win95\markk\libetc.h"  // PCwipeout
 
 
 #define FULL      0

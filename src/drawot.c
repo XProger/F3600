@@ -367,8 +367,6 @@ void tile(u_long *primitive)
    TILE  *ip;
    POLY_F4  op;
 
-   ip->w *=2;
-   ip->h *=2;
    ip = (TILE *)primitive;
    op.x0 = ip->x0*2;
    op.x1 = ip->x0 + ip->w;

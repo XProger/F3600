@@ -3,9 +3,7 @@
 #include "datacash.h"
 #include "wintime.h"
 
-#ifdef WIPEOUTPC
 char              *backup_cache;
-#endif
 int                  processing_interupt = 0;
 char              *INT_STACK;
 long              stack_addr;

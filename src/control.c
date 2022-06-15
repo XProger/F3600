@@ -1216,7 +1216,7 @@ void ZigZagShip(VECTOR *blockVector, ShipData *shipIndex, Face *facePtr, int shi
 void UpdateRemoteShip(register ShipData *shipIndex, Object** shipShapes, int shipNo, WeaponData *weaponIndex)
 {
    ShipData          *myShip , *remoteShip;
-   Face              *facePtr ;
+   Face              *facePtr = NULL;
    TrackSection      *nextSection, *section ;
    int               i;
    VECTOR            targetVector, bestPath;

@@ -1,3 +1,5 @@
+#include "menus.h"
+
 #define NO_OF_SHIPS 8
 
 #define IN_TOW          0x1

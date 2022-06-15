@@ -59,7 +59,7 @@ void HighScore (ConfigData *gameData)
 {
 
    BlkFill     *clear[ 2 ];
-   TimData     *timInfo ;
+   TimData     *timInfo = NULL;
    POLY_FT4    scorePrim[2] ;
    POLY_FT4    scorePrim1[2] ;
    short       charX=40, charY=185 ;

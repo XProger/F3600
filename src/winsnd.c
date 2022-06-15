@@ -77,6 +77,7 @@ char szMsg[512] = "";
 int   keyhit = 0;
 void finiSndObjects( void )
 {
+/*TODO
    int loop;
 
     if( ppDS != NULL )
@@ -98,10 +99,12 @@ void finiSndObjects( void )
         ppDS->Release();
         ppDS = NULL;
     }
+*/
 } /* finiSndObjects */
 
 void PlaySamp(LPDIRECTSOUNDBUFFER buf, DWORD dwFlags, int id)
 {
+/*TODO
    HRESULT dsrval;
    DWORD status;
 
@@ -124,10 +127,12 @@ void PlaySamp(LPDIRECTSOUNDBUFFER buf, DWORD dwFlags, int id)
          SoundErr("Buffer restored PlaySamp->Play:", dsrval);
        }
      }
+*/
 }
 
 LPDIRECTSOUNDBUFFER ClonePlayBuf(LPDIRECTSOUNDBUFFER buf, int id)
 {
+/*TODO
    LPDIRECTSOUNDBUFFER  newbuf;
    FPLAYING *element;
    DWORD status;
@@ -156,10 +161,13 @@ LPDIRECTSOUNDBUFFER ClonePlayBuf(LPDIRECTSOUNDBUFFER buf, int id)
    element->PlayID = newbuf;
    element->next = NULL;
    return(newbuf);
+*/
+   return NULL;
 }
 
 void StopSamp(LPDIRECTSOUNDBUFFER buf)
 {
+/*TODO
    HRESULT dsrval;
          dsrval = buf->Stop();
          if (dsrval != DS_OK)
@@ -172,11 +180,13 @@ void StopSamp(LPDIRECTSOUNDBUFFER buf)
                SoundErr("Buffer restored StopSamp->Stop:", dsrval);
              }
            }
+*/
 }
 
 HWND  MainWin;
 BOOL doSndInit(uint16 chans, uint16 sRate, HWND hwnd, uint16 nBits)
 {
+/*TODO
     HRESULT             dsrval;
    DSCAPS            SoundCaps;
 
@@ -299,11 +309,13 @@ BOOL doSndInit(uint16 chans, uint16 sRate, HWND hwnd, uint16 nBits)
 
 
    return(TRUE);
-
+*/
+   return FALSE;
 }
 
 LPDIRECTSOUNDBUFFER GetLoadSecondaryBuffer(char *filename,DWORD dwFlags)
 {
+/*TODO
    LPDIRECTSOUNDBUFFER  buffer;
    HRESULT     dsrval;
    LPVOID   ptr1, ptr2;
@@ -381,11 +393,13 @@ LPDIRECTSOUNDBUFFER GetLoadSecondaryBuffer(char *filename,DWORD dwFlags)
    buffer->Unlock(ptr1, len1, ptr2, len2);
 
    return(buffer);
-
+*/
+   return NULL;
 }
 
 LPDIRECTSOUNDBUFFER GetCopySecondaryBuffer(void *buf,long length, DWORD dwFlags)
 {
+/*TODO
    LPDIRECTSOUNDBUFFER  buffer;
    HRESULT     dsrval;
    LPVOID   ptr1, ptr2;
@@ -441,7 +455,8 @@ LPDIRECTSOUNDBUFFER GetCopySecondaryBuffer(void *buf,long length, DWORD dwFlags)
    buffer->Unlock(ptr1, len1, ptr2, len2);
 
    return(buffer);
-
+*/
+   return NULL;
 }
 
 
@@ -663,7 +678,9 @@ void SfxSetVolume(uint8 bVolume)
    nvol = ((float)globalvol / 218.0);
 
    volume = nvol* (((bVolume * 10000)/255)  - 10000);
+/*TODO
    lpPrimarySoundBuffer->SetVolume(volume);
+*/
 }
 
 void SfxOn(void)
@@ -714,14 +731,14 @@ void SfxPlay(int16 wSampleId,uint8 bVolume,uint8 bLRPan,uint8 bFBPan,
    volume = nvol * (( (bVolume * 10000)/255)  - 10000);
    pan = ((bLRPan-15) * 10000) / 15;
    frequency = (22050 * wPitch) / 256;
-
+/*TODO
    if (DSFlagsArray[wSampleId] & DSBCAPS_CTRLVOLUME)
       DSSampleArray[wSampleId]->SetVolume(volume);
    if (DSFlagsArray[wSampleId] & DSBCAPS_CTRLPAN)
       DSSampleArray[wSampleId]->SetPan(pan);
    if (DSFlagsArray[wSampleId] & DSBCAPS_CTRLFREQUENCY)
       DSSampleArray[wSampleId]->SetFrequency(frequency);
-
+*/
    PlaySamp(DSSampleArray[wSampleId], 0, wSampleId);
 }
 
@@ -741,14 +758,14 @@ int16 SfxPlayID(int16 wSampleId,uint8 bVolume,uint8 bLRPan,uint8 bFBPan,
 
    pan = ((bLRPan-15) * 10000) / 15;
    frequency = (22050 * wPitch) / 256;
-
+/*TODO
    if (DSFlagsArray[wSampleId] & DSBCAPS_CTRLVOLUME)
       DSSampleArray[wSampleId]->SetVolume(volume);
    if (DSFlagsArray[wSampleId] & DSBCAPS_CTRLPAN)
       DSSampleArray[wSampleId]->SetPan(pan);
    if (DSFlagsArray[wSampleId] & DSBCAPS_CTRLFREQUENCY)
       DSSampleArray[wSampleId]->SetFrequency(frequency);
-
+*/
 
    for (loop =0;loop< DSMaxFX ; loop++)
      {
@@ -773,6 +790,7 @@ int16 SfxPlayID(int16 wSampleId,uint8 bVolume,uint8 bLRPan,uint8 bFBPan,
 
 void SfxEffectVol(int16 wPlayId,uint8 bVolume)
 {
+/*TODO
    DWORD status;
    long volume;
    float nvol;
@@ -802,11 +820,12 @@ void SfxEffectVol(int16 wPlayId,uint8 bVolume)
 
    if (LoopingFlags[wPlayId] & DSBCAPS_CTRLVOLUME)
       LoopingArray[wPlayId]->SetVolume(volume);
-
+*/
 }
 
 void SfxEffectPitch(int16 wPlayId,uint16 wPitch)
 {
+/*TODO
    DWORD status;
    DWORD frequency;
 
@@ -834,13 +853,14 @@ void SfxEffectPitch(int16 wPlayId,uint16 wPitch)
 
    if (LoopingFlags[wPlayId] & DSBCAPS_CTRLFREQUENCY)
       LoopingArray[wPlayId]->SetVolume(frequency);
-
+*/
 }
 
 
 
 void SfxEffectPan(int16 wPlayId,uint16 bPan)
 {
+/*TODO
    DWORD status;
    long pan;
 
@@ -868,7 +888,7 @@ void SfxEffectPan(int16 wPlayId,uint16 bPan)
 
    if (LoopingFlags[wPlayId] & DSBCAPS_CTRLPAN)
       LoopingArray[wPlayId]->SetVolume(pan);
-
+*/
 }
 
 void SfxUnInit(uint8 bFlag)
@@ -878,6 +898,7 @@ void SfxUnInit(uint8 bFlag)
 
 void SfxStop(int16 wPlayId)
 {
+/*TODO
    DWORD status;
 
    if (LoopingArray[wPlayId] == NULL)
@@ -899,6 +920,7 @@ void SfxStop(int16 wPlayId)
    LoopingArray[wPlayId]->SetCurrentPosition(0);   //Reset to beginning
    LoopingArray[wPlayId] = NULL;
    LoopingFlags[wPlayId] = 0;
+*/
 }
 
 void KillAllFx(void)
@@ -922,6 +944,7 @@ void KillAllFx(void)
 
 void SfxDoSfx(void)
 {
+/*TODO
    FPLAYING *element, *del;
    DWORD status;
 
@@ -939,6 +962,7 @@ void SfxDoSfx(void)
      if (element->next != NULL)  //Case of deleting the last one
         element = element->next;
      }
+*/
 }
 
 int16 SfxRegisterBuffer(void *dataptr, uint32 length, int16 *idno, long flags)

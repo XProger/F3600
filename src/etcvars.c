@@ -1,5 +1,5 @@
 /* Source File: etcvars.c */
-#include                   "\wipesrc\win95\markk\input.h"
+#include                   "wipesrc\win95\markk\input.h"
 
 /* Interrupt Handling. */
 volatile unsigned short int      etc_OriginalInt09Selector;

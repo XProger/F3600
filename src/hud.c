@@ -255,7 +255,8 @@ void AddTime(int time, TEXT_DATA *pos_data, int colour)
                charTex = (Texture *) TextureTable [DRTEXT_12] ;
                break ;
 
-      case  8: charSet = &(CharSet8[0]) ;
+      case  8:
+      default: charSet = &(CharSet8[0]) ;
                charTex = (Texture *) TextureTable [DRTEXT_8] ;
                break ;
    }
@@ -481,7 +482,8 @@ void AddText(char* text_ptr, TEXT_DATA *pos_data, int colour)
                charTex = (Texture *) TextureTable [DRTEXT_12] ;
                break ;
 
-      case  8: charSet = &(CharSet8[0]) ;
+      case  8:
+      default: charSet = &(CharSet8[0]) ;
                charTex = (Texture *) TextureTable [DRTEXT_8] ;
                break ;
    }
@@ -566,7 +568,8 @@ void AddNumber(int num, TEXT_DATA *pos_data, int colour)
                charTex = (Texture *) TextureTable [DRTEXT_12] ;
                break ;
 
-      case  8: charSet = &(CharSet8[0]) ;
+      case  8:
+      default: charSet = &(CharSet8[0]) ;
                charTex = (Texture *) TextureTable [DRTEXT_8] ;
                break ;
    }
@@ -681,6 +684,7 @@ void SetCharTextures (char size)
             break ;
 
       case 16:
+      default:
             charSet = &(Text16[0]) ;
             break ;
 
@@ -1432,7 +1436,8 @@ void CentreText(char* the_text_ptr, TEXT_DATA *pos_data, int colour)
                charTex = (Texture *) TextureTable [DRTEXT_12] ;
                break ;
 
-      case  8: charSet = &(CharSet8[0]) ;
+      case  8:
+      default: charSet = &(CharSet8[0]) ;
                charTex = (Texture *) TextureTable [DRTEXT_8] ;
                break ;
    }

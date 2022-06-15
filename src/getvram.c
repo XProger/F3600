@@ -95,7 +95,7 @@ void DumpVram(long no)
    buff[16]=16;
    buff[17]=0x02|0x20;
 
-   sprintf( name, "wipeout\\vram.tga", no );
+   sprintf( name, "wipeout\\vram.tga" );
    DumpFile( name, (char *)buff, HEADER+(X*Y*2) );
 
    DFree ( heap, ( char* )buff ) ;

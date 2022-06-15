@@ -92,11 +92,13 @@ static HRESULT CALLBACK EnumPixelFormatsCallback (DDPIXELFORMAT * pddpf, LPVOID 
  */
 BOOL EnumTextureFormats (void)
 {
+/*TODO
    HRESULT hr;
 
    hr =  g_pd3dDevice->EnumTextureFormats (EnumPixelFormatsCallback, (LPVOID) & availableTextures);
    if (hr != DD_OK)
       return FALSE;
+*/
    return TRUE;
 }
 
