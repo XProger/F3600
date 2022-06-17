@@ -22,7 +22,6 @@
 #include "global.h"
 #include "combat.h"
 #include "libgte.h"
-#include "win.h"
 #include "drawot.h"
 #include "ajs.h"
 #include "protos.h"

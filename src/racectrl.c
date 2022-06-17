@@ -43,7 +43,6 @@
 #include "fri.h"
 #include "credits.h"
 #include "init.h"
-#include "win.h"
 #include "ajs.h"
 #include "collide.h"
 

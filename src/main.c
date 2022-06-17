@@ -34,7 +34,6 @@
 #include "ajs.h"
 #include "drawot.h"
 #include "decl.h"
-#include "win.h"
 #include "libgte.h"
 #include "sfx.h"
 #include "ayrace.h"

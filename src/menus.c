@@ -33,7 +33,6 @@
 #include "config.h"
 #include "init.h"
 #include "scene.h"
-#include "win.h"
 #include "wincd.h"
 
 #include <direct.h>
@@ -163,21 +162,21 @@ unsigned short NewOriginalKeyCodes[16]={0};
 unsigned short OriginalKeyCodes[16] =
 {
    _Z_KEY,              /* FrontLeftBottom   */ // left airbreak
-      _X_KEY,           /* FrontRightBottom  */ // right airbreak
-      _F1_KEY,          /* FrontRightTop  */ // Draw distance
-      _ESC_KEY,            /* FrontLeftTop      */
-      _TAB_KEY,         /* Triangle       */    // change view
-      _LEFT_ALT_KEY,       /* Circle         */ // shoot weapon
-      _LEFT_CTRL_KEY,      /* Cross       */    // accelerate
-      _F2_KEY,       /* Square         */ // Screen size
-      _ENTER_KEY,          /* Select         */ // editor
-      _F3_KEY,       /* Unused         */ // Resolution
-      _F4_KEY,       /* Unused         */ // Sky
-      _P_KEY,              /* Start       */    // pause
-      _UP_KEY,          /* Up          */ // up
-      _RIGHT_KEY,          /* Right       */    // right
-      _DOWN_KEY,           /* Down           */    // down
-      _LEFT_KEY            /* Left           */    // left
+   _X_KEY,              /* FrontRightBottom  */ // right airbreak
+   _F1_KEY,             /* FrontRightTop     */ // Draw distance
+   _ESC_KEY,            /* FrontLeftTop      */
+   _TAB_KEY,            /* Triangle          */ // change view
+   _LEFT_ALT_KEY,       /* Circle            */ // shoot weapon
+   _LEFT_CTRL_KEY,      /* Cross             */ // accelerate
+   _F2_KEY,             /* Square            */ // Screen size
+   _ENTER_KEY,          /* Select            */ // editor
+   _F3_KEY,             /* Unused            */ // Resolution
+   _F4_KEY,             /* Unused            */ // Sky
+   _P_KEY,              /* Start             */ // pause
+   _UP_KEY,             /* Up                */ // up
+   _RIGHT_KEY,          /* Right             */ // right
+   _DOWN_KEY,           /* Down              */ // down
+   _LEFT_KEY            /* Left              */ // left
 };
 
 
@@ -198,220 +197,220 @@ char CheckKey(unsigned short code);
 char  *ScanCodes[89] =
 {
    "        ",    // 0
-      "ESC     ",    // 1
-      "1       ",    // 2
-      "2       ",    // 3
-      "3       ",    // 4
-      "4       ",    // 5
-      "5       ",    // 6
-      "6       ",    // 7
-      "7       ",    // 8
-      "8       ",    // 9
-      "9       ",    // 10
-      "0       ",    // 11
-      "MINUS   ",    // 12
-      "EQUALS  ",    // 13
-      "BACKSPCE",    // 14
-      "TAB     ",    // 15
-      "Q       ",    // 16
-      "W       ",    // 17
-      "E       ",    // 18
-      "R       ",    // 19
-      "T       ",    // 20
-      "Y       ",    // 21
-      "U       ",    // 22
-      "I       ",    // 23
-      "O       ",    // 24
-      "P       ",    // 25
-      "L BRCKET",    // 26
-      "R BRCKET",    // 27
-      "ENTER   ",    // 28
-      "LFT CTRL",    // 29
-      "A       ",    // 30
-      "S       ",    // 31
-      "D       ",    // 32
-      "F       ",    // 33
-      "G       ",    // 34
-      "H       ",    // 35
-      "J       ",    // 36
-      "K       ",    // 37
-      "L       ",    // 38
-      "SEMICOLN",    // 39
-      "QUOTE   ",    // 40
-      "GRAVE   ",    // 41
-      "L SHIFT ",    // 42
-      "BACKSLSH",    // 43
-      "Z       ",    // 44
-      "X       ",    // 45
-      "C       ",    // 46
-      "V       ",    // 47
-      "B       ",    // 48
-      "N       ",    // 49
-      "M       ",    // 50
-      "COMMA   ",    // 51
-      "PERIOD  ",    // 52
-      "SLASH   ",    // 53
-      "R SHIFT ",    // 54
-      "ASTERISK",    // 55
-      "LEFT ALT",    // 56
-      "SPACE   ",    // 57
-      "CAPSLOCK",    // 58
-      "F1      ",    // 59
-      "F2      ",    // 60
-      "F3      ",    // 61
-      "F4      ",    // 62
-      "F5      ",    // 63
-      "F6      ",    // 64
-      "F7      ",    // 65
-      "F8      ",    // 66
-      "F9      ",    // 67
-      "F10     ",    // 68
-      "NUM LOCK",    // 69
-      "SCR LOCK",    // 70
-      "HOME    ",    // 71
-      "UP      ",    // 72
-      "PAGE UP ",    // 73
-      "XXXXXXXX",    // 74
-      "LEFT    ",    // 75
-      "KEYPAD 5",    // 76
-      "RIGHT   ",    // 77
-      "XXXXXXXX",    // 78
-      "END     ",    // 79
-      "DOWN    ",    // 80
-      "PAGE DN ",    // 81
-      "INSERT  ",    // 82
-      "DELETE  ",    // 83
-      "XXXXXXXX",    // 84
-      "XXXXXXXX",    // 85
-      "XXXXXXXX",    // 86
-      "F11     ",    // 87
-      "F12     "     // 88
+   "ESC     ",    // 1
+   "1       ",    // 2
+   "2       ",    // 3
+   "3       ",    // 4
+   "4       ",    // 5
+   "5       ",    // 6
+   "6       ",    // 7
+   "7       ",    // 8
+   "8       ",    // 9
+   "9       ",    // 10
+   "0       ",    // 11
+   "MINUS   ",    // 12
+   "EQUALS  ",    // 13
+   "BACKSPCE",    // 14
+   "TAB     ",    // 15
+   "Q       ",    // 16
+   "W       ",    // 17
+   "E       ",    // 18
+   "R       ",    // 19
+   "T       ",    // 20
+   "Y       ",    // 21
+   "U       ",    // 22
+   "I       ",    // 23
+   "O       ",    // 24
+   "P       ",    // 25
+   "L BRCKET",    // 26
+   "R BRCKET",    // 27
+   "ENTER   ",    // 28
+   "LFT CTRL",    // 29
+   "A       ",    // 30
+   "S       ",    // 31
+   "D       ",    // 32
+   "F       ",    // 33
+   "G       ",    // 34
+   "H       ",    // 35
+   "J       ",    // 36
+   "K       ",    // 37
+   "L       ",    // 38
+   "SEMICOLN",    // 39
+   "QUOTE   ",    // 40
+   "GRAVE   ",    // 41
+   "L SHIFT ",    // 42
+   "BACKSLSH",    // 43
+   "Z       ",    // 44
+   "X       ",    // 45
+   "C       ",    // 46
+   "V       ",    // 47
+   "B       ",    // 48
+   "N       ",    // 49
+   "M       ",    // 50
+   "COMMA   ",    // 51
+   "PERIOD  ",    // 52
+   "SLASH   ",    // 53
+   "R SHIFT ",    // 54
+   "ASTERISK",    // 55
+   "LEFT ALT",    // 56
+   "SPACE   ",    // 57
+   "CAPSLOCK",    // 58
+   "F1      ",    // 59
+   "F2      ",    // 60
+   "F3      ",    // 61
+   "F4      ",    // 62
+   "F5      ",    // 63
+   "F6      ",    // 64
+   "F7      ",    // 65
+   "F8      ",    // 66
+   "F9      ",    // 67
+   "F10     ",    // 68
+   "NUM LOCK",    // 69
+   "SCR LOCK",    // 70
+   "HOME    ",    // 71
+   "UP      ",    // 72
+   "PAGE UP ",    // 73
+   "XXXXXXXX",    // 74
+   "LEFT    ",    // 75
+   "KEYPAD 5",    // 76
+   "RIGHT   ",    // 77
+   "XXXXXXXX",    // 78
+   "END     ",    // 79
+   "DOWN    ",    // 80
+   "PAGE DN ",    // 81
+   "INSERT  ",    // 82
+   "DELETE  ",    // 83
+   "XXXXXXXX",    // 84
+   "XXXXXXXX",    // 85
+   "XXXXXXXX",    // 86
+   "F11     ",    // 87
+   "F12     "     // 88
 };
 
 char  ScanToAscii[110] =
 {
    0,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      0,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      0,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      0,
-      1,
-      1,
-      32,            // SPACE
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      0,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      48,            // 0
-      49,            // 1
-      50,            // 2
-      51,            // 3
-      52,            // 4
-      53,            // 5
-      54,            // 6
-      55,            // 7
-      56,            // 8
-      57,            // 9
-      1,
-      1,
-      0,
-      1,
-      1,
-      1,
-      1,
-      65,            // A
-      66,            // B
-      67,            // C
-      68,            // D
-      69,            // E
-      70,            // F
-      71,            // G
-      72,            // H
-      73,            // I
-      74,            // J
-      75,            // K
-      76,            // L
-      77,            // M
-      78,            // N
-      79,            // O
-      80,            // P
-      81,            // Q
-      82,            // R
-      83,            // S
-      84,            // T
-      85,            // U
-      86,            // V
-      87,            // W
-      88,            // X
-      89,            // Y
-      90,            // Z
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      0,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      43          // +
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   32,            // SPACE
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   48,            // 0
+   49,            // 1
+   50,            // 2
+   51,            // 3
+   52,            // 4
+   53,            // 5
+   54,            // 6
+   55,            // 7
+   56,            // 8
+   57,            // 9
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   65,            // A
+   66,            // B
+   67,            // C
+   68,            // D
+   69,            // E
+   70,            // F
+   71,            // G
+   72,            // H
+   73,            // I
+   74,            // J
+   75,            // K
+   76,            // L
+   77,            // M
+   78,            // N
+   79,            // O
+   80,            // P
+   81,            // Q
+   82,            // R
+   83,            // S
+   84,            // T
+   85,            // U
+   86,            // V
+   87,            // W
+   88,            // X
+   89,            // Y
+   90,            // Z
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   43          // +
 };
 
 
 
-#define  NONE  0
-#define  LEFT  1
-#define  RIGHT 2
-#define  UP    3
-#define  DOWN  4
-#define  BRAKEL   5
-#define  BRAKER   6
-#define  ACCEL 7
-#define  FIRE  8
-#define  VIEW_KEY 9
+#define  NONE        0
+#define  LEFT        1
+#define  RIGHT       2
+#define  UP          3
+#define  DOWN        4
+#define  BRAKEL      5
+#define  BRAKER      6
+#define  ACCEL       7
+#define  FIRE        8
+#define  VIEW_KEY    9
 #define  PAUSE_KEY   10
 
 #define  MAXSTRING   10
@@ -459,16 +458,6 @@ void DisplayPadMenu1 (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDe
 void DisplayPadMenu2 (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
 void  MouseConfig(void);
 void ResetKeys(void);
-
-
-void Debugit(char *t)
-{
-   FILE *fp;
-
-   fp=fopen("LOGFILE","a");
-   fprintf(fp,"%s\n",t);
-   fclose(fp);
-}
 
 
 void reloadScr(void)
@@ -4914,9 +4903,10 @@ void JJSReadTIM(char *filename , char *location, TimData *tim)
    for(i=0;i<320*240;++i)
    {
       fread(&pix0,2,1,fp);
+      /*TODO
       if(Screen565)
          pix1=((pix0&0x1f)<<11)|((pix0&0x3e0)<<1)|(pix0>>10);
-      else
+      else*/
          pix1=((pix0&0x1f)<<10)|(pix0&0x3e0)|(pix0>>10);
       *data++=pix1;
    }

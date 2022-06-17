@@ -37,7 +37,6 @@
 #include "libgte.h"
 #include "andyscn.h"
 #include "init.h"
-#include "win.h"
 
 extern TrackCamera      ctrlcamera;
 

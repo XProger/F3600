@@ -33,7 +33,6 @@
 #include "effects.h"
 #include "init.h"
 #include "ajs.h"
-#include "win.h"
 #include "error.h"
 #include "libgte.h"
 #include "collide.h"

@@ -16,13 +16,9 @@
 #include <string.h>
 #include "pallette.h"
 #include "protos.h"
-#include "win.h"
 
 #define  MAIN_PAL 0
 #define  SHIELD_PAL  1
-
-
-extern short rendering;
 
 #define addPrim(ot, p)  setaddr(p, getaddr(ot)), setaddr(ot, p)
 

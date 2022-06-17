@@ -47,7 +47,6 @@
 #include "wincd.h"
 #include "credits.h"
 #include "andyscn.h"
-#include "win.h"
 
 #define  _SIZE_T_DEFINED_
 //#include <stdlib.h>

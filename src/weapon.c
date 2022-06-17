@@ -38,7 +38,6 @@
 #include "libgte.h"
 #include "init.h"
 #include "collide.h"
-#include "win.h"
 #include "ajs.h"
 #include "utils.h"
 

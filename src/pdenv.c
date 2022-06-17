@@ -9,7 +9,6 @@
 //#include "\wipesrc\win95\jeda\cgl.h"
 #include "pcgraph.h"
 #include "winh.h"
-#include "win.h"
 
 extern short game_stat;
 extern char Sky;
@@ -60,15 +59,6 @@ DISPENV *PutDispEnv(DISPENV *env)
    if (env->disp.y != olddispy)
    {
       DDSwap();
-
-      if (inmenu==1 || Reallyinmenu==1)
-      {
-         BltClearToScreen();
-      }
-      else
-      {
-         WinClearScreen(0);
-      }
    }
 #else
    if (env->disp.y != olddispy)

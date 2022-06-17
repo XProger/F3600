@@ -50,7 +50,6 @@
     <ClCompile Include="..\main.c" />
     <ClCompile Include="..\malloc.c" />
     <ClCompile Include="..\menus.c" />
-    <ClCompile Include="..\newgraphics.c" />
     <ClCompile Include="..\object.c" />
     <ClCompile Include="..\options.c" />
     <ClCompile Include="..\pad.c" />
@@ -81,11 +80,11 @@
     <ClCompile Include="..\vsync.c" />
     <ClCompile Include="..\wave.c" />
     <ClCompile Include="..\weapon.c" />
-    <ClCompile Include="..\win.c" />
     <ClCompile Include="..\wincd.c" />
     <ClCompile Include="..\winclip.c" />
     <ClCompile Include="..\winsnd.c" />
     <ClCompile Include="..\wintime.c" />
+    <ClCompile Include="platform.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ajs.h" />
@@ -143,7 +142,6 @@
     <ClInclude Include="..\radscn.h" />
     <ClInclude Include="..\regread.h" />
     <ClInclude Include="..\resource.h" />
-    <ClInclude Include="..\rgraphics.h" />
     <ClInclude Include="..\scancode.h" />
     <ClInclude Include="..\scene.h" />
     <ClInclude Include="..\search.h" />
@@ -170,7 +168,6 @@
     <ClInclude Include="..\wassert.h" />
     <ClInclude Include="..\wave.h" />
     <ClInclude Include="..\weapon.h" />
-    <ClInclude Include="..\win.h" />
     <ClInclude Include="..\wincd.h" />
     <ClInclude Include="..\winclip.h" />
     <ClInclude Include="..\winh.h" />

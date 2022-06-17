@@ -13,7 +13,6 @@
 #include <math.h>
 #include "winh.h"
 #include "drawot.h"
-#include "win.h"
 
 #define VGA    0
 #define EAGLE  1
@@ -91,17 +90,6 @@ void DrawOTag(P_TAG *primitive)
 {
    unsigned long addr;
 
-#if   DEBUG_LOCKED
-   CurBuffer = DebugScreen;
-#else
-
-   while (LockBackBuffer())
-   {
-      ProcessMessages();   //loop until we can get that back buffer
-      ;
-   }
-   UnlockBackBuffer();  //Finished drawing
-#endif
    CurBufferJ=CurBuffer;                  //jed
    tempbuffer=CurBuffer;
    setRenderBegin();
@@ -118,13 +106,6 @@ void DrawOTag(P_TAG *primitive)
    }
    while ((addr = getaddr(primitive)) != 0xffffffff);
 
-#if DEBUG_LOCKED
-   while (LockBackBuffer())
-   {
-      ProcessMessages();   //loop until we can get that back buffer
-      ;
-   }
-#endif
    sendList();
    setRenderEnd();
 // UnlockBackBuffer();  //Finished drawing

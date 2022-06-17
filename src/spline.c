@@ -40,7 +40,6 @@
 #include "search.h"
 #include "libgte.h"
 #include "error.h"
-#include "win.h"
 #include "collide.h"
 #include "utils.h"
 

@@ -388,18 +388,6 @@ HRESULT Cleanup3DEnvironment()
    return S_OK;
 }
 
-BOOL WINAPI Enumerate2ndCard(GUID FAR *lpGUID,LPSTR desc, LPSTR name,LPVOID context,HMONITOR hm)
-{
-/*TODO
-   GUID *myGUID = (GUID *)context;
-
-   if(lpGUID == NULL)
-      return TRUE;
-   *myGUID = *lpGUID;
-*/
-   return FALSE;
-}
-
 BOOL renderInitialise(HWND hWnd, BOOL b_fullScreen, BOOL Voodoo, BOOL softwareOnly)
 {
 /*TODO

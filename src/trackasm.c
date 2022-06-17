@@ -677,7 +677,7 @@ Listed in decreasing order of priority
    TrackSection*        section;
    Face*                face;
 
-   VECTOR               *vertices;
+   VECTOR               *vertices, *v;
    short                faceCount;
 
    PolyFT4*             ft4;
@@ -685,7 +685,7 @@ Listed in decreasing order of priority
    Surface*             surface;
 
    Tile*                tile;
-   short          var;
+   short                var = 0;
 
 
    /* Set transformation matrix */
@@ -711,80 +711,55 @@ Listed in decreasing order of priority
       for ( j=0; j < faceCount; j++ )
       {
          /* get original 32 bit faces coords */
+         v = vertices + face->vertex[1];
+         svector[0].vx = v->vx + campos->vx;
+         svector[0].vy = v->vy + campos->vy;
+         svector[0].vz = v->vz + campos->vz;
 
-         vector[ 0 ] = *( vertices + face->vertex[ 1 ] );
-         vector[ 2 ] = *( vertices + face->vertex[ 0 ] );
-         vector[ 6 ] = *( vertices + face->vertex[ 2 ] );
-         vector[ 8 ] = *( vertices + face->vertex[ 3 ] );
+         v = vertices + face->vertex[0];
+         svector[2].vx = v->vx + campos->vx;
+         svector[2].vy = v->vy + campos->vy;
+         svector[2].vz = v->vz + campos->vz;
+
+         v = vertices + face->vertex[2];
+         svector[6].vx = v->vx + campos->vx;
+         svector[6].vy = v->vy + campos->vy;
+         svector[6].vz = v->vz + campos->vz;
+
+         v = vertices + face->vertex[3];
+         svector[8].vx = v->vx + campos->vx;
+         svector[8].vy = v->vy + campos->vy;
+         svector[8].vz = v->vz + campos->vz;
 
          /* mesh top */
 
-         vector[ 1 ].vx = ( vector[ 0 ].vx + vector[ 2 ].vx ) >> 1;
-         vector[ 1 ].vy = ( vector[ 0 ].vy + vector[ 2 ].vy ) >> 1;
-         vector[ 1 ].vz = ( vector[ 0 ].vz + vector[ 2 ].vz ) >> 1;
+         svector[ 1 ].vx = ( svector[ 0 ].vx + svector[ 2 ].vx ) >> 1;
+         svector[ 1 ].vy = ( svector[ 0 ].vy + svector[ 2 ].vy ) >> 1;
+         svector[ 1 ].vz = ( svector[ 0 ].vz + svector[ 2 ].vz ) >> 1;
 
          /* mesh left */
 
-         vector[ 3 ].vx = ( vector[ 0 ].vx + vector[ 6 ].vx ) >> 1;
-         vector[ 3 ].vy = ( vector[ 0 ].vy + vector[ 6 ].vy ) >> 1;
-         vector[ 3 ].vz = ( vector[ 0 ].vz + vector[ 6 ].vz ) >> 1;
+         svector[ 3 ].vx = ( svector[ 0 ].vx + svector[ 6 ].vx ) >> 1;
+         svector[ 3 ].vy = ( svector[ 0 ].vy + svector[ 6 ].vy ) >> 1;
+         svector[ 3 ].vz = ( svector[ 0 ].vz + svector[ 6 ].vz ) >> 1;
 
          /* mesh right */
 
-         vector[ 5 ].vx = ( vector[ 2 ].vx + vector[ 8 ].vx ) >> 1;
-         vector[ 5 ].vy = ( vector[ 2 ].vy + vector[ 8 ].vy ) >> 1;
-         vector[ 5 ].vz = ( vector[ 2 ].vz + vector[ 8 ].vz ) >> 1;
+         svector[ 5 ].vx = ( svector[ 2 ].vx + svector[ 8 ].vx ) >> 1;
+         svector[ 5 ].vy = ( svector[ 2 ].vy + svector[ 8 ].vy ) >> 1;
+         svector[ 5 ].vz = ( svector[ 2 ].vz + svector[ 8 ].vz ) >> 1;
 
          /* mesh bottom */
 
-         vector[ 7 ].vx = ( vector[ 6 ].vx + vector[ 8 ].vx ) >> 1;
-         vector[ 7 ].vy = ( vector[ 6 ].vy + vector[ 8 ].vy ) >> 1;
-         vector[ 7 ].vz = ( vector[ 6 ].vz + vector[ 8 ].vz ) >> 1;
+         svector[ 7 ].vx = ( svector[ 6 ].vx + svector[ 8 ].vx ) >> 1;
+         svector[ 7 ].vy = ( svector[ 6 ].vy + svector[ 8 ].vy ) >> 1;
+         svector[ 7 ].vz = ( svector[ 6 ].vz + svector[ 8 ].vz ) >> 1;
 
          /* mesh centre */
 
-         vector[ 4 ].vx = ( vector[ 3 ].vx + vector[ 5 ].vx ) >> 1;
-         vector[ 4 ].vy = ( vector[ 3 ].vy + vector[ 5 ].vy ) >> 1;
-         vector[ 4 ].vz = ( vector[ 3 ].vz + vector[ 5 ].vz ) >> 1;
-
-
-         /* make SVECTORs */
-
-         svector[ 0 ].vx = vector[ 0 ].vx + campos->vx;
-         svector[ 0 ].vy = vector[ 0 ].vy + campos->vy;
-         svector[ 0 ].vz = vector[ 0 ].vz + campos->vz;
-
-         svector[ 1 ].vx = vector[ 1 ].vx + campos->vx;
-         svector[ 1 ].vy = vector[ 1 ].vy + campos->vy;
-         svector[ 1 ].vz = vector[ 1 ].vz + campos->vz;
-
-         svector[ 2 ].vx = vector[ 2 ].vx + campos->vx;
-         svector[ 2 ].vy = vector[ 2 ].vy + campos->vy;
-         svector[ 2 ].vz = vector[ 2 ].vz + campos->vz;
-
-         svector[ 3 ].vx = vector[ 3 ].vx + campos->vx;
-         svector[ 3 ].vy = vector[ 3 ].vy + campos->vy;
-         svector[ 3 ].vz = vector[ 3 ].vz + campos->vz;
-
-         svector[ 4 ].vx = vector[ 4 ].vx + campos->vx;
-         svector[ 4 ].vy = vector[ 4 ].vy + campos->vy;
-         svector[ 4 ].vz = vector[ 4 ].vz + campos->vz;
-
-         svector[ 5 ].vx = vector[ 5 ].vx + campos->vx;
-         svector[ 5 ].vy = vector[ 5 ].vy + campos->vy;
-         svector[ 5 ].vz = vector[ 5 ].vz + campos->vz;
-
-         svector[ 6 ].vx = vector[ 6 ].vx + campos->vx;
-         svector[ 6 ].vy = vector[ 6 ].vy + campos->vy;
-         svector[ 6 ].vz = vector[ 6 ].vz + campos->vz;
-
-         svector[ 7 ].vx = vector[ 7 ].vx + campos->vx;
-         svector[ 7 ].vy = vector[ 7 ].vy + campos->vy;
-         svector[ 7 ].vz = vector[ 7 ].vz + campos->vz;
-
-         svector[ 8 ].vx = vector[ 8 ].vx + campos->vx;
-         svector[ 8 ].vy = vector[ 8 ].vy + campos->vy;
-         svector[ 8 ].vz = vector[ 8 ].vz + campos->vz;
+         svector[ 4 ].vx = ( svector[ 3 ].vx + svector[ 5 ].vx ) >> 1;
+         svector[ 4 ].vy = ( svector[ 3 ].vy + svector[ 5 ].vy ) >> 1;
+         svector[ 4 ].vz = ( svector[ 3 ].vz + svector[ 5 ].vz ) >> 1;
 
          RotTransPersN( svector, screen, depth, flag, 9);
 
@@ -1143,7 +1118,6 @@ Listed in decreasing order of priority
 #else
    VECTOR               camposData;
    VECTOR*              campos = &camposData;
-   VECTOR      vector[ 25 ];
    SVECTOR              svector[ 25 ];
    DVECTOR              screen[ 25 ];
    ushort               depth[ 25 ];
@@ -1157,7 +1131,7 @@ Listed in decreasing order of priority
    TrackSection*        section;
    Face*                face;
 
-   VECTOR               *vertices;
+   VECTOR               *vertices, *v;
    short                faceCount;
 
    PolyFT4*             ft4;
@@ -1197,211 +1171,119 @@ Listed in decreasing order of priority
 
       for ( j=0; j < faceCount; j++ )
       {
-         /* get original 32 bit faces coords */
+         v = vertices + face->vertex[1];
+         svector[0].vx = v->vx + campos->vx;
+         svector[0].vy = v->vy + campos->vy;
+         svector[0].vz = v->vz + campos->vz;
 
-         vector[ 0 ] = *( vertices + face->vertex[ 1 ] );
-         vector[ 4 ] = *( vertices + face->vertex[ 0 ] );
-         vector[ 20 ] = *( vertices + face->vertex[ 2 ] );
-         vector[ 24 ] = *( vertices + face->vertex[ 3 ] );
+         v = vertices + face->vertex[0];
+         svector[4].vx = v->vx + campos->vx;
+         svector[4].vy = v->vy + campos->vy;
+         svector[4].vz = v->vz + campos->vz;
+
+         v = vertices + face->vertex[2];
+         svector[20].vx = v->vx + campos->vx;
+         svector[20].vy = v->vy + campos->vy;
+         svector[20].vz = v->vz + campos->vz;
+
+         v = vertices + face->vertex[3];
+         svector[24].vx = v->vx + campos->vx;
+         svector[24].vy = v->vy + campos->vy;
+         svector[24].vz = v->vz + campos->vz;
 
          /* mesh top */
 
-         vector[ 2 ].vx = ( vector[ 0 ].vx + vector[ 4 ].vx ) >> 1;
-         vector[ 2 ].vy = ( vector[ 0 ].vy + vector[ 4 ].vy ) >> 1;
-         vector[ 2 ].vz = ( vector[ 0 ].vz + vector[ 4 ].vz ) >> 1;
+         svector[ 2 ].vx = ( svector[ 0 ].vx + svector[ 4 ].vx ) >> 1;
+         svector[ 2 ].vy = ( svector[ 0 ].vy + svector[ 4 ].vy ) >> 1;
+         svector[ 2 ].vz = ( svector[ 0 ].vz + svector[ 4 ].vz ) >> 1;
 
-         vector[ 1 ].vx = ( vector[ 0 ].vx + vector[ 2 ].vx ) >> 1;
-         vector[ 1 ].vy = ( vector[ 0 ].vy + vector[ 2 ].vy ) >> 1;
-         vector[ 1 ].vz = ( vector[ 0 ].vz + vector[ 2 ].vz ) >> 1;
+         svector[ 1 ].vx = ( svector[ 0 ].vx + svector[ 2 ].vx ) >> 1;
+         svector[ 1 ].vy = ( svector[ 0 ].vy + svector[ 2 ].vy ) >> 1;
+         svector[ 1 ].vz = ( svector[ 0 ].vz + svector[ 2 ].vz ) >> 1;
 
-         vector[ 3 ].vx = ( vector[ 2 ].vx + vector[ 4 ].vx ) >> 1;
-         vector[ 3 ].vy = ( vector[ 2 ].vy + vector[ 4 ].vy ) >> 1;
-         vector[ 3 ].vz = ( vector[ 2 ].vz + vector[ 4 ].vz ) >> 1;
+         svector[ 3 ].vx = ( svector[ 2 ].vx + svector[ 4 ].vx ) >> 1;
+         svector[ 3 ].vy = ( svector[ 2 ].vy + svector[ 4 ].vy ) >> 1;
+         svector[ 3 ].vz = ( svector[ 2 ].vz + svector[ 4 ].vz ) >> 1;
 
          /* mesh left */
 
-         vector[ 10 ].vx = ( vector[ 0 ].vx + vector[ 20 ].vx ) >> 1;
-         vector[ 10 ].vy = ( vector[ 0 ].vy + vector[ 20 ].vy ) >> 1;
-         vector[ 10 ].vz = ( vector[ 0 ].vz + vector[ 20 ].vz ) >> 1;
+         svector[ 10 ].vx = ( svector[ 0 ].vx + svector[ 20 ].vx ) >> 1;
+         svector[ 10 ].vy = ( svector[ 0 ].vy + svector[ 20 ].vy ) >> 1;
+         svector[ 10 ].vz = ( svector[ 0 ].vz + svector[ 20 ].vz ) >> 1;
 
-         vector[ 5 ].vx = ( vector[ 0 ].vx + vector[ 10 ].vx ) >> 1;
-         vector[ 5 ].vy = ( vector[ 0 ].vy + vector[ 10 ].vy ) >> 1;
-         vector[ 5 ].vz = ( vector[ 0 ].vz + vector[ 10 ].vz ) >> 1;
+         svector[ 5 ].vx = ( svector[ 0 ].vx + svector[ 10 ].vx ) >> 1;
+         svector[ 5 ].vy = ( svector[ 0 ].vy + svector[ 10 ].vy ) >> 1;
+         svector[ 5 ].vz = ( svector[ 0 ].vz + svector[ 10 ].vz ) >> 1;
 
-         vector[ 15 ].vx = ( vector[ 10 ].vx + vector[ 20 ].vx ) >> 1;
-         vector[ 15 ].vy = ( vector[ 10 ].vy + vector[ 20 ].vy ) >> 1;
-         vector[ 15 ].vz = ( vector[ 10 ].vz + vector[ 20 ].vz ) >> 1;
+         svector[ 15 ].vx = ( svector[ 10 ].vx + svector[ 20 ].vx ) >> 1;
+         svector[ 15 ].vy = ( svector[ 10 ].vy + svector[ 20 ].vy ) >> 1;
+         svector[ 15 ].vz = ( svector[ 10 ].vz + svector[ 20 ].vz ) >> 1;
 
          /* mesh right */
 
-         vector[ 14 ].vx = ( vector[ 4 ].vx + vector[ 24 ].vx ) >> 1;
-         vector[ 14 ].vy = ( vector[ 4 ].vy + vector[ 24 ].vy ) >> 1;
-         vector[ 14 ].vz = ( vector[ 4 ].vz + vector[ 24 ].vz ) >> 1;
+         svector[ 14 ].vx = ( svector[ 4 ].vx + svector[ 24 ].vx ) >> 1;
+         svector[ 14 ].vy = ( svector[ 4 ].vy + svector[ 24 ].vy ) >> 1;
+         svector[ 14 ].vz = ( svector[ 4 ].vz + svector[ 24 ].vz ) >> 1;
 
-         vector[ 9 ].vx = ( vector[ 4 ].vx + vector[ 14 ].vx ) >> 1;
-         vector[ 9 ].vy = ( vector[ 4 ].vy + vector[ 14 ].vy ) >> 1;
-         vector[ 9 ].vz = ( vector[ 4 ].vz + vector[ 14 ].vz ) >> 1;
+         svector[ 9 ].vx = ( svector[ 4 ].vx + svector[ 14 ].vx ) >> 1;
+         svector[ 9 ].vy = ( svector[ 4 ].vy + svector[ 14 ].vy ) >> 1;
+         svector[ 9 ].vz = ( svector[ 4 ].vz + svector[ 14 ].vz ) >> 1;
 
-         vector[ 19 ].vx = ( vector[ 14 ].vx + vector[ 24 ].vx ) >> 1;
-         vector[ 19 ].vy = ( vector[ 14 ].vy + vector[ 24 ].vy ) >> 1;
-         vector[ 19 ].vz = ( vector[ 14 ].vz + vector[ 24 ].vz ) >> 1;
+         svector[ 19 ].vx = ( svector[ 14 ].vx + svector[ 24 ].vx ) >> 1;
+         svector[ 19 ].vy = ( svector[ 14 ].vy + svector[ 24 ].vy ) >> 1;
+         svector[ 19 ].vz = ( svector[ 14 ].vz + svector[ 24 ].vz ) >> 1;
 
          /* mesh bottom */
 
-         vector[ 22 ].vx = ( vector[ 20 ].vx + vector[ 24 ].vx ) >> 1;
-         vector[ 22 ].vy = ( vector[ 20 ].vy + vector[ 24 ].vy ) >> 1;
-         vector[ 22 ].vz = ( vector[ 20 ].vz + vector[ 24 ].vz ) >> 1;
+         svector[ 22 ].vx = ( svector[ 20 ].vx + svector[ 24 ].vx ) >> 1;
+         svector[ 22 ].vy = ( svector[ 20 ].vy + svector[ 24 ].vy ) >> 1;
+         svector[ 22 ].vz = ( svector[ 20 ].vz + svector[ 24 ].vz ) >> 1;
 
-         vector[ 21 ].vx = ( vector[ 20 ].vx + vector[ 22 ].vx ) >> 1;
-         vector[ 21 ].vy = ( vector[ 20 ].vy + vector[ 22 ].vy ) >> 1;
-         vector[ 21 ].vz = ( vector[ 20 ].vz + vector[ 22 ].vz ) >> 1;
+         svector[ 21 ].vx = ( svector[ 20 ].vx + svector[ 22 ].vx ) >> 1;
+         svector[ 21 ].vy = ( svector[ 20 ].vy + svector[ 22 ].vy ) >> 1;
+         svector[ 21 ].vz = ( svector[ 20 ].vz + svector[ 22 ].vz ) >> 1;
 
-         vector[ 23 ].vx = ( vector[ 22 ].vx + vector[ 24 ].vx ) >> 1;
-         vector[ 23 ].vy = ( vector[ 22 ].vy + vector[ 24 ].vy ) >> 1;
-         vector[ 23 ].vz = ( vector[ 22 ].vz + vector[ 24 ].vz ) >> 1;
+         svector[ 23 ].vx = ( svector[ 22 ].vx + svector[ 24 ].vx ) >> 1;
+         svector[ 23 ].vy = ( svector[ 22 ].vy + svector[ 24 ].vy ) >> 1;
+         svector[ 23 ].vz = ( svector[ 22 ].vz + svector[ 24 ].vz ) >> 1;
 
          /* mesh centre */
 
-         vector[ 12 ].vx = ( vector[ 10 ].vx + vector[ 14 ].vx ) >> 1;
-         vector[ 12 ].vy = ( vector[ 10 ].vy + vector[ 14 ].vy ) >> 1;
-         vector[ 12 ].vz = ( vector[ 10 ].vz + vector[ 14 ].vz ) >> 1;
+         svector[ 12 ].vx = ( svector[ 10 ].vx + svector[ 14 ].vx ) >> 1;
+         svector[ 12 ].vy = ( svector[ 10 ].vy + svector[ 14 ].vy ) >> 1;
+         svector[ 12 ].vz = ( svector[ 10 ].vz + svector[ 14 ].vz ) >> 1;
 
-         vector[ 7 ].vx = ( vector[ 2 ].vx + vector[ 12 ].vx ) >> 1;
-         vector[ 7 ].vy = ( vector[ 2 ].vy + vector[ 12 ].vy ) >> 1;
-         vector[ 7 ].vz = ( vector[ 2 ].vz + vector[ 12 ].vz ) >> 1;
+         svector[ 7 ].vx = ( svector[ 2 ].vx + svector[ 12 ].vx ) >> 1;
+         svector[ 7 ].vy = ( svector[ 2 ].vy + svector[ 12 ].vy ) >> 1;
+         svector[ 7 ].vz = ( svector[ 2 ].vz + svector[ 12 ].vz ) >> 1;
 
-         vector[ 11 ].vx = ( vector[ 10 ].vx + vector[ 12 ].vx ) >> 1;
-         vector[ 11 ].vy = ( vector[ 10 ].vy + vector[ 12 ].vy ) >> 1;
-         vector[ 11 ].vz = ( vector[ 10 ].vz + vector[ 12 ].vz ) >> 1;
+         svector[ 11 ].vx = ( svector[ 10 ].vx + svector[ 12 ].vx ) >> 1;
+         svector[ 11 ].vy = ( svector[ 10 ].vy + svector[ 12 ].vy ) >> 1;
+         svector[ 11 ].vz = ( svector[ 10 ].vz + svector[ 12 ].vz ) >> 1;
 
-         vector[ 13 ].vx = ( vector[ 12 ].vx + vector[ 14 ].vx ) >> 1;
-         vector[ 13 ].vy = ( vector[ 12 ].vy + vector[ 14 ].vy ) >> 1;
-         vector[ 13 ].vz = ( vector[ 12 ].vz + vector[ 14 ].vz ) >> 1;
+         svector[ 13 ].vx = ( svector[ 12 ].vx + svector[ 14 ].vx ) >> 1;
+         svector[ 13 ].vy = ( svector[ 12 ].vy + svector[ 14 ].vy ) >> 1;
+         svector[ 13 ].vz = ( svector[ 12 ].vz + svector[ 14 ].vz ) >> 1;
 
-         vector[ 17 ].vx = ( vector[ 12 ].vx + vector[ 22 ].vx ) >> 1;
-         vector[ 17 ].vy = ( vector[ 12 ].vy + vector[ 22 ].vy ) >> 1;
-         vector[ 17 ].vz = ( vector[ 12 ].vz + vector[ 22 ].vz ) >> 1;
+         svector[ 17 ].vx = ( svector[ 12 ].vx + svector[ 22 ].vx ) >> 1;
+         svector[ 17 ].vy = ( svector[ 12 ].vy + svector[ 22 ].vy ) >> 1;
+         svector[ 17 ].vz = ( svector[ 12 ].vz + svector[ 22 ].vz ) >> 1;
 
-         vector[ 6 ].vx = ( vector[ 5 ].vx + vector[ 7 ].vx ) >> 1;
-         vector[ 6 ].vy = ( vector[ 5 ].vy + vector[ 7 ].vy ) >> 1;
-         vector[ 6 ].vz = ( vector[ 5 ].vz + vector[ 7 ].vz ) >> 1;
+         svector[ 6 ].vx = ( svector[ 5 ].vx + svector[ 7 ].vx ) >> 1;
+         svector[ 6 ].vy = ( svector[ 5 ].vy + svector[ 7 ].vy ) >> 1;
+         svector[ 6 ].vz = ( svector[ 5 ].vz + svector[ 7 ].vz ) >> 1;
 
-         vector[ 8 ].vx = ( vector[ 7 ].vx + vector[ 9 ].vx ) >> 1;
-         vector[ 8 ].vy = ( vector[ 7 ].vy + vector[ 9 ].vy ) >> 1;
-         vector[ 8 ].vz = ( vector[ 7 ].vz + vector[ 9 ].vz ) >> 1;
+         svector[ 8 ].vx = ( svector[ 7 ].vx + svector[ 9 ].vx ) >> 1;
+         svector[ 8 ].vy = ( svector[ 7 ].vy + svector[ 9 ].vy ) >> 1;
+         svector[ 8 ].vz = ( svector[ 7 ].vz + svector[ 9 ].vz ) >> 1;
 
-         vector[ 16 ].vx = ( vector[ 15 ].vx + vector[ 17 ].vx ) >> 1;
-         vector[ 16 ].vy = ( vector[ 15 ].vy + vector[ 17 ].vy ) >> 1;
-         vector[ 16 ].vz = ( vector[ 15 ].vz + vector[ 17 ].vz ) >> 1;
+         svector[ 16 ].vx = ( svector[ 15 ].vx + svector[ 17 ].vx ) >> 1;
+         svector[ 16 ].vy = ( svector[ 15 ].vy + svector[ 17 ].vy ) >> 1;
+         svector[ 16 ].vz = ( svector[ 15 ].vz + svector[ 17 ].vz ) >> 1;
 
-         vector[ 18 ].vx = ( vector[ 17 ].vx + vector[ 19 ].vx ) >> 1;
-         vector[ 18 ].vy = ( vector[ 17 ].vy + vector[ 19 ].vy ) >> 1;
-         vector[ 18 ].vz = ( vector[ 17 ].vz + vector[ 19 ].vz ) >> 1;
-
-
-         /* make SVECTORs */
-
-         svector[ 0 ].vx = vector[ 0 ].vx + campos->vx;
-         svector[ 0 ].vy = vector[ 0 ].vy + campos->vy;
-         svector[ 0 ].vz = vector[ 0 ].vz + campos->vz;
-
-         svector[ 1 ].vx = vector[ 1 ].vx + campos->vx;
-         svector[ 1 ].vy = vector[ 1 ].vy + campos->vy;
-         svector[ 1 ].vz = vector[ 1 ].vz + campos->vz;
-
-         svector[ 2 ].vx = vector[ 2 ].vx + campos->vx;
-         svector[ 2 ].vy = vector[ 2 ].vy + campos->vy;
-         svector[ 2 ].vz = vector[ 2 ].vz + campos->vz;
-
-         svector[ 3 ].vx = vector[ 3 ].vx + campos->vx;
-         svector[ 3 ].vy = vector[ 3 ].vy + campos->vy;
-         svector[ 3 ].vz = vector[ 3 ].vz + campos->vz;
-
-         svector[ 4 ].vx = vector[ 4 ].vx + campos->vx;
-         svector[ 4 ].vy = vector[ 4 ].vy + campos->vy;
-         svector[ 4 ].vz = vector[ 4 ].vz + campos->vz;
-
-         svector[ 5 ].vx = vector[ 5 ].vx + campos->vx;
-         svector[ 5 ].vy = vector[ 5 ].vy + campos->vy;
-         svector[ 5 ].vz = vector[ 5 ].vz + campos->vz;
-
-         svector[ 6 ].vx = vector[ 6 ].vx + campos->vx;
-         svector[ 6 ].vy = vector[ 6 ].vy + campos->vy;
-         svector[ 6 ].vz = vector[ 6 ].vz + campos->vz;
-
-         svector[ 7 ].vx = vector[ 7 ].vx + campos->vx;
-         svector[ 7 ].vy = vector[ 7 ].vy + campos->vy;
-         svector[ 7 ].vz = vector[ 7 ].vz + campos->vz;
-
-         svector[ 8 ].vx = vector[ 8 ].vx + campos->vx;
-         svector[ 8 ].vy = vector[ 8 ].vy + campos->vy;
-         svector[ 8 ].vz = vector[ 8 ].vz + campos->vz;
-
-         svector[ 9 ].vx = vector[ 9 ].vx + campos->vx;
-         svector[ 9 ].vy = vector[ 9 ].vy + campos->vy;
-         svector[ 9 ].vz = vector[ 9 ].vz + campos->vz;
-
-         svector[ 10 ].vx = vector[ 10 ].vx + campos->vx;
-         svector[ 10 ].vy = vector[ 10 ].vy + campos->vy;
-         svector[ 10 ].vz = vector[ 10 ].vz + campos->vz;
-
-         svector[ 11 ].vx = vector[ 11 ].vx + campos->vx;
-         svector[ 11 ].vy = vector[ 11 ].vy + campos->vy;
-         svector[ 11 ].vz = vector[ 11 ].vz + campos->vz;
-
-         svector[ 12 ].vx = vector[ 12 ].vx + campos->vx;
-         svector[ 12 ].vy = vector[ 12 ].vy + campos->vy;
-         svector[ 12 ].vz = vector[ 12 ].vz + campos->vz;
-
-         svector[ 13 ].vx = vector[ 13 ].vx + campos->vx;
-         svector[ 13 ].vy = vector[ 13 ].vy + campos->vy;
-         svector[ 13 ].vz = vector[ 13 ].vz + campos->vz;
-
-         svector[ 14 ].vx = vector[ 14 ].vx + campos->vx;
-         svector[ 14 ].vy = vector[ 14 ].vy + campos->vy;
-         svector[ 14 ].vz = vector[ 14 ].vz + campos->vz;
-
-         svector[ 15 ].vx = vector[ 15 ].vx + campos->vx;
-         svector[ 15 ].vy = vector[ 15 ].vy + campos->vy;
-         svector[ 15 ].vz = vector[ 15 ].vz + campos->vz;
-
-         svector[ 16 ].vx = vector[ 16 ].vx + campos->vx;
-         svector[ 16 ].vy = vector[ 16 ].vy + campos->vy;
-         svector[ 16 ].vz = vector[ 16 ].vz + campos->vz;
-
-         svector[ 17 ].vx = vector[ 17 ].vx + campos->vx;
-         svector[ 17 ].vy = vector[ 17 ].vy + campos->vy;
-         svector[ 17 ].vz = vector[ 17 ].vz + campos->vz;
-
-         svector[ 18 ].vx = vector[ 18 ].vx + campos->vx;
-         svector[ 18 ].vy = vector[ 18 ].vy + campos->vy;
-         svector[ 18 ].vz = vector[ 18 ].vz + campos->vz;
-
-         svector[ 19 ].vx = vector[ 19 ].vx + campos->vx;
-         svector[ 19 ].vy = vector[ 19 ].vy + campos->vy;
-         svector[ 19 ].vz = vector[ 19 ].vz + campos->vz;
-
-         svector[ 20 ].vx = vector[ 20 ].vx + campos->vx;
-         svector[ 20 ].vy = vector[ 20 ].vy + campos->vy;
-         svector[ 20 ].vz = vector[ 20 ].vz + campos->vz;
-
-         svector[ 21 ].vx = vector[ 21 ].vx + campos->vx;
-         svector[ 21 ].vy = vector[ 21 ].vy + campos->vy;
-         svector[ 21 ].vz = vector[ 21 ].vz + campos->vz;
-
-         svector[ 22 ].vx = vector[ 22 ].vx + campos->vx;
-         svector[ 22 ].vy = vector[ 22 ].vy + campos->vy;
-         svector[ 22 ].vz = vector[ 22 ].vz + campos->vz;
-
-         svector[ 23 ].vx = vector[ 23 ].vx + campos->vx;
-         svector[ 23 ].vy = vector[ 23 ].vy + campos->vy;
-         svector[ 23 ].vz = vector[ 23 ].vz + campos->vz;
-
-         svector[ 24 ].vx = vector[ 24 ].vx + campos->vx;
-         svector[ 24 ].vy = vector[ 24 ].vy + campos->vy;
-         svector[ 24 ].vz = vector[ 24 ].vz + campos->vz;
-
-
+         svector[ 18 ].vx = ( svector[ 17 ].vx + svector[ 19 ].vx ) >> 1;
+         svector[ 18 ].vy = ( svector[ 17 ].vy + svector[ 19 ].vy ) >> 1;
+         svector[ 18 ].vz = ( svector[ 17 ].vz + svector[ 19 ].vz ) >> 1;
 
          RotTransPersN( svector, screen, depth, flag, 25);
 

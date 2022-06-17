@@ -30,9 +30,6 @@
 #include "sprite.h"
 #include "cone.h"
 #include "error.h"
-#include "win.h"
-
-
 
 void InitCone ( Cone *cone )
 {

@@ -481,7 +481,6 @@ void DrawNewTrack( TrackCamera *camera, AutoMeshData *autoMesh )
    ushort         opad, xpad;
    static short   cracks = 1;
 
-
    autoMesh->triCount = 0;
    autoMesh->quadCount = 0;
    autoMesh->attemptedAutos = 0;

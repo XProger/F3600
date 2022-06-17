@@ -25,7 +25,6 @@
 #include "libgte.h"
 #include "search.h"
 #include "effects.h"
-#include "win.h"
 #include "collide.h"
 
 //#include "markk\libetc.h"      // DLS
