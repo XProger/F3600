@@ -22,7 +22,6 @@
 #include "global.h"
 #include "error.h"
 #include "file.h"
-#include "pallette.h"
 
 void IntelPrim( Prm prm )
 {
@@ -296,9 +295,6 @@ Object* LoadPrm( char* name, short textureStart )
 
 //   printf( "Loading prm file %s\n", name);
 
-#if LoadMessages
-#endif
-
    length = FileLength( name );
 
    if ( length <= 0 )
@@ -363,10 +359,6 @@ Object* LoadPrm( char* name, short textureStart )
 
       IntelShort( &object->skeleton->update );
 
-      /* BSP */
-
-      object->bspTree = NULL;
-
       /* Next */
 
       object->next = NULL;
@@ -406,16 +398,16 @@ Object* LoadPrm( char* name, short textureStart )
          switch ( prm.f3->type )
          {
             case TypeF3 :
-            prm.f3->colour.r = FindNearestColourIndex(&(prm.f3->colour));
-            prm.f3->colour.g = 0;
-            prm.f3->colour.b = 0;
+               //prm.f3->colour.r = 0;// FindNearestColourIndex(&(prm.f3->colour));
+               //prm.f3->colour.g = 0;
+               //prm.f3->colour.b = 0;
                prm.f3 += 1;
                break;
 
             case TypeF4 :
-            prm.f4->colour.r = FindNearestColourIndex(&(prm.f4->colour));
-            prm.f4->colour.g = 0;
-            prm.f4->colour.b = 0;
+               //prm.f4->colour.r = 0;// FindNearestColourIndex(&(prm.f4->colour));
+               //prm.f4->colour.g = 0;
+               //prm.f4->colour.b = 0;
                prm.f4 += 1;
                break;
 
@@ -427,9 +419,9 @@ Object* LoadPrm( char* name, short textureStart )
                uOffset = texture->u0;
                vOffset = texture->v0;
 
-            prm.ft3->colour.r = 255;
-            prm.ft3->colour.g = 0;
-            prm.ft3->colour.b = 0;
+               //prm.ft3->colour.r = 255;
+               //prm.ft3->colour.g = 0;
+               //prm.ft3->colour.b = 0;
                prm.ft3->cba = texture->cba;
                prm.ft3->tsb = texture->tsb;
                prm.ft3->u0 += uOffset;
@@ -449,9 +441,9 @@ Object* LoadPrm( char* name, short textureStart )
                uOffset = texture->u0;
                vOffset = texture->v0;
 
-            prm.ft4->colour.r = 255;
-            prm.ft4->colour.g = 0;
-            prm.ft4->colour.b = 0;
+               //prm.ft4->colour.r = 255;
+               //prm.ft4->colour.g = 0;
+               //prm.ft4->colour.b = 0;
                prm.ft4->cba = texture->cba;
                prm.ft4->tsb = texture->tsb;
                prm.ft4->u0 += uOffset;
@@ -467,16 +459,16 @@ Object* LoadPrm( char* name, short textureStart )
                break;
 
             case TypeG3 :
-            prm.g3->colour[0].r = FindNearestColourIndex(&(prm.g3->colour[0]));
-            prm.g3->colour[0].g = 0;
-            prm.g3->colour[0].b = 0;
+               //prm.g3->colour[0].r = 0;//FindNearestColourIndex(&(prm.g3->colour[0]));
+               //prm.g3->colour[0].g = 0;
+               //prm.g3->colour[0].b = 0;
                prm.g3 += 1;
                break;
 
             case TypeG4 :
-            prm.g4->colour[0].r = FindNearestColourIndex(&(prm.g4->colour[0]));
-            prm.g4->colour[0].g = 0;
-            prm.g4->colour[0].b = 0;
+               //prm.g4->colour[0].r = 0;// FindNearestColourIndex(&(prm.g4->colour[0]));
+               //prm.g4->colour[0].g = 0;
+               //prm.g4->colour[0].b = 0;
                prm.g4 += 1;
                break;
 
@@ -487,9 +479,6 @@ Object* LoadPrm( char* name, short textureStart )
                uOffset = texture->u0;
                vOffset = texture->v0;
 
-//          prm.gt3->colour[0].r = 255;
-//          prm.gt3->colour[0].g = 0;
-//          prm.gt3->colour[0].b = 0;
                prm.gt3->cba = texture->cba;
                prm.gt3->tsb = texture->tsb;
                prm.gt3->u0 += uOffset;

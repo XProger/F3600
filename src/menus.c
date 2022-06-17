@@ -26,7 +26,6 @@
 #include "sound.h"
 #include "sparks2.h"
 #include "global.h"
-#include "vramsize.h"               // PCwipeout
 #include "ajs.h"
 #include "decl.h"
 #include "main.h"
@@ -46,10 +45,6 @@
 #include "wipesrc\win95\chrise\sfx.h"
 #include "wipesrc\win95\markk\multiwo.h"
 #include "wipesrc\win95\markk\merror.h"
-#define  FN_DEBUG
-//#include "..\markk\debug.h"
-
-#include <dos.h>
 typedef int BOOL;
 
 extern BOOL Screen565;
@@ -516,7 +511,6 @@ void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int tim
    //JJSNewTexture ("wipeout\\newgraph\\menu\\menus.bmp");
    SJRNewTexture ("wipeout\\newgraph\\menu\\menus.sjr");
    trackNum = 15;//pretend track for restoring - SJR
-   LoadVRam("wipeout\\newgraph\\menu\\menus.pcx",0);
 
    LoadTexModel (shipShapes, "allsh") ;
    LoadTexModel (pilotShapes, "pilot") ;
@@ -628,7 +622,7 @@ void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int tim
       Swap( );
    }
    inmenu=1;
-   CopyPal(main_palette,0,255);  // PCwipeout
+
    for( i = 0; i < 2; i++)
       Swap( );
 

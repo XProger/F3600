@@ -33,8 +33,6 @@
 
 int skyPos[15] = {-820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0};
 
-#define  GsGetVcount()  0;
-
 short InitScene(Object** prm, short *prmCount, Skeleton* camPos, ConfigData *gameData)
 {
    short    sceneTextures;
@@ -307,7 +305,6 @@ TIMlist *LoadCompressedTextureSequence( char *fileName )
    long  fileSize;
    static TIMlist timList;
    long  timSize, timTotalSize;
-   int   CPURasters;
 
 // GsClearVcount();
 
@@ -361,13 +358,11 @@ TIMlist *LoadCompressedTextureSequence( char *fileName )
    {
       timList.memOffset[texNum] += ( long )timList.memBase;
    }
-   CPURasters=GsGetVcount();
 
 /* printf("Decompressing: %s\n", fileName);*/
 
 // GsClearVcount();
    ExpandData( (uchar *)fileBuffer + 4 + numTex*4, (uchar *)timList.memBase );
-   CPURasters=GsGetVcount();
 
    DFree( heap, fileBuffer );       /* free compressed file memory */
 

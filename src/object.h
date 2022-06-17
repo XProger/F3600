@@ -686,34 +686,6 @@ typedef union StdPoly
 #define     TypePointLight       22
 #define     TypeSpotLight        23
 
-
-/* BSP Tree Structure
-
-   NOTE : The BSP Tree only gives the relative sorting
-   order for the objects in the tree. They must then be
-   linked into the Z sort table using the object's centre
-   point Z value.
-
-   Drawing order when polygons are visible :
-      1  back branch polygons
-      2  plane polygons
-      3  front branch polygons
-
-   Drawing order when polygons are invisible ( back face rejected ) :
-      1  front branch polygons
-      2  back branch polygons
-*/
-
-typedef struct BspTree
-{
-   short             primitiveCount;   /* Number of coplanar primitives */
-   Primitive*        primitives;       /* Pointer to the primitives */
-
-   struct BspTree*   front;            /* Bsp Tree for polygons in front */
-   struct BspTree*   back;             /* Bsp Tree for polygons behind */
-} BspTree;
-
-
 #if Lib
 
 typedef union LibraryPrimitive
@@ -766,7 +738,7 @@ typedef struct Object
    long              pad;
 #endif
 
-   BspTree*          bspTree;          /* Pointer to BSP Tree Primitives */
+   long              bspTree_unused;
 
    Skeleton*         skeleton;         /* Pointer to Local Coordinates */
 

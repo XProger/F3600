@@ -1,9 +1,9 @@
 #include "pad.h"
 
+#define              HEAP_SIZE         1536 // maybe too small (or too big ?)
 
 #define              CD_FS             0
 #define              COMBAT            1
-#define              SystemFont        0        /* system font on or off */ // PCwipeout
 #define              EditorOn          0        /* editor on or off */
 #define              CD_AUDIO          1
 
@@ -13,8 +13,6 @@
 #define              LoadMessages      0        /* printf for Loading etc */
 #define              RedText           0
 #define              WhiteText         1
-
-#define              FileRoot     "c:"
 
 #define              TextureTableMax 800
 
@@ -172,14 +170,6 @@ extern Object              *camSpline[ ];
 extern Object              *shipSpline[ ];
 extern short         finishedExtro;
 extern short         extroLevel;
-
-/* different palettes */
-
-extern   char  main_palette[];
-extern   char  shield_palette[];
-extern   char  current_palette;
-#define  MAIN_PAL 0
-#define  SHIELD_PAL  1
 
 /* fade table references */
 

@@ -699,9 +699,9 @@ void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
 
    for(i = 0; i < NO_OF_SHIPS; i++)
    {
-      if( ((raceType == HEAD_TO_HEAD) && ((i == ownShip ) || (i == serialShip)))  ||
-         ((raceType == TIME_TRIAL) && (i == ownShip)) ||
-         ((raceType  != TIME_TRIAL) && (raceType != HEAD_TO_HEAD)) )
+      //if( ((raceType == HEAD_TO_HEAD) && ((i == ownShip ) || (i == serialShip)))  ||
+      //   ((raceType == TIME_TRIAL) && (i == ownShip)) ||
+      //   ((raceType  != TIME_TRIAL) && (raceType != HEAD_TO_HEAD)) )
       {
 
          if((shipIndex[i].attr & VISIBLE) && ((shipIndex[i].attr & FLYING) == 0 ))
@@ -819,8 +819,8 @@ void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
                shadow[i].poly[0][ CurrentScreen ].y2 = y[5];
 
                shadow[i].poly[0][ CurrentScreen ].z0 = vertex[0].vz;
-               shadow[i].poly[0][ CurrentScreen ].z1 = vertex[3].vz;
-               shadow[i].poly[0][ CurrentScreen ].z2 = vertex[5].vz;
+               shadow[i].poly[0][ CurrentScreen ].z1 = vertex[0].vz;
+               shadow[i].poly[0][ CurrentScreen ].z2 = vertex[0].vz;
                shadow[i].poly[0][ CurrentScreen ].pad4 = 0;
                shadow[i].poly[0][ CurrentScreen ].pad5 = 0;
                shadow[i].poly[0][ CurrentScreen ].pad6 = 0;
@@ -832,9 +832,9 @@ void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
                shadow[i].poly[1][ CurrentScreen ].x2 = x[4];
                shadow[i].poly[1][ CurrentScreen ].y2 = y[4];
 
-               shadow[i].poly[1][ CurrentScreen ].z0 = vertex[3].vz;
+               shadow[i].poly[1][ CurrentScreen ].z0 = vertex[1].vz;
                shadow[i].poly[1][ CurrentScreen ].z1 = vertex[1].vz;
-               shadow[i].poly[1][ CurrentScreen ].z2 = vertex[4].vz;
+               shadow[i].poly[1][ CurrentScreen ].z2 = vertex[1].vz;
                shadow[i].poly[1][ CurrentScreen ].pad4 = 0;
                shadow[i].poly[1][ CurrentScreen ].pad5 = 0;
                shadow[i].poly[1][ CurrentScreen ].pad6 = 0;
@@ -846,9 +846,9 @@ void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
                shadow[i].poly[2][ CurrentScreen ].x2 = x[4];
                shadow[i].poly[2][ CurrentScreen ].y2 = y[4];
 
-               shadow[i].poly[2][ CurrentScreen ].z0 = vertex[5].vz;
-               shadow[i].poly[2][ CurrentScreen ].z1 = vertex[3].vz;
-               shadow[i].poly[2][ CurrentScreen ].z2 = vertex[4].vz;
+               shadow[i].poly[2][ CurrentScreen ].z0 = vertex[0].vz;
+               shadow[i].poly[2][ CurrentScreen ].z1 = vertex[0].vz;
+               shadow[i].poly[2][ CurrentScreen ].z2 = vertex[0].vz;
                shadow[i].poly[2][ CurrentScreen ].pad4 = 0;
                shadow[i].poly[2][ CurrentScreen ].pad5 = 0;
                shadow[i].poly[2][ CurrentScreen ].pad6 = 0;
@@ -860,8 +860,8 @@ void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
                shadow[i].poly[3][ CurrentScreen ].x2 = x[2];
                shadow[i].poly[3][ CurrentScreen ].y2 = y[2];
 
-               shadow[i].poly[3][ CurrentScreen ].z0 = vertex[5].vz;
-               shadow[i].poly[3][ CurrentScreen ].z1 = vertex[4].vz;
+               shadow[i].poly[3][ CurrentScreen ].z0 = vertex[2].vz;
+               shadow[i].poly[3][ CurrentScreen ].z1 = vertex[2].vz;
                shadow[i].poly[3][ CurrentScreen ].z2 = vertex[2].vz;
                shadow[i].poly[3][ CurrentScreen ].pad4 = 0;
                shadow[i].poly[3][ CurrentScreen ].pad5 = 0;

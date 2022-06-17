@@ -33,7 +33,6 @@
 #include "options.h"
 #include "sprite.h"
 #include "trackasm.h"
-#include "fri.h"
 #include "ajs.h"
 #include "libgte.h"
 #include "init.h"
@@ -41,13 +40,8 @@
 #include "ajs.h"
 #include "utils.h"
 
-#include "pallette.h"
-
 extern long          ctrlNeedTargetIcon;
 extern int           ctrlnearShip;
-extern   char        WhitePal;
-extern   char        GreyPal;
-extern   char        DepthFadeTble[];
 short             Shielded = 0;
 extern TrackCamera      ctrlcamera;
 

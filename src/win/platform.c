@@ -313,7 +313,6 @@ typedef struct {
    unsigned short red:5;
 } BIT15;
 
-BIT15 ATIpalette[256];
 BOOL bTexEn=FALSE;
 
 BOOL trans = FALSE;
@@ -324,7 +323,6 @@ HINSTANCE hinst;
 HWND      hwnd;
 char globalPilot[255]={0};
 
-extern char DepthFadeTble[],WhitePal;
 extern short int CurrTrkNo;
 short randlist[2000];
 short *randnum;
@@ -489,7 +487,7 @@ void renderInit()
    wglMakeCurrent(hDC, hRC);
 
    glClearColor(0, 0, 0, 1);
-   glDisable(GL_CULL_FACE);
+   glEnable(GL_CULL_FACE);
    glCullFace(GL_FRONT);
 
    //glEnable(GL_DEPTH_TEST);
@@ -517,8 +515,14 @@ void renderFree()
 
 void renderSwap()
 {
-   Sleep(1);
+   Sleep(33);
    SwapBuffers(hDC);
+
+   char buf[256];
+   //   sprintf(buf, "%d = G3:%d G4:%d F3:%d F4:%d GT3:%d GT4:%d FT3:%d FT4:%d\n", (dbg_G3 + dbg_G4 + dbg_F3 + dbg_F4 + dbg_GT3 + dbg_GT4 + dbg_FT3 + dbg_FT4), dbg_G3, dbg_G4, dbg_F3, dbg_F4, dbg_GT3, dbg_GT4, dbg_FT3, dbg_FT4);
+   //   OutputDebugString(buf);
+   dbg_G3 = dbg_G4 = dbg_F3 = dbg_F4 = dbg_GT3 = dbg_GT4 = dbg_FT3 = dbg_FT4 = 0;
+
 }
 
 void renderResize(int width, int height)
@@ -680,21 +684,6 @@ void setupScreens(void)
    JJSLoadSprites();
 }
 
-void CopyPal(char *palette, short start, short end)
-{
-   int i;
-
-   for (i = start; i <= end; i++)
-   {
-   /*
-      ddPalette[i].peRed = *palette++;
-      ddPalette[i].peGreen = *palette++;
-      ddPalette[i].peBlue = *palette++;
-      ddPalette[i].peFlags = 0;
-   */
-   }
-}
-
 void initrandy()
 {
    short i;
@@ -820,15 +809,9 @@ int        ProcessMessages(void)
 
 void DDSwap(void)
 {
-   if (!bActive)
-      return;
-
    renderSwap();
 
-   char buf[256];
-//   sprintf(buf, "%d = G3:%d G4:%d F3:%d F4:%d GT3:%d GT4:%d FT3:%d FT4:%d\n", (dbg_G3 + dbg_G4 + dbg_F3 + dbg_F4 + dbg_GT3 + dbg_GT4 + dbg_FT3 + dbg_FT4), dbg_G3, dbg_G4, dbg_F3, dbg_F4, dbg_GT3, dbg_GT4, dbg_FT3, dbg_FT4);
-//   OutputDebugString(buf);
-   dbg_G3 = dbg_G4 = dbg_F3 = dbg_F4 = dbg_GT3 = dbg_GT4 = dbg_FT3 = dbg_FT4 = 0;
+
 }
 
 void WinQuit(void)

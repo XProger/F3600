@@ -27,7 +27,6 @@
 #include "protos.h"
 #include "error.h"
 
-#define    GsGetVcount() 0
 // PCwipeout
 #define SHIELD_BODGE 50
 
@@ -299,7 +298,7 @@ short    gpuWarning = 0;
 short    cpuWarning = 0;
 
 
-void      Swap()
+void Swap()
 {
    long      size;
 
@@ -329,13 +328,8 @@ void      Swap()
 
    /* Start GPU drawing new frame */
    DrawOTag(OT[(CurrentScreen + 1) & 1] + OT_SIZE - 1);
-// StartOTag(OT[(CurrentScreen + 1) & 1] + OT_SIZE - 1);
-// ContinueOTag();
-   /* Flush debug messages */
 
-#if SystemFont
-   FntFlush(-1);
-#endif
+   renderSwap();
 
    prims.ptr = (char *)PrimitiveBuffer[CurrentScreen];
 }

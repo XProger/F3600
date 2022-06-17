@@ -38,19 +38,12 @@
 #include "trackasm.h"
 #include "progress.h"
 #include "spline.h"
-#include "vramsize.h" // PCwipeout
-#include "pallette.h"
-#include "fri.h"
 #include "ajs.h"
 #include "racectrl.h"
 #include "wintime.h"
 #include "wincd.h"
 #include "credits.h"
 #include "andyscn.h"
-
-#define  _SIZE_T_DEFINED_
-//#include <stdlib.h>
-
 #include "input.h"
 
 #define START_EXTRO 0
@@ -74,9 +67,6 @@ typedef struct {
    char  *bitmap;
    char  *palette;
 } bm;
-void  WritePCX(char *fname, bm *BMptr);         // Thanks Jed (even if it is a bit flakey)
-void  DumpVRamAsPCX(char *filename);
-void CheckIngameError();
 
 extern   u_char         ctrlparam;
 
@@ -115,20 +105,6 @@ extern int           ctrlcdPause;
 extern   short   startIceText;
 extern   short   startFireText;
 extern Speedo        ctrlspeedo;
-
-
-
-
-
-
-
-#define _SIZE_T_DEFINED_         // PCwipeout
-extern short CLUT_R[256];              // PCwipeout
-extern short CLUT_G[256];              // PCwipeout
-extern short CLUT_B[256];              // PCwipeout
-extern char    fred;                   // PCwipeout
-
-#define  GsGetVcount()  0        // PCwipeout
 
 #define RobTest 0
 
@@ -172,9 +148,6 @@ extern short         CurrTrkNo;
 long  ctrl_init;
 long  ok_to_interrupt;
 long  ctrl_says_quit;
-#if 0
-GLOS  glo, glo1;
-#endif
 long  last_frame_count = 0, this_frame_count = 0;
 long  CDRestartNeeded;
 long  CDloopCheck;
@@ -207,8 +180,6 @@ void race( combatData *packetData, ConfigData *gameData, int mode, int timeout )
    raceinit();
    UpdateEffects(ctrleffects);
    CdControlB(CdlStop, 0, 0);
-
-   CheckIngameError();
 
    UpdateNotes(NOT_PAUSED);
 
@@ -336,7 +307,7 @@ void race( combatData *packetData, ConfigData *gameData, int mode, int timeout )
       //LANDSCAPE
       DrawLandscape( &(ctrlshipIndex[ownShip]), &ctrlcamera );
       //SHADOW
-      if(ctrlshipIndex[ownShip].attr & RACING)
+      if(ctrlshipIndex[ownShip].attr & RACING) /* TODO enable for cinematics? */
          DrawShadow(ctrlshipShapes, ctrlshipIndex, ctrlShadow);
       //SHIPS
       DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip, ctrlcamera);
@@ -536,108 +507,6 @@ void QuitGame()
    return ;
 }
 
-
-void WritePCX(char *fname, bm *BMptr)
-{
-   FILE  *fp;
-   char  *ptr;
-   unsigned char  temp_char,match,count;
-   unsigned int temp_int;
-   unsigned long size,i;
-
-   fp=fopen(fname,"wb");
-   if (fp !=NULL)
-   {
-      temp_char = 10;                  // Manifacturers Code
-      fwrite(&temp_char, 1, 1, fp);
-      temp_char = 5;                   // Pcx Version 5
-      fwrite(&temp_char, 1, 1, fp);
-      temp_char = 1;                   // Encoding Always 1 = RLE
-      fwrite(&temp_char, 1, 1, fp);
-      temp_char = 8;                   // Bits Per Pixel 8 ( Bloody Hope So ! )
-      fwrite(&temp_char, 1, 1, fp);
-
-      temp_int = 0;
-      fwrite(&temp_int, 2, 1, fp);     // X and Y Pos In Ram
-      fwrite(&temp_int, 2, 1, fp);
-
-      temp_int=(BMptr->width)-1;
-      fwrite(&temp_int, 2, 1, fp);     // Width
-
-      temp_int=(BMptr->height)-1;
-      fwrite(&temp_int, 2, 1, fp);     // Height
-
-      temp_int = BMptr->width;         // Hres Size
-      fwrite(&temp_int, 2, 1, fp);
-
-      temp_int = BMptr->height;        // Vres Size
-      fwrite(&temp_int, 2, 1, fp);
-
-      temp_int = 0;                    // Clear 16 Colour Pallete ?? ( Why The Fuck Is It Here ??? )
-      i=48/2;
-      while(i--)
-      {
-         temp_int ++;
-         fwrite(&temp_int, 2, 1, fp);
-      }
-
-      temp_char = 0x00;                // Reserved
-      fwrite(&temp_char, 1, 1, fp);
-
-      temp_char = 0x1;                 // View Mode Byte
-      fwrite(&temp_char, 1, 1, fp);
-
-      temp_int=BMptr->width;           // Bytes Per Line
-      fwrite(&temp_int, 2, 1, fp);
-
-      temp_int = 0x0001;                  // Palette Type
-      fwrite(&temp_int, 2, 1, fp);
-
-      temp_int = 0;                    // Write Reserved Bytes
-      i=58/2;
-      while (i--)
-      {
-         fwrite(&temp_int, 2, 1, fp);
-      }
-      ptr=BMptr->bitmap;               // Write the actual image
-      size=(BMptr->height * BMptr->width);
-
-      count=0;
-      match=*ptr;
-
-      i=size-1;
-      while (i--)
-      {
-         temp_char=*ptr++;
-         if ((temp_char==match) && (count <63))
-         {
-            count++;
-         }
-         else
-         {
-            if ((count==1) && (match <192))
-            {
-               fwrite(&match,1,1,fp);
-            }
-            else
-            {
-               count +=192;
-               fwrite(&count, 1, 1, fp);
-               fwrite(&match, 1, 1, fp);
-            }
-            count = 1;
-            match=temp_char;
-         }
-      }
-
-      temp_char = 12;
-      fwrite(&temp_char, 1, 1, fp);
-
-      fwrite(BMptr->palette, 1, 768, fp);
-      fclose(fp);
-   }
-}
-
 #if 0
 void CdRestart(ConfigData *gameData)
 {
@@ -665,32 +534,3 @@ void CdRestart(ConfigData *gameData)
 #endif
 }
 #endif
-void CheckIngameError()
-{
-   static int toggle = 0;
-   while (1)
-   {
-      if (thieving_git)
-      {
-         opad=pad;
-         pad = neg1.bits;
-         if((neg1.head != 0xff))
-            pad = ~pad;
-         xpad=(pad^opad)&pad;          //xpad is difference between this frames
-
-         ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
-         textPrim = CurrentScreen * 300;
-         CentreText ("PLEASE INSERT ORIGINAL",text_data (20, 60, 8),RedText);
-         CentreText ("WIPEOUT PC CD ROM",text_data (20, 72, 8),RedText);
-
-         CentreText ("PRESS RETURN WHEN READY",text_data (20, 120, 8),(toggle++)&1);
-
-         Swap();
-      }
-      else
-      {
-         break;
-      }
-   }
-}
-

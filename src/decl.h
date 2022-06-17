@@ -6,7 +6,6 @@ int ShellSetPrefs(void);
 void CDRestart();
 void CDPlay(short int CurrTrackNo);
 void CDStop();
-void LoadVRam(char *filename, char set_pal);
 int SJRNewTexture(char *filename);
 void reloadStartScr(void);
 void reloadScr(void);

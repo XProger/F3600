@@ -30,7 +30,6 @@
 #include "sparks2.h"
 #include "main.h"
 #include "global.h"
-#include "vramsize.h" // PCwipeout
 #include "ajs.h"
 #include "drawot.h"
 #include "decl.h"
@@ -64,7 +63,6 @@ extern TimData *AJSLoad16BitTexture(char *filename, char location);
 extern TimData *JJSLoad16BitTexture(char *filename, char location);
 // extern u_long __bss, __bsslen, _ramsize, _stacksize;
 
-#define  GsGetVcount()  0
 extern char     thieving_git;
 
 /*
@@ -95,10 +93,8 @@ int        inattract = 0;
 void reloadStartScr(void)
 {
    int i;
-   LoadVRam("wipeout\\newgraph\\menu\\font.pcx", 0);
    titleScreen = JJSLoad16BitTexture("wipeout\\textures\\wiptitle.tim", VRAM);
    inmenu = 1;
-   CopyPal(shield_palette, 0, 255);
    for (i = 0; i < 2; i++)
    {
       ClearOTagR(OT[CurrentScreen], OT_SIZE);
@@ -113,7 +109,7 @@ void reloadStartScr(void)
    InitAJSVSync();
 }
 
-void      oldmain(void)
+void oldmain(void)
 {
    int        i;
    combatData      packetData;
@@ -180,12 +176,10 @@ void      oldmain(void)
 
    ShellGetPrefs();
    StartPAD();
-   LoadVRam("wipeout\\newgraph\\menu\\font.pcx", 0);
 
    InitGameDisplay();
    titleScreen = JJSLoad16BitTexture("wipeout\\textures\\wiptitle.tim", SCREEN);
    inmenu = 1;
-   CopyPal(shield_palette, 0, 255);
    for (i = 0; i < 2; i++)
    {
       ClearOTagR(OT[CurrentScreen], OT_SIZE);
@@ -216,7 +210,7 @@ void      oldmain(void)
    ChangeClearPAD(0);
 #endif
 
-   srand(GsGetVcount());
+   srand(0);
 
    InitGameData(&gameData);
 
@@ -264,10 +258,8 @@ void      oldmain(void)
 #if PAL
       titleScreen = Load16BitTexture("wipeout\\textures\\paltitle.tim", VRAM);
 #else
-      LoadVRam("wipeout\\newgraph\\menu\\font.pcx", 0);
       titleScreen = JJSLoad16BitTexture("wipeout\\textures\\wiptitle.tim", VRAM);
       inmenu = 1;
-      CopyPal(shield_palette, 0, 255);
       for (i = 0; i < 2; i++)
       {
          ClearOTagR(OT[CurrentScreen], OT_SIZE);
@@ -491,7 +483,6 @@ void      oldmain(void)
       ClearOTagR(OT[CurrentScreen], OT_SIZE);
       JJSLoad16BitTexture(loadPath, SCREEN);
       inmenu = 0;
-      CopyPal(shield_palette, 0, 255); // PCwipeout
       for (i = 0; i < 2; i++)
       {
          ClearOTagR(OT[CurrentScreen], OT_SIZE);
@@ -510,72 +501,58 @@ void      oldmain(void)
       switch (gameData.trackNum)
       {
       case 1:
-         LoadVRam("wipeout\\newgraph\\venom\\altima\\altima.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\venom\\altima\\altima.sjr");
          strcpy(trackdir, "venom\\altima\\");
          break;
       case 2:
-         LoadVRam("wipeout\\newgraph\\venom\\karbonis\\karbonis.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\venom\\karbonis\\karbonis.sjr");
          strcpy(trackdir, "venom\\karbonis\\");
          break;
       case 3:
-         LoadVRam("wipeout\\newgraph\\venom\\terramax\\terramax.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\venom\\terramax\\terramax.sjr");
          strcpy(trackdir, "venom\\terramax\\");
          break;
       case 4:
-         LoadVRam("wipeout\\newgraph\\venom\\korodera\\korodera.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\venom\\korodera\\korodera.sjr");
          strcpy(trackdir, "venom\\korodera\\");
          break;
       case 5:
-         LoadVRam("wipeout\\newgraph\\venom\\arridos\\arridos.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\venom\\arridos\\arridos.sjr");
          strcpy(trackdir, "venom\\arridos\\");
          break;
       case 6:
-         LoadVRam("wipeout\\newgraph\\venom\\silver\\silver.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\venom\\silver\\silver.sjr");
          strcpy(trackdir, "venom\\silver\\");
          break;
       case 7:
-         LoadVRam("wipeout\\newgraph\\venom\\firestar\\firestar.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\venom\\firestar\\firestar.sjr");
          strcpy(trackdir, "venom\\firestar\\");
          break;
       case 8:
-         LoadVRam("wipeout\\newgraph\\rapier\\altima\\altima.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\rapier\\altima\\altima.sjr");
          strcpy(trackdir, "rapier\\altima\\");
          break;
       case 9:
-         LoadVRam("wipeout\\newgraph\\rapier\\karbonis\\karbonis.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\rapier\\karbonis\\karbonis.sjr");
          strcpy(trackdir, "rapier\\karbonis\\");
          break;
       case 10:
-         LoadVRam("wipeout\\newgraph\\rapier\\terramax\\terramax.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\rapier\\terramax\\terramax.sjr");
          strcpy(trackdir, "rapier\\terramax\\");
          break;
       case 11:
-         LoadVRam("wipeout\\newgraph\\rapier\\korodera\\korodera.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\rapier\\korodera\\korodera.sjr");
          strcpy(trackdir, "rapier\\korodera\\");
          break;
       case 12:
-         LoadVRam("wipeout\\newgraph\\rapier\\arridos\\arridos.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\rapier\\arridos\\arridos.sjr");
          strcpy(trackdir, "rapier\\arridos\\");
          break;
       case 13:
-         LoadVRam("wipeout\\newgraph\\rapier\\silver\\silver.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\rapier\\silver\\silver.sjr");
          strcpy(trackdir, "rapier\\silver\\");
          break;
       case 14:
-         LoadVRam("wipeout\\newgraph\\rapier\\firestar\\firestar.pcx", 0);
          SJRNewTexture("wipeout\\newgraph\\rapier\\firestar\\firestar.sjr");
          strcpy(trackdir, "rapier\\firestar\\");
          break;

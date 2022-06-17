@@ -73,20 +73,13 @@ typedef struct combatdata
 
 
 
-void InitCombat () ;
-void CloseCombat () ;
-void InitFiles () ;
 void CombatMaster (combatData *, ShipData *) ;
 void CombatSlave (combatData *, ShipData *) ;
-void PlayStationLinkUp(POLY_F4 * , int) ;
-void NewMaster (combatData *, ShipData *) ;
-void NewSlave (combatData *, ShipData *) ;
 // void WaitForMaster () ;
 // void WaitForSlave () ;
 /*void InitializeGame   (combatData *, ConfigData *) ;*/
 void InitializeCombatLink () ;
 
-void SetSerialData(ShipData *shipIndex, Object **shipShapes);
 void static _error();
 void _start_remote();
 void _init_cont();

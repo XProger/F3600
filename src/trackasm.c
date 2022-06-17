@@ -39,8 +39,6 @@ void Test16Bit(long *Test16bitX, long *Test16bitY, long *Test16bitZ);
 #define     DepthMod    0
 
 extern      char TrackDirection( TrackCamera* camera );
-extern      char WhitePal;
-extern char    DepthFadeTble;
 extern short   Shielded;
 static int fp;
 char str[40];

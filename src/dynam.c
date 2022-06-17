@@ -25,10 +25,6 @@
 #include "collide.h"
 #include "skeleton.h"
 
-extern   char  BluePal;
-extern   char  WhitePal;
-extern   char  DepthFadeTble[];
-
 void shipTrkReaction(register ShipData *playerShip, Object** shipShapes)
 {
    int            alpha, noseAlpha;
@@ -539,12 +535,15 @@ int SetTrackAttributes(TrackSection *section,
       noWeaponGrids++;
    } else if(facePtr->flags & SPEED_UP)
    {
+      facePtr->red = 0;
+      /*TODO TRACK SPEEDUP
       facePtr->red = BluePal;
+      */
       facePtr->green = BLUE_SPEEDUP;
       facePtr->blue = 0;
    }
 
-
+/*TODO
 #define TINT 1
 #if TINT
    else if ((facePtr->flags & TRACK_BASE) &&  (trackNo == 7))
@@ -552,15 +551,16 @@ int SetTrackAttributes(TrackSection *section,
       facePtr->red = DepthFadeTble[(256*(WHITE4_TRANSL-1))+facePtr->red];
    }
 #endif
+*/
    facePtr++;
-
+/*TODO
 #if TINT
    if ((facePtr->flags & TRACK_BASE) && (trackNo == 7))
    {
       facePtr->red = DepthFadeTble[(256*(WHITE4_TRANSL-1))+facePtr->red];
    }
 #endif
-
+*/
 
    if(facePtr->flags & WEAPON_GRID_RIGHT)
    {
@@ -578,7 +578,10 @@ int SetTrackAttributes(TrackSection *section,
    }
    else if(facePtr->flags & SPEED_UP)
    {
+      facePtr->red = 0;
+      /*TODO track speedup
       facePtr->red = BluePal;
+      */
       facePtr->green = BLUE_SPEEDUP;
       facePtr->blue = 0;
    }

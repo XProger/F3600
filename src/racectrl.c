@@ -38,17 +38,10 @@
 #include "trackasm.h"
 #include "progress.h"
 #include "spline.h"
-#include "vramsize.h" // PCwipeout
-#include "pallette.h"
-#include "fri.h"
 #include "credits.h"
 #include "init.h"
 #include "ajs.h"
 #include "collide.h"
-
-#define  _SIZE_T_DEFINED_
-//#include "\wc10\h\stdlib.h"
-
 #include "input.h"
 
 #define START_EXTRO 0
@@ -74,26 +67,11 @@ typedef struct {
    char  *bitmap;
    char  *palette;
 } bm;
-void  WritePCX(char *fname, bm *BMptr);         // Thanks Jed (even if it is a bit flakey)
-void  DumpVRamAsPCX(char *filename);
 
-extern   char* VRam;             // PCwipeout
 extern   int     inattract;
 extern   short   startIceText;
 extern   short   startFireText;
-#define _SIZE_T_DEFINED_         // PCwipeout
-#include <stdio.h>      // PCwipeout
-short CLUT_R[256];               // PCwipeout
-short CLUT_G[256];               // PCwipeout
-short CLUT_B[256];               // PCwipeout
-char  BluePal;             // PCwipeout
-char  WhitePal;               // PCwipeout
-char  GreyPal;             // PCwipeout
-char     fred;                   // PCwipeout
 int   ajscount=0;                // oh shit another global flag
-
-#define  GsGetVcount()  0        // PCwipeout
-
 
 #define RobTest 0
 
@@ -246,6 +224,10 @@ long        ctrlCDPaused;
 long        ctrlfirsttime;
 extern   long  CDRestartNeeded;
 
+extern	long	ctrl_init;
+extern	long	ok_to_interrupt;
+extern	long	ctrl_says_quit;
+
 void raceinit(void)
 {
    ConfigData     *gameData;
@@ -306,25 +288,6 @@ void raceinit(void)
 
       inattract = 0;
       InitCredits();
-
-      colvector.b = 255;
-      colvector.r = 0;
-      colvector.g = 0;
-
-      BluePal = FindNearestColourIndex(&colvector);
-
-      colvector.b = 255;
-      colvector.r = 255;
-      colvector.g = 255;
-
-      WhitePal = FindNearestColourIndex(&colvector);
-
-      colvector.b = 64;
-      colvector.r = 64;
-      colvector.g = 64;
-
-      GreyPal = FindNearestColourIndex(&colvector);
-
 
       /**********************************************************/
       /***                 Initialise Camera                  ***/
@@ -645,16 +608,7 @@ void raceinit(void)
       }
 #endif
 
-
-
       ctrlnextSection = ctrlcamera.section;
-
-#if SystemFont
-      InitFonts( );
-#endif
-
-
-
 
       ctrlshipIndex[ownShip].haveFired = NON_ACTIVE ;
 
@@ -723,7 +677,7 @@ void raceinit(void)
          ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
          Swap( );    //Should have no problems with this on interrupt
       }
-      CopyPal(main_palette,0,255);
+
       InitAJSVSync();
 
    }
@@ -1707,158 +1661,6 @@ void racectrl(void)
             DrawMapShips(ctrlmapShips, ctrlshipIndex, ctrltrackMap);
 #endif
 
-
-#if 0 //JJS serial
-            if (gameType == MASTER || gameType == SLAVE)
-            {
-
-               if ((attractDelay > 0) && ((ctrlshipIndex[ownShip].attr & RACING) == 0))
-               {
-                  attractDelay -- ;
-
-                  if (attractDelay == 0)
-                  {
-                     attractDelay = 1 ;
-
-                     if(ctrlshipIndex[serialShip].attr & RACING )
-                        CentreText ("WAITING FOR OTHER PLAYER", text_data (25, 116, 8), RedText) ;
-                     else
-                     {
-                        if (raceType == HEAD_TO_HEAD)
-                        {
-                           if (winTable[ownShip].racePosition > winTable[serialShip].racePosition)
-                           {
-                              ctrlNeedEndText = 1;
-                              ctrlNeedEndTextVar = 2;
-                              ctrlNeedWinLose = 1;
-                              ctrlNeedWinLoseVar = 0;
-                              ctrlNeedBackPoly = 1;
-                           }
-                           else
-                           {
-                              ctrlNeedEndText = 1;
-                              ctrlNeedEndTextVar = 1;
-                              ctrlNeedWinLose = 1;
-                              ctrlNeedWinLoseVar = 1;
-                              ctrlNeedBackPoly = 1;
-                           }
-
-                           ctrlNeedRaceInfo = 1;
-                           ctrlNeedDeSelectScreen = 1;
-                        }
-
-                        if (raceType == TWO_PLAYER_RACE)
-                        {
-
-                           if (winTable[ownShip].racePosition > winTable[serialShip].racePosition)
-                           {
-                              ctrlNeedEndText = 1;
-                              ctrlNeedEndTextVar = 2;
-                              ctrlNeedWinLose = 1;
-                              ctrlNeedWinLoseVar = 0;
-                              ctrlNeedBackPoly = 1;
-                           }
-                           else
-                           {
-                              ctrlNeedEndText = 1;
-                              ctrlNeedEndTextVar = 1;
-                              ctrlNeedWinLose = 1;
-                              ctrlNeedWinLoseVar = 1;
-                              ctrlNeedBackPoly = 1;
-                           }
-
-                           ctrlNeedRaceInfo = 1;
-                           ctrlNeedDeSelectScreen = 1;
-                        }
-                        if (GetMenuKey(M_SELECT))
-                        {
-                           attractDelay = 0 ;
-                           ctrlquitTwoPlayer = 1 ;
-                        }
-                     }
-
-                  }
-               }
-
-               if (ctrlquitTwoPlayer)
-               {
-                  ctrlshipIndex[ownShip].haveFired = QUIT ;
-               }
-
-
-            }
-
-
-            if ((gameType == MASTER ||
-               gameType == SLAVE) && ctrlchoice > -1 && !ctrlactivated)
-            {
-               ctrlmachinePaused = MASTER ;
-               ctrlactivated = 1 ;
-               ctrlshipIndex[ownShip].haveFired = PAUSE ;
-            }
-
-
-            if (ctrlactivated && ctrlmachinePaused == MASTER)
-            {
-
-               if (ctrlchoiceData == 0)
-               {
-                  ctrlshipIndex[ownShip].haveFired = CONT ;
-                  ctrlactivated = 0 ;
-                  ctrlmachinePaused = SINGLE ;
-                  ctrlchoiceData = -1 ;
-               }
-
-               if (ctrlchoiceData == 1)
-               {
-                  ctrlshipIndex[ownShip].haveFired = RETIRE ;
-                  ctrlactivated = 0 ;
-                  ctrlmachinePaused = SINGLE ;
-                  ctrlchoiceData = -1 ;
-                  //          printf ("Master retiring \n") ;
-               }
-
-               if (ctrlchoiceData == 2)
-               {
-                  ctrlshipIndex[ownShip].haveFired = QUIT ;
-                  /*
-                  ctrlactivated = 0 ;
-                  ctrlmachinePaused = SINGLE ;
-                  choiceData = -1 ;
-                  */
-               }
-
-            }
-
-
-            if (gameType == MASTER ||
-               gameType == SLAVE )
-            {
-               if( gameType == MASTER)
-               {
-                  ctrlshipIndex[serialShip].vpivot.vx = ctrlshipIndex[serialShip].ppivot.vx;
-                  ctrlshipIndex[serialShip].vpivot.vy = ctrlshipIndex[serialShip].ppivot.vy;
-                  ctrlshipIndex[serialShip].vpivot.vz = ctrlshipIndex[serialShip].ppivot.vz;
-               }
-               if( gameType == SLAVE)
-               {
-                  for(ctrl_i = 0; ctrl_i < NO_OF_SHIPS; ctrl_i++)
-                  {
-                     if(ctrl_i != ownShip)
-                     {
-                        ctrlshipIndex[ctrl_i].vpivot.vx = ctrlshipIndex[ctrl_i].ppivot.vx;
-                        ctrlshipIndex[ctrl_i].vpivot.vy = ctrlshipIndex[ctrl_i].ppivot.vy;
-                        ctrlshipIndex[ctrl_i].vpivot.vz = ctrlshipIndex[ctrl_i].ppivot.vz;
-                     }
-                  }
-               }
-               packetData->controlData = &neg1 ;
-               (packetData->combatControl)(packetData, &(ctrlshipIndex[0])) ;
-               SetSerialData(ctrlshipIndex, ctrlshipShapes);
-               CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
-            }
-#endif
-
             if (ctrlshipIndex[serialShip].haveFired == PAUSE && !ctrlactivated)
             {
                ctrlmachinePaused = SLAVE ;
@@ -1944,15 +1746,5 @@ void racectrl(void)
             //    xpad = archive_xpad; //bodge to restore the xpad of the current drawing frame
             //    pad = archive_pad;   //bodge to restore the xpad of the current drawing frame
             ctrl_init = 1; //OK to start the drawing now, once we've been around once.
-
-#ifdef PCwipeout
-            fred++;
-            if (fred>=4)
-            {
-               //       DumpVram16Bit("wipeout\\vramdump\\venom\\firestar.rgb",&VRam);
-               DumpVRamAsPCX("wipeout\\vramdump.pcx");
-               exit(0);
-            }
-#endif
 } /*end of race*/
 

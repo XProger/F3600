@@ -16,16 +16,11 @@
 #include "file.h"
 char  jmax;
 
-extern void CopyPal(char *,char,char);
-
 /*************************************
 * Defines & Externs
 *************************************/
 
-extern   char *VRam;
 extern   char *CurBuffer;
-extern   char *DepthFadeTble;
-extern   void  GSwap(void);
 
 #define  PAL      1
 #define  PIC      2
@@ -54,10 +49,9 @@ void ReadPCX(char *fname, bm *BMptr,char Flg)
 {
 
    FILE     *fp;
-   int      xsize=0, ysize=0, vram_xpos=0, vram_ypos=0, Isize=0;
+   int      xsize=0, ysize=0, vram_xpos=0, vram_ypos=0, Isize=0, z=0;
    unsigned char     *ptr, *ptr2;
    unsigned char     PCX_byte, RLE_byte;  // pcx code
-   unsigned long  z=0;
    unsigned char     aflag;
    int fLength;
    if ((Flg&DEBUG)!=0) fprintf(stderr,"Attempting To Open File - %s\n",fname);

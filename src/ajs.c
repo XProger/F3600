@@ -14,49 +14,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "pallette.h"
 #include "protos.h"
-
-#define  MAIN_PAL 0
-#define  SHIELD_PAL  1
 
 #define addPrim(ot, p)  setaddr(p, getaddr(ot)), setaddr(ot, p)
 
-CVECTOR  Palette[256];
-char  main_palette[768];
-char shield_palette[768];
+/*TODO REMOVE PALETTE*/
 char winLoseIn=0;
-char  current_palette=MAIN_PAL;
 
 char winPic[35840];
 char losePic[35840];
 extern char inmenu,Reallyinmenu;
-extern   char VRam[];
-extern   char DepthFadeTble[];
 extern unsigned int  this_frame, last_frame;
 
 //#define   LOADTEXTURES   1              // standard load stuff (LoadImage4, LoadImage8 etc.);
 //#define   LOADAS24BIT 1                 // if you want to load vram as 1 byte red, 1 byte green & 1 byte blue (requires 6 mb vram)
 #define  BLANKFUNCTIONS 1              // if loading vram as pcx
-
-// System global variables and defines
-
-#define VRAM_WIDTH   2048     // VRAM_WIDTH is used to represent the width of the PSX video ram
-// within the PC. It is set to 2048 (1024 words) it is used in the
-// LoadImage, StoreImage and MoveImage functions to enable x,y
-// style access to the ram.
-
-u_long   *video_start_addr;      // video_start_addr is a pointer to the PC equivalent of the 0,0
-// co-ordinate in PSX video ram. This is used in LoadImage,
-// StoreImage and MoveImage
-
-DISPENV  g_DispEnv;           // g_DispEnv is used to represent the PSX display environment, it
-// is used in GetDispEnv to get the system values - this function
-// is NOT used in RidgeRacer
-
-DRAWENV  g_DrawEnv;           // g_DrawEnv is used to represent the PSX drawing environment, it
-// is used in GetDrawEnv to get the system values - this function
-// is NOT used in RidgeRacer
 
 int      g_mask;              // global display mask variable set in SetDispMask
 
@@ -992,67 +964,6 @@ int      LoadImage8(RECT   *recp, unsigned long *p, CLUT *cluts)
    return(1);
 }
 #endif
-
-
-void LoadVRam(char *filename, char set_pal)
-{
-   bm       BM;
-
-   char  fadefilename[_MAX_PATH];
-
-   char  drive[_MAX_DRIVE];
-   char  dir[_MAX_DIR];
-   char  fname[_MAX_FNAME];
-
-   char  *palptr;
-   int      loop;
-
-   // pall=(char*)malloc(768);
-
-
-   BM.bitmap=VRam;
-   BM.width=256;
-   BM.height=5632; // was 8192
-   BM.palette=main_palette;
-   ReadPCX(filename,&BM,3);   // 2 = PIC, 1 = PAL, 4= DEBUG
-
-   palptr = main_palette;
-
-   for (loop = 0; loop < 256; loop++)
-   {
-      Palette[loop].r = *palptr++;
-      Palette[loop].g = *palptr++;
-      Palette[loop].b = *palptr++;
-   }
-
-   if (set_pal)
-   {
-      current_palette=MAIN_PAL;
-      CopyPal(main_palette,0,255);
-   }
-
-
-   shield_palette[0]=main_palette[0]; // colour 0 (r0,g0,b0) should not be faded to white
-   shield_palette[1]=main_palette[1];
-   shield_palette[2]=main_palette[2];
-   for (loop = 3; loop < 768; loop++)
-   {
-      if (((short)main_palette[loop]+75)>255)
-         shield_palette[loop]=255;
-      else
-         shield_palette[loop] = main_palette[loop]+75;
-   }
-   _splitpath(filename,drive,dir,fname,NULL);
-   _makepath(fadefilename,"",dir,fname,".dpq");
-
-   BM.width=256;
-   BM.height=96;
-   BM.bitmap=DepthFadeTble;
-   BM.palette=main_palette;
-   ReadPCX(fadefilename,&BM,2);
-
-   // free(pall);
-}
 
 void setWinLose(void)
 {

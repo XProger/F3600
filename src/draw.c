@@ -27,7 +27,6 @@
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
-#include "fri.h"
 #include "libgte.h"
 #include "utils.h"
 #include "andyscn.h"

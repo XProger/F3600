@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <None Include="..\3dpoly.asm" />
-    <None Include="..\drawpoly.asm" />
-    <None Include="..\flatclip.asm" />
-    <None Include="..\grfont.asm" />
-    <None Include="..\libgtes.asm" />
-    <None Include="..\rmnet.asm" />
-    <None Include="..\sprite.asm" />
-    <None Include="..\textclip.asm" />
-    <None Include="..\timer.asm" />
-    <None Include="..\tims.asm" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\ajs.c" />
     <ClCompile Include="..\andyscn.c" />
     <ClCompile Include="..\ayrace.c" />
@@ -34,8 +22,6 @@
     <ClCompile Include="..\error.c" />
     <ClCompile Include="..\etcvars.c" />
     <ClCompile Include="..\file.c" />
-    <ClCompile Include="..\fromasm.c" />
-    <ClCompile Include="..\getvram.c" />
     <ClCompile Include="..\global.c" />
     <ClCompile Include="..\grabber.c" />
     <ClCompile Include="..\hiscores.c" />
@@ -53,7 +39,6 @@
     <ClCompile Include="..\object.c" />
     <ClCompile Include="..\options.c" />
     <ClCompile Include="..\pad.c" />
-    <ClCompile Include="..\pallette.c" />
     <ClCompile Include="..\pdenv.c" />
     <ClCompile Include="..\pmkey.c" />
     <ClCompile Include="..\racectrl.c" />
@@ -77,7 +62,6 @@
     <ClCompile Include="..\trakview.c" />
     <ClCompile Include="..\ttf.c" />
     <ClCompile Include="..\utils.c" />
-    <ClCompile Include="..\vsync.c" />
     <ClCompile Include="..\wave.c" />
     <ClCompile Include="..\weapon.c" />
     <ClCompile Include="..\wincd.c" />
@@ -90,7 +74,6 @@
     <ClInclude Include="..\ajs.h" />
     <ClInclude Include="..\andyscn.h" />
     <ClInclude Include="..\asmtrk.h" />
-    <ClInclude Include="..\ati3dcif.h" />
     <ClInclude Include="..\ayrace.h" />
     <ClInclude Include="..\camera.h" />
     <ClInclude Include="..\card.h" />
@@ -100,7 +83,6 @@
     <ClInclude Include="..\cone.h" />
     <ClInclude Include="..\config.h" />
     <ClInclude Include="..\control.h" />
-    <ClInclude Include="..\crack.h" />
     <ClInclude Include="..\credits.h" />
     <ClInclude Include="..\cwdde.h" />
     <ClInclude Include="..\datacash.h" />
@@ -115,8 +97,6 @@
     <ClInclude Include="..\error.h" />
     <ClInclude Include="..\file.h" />
     <ClInclude Include="..\fileops.h" />
-    <ClInclude Include="..\fri.h" />
-    <ClInclude Include="..\getvram.h" />
     <ClInclude Include="..\global.h" />
     <ClInclude Include="..\grabber.h" />
     <ClInclude Include="..\handlers.h" />
@@ -133,7 +113,6 @@
     <ClInclude Include="..\object.h" />
     <ClInclude Include="..\options.h" />
     <ClInclude Include="..\pad.h" />
-    <ClInclude Include="..\pallette.h" />
     <ClInclude Include="..\pcgraph.h" />
     <ClInclude Include="..\progress.h" />
     <ClInclude Include="..\protos.h" />
@@ -164,7 +143,6 @@
     <ClInclude Include="..\ttf.h" />
     <ClInclude Include="..\utils.h" />
     <ClInclude Include="..\utypes.h" />
-    <ClInclude Include="..\vramsize.h" />
     <ClInclude Include="..\wassert.h" />
     <ClInclude Include="..\wave.h" />
     <ClInclude Include="..\weapon.h" />

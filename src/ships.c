@@ -32,7 +32,6 @@
 #include "hud.h"
 #include "trackasm.h"
 #include "dynam.h"
-#include "fri.h"
 #include "utils.h"
 #include "libgte.h"
 #include "andyscn.h"

@@ -50,35 +50,8 @@ extern int  WinHeightX2;
 
 DISPENV *PutDispEnv(DISPENV *env)
 {
-   extern short BG_Colour;
-
-
    curvidmode = env->disp.w;
-
-#ifdef   WIPEOUTPC
-   if (env->disp.y != olddispy)
-   {
-      DDSwap();
-   }
-#else
-   if (env->disp.y != olddispy)
-      {
-         DDSwap();
-
-         while (LockBackBuffer())
-            {
-            ProcessMessages();   //loop until we can get that back buffer
-         ;
-            }
-         if (game_stat > 1)
-            memset(CurBuffer,BG_Colour,320*200);
-         else
-            memset(CurBuffer,0,320*200);
-         UnlockBackBuffer();  //Finished drawing
-      }
-#endif
    olddispy = env->disp.y;
-
    return(env);
 }
 

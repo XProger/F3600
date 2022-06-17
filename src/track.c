@@ -34,13 +34,10 @@
 #include "hud.h"
 #include "cone.h"
 #include "race.h"
-#include "fri.h"
 #include "error.h"
-#include "pallette.h"
 
 
 #define TrackVersion 8
-#define  GsGetVcount()  0;
 
 //#define AsmTransformTrackMed AsmTransformTrackLo
 
@@ -281,37 +278,7 @@ void InitFaces( char *file )
    track->faceCount = length / sizeof( Face );
 
    IntelFace( );
-
-
-
-   /* copy the original colors */
-
-   track->colCopy = ( Colors* )DAlloc( heap, track->faceCount * sizeof( Colors ) );
-   if( !track->faces )
-   {
-      Error( "Track.c:InitFaces: Failed to allocate memory for copy of colors", Fatal );
-   }
-
-   for ( i=0; i<track->faceCount; i++ )
-   {
-      cols.r = track->faces[ i ].red;
-      cols.g = track->faces[ i ].green;
-      cols.b = track->faces[ i ].blue;
-
-      track->faces[ i ].red=FindNearestColourIndex(&cols);
-      track->faces[ i ].green=0;
-      track->faces[ i ].blue=BLACK_NOT_DRAWN;
-     track->colCopy[ i ].red  = track->faces[ i ].red;
-     track->colCopy[ i ].green   = track->faces[ i ].green;
-     track->colCopy[ i ].blue    = track->faces[ i ].blue;
-   }
-
 }
-
-
-
-
-
 
 void InitSections( char *file )
 {
@@ -485,7 +452,6 @@ void DrawNewTrack( TrackCamera *camera, AutoMeshData *autoMesh )
    autoMesh->quadCount = 0;
    autoMesh->attemptedAutos = 0;
 
-   beforeVcount = GsGetVcount();
    AsmNextFrame( );
 
    dir = TrackDirection(camera);

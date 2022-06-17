@@ -57,6 +57,5 @@ void  JJSDrawPolyGT4(POLY_GT4* p);
 void  JJSDrawPolyF4(POLY_F4* p);
 void  JJSDrawPolyFT4(POLY_FT4* p);
 void  JJSDrawPolyG4(POLY_G4* p);
-void  CopyPal(char* palette, short start, short end);
 void  WinQuit(void);
 int   JJSJoyConfig(void);

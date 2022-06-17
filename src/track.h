@@ -43,9 +43,9 @@ typedef struct Face
    SVector        normal;
    char           texture;
    char           flags;
-   char           red;
-   char           green;
-   char           blue;
+   uchar          red;
+   uchar          green;
+   uchar          blue;
 } Face;
 
 
@@ -122,7 +122,6 @@ typedef struct TrackData
    TrackSection   *sections;        /* pointer to the first section */
 
    short          *viewList;
-   Colors         *colCopy;         /* original colours */
 } TrackData;
 
 
