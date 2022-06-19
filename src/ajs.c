@@ -18,7 +18,6 @@
 
 #define addPrim(ot, p)  setaddr(p, getaddr(ot)), setaddr(ot, p)
 
-/*TODO REMOVE PALETTE*/
 char winLoseIn=0;
 
 char winPic[35840];
@@ -247,7 +246,7 @@ DRAWENV  *SetDefDrawEnv(DRAWENV *draw, int x, int y, int w, int h)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void     SetDrawMode(DR_MODE *dr_mode, int dfe, int dtd, int tpage, RECT *tw)
+void     SetDrawMode(DR_MODE *dr_mode, int dfe, int dtd, int tpage, GRECT *tw)
 {
    // Initialises the draw mode primitive.
    // The format below was designed by me (ajs) if you don't like it - design your own !
@@ -270,7 +269,7 @@ void     SetDrawMode(DR_MODE *dr_mode, int dfe, int dtd, int tpage, RECT *tw)
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-void     StoreImage(RECT   *recp, unsigned long *p)
+void     StoreImage(GRECT   *recp, unsigned long *p)
 {
    // Transfers the rectangular area in the frame bufffer specified by recp to the contiguous area
    // in main memory at address p
@@ -304,7 +303,7 @@ void  SetPolyGT3(POLY_GT3 *p)
 
 //*****************************************************************
 
-void LoadClut4(RECT  *rect, u_short *clutptr, CLUT *cluts)
+void LoadClut4(GRECT  *rect, u_short *clutptr, CLUT *cluts)
 {
    int loop;
    u_short *ptr;
@@ -316,7 +315,7 @@ void LoadClut4(RECT  *rect, u_short *clutptr, CLUT *cluts)
    }
 }
 
-void LoadClut8(RECT  *rect, u_short *clutptr, CLUT *cluts)
+void LoadClut8(GRECT  *rect, u_short *clutptr, CLUT *cluts)
 {
    int loop;
    u_short *ptr;
@@ -954,12 +953,12 @@ int      LoadImage4(RECT   *recp, unsigned long *p, CLUT *cluts)
 #endif
 #ifdef BLANKFUNCTIONS
 
-int      LoadImage4(RECT   *recp, unsigned long *p, CLUT *cluts)
+int      LoadImage4(GRECT   *recp, unsigned long *p, CLUT *cluts)
 {
    return(1);
 }
 
-int      LoadImage8(RECT   *recp, unsigned long *p, CLUT *cluts)
+int      LoadImage8(GRECT   *recp, unsigned long *p, CLUT *cluts)
 {
    return(1);
 }

@@ -122,7 +122,6 @@ short       PlayDirectionalNote(short vagID, short priority, short duration, VEC
 void     SetPitch(short VagID, short pitch);
 void     SetVolume(short vagID, short voll, short volr);
 short       AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR pos );
-int      InitCD( CdlLOC*, int );
 short       AdjustRemoteEngineSound(ShipData *shipIndex, Object** shipShapes, TrackCamera *camera );
 void     AdjustEngineSound(ShipData*, TrackCamera*);
 void StopNotes(void);

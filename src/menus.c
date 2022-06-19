@@ -29,22 +29,16 @@
 #include "ajs.h"
 #include "decl.h"
 #include "main.h"
-#include "config.h"
 #include "init.h"
 #include "scene.h"
-#include "wincd.h"
+#include "utils.h"
 
-#include <direct.h>
 
 #define _SIZE_T_DEFINED_            // PCwipeout
 #include <stdio.h>         // PCwipeout
 #include <stdlib.h>     // PCwipeout
 #include <string.h>
-#include "wipesrc\win95\andyy\pallette.h"
-#include "wipesrc\win95\chrise\utypes.h"
-#include "wipesrc\win95\chrise\sfx.h"
-#include "wipesrc\win95\markk\multiwo.h"
-#include "wipesrc\win95\markk\merror.h"
+
 typedef int BOOL;
 
 extern BOOL Screen565;
@@ -79,10 +73,6 @@ short globalvol;
 
 TimData  *menuScreen ;
 
-// temporary test stuff
-#include "wipesrc\win95\markk\libetc.h"  // PCwipeout
-
-
 #define FULL      0
 #define HIGH      3
 #define  MEDIUM      2
@@ -102,16 +92,13 @@ extern long CommSerialBaudRate=1;
 //extern long global_mark_error;
 
 
-//WIN 95
-extern char             *backscreen;
-
 // OTHER FUCKERS
 extern float halfxf;
 extern float halfyf;
 extern char  pixdouble;
 
 char  ScreenSize=FULL;
-char  Resolution=MEDIUM;
+char  Resolution=HIGH;
 extern   short ft;
 extern   char MipMap;
 extern  char PersCorr;
@@ -128,7 +115,6 @@ long  my_SkyTrackFlags;
 char  mouse_sensitivity=MEDIUM_SENS;
 char cur_mouse_setting=MEDIUM_SENS;
 
-char  controller = _KEYBOARD;
 char  orig_controller;
 char  changecontroller = 1;
 // end of temporary stuff
@@ -150,30 +136,30 @@ int   modelHdg = 0 ;
 int   zoomInOut = 0 ;
 int   downUp = 0 ;
 char  twist = 0 ;
-char  negtwist = 0 ;
 Skeleton    *root ;
+/*TODO input mapping
 unsigned short Keycons[10];
 unsigned short NewOriginalKeyCodes[16]={0};
 unsigned short OriginalKeyCodes[16] =
 {
-   _Z_KEY,              /* FrontLeftBottom   */ // left airbreak
-   _X_KEY,              /* FrontRightBottom  */ // right airbreak
-   _F1_KEY,             /* FrontRightTop     */ // Draw distance
-   _ESC_KEY,            /* FrontLeftTop      */
-   _TAB_KEY,            /* Triangle          */ // change view
-   _LEFT_ALT_KEY,       /* Circle            */ // shoot weapon
-   _LEFT_CTRL_KEY,      /* Cross             */ // accelerate
-   _F2_KEY,             /* Square            */ // Screen size
-   _ENTER_KEY,          /* Select            */ // editor
-   _F3_KEY,             /* Unused            */ // Resolution
-   _F4_KEY,             /* Unused            */ // Sky
-   _P_KEY,              /* Start             */ // pause
-   _UP_KEY,             /* Up                */ // up
-   _RIGHT_KEY,          /* Right             */ // right
-   _DOWN_KEY,           /* Down              */ // down
-   _LEFT_KEY            /* Left              */ // left
+   _Z_KEY,              // FrontLeftBottom   // left airbreak
+   _X_KEY,              // FrontRightBottom  // right airbreak
+   _F1_KEY,             // FrontRightTop     // Draw distance
+   _ESC_KEY,            // FrontLeftTop     
+   _TAB_KEY,            // Triangle          // change view
+   _LEFT_ALT_KEY,       // Circle            // shoot weapon
+   _LEFT_CTRL_KEY,      // Cross             // accelerate
+   _F2_KEY,             // Square            // Screen size
+   _ENTER_KEY,          // Select            // editor
+   _F3_KEY,             // Unused            // Resolution
+   _F4_KEY,             // Unused            // Sky
+   _P_KEY,              // Start             // pause
+   _UP_KEY,             // Up                // up
+   _RIGHT_KEY,          // Right             // right
+   _DOWN_KEY,           // Down              // down
+   _LEFT_KEY            // Left              // left
 };
-
+*/
 
 //POLY_FT4     buttons[18][2] ;
 SPRT     buttons[18][2] ;     // DLS
@@ -181,11 +167,8 @@ Texture     *buttonTex[18] ;
 DR_MODE     drmode[18][2];          // DLS
 DR_MODE     drmode2[18][2];            // DLS
 
-TimData *AJSLoad16BitTexture(char *filename, char location);
 TimData *JJSLoad16BitTexture(char *filename, char location);
-BOOL JJSNewTexture(char *filename);
 extern char *GetCdTrackName(int no);
-void MostRecentSaveFile(); // returns the name of the last file to be modified in "c:\wipeout"
 char CheckKey(unsigned short code);
 
 
@@ -417,9 +400,9 @@ char  ScanToAscii[110] =
 #define  JOY_BODGE   8
 //#define SAVEDIR       "wipeout\\"
 #define  FILE_EXTENSION ".wsf"
-
+/*TODO saves
 extern char *SaveDirBase;
-
+*/
 
 short JoyMinX = 0, JoyMaxX = 255;
 short JoyMinY = 0, JoyMaxY = 255;
@@ -630,7 +613,7 @@ void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int tim
    while (1)
    {
       opad=pad;
-      pad = neg1.bits;
+      pad = gPad;
       andyTimeout++;
 
       if(andyTimeout >= TOut * 30)
@@ -638,10 +621,6 @@ void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int tim
          andybodge=2;
          break;
       }
-
-      if(neg1.head != 0xff)
-         pad = ~pad;
-
       xpad=(pad^opad)&pad;
 
       UpdateNotes(NOT_PAUSED);
@@ -653,20 +632,6 @@ void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int tim
       oldMenu = currMenu ;
       oldOption = currOption ;
 
-      if (neg1.head == 8960)
-      {
-         if ((currMenu == PADCONFIG_MENU) && ((menuSystem[PADCONFIG_MENU].displayObject == DrawPlayPad) ||
-            (menuSystem[PADCONFIG_MENU].displayObject == 0)))
-            currMenu = NEGCON_MENU ;
-
-         menuSystem[OPTION_MENU].menu2Model = negconShapes ;
-         menuSystem[17].menuModel = negconShapes ;
-         menuSystem[PADCONFIG_MENU].displayMenu = MenuNegCon ;
-         menuSystem[PADCONFIG_MENU].displayObject = NegConButtonDisplay ;
-         menuSystem[PADCONFIG_MENU].prevMenu = NEGCON_MENU ;
-         gameData->oldPadPreset = gameData->normpadPreset ;
-      }
-      else
       {
          if ((currMenu == NEGCON_MENU) ||  (currMenu == TWIST_MENU))
             currMenu = PADCONFIG_MENU ;
@@ -683,14 +648,14 @@ void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int tim
       if (currMenu != -2)
       {
          MenuErrors (&currMenu, &(menuSystem[0])) ;
-         if (menuSystem[currMenu].errorFlag != NO_ERROR)
+         if (menuSystem[currMenu].errorFlag != 0)
          {
             selectData.fadeHeight = 0 ;
             selectData.select = 0 ;
          }
       }
 
-      if (menuSystem[currMenu].updateCount != 0 && menuSystem[currMenu].errorFlag == NO_ERROR)
+      if (menuSystem[currMenu].updateCount != 0 && menuSystem[currMenu].errorFlag == 0)
          menuSystem[currMenu].updateCount-- ;
 
       //    ShowMenuBackground (&(menuPrim[0]), &(menu1Prim[0]), menuScreen) ; // PCwipeout
@@ -698,7 +663,7 @@ void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int tim
       if (currMenu == -2)
          currMenu = 0 ;
 
-      if (menuSystem[currMenu].errorFlag == NO_ERROR)
+      if (menuSystem[currMenu].errorFlag == 0)
       {
          if (currMenu >= 0)
             CallMenuSelector (&(menuSystem[0]), &currMenu, &currOption, shipShapes, gameData, &musicPrims, &musicTex, &selectData, &(loadGames[0])) ;
@@ -809,15 +774,12 @@ void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int tim
 
       /********************************************/
 
-      negSelect = neg1.i;
-      negQuit = neg1.ii;
-      negBack = neg1.ii;
       Swap() ;
 
       firstTime = 0 ;
 
       if (menuSystem[currMenu].updateCount == 0 &&
-         menuSystem[currMenu].errorFlag == NO_ERROR &&
+         menuSystem[currMenu].errorFlag == 0 &&
          selectData.select == 1)
       {
          selectData.select = 0 ;
@@ -1373,22 +1335,15 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
    /*******************/
    /***** Menu 12 *****/
    /*******************/
-
-
    if (*currMenu == ENTER_GAME_NAME)
    {
       if(TextPos < 1)
          return;
 
+/*TODO saves
       SaveFilename[TextPos] = '\0';
       TextEntry = 0;
       TextPos = 0;
-
-      //    if (strlen(selectData->nameEntered) <= 1)
-      //       return ;
-
-      //    selectData->nameEntered[strlen(selectData->nameEntered)-1] = 0 ;
-      //    selectData->confirm = 1 ;
 
       CheckSaveType (selectData, &(loadGames[0]), gameData) ;
 
@@ -1420,11 +1375,10 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
          fclose(fd);
          *currMenu = CONFIRM_SAVE ;
       }
-
+*/
       *currOption = 0;
       return ;
    }
-
 
    /*******************/
    /***** Menu 14 *****/
@@ -1528,18 +1482,9 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
 
    if (*currMenu == PADCONFIG_MENU)
    {
-      if (neg1.head == 8960)
-      {
-         SetNegconPresets (gameData) ;
-         gameData->negconPreset = gameData->oldNegPreset ;
-         *currMenu = NEGCON_MENU ;
-      }
-      else
-      {
-         SetNormPadPresets (gameData) ;
-         gameData->normpadPreset = gameData->oldPadPreset ;
-         *currMenu = OPTION_MENU ;
-      }
+      SetNormPadPresets (gameData) ;
+      gameData->normpadPreset = gameData->oldPadPreset ;
+      *currMenu = OPTION_MENU ;
 
       *currOption = 0 ;
       return ;
@@ -1632,7 +1577,6 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
          *currOption = 0 ;
          *currMenu = TWIST_MENU ;
          twist = gameData->negTwist ;
-         nCon.twistFactor = abs(gameData->negTwist-128) ;
       }
       return ;
    }
@@ -1646,10 +1590,6 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
    {
       *currOption = 0 ;
       *currMenu = NEGCON_MENU ;
-      gameData->negTwist = twist ;
-      negtwist = gameData->negTwist ;
-      nCon.twistFactor = abs(gameData->negTwist-128) ;
-      if(nCon.twistFactor < 30) nCon.twistFactor = 30;
       return ;
    }
 
@@ -1730,9 +1670,9 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
    if (*currMenu == CONTROLLER_MENU)
    {
       // store new variables
-      controller = orig_controller;
       *currOption = 0 ;
-
+/*TODO input
+      controller = orig_controller;
       if (changecontroller)
       {
          // change the controller to new settings
@@ -1741,8 +1681,6 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
             StartPAD();
 
          if((etc_InputDeviceSelect == _JOYSTICK1) && (JoyMinX == 0))
-         /* SJR*currMenu = CONTROL_EDIT_MENU;
-         else*/
          {
             if (JJSJoyConfig())
             {
@@ -1763,6 +1701,7 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
       {
          *currMenu = CONTROL_EDIT_MENU ;
       }
+*/
    }
 }
 
@@ -1835,20 +1774,6 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
             }
          }
 
-         if (neg1.head == 8960)
-         {
-            if (((gameData->gameType == CHAMPIONSHIP) && (*currMenu == PILOT_MENU)) || (*currMenu == TRACK_MENU) ||
-               (gameType == SLAVE && *currMenu == PILOT_MENU))
-               DisplayButtons ( 140, 210, NSTART) ;
-            else
-            {
-               DisplayButtons ( 30, 210, NSELECT) ;
-               if ((*currMenu != MAIN_MENU) && (!(((gameType == SLAVE) &&  (*currMenu == TEAM_MENU)) ||
-                  ((gameType == MASTER) && (*currMenu == CLASS_MENU)))))
-                  DisplayButtons ( 240 , 210, NBACK) ;
-            }
-         }
-         else
          {
             if (((gameData->gameType == CHAMPIONSHIP) && (*currMenu == PILOT_MENU)) || (*currMenu == TRACK_MENU) ||
                (gameType == SLAVE && *currMenu == PILOT_MENU))
@@ -1938,7 +1863,7 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
 
    if (GetMenuKey(M_SELECT))
    {
-      if (menuSystem[(*currMenu)].updateCount == 0 && menuSystem[(*currMenu)].errorFlag == NO_ERROR)
+      if (menuSystem[(*currMenu)].updateCount == 0 && menuSystem[(*currMenu)].errorFlag == 0)
       {
          if (!(*currMenu == ENTER_GAME_NAME && (selectData->nameEntered[strlen(selectData->nameEntered)-1] >= 'A' &&
             selectData->nameEntered[strlen(selectData->nameEntered)-1] <= ('Z'+1))))
@@ -1962,33 +1887,6 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
          {
             // JJS new bit 0606 for exiting menus
             {
-               switch(controller)
-               {
-               case _JOYSTICK1:
-                  if (JJSJoyConfig())
-                  {
-                     etc_Joystick1Switch = _DEVICE_ON;
-                     etc_Mouse1Switch = _DEVICE_OFF;
-                     etc_InputDeviceSelect = _JOYSTICK1;
-                  }
-                  else
-                  {
-                     etc_Joystick1Switch = _DEVICE_OFF;
-                     etc_InputDeviceSelect = _KEYBOARD;
-                     orig_controller = _KEYBOARD;
-                  }
-                  break;
-               case _MOUSE1:
-                  etc_Joystick1Switch = _DEVICE_OFF;
-                  etc_Mouse1Switch = _DEVICE_ON;
-                  etc_InputDeviceSelect = _MOUSE1;
-                  break;
-               default:
-                  etc_Mouse1Switch = _DEVICE_OFF;
-                  etc_Joystick1Switch = _DEVICE_OFF;
-                  etc_InputDeviceSelect = _KEYBOARD;
-                  break;
-               }
                ResetKeys();
             }
          }
@@ -2037,7 +1935,7 @@ void InitMenuSystem (Menus *menuSystem)
    for (i=0; i < MAX_MENUS; i++)
    {
       menuSystem[i].updateCount = 0 ;
-      menuSystem[i].errorFlag = NO_ERROR ;
+      menuSystem[i].errorFlag = 0 ;
       menuSystem[i].menuTitle[0] = 0 ;
       menuSystem[i].titleY = 21 ;
    }
@@ -2782,74 +2680,9 @@ void DrawPlayPad (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
    if (pad & PadSelect)    y -= 10 ;
 }
 
-void DrawNegCon (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DrawNegCon(Menus* menuSystem, int* currMenu, int shapeNo, int* swapDelay)
 {
-   static hdg = 0, shdg = 0 ;
-   int   rotation = 0 ;
-   int   dispRot = 0 ;
-
-   Object*  a;
-   Object*  b;
-
-   if (neg1.head == 8960)
-   {
-      DisplayButtons ( 30, 210, NSELECT) ;
-      DisplayButtons ( 240, 210, NBACK) ;
-   }
-   else
-   {
-      DisplayButtons ( 30, 210, PSELECT) ;
-      DisplayButtons ( 240, 210, PBACK) ;
-   }
-
-   CentreText ("NEGCON CONFIGURATION ",text_data (60, 21, 8),RedText) ;
-
-   a = menuSystem[(*currMenu)].menuModel[0];
-   b = menuSystem[(*currMenu)].menuModel[1];
-
-   SetSkeletonPosition(root,0,150,1100) ;
-   SetSkeletonDirectionHPR(root, 1024, 0, 0);
-
-   SetSkeletonPosition( a->skeleton, 0, 0, -8 );
-   SetSkeletonPosition( b->skeleton, 0, 0, 8 );
-
-   twist = neg1.twist ;
-
-   if (twist <= 128)
-      rotation =   180 - ((((4096*180)/128) * twist) >> 12) ;
-   else
-      rotation =  (((4096*180)/128) * (twist - 128)) >> 12 ;
-
-   AddText ("ANGLE",text_data (120, 60, 8),RedText) ;
-   AddNumber (rotation,text_data (190, 60, 8),RedText) ;
-
-   CentreText ("DEFINE MAXIMUM LOCK",text_data (120, 180, 8),RedText) ;
-   if (negtwist == 0)
-   {
-      AddText ("DEFAULT",text_data (100, 195, 8),RedText) ;
-      AddNumber (178,text_data (190, 195, 8),RedText) ;
-   }
-   else
-   {
-      if (negtwist <= 128)
-         dispRot =    180 - ((((4096*180)/128) * negtwist) >> 12) ;
-      else
-         dispRot =  (((4096*180)/128) * (negtwist - 128)) >> 12 ;
-
-      AddText ("FULL LOCK IS",text_data (90, 195, 8),RedText) ;
-      AddNumber (dispRot,text_data (210, 195, 8),RedText) ;
-   }
-
-   SetSkeletonDirection( a->skeleton, 0, 0, ((neg1.twist-128)<<3) );
-   SetSkeletonDirection( b->skeleton, 0, 0, -((neg1.twist-128)<<3) );
-
-   a->skeleton->update = 1 ;
-   b->skeleton->update = 1 ;
-
-   TransformStaticObject(a, NULL);
-   TransformStaticObject(b, NULL);
-
-   hdg += 40;
+   /*TODO negcon */
 }
 
 void NegConButtonDisplay (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
@@ -2970,12 +2803,6 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
 
    AddText ("AUDIO CONFIGURATION",text_data (60, 20, 8),RedText) ;
 
-   if (neg1.head == 8960)
-   {
-      DisplayButtons ( 30, 210, NSELECT) ;
-      DisplayButtons ( 240, 210, NBACK) ;
-   }
-   else
    {
       DisplayButtons ( 30, 210, PSELECT) ;
       DisplayButtons ( 240, 210, PBACK) ;
@@ -3190,30 +3017,27 @@ void EnterLoadGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
 
    if(TextEntry)
    {
-      if(etc_KeyPressed)
+      KeyCode = GetKeyNoBlock();
+
+      if((KeyCode > 0x40 && KeyCode < 0x5b))//A - Z
+         // ||       // Q - P
+
+         //  (KeyCode > 29 && KeyCode < 39) ||     // A - L
+
+         //(KeyCode > 43 && KeyCode < 51))         // Z - M
       {
-         KeyCode = GetKeyNoBlock();
+         LoadFilename[TextPos] = ScanToAscii[KeyCode];
 
-         if((KeyCode > 0x40 && KeyCode < 0x5b))//A - Z
-            // ||       // Q - P
+         if(TextPos < (MAXSTRING - 2))
+            TextPos++;
 
-            //  (KeyCode > 29 && KeyCode < 39) ||     // A - L
+         LoadFilename[TextPos] = 101;     // Cursor
+      }
 
-            //(KeyCode > 43 && KeyCode < 51))         // Z - M
-         {
-            LoadFilename[TextPos] = ScanToAscii[KeyCode];
-
-            if(TextPos < (MAXSTRING - 2))
-               TextPos++;
-
-            LoadFilename[TextPos] = 101;     // Cursor
-         }
-
-         if((KeyCode == 0x08) && (TextPos > 0))    // Backspace
-         {
-            LoadFilename[TextPos] = ' ';
-            LoadFilename[--TextPos] = 101;
-         }
+      if((KeyCode == 0x08) && (TextPos > 0))    // Backspace
+      {
+         LoadFilename[TextPos] = ' ';
+         LoadFilename[--TextPos] = 101;
       }
    }
    else
@@ -3245,28 +3069,25 @@ void EnterSaveGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
 
    if(TextEntry)
    {
-      if(etc_KeyPressed)
+      KeyCode = GetKeyNoBlock();
+
+      if((KeyCode > 0x40 && KeyCode < 0x5b))//A - Z
+         //if((KeyCode > 15 && KeyCode < 26) ||       // Q - P
+         //(KeyCode > 29 && KeyCode < 39) ||       // A - L
+         //(KeyCode > 43 && KeyCode < 51))         // Z - M
       {
-         KeyCode = GetKeyNoBlock();
+         SaveFilename[TextPos] = ScanToAscii[KeyCode];
 
-         if((KeyCode > 0x40 && KeyCode < 0x5b))//A - Z
-            //if((KeyCode > 15 && KeyCode < 26) ||       // Q - P
-            //(KeyCode > 29 && KeyCode < 39) ||       // A - L
-            //(KeyCode > 43 && KeyCode < 51))         // Z - M
-         {
-            SaveFilename[TextPos] = ScanToAscii[KeyCode];
+         if(TextPos < (MAXSTRING - 2))
+            TextPos++;
 
-            if(TextPos < (MAXSTRING - 2))
-               TextPos++;
+         SaveFilename[TextPos] = 101;     // Cursor
+      }
 
-            SaveFilename[TextPos] = 101;     // Cursor
-         }
-
-         if((KeyCode == 0x08) && (TextPos > 0))    // Backspace
-         {
-            SaveFilename[TextPos] = ' ';
-            SaveFilename[--TextPos] = 101;
-         }
+      if((KeyCode == 0x08) && (TextPos > 0))    // Backspace
+      {
+         SaveFilename[TextPos] = ' ';
+         SaveFilename[--TextPos] = 101;
       }
    }
    else
@@ -3289,7 +3110,7 @@ void MenuErrors (int *currMenu, Menus *menuSystem)
 {
    int i ;
 
-   if (menuSystem[*currMenu].updateCount > 0 && menuSystem[*currMenu].errorFlag != NO_ERROR)
+   if (menuSystem[*currMenu].updateCount > 0 && menuSystem[*currMenu].errorFlag != 0)
    {
       AddText ("ERROR", text_data (105,20, 16), RedText) ;
 
@@ -3333,125 +3154,6 @@ void MenuErrors (int *currMenu, Menus *menuSystem)
                        text_data (10,112, 12), RedText) ;
          break ;
 
-      case _ERR_BAD_SERIAL_PORT:
-         CentreText("BAD SERIAL PORT", text_data (10,112,8), RedText);
-         break;
-
-      case _ERR_SERIAL_PORT_NOT_FOUND  :
-         CentreText("SERIAL PORT NOT FOUND", text_data (10,112,8), RedText);
-         break;
-
-
-
-      case _ERR_INSTALLING_SERIAL      :
-         CentreText("CANT INSTALL SERIAL DEVICE", text_data (10,112,8), RedText);
-         break;
-
-
-      case _ERR_HANDSHAKING_SERIAL     :
-         CentreText("SERIAL HANDSHAKE FAILURE", text_data (10,112,8), RedText);
-         break;
-
-
-      case _ERR_SYNCHRONISING_SERIAL   :
-         CentreText("SERIAL SYNC FAILURE", text_data (10,112,8), RedText);
-         break;
-
-
-      case _ERR_TRANSFERRING_SERIAL :
-         CentreText("SERIAL TRANSFER ERROR", text_data (10,112,8), RedText);
-         break;
-
-
-      case _ERR_TIMEOUT_SERIAL         :
-         CentreText("SERIAL TIMED OUT", text_data (10,112,8), RedText);
-         break;
-
-
-      case _ERR_RESOLVING_SERIAL    :
-         CentreText("CANT RESOLVE SERIAL", text_data (10,112,8), RedText);
-         break;
-
-
-
-         // modem errors
-      case  _ERR_INSTALLING_MODEM      :
-         CentreText("CANT INSTALL MODEM", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_INITIALIZING_MODEM    :
-         CentreText("CANT INITIALIZE MODEM", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_DIALLING_MODEM        :
-         CentreText("CANT DIAL MODEM", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_CONNECTING_MODEM      :
-         CentreText("CONNECT FAILED", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_ANSWERING_MODEM    :
-         CentreText("CANT ANSWER ON MODEM", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_TIMEOUT_MODEM         :
-         CentreText("MODEM NOT RESPONDING", text_data (10,112,8), RedText);
-         break;
-
-
-
-         // network errors
-      case  _ERR_IPX_NOT_PRESENT    :
-         CentreText("IPX NOT FOUND", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_IPX_SYNCHRONISING     :
-         CentreText("IPX SYNC FAILURE", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_IPX_SOCKET_FULL    :
-         CentreText("IPX SOCKET FULL", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_IPX_SOCKET_OPEN    :
-         CentreText("SOCKET IN USE", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_IPX_OPEN_ERROR        :
-         CentreText("OPEN SOCKET FAILURE", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_IPX_TOO_MANY_EVENTS   :
-         CentreText("TOO MANY EVENT BLOCKS", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_NETWARE_NOT_LOADED    :
-         CentreText("NETWARE NOT FOUND", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_IPX_DATA_TOO_BIG      :
-         CentreText("IPX DATA TOO LARGE", text_data (10,112,8), RedText);
-         break;
-
-
-      case  _ERR_IPX_TIMEOUT_NETWORK   :
-         CentreText("NETWORK TIMED OUT", text_data (10,112,8), RedText);
-         break;
-
-
          // unknown errors
       default                       :
          CentreText("ERROR CONNECTING", text_data (10,112,8), RedText);
@@ -3464,7 +3166,7 @@ void MenuErrors (int *currMenu, Menus *menuSystem)
       {
          for (i=0; i < MAX_MENUS; i++)
          {
-            menuSystem[i].errorFlag = NO_ERROR ;
+            menuSystem[i].errorFlag = 0 ;
          }
       }
 }
@@ -3539,14 +3241,7 @@ void ShowHiScores (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDat
       CentreText ("VENOM", text_data (1, 40, 8), RedText) ;
    }
 
-   if (neg1.head == 8960)
-   {
-      DisplayButtons ( 240, 210, NBACK) ;
-   }
-   else
-   {
-      DisplayButtons ( 240, 210, PBACK) ;
-   }
+   DisplayButtons ( 240, 210, PBACK) ;
 
 
    if (((gameData->RapierClass == 0) && (selectData->hiscoreTrack == (NumTracks-1)))
@@ -3658,14 +3353,7 @@ void ShowTimeTrialScores (MusicPrims *musicPrims, SlideTextures *musicTex, Selec
       CentreText ("VENOM", text_data (1, 40, 8), RedText) ;
    }
 
-   if (neg1.head == 8960)
-   {
-      DisplayButtons ( 240, 210, NBACK) ;
-   }
-   else
-   {
-      DisplayButtons ( 240, 210, PBACK) ;
-   }
+   DisplayButtons ( 240, 210, PBACK) ;
 
    if (((gameData->RapierClass == 0) && ((selectData->hiscoreTrack-HiScoreTracks) == (NumTracks-1)))
       || ((gameData->RapierClass == 1) && ((selectData->hiscoreTrack-HiScoreTracks) == (totalTracks-1))))
@@ -3750,16 +3438,8 @@ void ConfirmSaveGame (MusicPrims *musicPrims, SlideTextures *musicTex, Selection
 {
    static int  toggle = 0 ;
 
-   if (neg1.head == 8960)
-   {
-      DisplayButtons ( 30, 210, NSELECT) ;
-      DisplayButtons ( 240, 210, NBACK) ;
-   }
-   else
-   {
-      DisplayButtons ( 30, 210, PSELECT) ;
-      DisplayButtons ( 240, 210, PBACK) ;
-   }
+   DisplayButtons ( 30, 210, PSELECT) ;
+   DisplayButtons ( 240, 210, PBACK) ;
 
    CentreText ("OVERWRITE EXISTING FILE", text_data (70, 50, 8), RedText) ;
    if (selectData->saveType == NORM)
@@ -4066,17 +3746,8 @@ void MenuNegCon (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData 
    static int  toggleDisplay = 0 ;
    char     temp = 0 ;
 
-   if (neg1.head == 8960)
-   {
-      DisplayButtons ( 30, 210, NSELECT) ;
-      DisplayButtons ( 240, 210, NBACK) ;
-   }
-   else
-   {
-      DisplayButtons ( 30, 210, PSELECT) ;
-      DisplayButtons ( 240, 210, PBACK) ;
-   }
-
+   DisplayButtons ( 30, 210, PSELECT) ;
+   DisplayButtons ( 240, 210, PBACK) ;
 
    if ((toggleDisplay % 30) <= 20)
    {
@@ -4201,16 +3872,8 @@ void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData
    static int  toggleDisplay = 0 ;
    char   temp = 0 ;
 
-   if (neg1.head == 8960)
-   {
-      DisplayButtons ( 30, 210, NSELECT) ;
-      DisplayButtons ( 240, 210, NBACK) ;
-   }
-   else
-   {
-      DisplayButtons ( 30, 210, PSELECT) ;
-      DisplayButtons ( 240, 210, PBACK) ;
-   }
+   DisplayButtons ( 30, 210, PSELECT) ;
+   DisplayButtons ( 240, 210, PBACK) ;
 
    if ((toggleDisplay % 30) <= 20)
    {
@@ -4453,64 +4116,6 @@ void SetNormPadPresets (ConfigData *gameData)
 }
 
 
-void SetNegconPresets (ConfigData *gameData)
-{
-   switch (gameData->negconPreset)
-   {
-
-   case 0 : nCon.type         = 0;
-      nCon.type         |= A_THRUST_I;
-      nCon.type         |= D_VIEW;
-      nCon.type         |= A_FIRE_II;
-
-      nCon.thrust       = NEG_A;
-      nCon.view         = NEG_B;
-      nCon.fire         = PadCircle0;
-      break ;
-
-   case 1 : nCon.type         = 0;
-      nCon.type         |= A_THRUST_I;
-      nCon.type         |= D_VIEW;
-      nCon.type         |= A_FIRE_II;
-
-      nCon.thrust    = PadCross0;
-      nCon.view      = NEG_B;
-      nCon.fire      = PadSquare0;
-      break ;
-
-   case 2 : nCon.type         = 0;
-      nCon.type         |= A_THRUST_II;
-      nCon.type         |= D_VIEW;
-      nCon.type         |= A_FIRE_I;
-
-      nCon.thrust    = PadCross0;
-      nCon.view      = NEG_B ;
-      nCon.fire      = PadTopRight1;
-      break ;
-
-   case 3 : nCon.type         = 0;
-      nCon.type         |= D_THRUST;
-      nCon.type         |= A_VIEW;
-      nCon.type         |= D_FIRE;
-
-      nCon.thrust    = NEG_A;
-      nCon.view      = PadCircle0;
-      nCon.fire      = NEG_B;
-      break ;
-
-   case 4 : nCon.type         = 0;
-      nCon.type         |= D_THRUST;
-      nCon.type         |= A_VIEW;
-      nCon.type         |= D_FIRE;
-
-      nCon.thrust    = NEG_B;
-      nCon.view      = PadTriangle0;
-      nCon.fire      = NEG_A;
-      break ;
-   }
-}
-
-
 void DrawGames (Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
 {
    static hdg = 0;
@@ -4587,6 +4192,7 @@ void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDela
 
       Reallyinmenu = 0;
       inmenu = 1;
+      /*TODO input menu
       switch(controller)
       {
       case _KEYBOARD:
@@ -4599,6 +4205,7 @@ void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDela
          DisplayPadMenu2(menuSystem,currMenu,shipNo,swapDelay);
          break;
       }
+      */
    }
 
    if (shipNo == 3)           // Graphics Detail
@@ -4724,16 +4331,8 @@ void ConfirmFormat (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
 {
    static int  toggle = 0 ;
 
-   if (neg1.head == 8960)
-   {
-      DisplayButtons ( 30, 210, NSELECT) ;
-      DisplayButtons ( 240, 210, NBACK) ;
-   }
-   else
-   {
-      DisplayButtons ( 30, 210, PSELECT) ;
-      DisplayButtons ( 240, 210, PBACK) ;
-   }
+   DisplayButtons ( 30, 210, PSELECT) ;
+   DisplayButtons ( 240, 210, PBACK) ;
 
    CentreText ("FORMAT DISK", text_data (70, 20, 8), RedText) ;
    CentreText ("DO YOU WISH TO FORMAT CARD", text_data (55, 60, 8), WhiteText) ;
@@ -4834,7 +4433,7 @@ void InitButtons (char *fileName)
 
 void DisplayButtons (int x, int y, int buttType)
 {
-   RECT  tw;
+   GRECT  tw;
 
 
    x *= upres;
@@ -5196,14 +4795,13 @@ void ControllerOptions(MusicPrims *musicPrims, SlideTextures *musicTex, Selectio
    {
       changecontroller=1;
       andybodge=0;
-      orig_controller = controller;
    }
 
    CentreText ("CONTROLLER OPTIONS", text_data (1,21, 8), RedText) ;
 
    DisplayButtons ( 30, 210, PSELECT);
    DisplayButtons ( 240, 210, PBACK);
-
+/*TODO input menu
    if (GetMenuKey(M_UP)||GetMenuKey(M_DOWN))
    {
       if (orig_controller != _JOYSTICK1)
@@ -5272,9 +4870,8 @@ void ControllerOptions(MusicPrims *musicPrims, SlideTextures *musicTex, Selectio
 
       break;
    }
-
    CentreText (controllerstring, text_data (0, 50, 8), colour1) ;
-
+*/
 }
 
 
@@ -5287,30 +4884,15 @@ void ControllerEdit(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    DisplayButtons ( 30, 210, PSELECT) ;
    DisplayButtons ( 240, 210, PBACK) ;
 
-   switch(controller)
+   CentreText ("CONFIGURE KEYBOARD", text_data (1,21, 8), RedText) ;
+   if(davebodge == 1)
    {
-   case _KEYBOARD:
-      CentreText ("CONFIGURE KEYBOARD", text_data (1,21, 8), RedText) ;
-      if(davebodge == 1)
-      {
-         KeyConfig0();
-         davebodge = 0;
-      }
-      else
-      {
-         KeyConfig();
-      }
-      break;
-
-   case _MOUSE1:
-      CentreText ("MOUSE SENSITIVITY", text_data (1,21, 8), RedText) ;
-      MouseConfig();
-      break;
-
-   case _JOYSTICK1:
-      //CentreText ("CONFIGURE JOYSTICK", text_data (1,21, 8), RedText) ;
-      //JoystickConfig();
-      break;
+      KeyConfig0();
+      davebodge = 0;
+   }
+   else
+   {
+      KeyConfig();
    }
 
    toggle ++ ;
@@ -5324,13 +4906,13 @@ void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swa
 
 
    InitMenuDisplay (110);
-
+/*TODO input draw menu
    switch(orig_controller)
    {
       // jed
    case _KEYBOARD:
       etc_Joystick1Switch = _DEVICE_OFF; //jjs quick and dirty
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 0, 3500) ;   /*1800*/
+      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 0, 3500) ;
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg,0, 0);
       TransformStaticObject(menuSystem[(*currMenu)].menuModel[1], NULL);
       hdg += 20;
@@ -5338,7 +4920,7 @@ void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swa
 
       // jed
    case _MOUSE1:
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, 0, 4500) ;   /*1800*/
+      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, 0, 4500) ;
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),  hdg,75,25);
       TransformStaticObject(menuSystem[(*currMenu)].menuModel[0], NULL);
       hdg += 40;
@@ -5346,18 +4928,20 @@ void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swa
 
       // jed
    case _JOYSTICK1:
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 3500) ;   /*1800*/
+      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 3500) ;
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),  hdg,-50,0);
       TransformStaticObject(menuSystem[(*currMenu)].menuModel[2], NULL);
       hdg += 40;
       break;
    }
+*/
 }
 
 
 
 void KeyConfig0(void)
 {
+   /*TODO input 
    char  keyc;
 
 
@@ -5450,8 +5034,8 @@ void KeyConfig0(void)
       NewOriginalKeyCodes[keyc] = 0;
 
    etc_KeyPressed = 0;
-   etc_ExtendedFlag = 0;
    etc_Key = 0;
+   */
 }
 
 
@@ -5461,7 +5045,7 @@ void KeyConfig(void)
    char        exists;
    unsigned short KeyCode = 0;
 
-
+/*TODO input
    CentreText ("PRESS KEY FOR", text_data (1, 6*12, 8), RedText) ;
 
    switch(KeyToChange)
@@ -5720,6 +5304,7 @@ void KeyConfig(void)
 
       break;
    }
+*/
 }
 
 void  MouseConfig(void)
@@ -5795,41 +5380,19 @@ void  MouseConfig(void)
    toggle ++ ;
 }
 
-
-
-void  JoystickConfig(void)
+void JoystickConfig(void)
 {
-   JJSJoyConfig();
    JoyMinX = 0;
    PlayNote(MENU_SELECT, 1, 20);
    davebodge = 2;
    changecontroller = 0;
 }
 
-
-
 void DrawControllerEdit (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
 {
    static hdg = 0 ;
 
    InitMenuDisplay (80);
-
-   switch(controller)
-   {
-   case _MOUSE1:
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, 0, 6000) ;   /*1800*/
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),  hdg,0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0], NULL);
-      switch(cur_mouse_setting)
-      {
-      case HIGH_SENS:      hdg += 120; break;
-      case MEDIUM_SENS: hdg += 40;  break;
-      case LOW_SENS:    hdg += 10;  break;
-      }
-
-      break;
-   }
-
 }
 
 void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
@@ -5840,66 +5403,9 @@ void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo, int *swap
    DrawTeamShips (0, 0, MODELSIZE, &heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]) ;
 }
 
-void MostRecentSaveFile(char *filename)
-{
-#if defined(JJS)
-   DIR *dirp;
-   struct dirent *direntp;
-   unsigned short int d_time=0;
-   unsigned short int d_date=0;
-   char tempname[_MAX_PATH2];
-   char *ext, *search;
-   char fred[_MAX_PATH2];
-
-   filename[0]=0; // initialise it to NULL
-
-   dirp=opendir("wipeout");
-   if (dirp==NULL)   return;
-
-   for (; ; )
-   {
-      direntp=readdir(dirp);
-      if (direntp==NULL) break;
-
-      // look for .wsf files only
-      _splitpath2(direntp->d_name,tempname,NULL,NULL,NULL,&ext);
-
-      if (!(strcmpi(ext,".wsf")))
-      {
-         if (direntp->d_date>d_date)
-         {
-            d_date=direntp->d_date;
-            d_time=direntp->d_time;
-            strcpy(filename,direntp->d_name);
-         }
-         else
-         {
-            if (direntp->d_date==d_date)
-            {
-               if (direntp->d_time>d_time)
-               {
-                  d_time=direntp->d_time;
-                  strcpy(filename,direntp->d_name);
-               }
-            }
-         }
-      }
-   }
-
-   closedir(dirp);
-   if (filename[0]!=0)
-   {
-      search = (char *)strrchr(filename,'.');
-      if (search != NULL)
-         search[0]= 0;
-   }
-#endif
-}
-
-
-
 char CheckKey(unsigned short code)
 {
+   /*TODO input remap
    if(NewOriginalKeyCodes[15] == code)
       return(0);
    else if(NewOriginalKeyCodes[13] == code)
@@ -5923,7 +5429,7 @@ char CheckKey(unsigned short code)
 
    if(code == 0x1c)
       return(0);
-
+      */
    return(1);
 }
 
@@ -5931,6 +5437,7 @@ char CheckKey(unsigned short code)
 
 void ResetKeys(void)
 {
+/*TODO input default keys
    OriginalKeyCodes[15] = Keycons[0];
    OriginalKeyCodes[13] = Keycons[1];
    OriginalKeyCodes[12] = Keycons[2];
@@ -5952,6 +5459,7 @@ void ResetKeys(void)
    SetKey(5,  OriginalKeyCodes[5]);
    SetKey(4,  OriginalKeyCodes[4]);
    SetKey(11, OriginalKeyCodes[11]);
+*/
 }
 #if 0
 void NetworkOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)

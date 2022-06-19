@@ -2,7 +2,6 @@
 /* (C) Psygnosis 1994. By Jason Carl Denton
 */
 
-
 #include "wipesrc\psx26\include\sys\types.h"
 #include "wipesrc\psx26\include\libgte.h"
 #include "wipesrc\psx26\include\libgpu.h"
@@ -23,7 +22,9 @@ typedef char* Ptr;
 #define  NULL     0
 #endif
 
-extern   ulong FastRam; // ajs (well ajy actually)
+#define randy() rand()
+
+extern int gPad;
 
 /* Functions in the library but not defined in the headers! */
 
@@ -39,12 +40,10 @@ long rsin( long angle );
 long rcos( long angle );
 */
 
+
+
 int   JJSLoadSprites(void);
-int   randy(void);
-void  centreMouse(void);
 void  changeScreen(void);
-int   LockBackBuffer(void);
-void  UnlockBackBuffer(void);
 void  setRenderBegin(void);
 void  setRenderEnd(void);
 int   ProcessMessages(void);
@@ -58,4 +57,8 @@ void  JJSDrawPolyF4(POLY_F4* p);
 void  JJSDrawPolyFT4(POLY_FT4* p);
 void  JJSDrawPolyG4(POLY_G4* p);
 void  WinQuit(void);
-int   JJSJoyConfig(void);
+unsigned short GetKeyNoBlock();
+
+void setRenderBegin(void);
+void setRenderEnd(void);
+void sendList(void);

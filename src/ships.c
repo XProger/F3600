@@ -36,6 +36,8 @@
 #include "libgte.h"
 #include "andyscn.h"
 #include "init.h"
+#include "utils.h"
+
 
 extern TrackCamera      ctrlcamera;
 
@@ -538,10 +540,7 @@ void initShipData(TrackSection* section, ShipData *shipIndex,ConfigData *gameDat
 
       if(i == ownShip)
       {
-         if(neg1.head == 8960)
-            shipIndex[i].update = UpdatePlayerShipNegStart;
-         else
-            shipIndex[i].update = UpdatePlayerShipNormStart;
+         shipIndex[i].update = UpdatePlayerShipNormStart;
       }
       else
          shipIndex[i].update = UpdateRemoteShipStart;

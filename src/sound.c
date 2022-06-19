@@ -25,7 +25,6 @@
 
 #include "utypes.h"
 #include "sfx.h"
-#include "winsnd.h"
 #include "utils.h"
 #include "libgte.h"
 
@@ -313,7 +312,7 @@ void InitSpuSound()
       SfxOn();                //Start to DMA circ buffer.
 
       /** Init Reverb **/
-      SfxInitReverb(REVERB,100);    //Default value for reverb effect
+      SfxInitReverb(100);    //Default value for reverb effect
       SfxSetReverbDepth(64);        //ditto
       SfxReverbOff();               //No reverb by refault
    }
@@ -379,7 +378,7 @@ void UpdateNotes(int paused)
       //looping sounds should now switch to duration 8
    {
       mode = PAUSED;
-      KillAllFx();
+      SfxStopAll();
       for (i = 0; i < PLAY_CHANNELS; i++)
       {
          //Static spot effect and fading out loop samples
@@ -514,7 +513,7 @@ void KillNotes()
       if (IsPlaying(i))
          KillNote(channel_info[i].vagNo);
    }
-   KillAllFx();
+   SfxStopAll();
 }
 
 void StopNotes(void)
@@ -996,15 +995,6 @@ void AdjustEngineSound(ShipData *playerShip, TrackCamera *camera)
    */
    SetVolume(TURBULENCE, (vol>>2) + ((vol * playerShip->r_brake_rot)>>9), (vol>>2) + ((vol * playerShip->l_brake_rot)>>9));
 
-}
-
-int InitCD(CdlLOC* loc, int trackNo)
-{
-   u_char   param;
-   int      i;
-
-   ntoc = CdGetToc(loc);
-   return(ntoc);
 }
 
 int InitCrowdSound(Object** prm, short prmCount, Object **lostad, int stadCount)

@@ -10,7 +10,6 @@
 #define        MAX_CD_TRACKS     11
 #define     MAX_GAMES         15
 
-#define        NO_ERROR       0
 #define        CARD_FULL         101
 #define        DUP_NAME       102
 #define        LOAD_ERROR        103
@@ -430,7 +429,6 @@ void     DisplayPadMenu(Menus *, int *, int, int *);
 void     DisplayNegConMenu(Menus *, int *, int, int *);
 void     ConfirmFormat(MusicPrims *, SlideTextures *, SelectionData *, char [][9], ConfigData *);
 void     SetNormPadPresets(ConfigData *);
-void     SetNegconPresets(ConfigData *);
 void     InitChampionship();
 void     CheckSaveType(SelectionData *, char [][9], ConfigData *);
 void     NegConButtonDisplay(Menus *, int *, int, int *);
@@ -450,7 +448,5 @@ void     NetworkOptions(MusicPrims *, SlideTextures *, SelectionData *, char [][
 void     SerialOptions(MusicPrims *, SlideTextures *, SelectionData *, char [][9], ConfigData *);
 void     SerialNetworkHandling(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData);
 void  RestartGameConfirm (char *confirm, short xpad, char *lConfirm, ulong *toggle);
-void MostRecentSaveFile(char *filename);
-void JJSReadTIM(char *filename , char *location, TimData *tim);
 
 #endif

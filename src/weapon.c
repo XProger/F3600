@@ -28,7 +28,6 @@
 #include "global.h"
 #include "main.h"
 #include "texplace.h"
-#include "trakview.h"
 #include "effects.h"
 #include "options.h"
 #include "sprite.h"

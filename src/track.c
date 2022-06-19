@@ -122,8 +122,8 @@ void IntelSection( void )
 
       for ( j=0; j<4; j++ )
       {
-         IntelShort( &section->high[ j ] );
-         IntelShort( &section->med[ j ] );
+         IntelShort( &section->unused_high[ j ] );
+         IntelShort( &section->unused_med[ j ] );
       }
 
       IntelShort( &section->faceStart );

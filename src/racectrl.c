@@ -26,7 +26,6 @@
 #include "sound.h"
 #include "editor.h"
 #include "texplace.h"
-#include "trakview.h"
 #include "effects.h"
 #include "fileops.h"
 #include "sparks2.h"
@@ -36,13 +35,11 @@
 #include "cone.h"
 #include "race.h"
 #include "trackasm.h"
-#include "progress.h"
 #include "spline.h"
 #include "credits.h"
 #include "init.h"
 #include "ajs.h"
 #include "collide.h"
-#include "input.h"
 
 #define START_EXTRO 0
 #define UPDATE_EXTRO 1
@@ -615,7 +612,6 @@ void raceinit(void)
       if (gameType != SINGLE)
          ctrlshipIndex[serialShip].haveFired = NON_ACTIVE ;
 
-      SetNegconPresets (gameData) ;
       SetNormPadPresets (gameData) ;
 
 
@@ -747,9 +743,7 @@ void racectrl(void)
 
       opad=pad;
       //    archive_pad = pad;
-      pad = neg1.bits;
-      if((neg1.head != 0xff))
-         pad = ~pad;
+      pad = gPad;
       //    archive_xpad = xpad;          //preserve xpad from the drawing side
       xpad=(pad^opad)&pad;          //xpad is difference between this frames
       //pad and the last frames pad.
@@ -977,24 +971,12 @@ void racectrl(void)
 
          if(ctrlmode != ATTRACT)
          {
-            if((neg1.head != 8960) && (gameType == SINGLE))
+            if(gameType == SINGLE)
             {
                if(pad == 0)
                   ctrlbuttonPressed++;
                else
                   ctrlbuttonPressed = 0;
-            }
-            else if( (neg1.head == 8960) && (gameType == SINGLE))
-            {
-               if((pad != 0) ||
-                  (neg1.twist > 135) ||
-                  (neg1.twist < 122) ||
-                  (neg1.i > 10) ||
-                  (neg1.ii > 10) ||
-                  (neg1.lShift > 10))
-                  ctrlbuttonPressed = 0;
-               else
-                  ctrlbuttonPressed++;
             }
          }
 
@@ -1737,11 +1719,6 @@ void racectrl(void)
                return;
             }
 
-
-
-            negSelect = neg1.i;
-            negQuit = neg1.ii;
-            negBack = neg1.ii;
             //    copy_glob_to_spare(xpad);
             //    xpad = archive_xpad; //bodge to restore the xpad of the current drawing frame
             //    pad = archive_pad;   //bodge to restore the xpad of the current drawing frame

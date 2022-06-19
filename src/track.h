@@ -88,8 +88,10 @@ typedef struct TrackSection
    short          eastViewCount[ 3 ];
    short          westViewCount[ 3 ];
    short          allViewCount[ 3 ];
-   short          high[ 4 ];
-   short          med[ 4 ];
+
+   /*TODO unused*/
+   short          unused_high[ 4 ];
+   short          unused_med[ 4 ];
 
    short          faceStart;
    short          faceCount;

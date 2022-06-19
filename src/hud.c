@@ -27,12 +27,7 @@
 #include "utils.h"
 #include "libgte.h"
 
-
-#ifdef PC_DEMO
-#define  END_LAP 1
-#else
 #define END_LAP 3
-#endif
 
 extern short FrameState,screenres;
 extern float upres;

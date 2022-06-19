@@ -20,7 +20,6 @@
 #include "tilelib.h"
 #include "ttf.h"
 #include "texplace.h"
-#include "trakview.h"
 #include "trackasm.h"
 #include "effects.h"
 #include "fileops.h"

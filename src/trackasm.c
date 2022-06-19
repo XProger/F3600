@@ -31,8 +31,6 @@
 #include "libgte.h"
 #include "ajs.h"
 
-#define     UseFastRam     1
-
 void Test16Bit(long *Test16bitX, long *Test16bitY, long *Test16bitZ);
 
 #define     DepthShift     2
@@ -354,17 +352,6 @@ void AsmNextFrame( )
    /* Initialise med track polygon counter */
 
    TrackHiCount = 0;
-
-   /* Initialise mesh memory pointer */
-
-   if ( CurrentScreen == 0 )
-   {
-      MeshPtr = MeshRam0;
-   }
-   else
-   {
-      MeshPtr = MeshRam1;
-   }
 }
 
 
@@ -378,14 +365,6 @@ Listed in decreasing order of priority
 
    VECTOR*              vertex;
 
-#if UseFastRam
-   VECTOR*              campos = ( VECTOR* )( FastRam );          /* 1 vector = 16 bytes */
-   SVECTOR*             svector = ( SVECTOR* )( campos + 1 );     /* 4 svectors = 32 bytes */
-   DVECTOR*             screen = ( DVECTOR* )( svector + 4 );     /* 4 dvectors = 16 bytes */
-   long*                depth = ( long* )( screen + 4 );         /* 4 longs = 16 bytes */
-   long*                flag = ( long* )( depth + 4 );           /* 4 longs = 16 bytes */
-   long*                interpolate = ( long* )( flag + 4 );     /* 4 longs = 16 bytes */
-#else
    VECTOR               camposData;
    VECTOR*              campos = &camposData;
    SVECTOR              svector[ 4 ];
@@ -393,11 +372,9 @@ Listed in decreasing order of priority
    long                 depth[ 4 ];
    long                 flag[ 4 ];
    long                 interpolate[ 4 ];
-#endif
-
-
-   ushort*              depth2 = ( ushort* )( interpolate + 4 );              /* 9 shorts = 18 bytes */
-   ushort*              flag2 = ( ushort* )( depth2 + 4 );                /* 9 shorts = 18 bytes */
+   ushort               depth2Data[ 4 ];
+   ushort               depth2[ 4 ];
+   ushort               flag2[ 4 ];
 
    short                i, j, k;
 
@@ -650,14 +627,6 @@ Listed in decreasing order of priority
 
    VECTOR*              vertex;
 
-#if UseFastRam
-   VECTOR*              campos = ( VECTOR* )( FastRam );                /* 1 vector = 16 bytes */
-   VECTOR*              vector = ( VECTOR* )( campos + 1 );             /* 9 vectors = 144 bytes */
-   SVECTOR*             svector = ( SVECTOR* )( vector + 9 );           /* 9 svectors = 72 bytes */
-   DVECTOR*             screen = ( DVECTOR* )( svector + 9 );           /* 9 dvectors = 36 bytes */
-   ushort*              depth = ( ushort* )( screen + 9 );              /* 9 shorts = 18 bytes */
-   ushort*              flag = ( ushort* )( depth + 9 );                /* 9 shorts = 18 bytes */
-#else
    VECTOR               camposData;
    VECTOR*              campos = &camposData;
    SVECTOR              svector[ 9 ];
@@ -665,8 +634,6 @@ Listed in decreasing order of priority
    ushort               depth[ 9 ];
    ushort               flag[ 9 ];
    VECTOR               meshVector[ 9 ];
-#endif
-
 
    /* original 32 bit vertices */
 
@@ -1106,21 +1073,12 @@ Listed in decreasing order of priority
 
    VECTOR*              vertex;
 
-#if 0 //JJS UseFastRam
-   VECTOR*              campos = ( VECTOR* )( FastRam );                /* 1 vector = 16 bytes */
-   VECTOR*              vector = ( VECTOR* )( campos + 1 );             /* 25 vectors = 400 bytes */
-   SVECTOR*             svector = ( SVECTOR* )( vector + 25 );          /* 25 svectors = 200 bytes */
-   DVECTOR*             screen = ( DVECTOR* )( svector + 25 );          /* 25 dvectors = 100 bytes */
-   ushort*              depth = ( ushort* )( screen + 25 );             /* 25 shorts = 50 bytes */
-   ushort*              flag = ( ushort* )( depth + 25 );               /* 25 shorts = 50 bytes */
-#else
    VECTOR               camposData;
    VECTOR*              campos = &camposData;
    SVECTOR              svector[ 25 ];
    DVECTOR              screen[ 25 ];
    ushort               depth[ 25 ];
    ushort               flag[ 25 ];
-#endif
 
    /* original 32 bit vertices */
 
@@ -1346,21 +1304,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 0 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 0 ] & flag[ 1 ] & flag[ 5 ] & flag[ 6 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 0 ] );
-
-            AsmAutoMesh( &svector[ 0 ], &svector[ 1 ], &svector[ 5 ], &svector[ 6 ], face, tile, autoMesh );
-         }
 
          /* polygon 1 */
 
@@ -1424,21 +1367,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 1 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 1 ] & flag[ 2 ] & flag[ 6 ] & flag[ 7 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 1 ] );
-
-            AsmAutoMesh( &svector[ 1 ], &svector[ 2 ], &svector[ 6 ], &svector[ 7 ], face, tile, autoMesh );
-         }
 
          /* polygon 2 */
 
@@ -1500,21 +1428,6 @@ Listed in decreasing order of priority
             ft4->xy3.pad = 1;
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 2 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
-         }
-         else if ( !( flag[ 2 ] & flag[ 3 ] & flag[ 7 ] & flag[ 8 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 2 ] );
-
-            AsmAutoMesh( &svector[ 2 ], &svector[ 3 ], &svector[ 7 ], &svector[ 8 ], face, tile, autoMesh );
          }
 
          /* polygon 3 */
@@ -1578,21 +1491,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 3 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 3 ] & flag[ 4 ] & flag[ 8 ] & flag[ 9 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 3 ] );
-
-            AsmAutoMesh( &svector[ 3 ], &svector[ 4 ], &svector[ 8 ], &svector[ 9 ], face, tile, autoMesh );
-         }
 
          /* polygon 4 */
 
@@ -1654,21 +1552,6 @@ Listed in decreasing order of priority
             ft4->xy3.pad = 1;
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 5 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
-         }
-         else if ( !( flag[ 5 ] & flag[ 6 ] & flag[ 10 ] & flag[ 11 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 4 ] );
-
-            AsmAutoMesh( &svector[ 5 ], &svector[ 6 ], &svector[ 10 ], &svector[ 11 ], face, tile, autoMesh );
          }
 
          /* polygon 5 */
@@ -1732,21 +1615,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 6 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 6 ] & flag[ 7 ] & flag[ 11 ] & flag[ 12 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 5 ] );
-
-            AsmAutoMesh( &svector[ 6 ], &svector[ 7 ], &svector[ 11 ], &svector[ 12 ], face, tile, autoMesh );
-         }
 
          /* polygon 6 */
 
@@ -1808,21 +1676,6 @@ Listed in decreasing order of priority
             ft4->xy3.pad = 1;
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 7 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
-         }
-         else if ( !( flag[ 7 ] & flag[ 8 ] & flag[ 12 ] & flag[ 13 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 6 ] );
-
-            AsmAutoMesh( &svector[ 7 ], &svector[ 8 ], &svector[ 12 ], &svector[ 13 ], face, tile, autoMesh );
          }
 
          /* polygon 7 */
@@ -1886,21 +1739,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 8 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 8 ] & flag[ 9 ] & flag[ 13 ] & flag[ 14 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 7 ] );
-
-            AsmAutoMesh( &svector[ 8 ], &svector[ 9 ], &svector[ 13 ], &svector[ 14 ], face, tile, autoMesh );
-         }
 
          /* polygon 8 */
 
@@ -1962,21 +1800,6 @@ Listed in decreasing order of priority
             ft4->xy3.pad = 1;
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 10 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
-         }
-         else if ( !( flag[ 10 ] & flag[ 11 ] & flag[ 15 ] & flag[ 16 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 8 ] );
-
-            AsmAutoMesh( &svector[ 10 ], &svector[ 11 ], &svector[ 15 ], &svector[ 16 ], face, tile, autoMesh );
          }
 
          /* polygon 9 */
@@ -2040,21 +1863,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 11 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 11 ] & flag[ 12 ] & flag[ 16 ] & flag[ 17 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 9 ] );
-
-            AsmAutoMesh( &svector[ 11 ], &svector[ 12 ], &svector[ 16 ], &svector[ 17 ], face, tile, autoMesh );
-         }
 
          /* polygon 10 */
 
@@ -2116,21 +1924,6 @@ Listed in decreasing order of priority
             ft4->xy3.pad = 1;
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 12 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
-         }
-         else if ( !( flag[ 12 ] & flag[ 13 ] & flag[ 17 ] & flag[ 18 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 10 ] );
-
-            AsmAutoMesh( &svector[ 12 ], &svector[ 13 ], &svector[ 17 ], &svector[ 18 ], face, tile, autoMesh );
          }
 
          /* polygon 11 */
@@ -2194,21 +1987,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 13 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 13 ] & flag[ 14 ] & flag[ 18 ] & flag[ 19 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 11 ] );
-
-            AsmAutoMesh( &svector[ 13 ], &svector[ 14 ], &svector[ 18 ], &svector[ 19 ], face, tile, autoMesh );
-         }
 
          /* polygon 12 */
 
@@ -2270,22 +2048,6 @@ Listed in decreasing order of priority
             ft4->xy3.pad = 1;
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 15 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
-         }
-         else if ( !( flag[ 15 ] & flag[ 16 ] & flag[ 20 ] & flag[ 21 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-
-            tile = &( surface->high[ 12 ] );
-
-            AsmAutoMesh( &svector[ 15 ], &svector[ 16 ], &svector[ 20 ], &svector[ 21 ], face, tile, autoMesh );
          }
 
          /* polygon 13 */
@@ -2349,21 +2111,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 16 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 16 ] & flag[ 17 ] & flag[ 21 ] & flag[ 22 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 13 ] );
-
-            AsmAutoMesh( &svector[ 16 ], &svector[ 17 ], &svector[ 21 ], &svector[ 22 ], face, tile, autoMesh );
-         }
 
          /* polygon 14 */
 
@@ -2425,21 +2172,6 @@ Listed in decreasing order of priority
             ft4->xy3.pad = 1;
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 17 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
-         }
-         else if ( !( flag[ 17 ] & flag[ 18 ] & flag[ 22 ] & flag[ 23 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 14 ] );
-
-            AsmAutoMesh( &svector[ 17 ], &svector[ 18 ], &svector[ 22 ], &svector[ 23 ], face, tile, autoMesh );
          }
 
          /* polygon 15 */
@@ -2503,21 +2235,6 @@ Listed in decreasing order of priority
 
             AddPrim( OT[ CurrentScreen ] + (( depth[ 18 ] >> DepthShift) - DepthMod  ), ( ulong* ) ft4 );
          }
-         else if ( !( flag[ 18 ] & flag[ 19 ] & flag[ 23 ] & flag[ 24 ] & ShortClipFlags ) )
-         {
-            if ( face->flags & FlipTexture )
-            {
-               surface = &( TrackSurface[ face->texture ][ 1 ] );
-            }
-            else
-            {
-               surface = &( TrackSurface[ face->texture ][ 0 ] );
-            }
-
-            tile = &( surface->high[ 15 ] );
-
-            AsmAutoMesh( &svector[ 18 ], &svector[ 19 ], &svector[ 23 ], &svector[ 24 ], face, tile, autoMesh );
-         }
 
          face++;
       }
@@ -2529,574 +2246,6 @@ Listed in decreasing order of priority
 
    return( section );
 }
-
-
-void AsmAutoMesh
-(
- SVECTOR*       tlVector,
- SVECTOR*       trVector,
- SVECTOR*       blVector,
- SVECTOR*       brVector,
- Face*          face,
- Tile*          tile,
- AutoMeshData*  autoMesh
- )
-{
-   PolyFT4*       ft4;
-   PolyFT3*       ft3;
-
-
-   short          clip;
-
-   return;
-
-#define        top            1
-#define        right          2
-#define        bottom         4
-#define        left           8
-#define        centre         16
-
-#define        topLeft        32
-#define        topRight       64
-#define        bottomLeft     128
-#define        bottomRight    256
-
-
-
-
-#define        tNum     0
-#define        rNum     1
-#define        bNum     2
-#define        lNum     3
-#define        cNum     4
-
-#define        tlNum    5
-#define        trNum    6
-#define        blNum    7
-#define        brNum    8
-
-   SVECTOR*       svector =     ( SVECTOR* )( FastRam + 816 );    /* 5 * 8 = 40 bytes */
-   DVECTOR*       screen =      ( DVECTOR* )( FastRam + 856 );    /* 9 * 4 = 36 bytes */
-   long*          depth =       ( long* )   ( FastRam + 892 );    /* 9 * 4 = 36 bytes */
-
-   long*          interpolate = ( long* )   ( FastRam + 928 );    /* 1 * 4 = 4 bytes  */
-   long*          flag =        ( long* )   ( FastRam + 932 );    /* 1 * 4 = 4 bytes  */
-
-   uchar*         uv =          ( uchar* )  ( FastRam + 936 );    /* 5 * 2 = 10 bytes */
-
-#define        tu    0
-#define        ru    1
-#define        bu    2
-#define        lu    3
-#define        cu    4
-
-#define        tv    5
-#define        rv    6
-#define        bv    7
-#define        lv    8
-#define        cv    9
-
-
-
-   if ( ( autoMesh->quadCount >= MaxAutos ) || ( autoMesh->triCount >= MaxAutos ) )
-   {
-#if 0
-      Error( " too many automeshed polys \n\n", Warning );
-#endif
-
-      return;
-   }
-
-   /* Calculate 3d coords */
-
-   svector[ tNum ].vx = ( tlVector->vx + trVector->vx ) >> 1;
-   svector[ tNum ].vy = ( tlVector->vy + trVector->vy ) >> 1;
-   svector[ tNum ].vz = ( tlVector->vz + trVector->vz ) >> 1;
-
-   svector[ bNum ].vx = ( blVector->vx + brVector->vx ) >> 1;
-   svector[ bNum ].vy = ( blVector->vy + brVector->vy ) >> 1;
-   svector[ bNum ].vz = ( blVector->vz + brVector->vz ) >> 1;
-
-   svector[ rNum ].vx = ( trVector->vx + brVector->vx ) >> 1;
-   svector[ rNum ].vy = ( trVector->vy + brVector->vy ) >> 1;
-   svector[ rNum ].vz = ( trVector->vz + brVector->vz ) >> 1;
-
-   svector[ lNum ].vx = ( tlVector->vx + blVector->vx ) >> 1;
-   svector[ lNum ].vy = ( tlVector->vy + blVector->vy ) >> 1;
-   svector[ lNum ].vz = ( tlVector->vz + blVector->vz ) >> 1;
-
-   svector[ cNum ].vx = ( svector[ lNum ].vx + svector[ rNum ].vx ) >> 1;
-   svector[ cNum ].vy = ( svector[ lNum ].vy + svector[ rNum ].vy ) >> 1;
-   svector[ cNum ].vz = ( svector[ lNum ].vz + svector[ rNum ].vz ) >> 1;
-
-
-   /* Transform the coordinates */
-
-   clip = 0;
-
-
-   depth[ cNum ] = RotTransPers
-      (
-      &( svector[ cNum ] ),
-      &( screen[ cNum ] ),
-      interpolate,
-      flag
-      );
-
-   if ( !( *flag & ClipFlags ) )
-   {
-      clip |= centre;
-      uv[ cu ] = ( tile->u0 + tile->u1 + tile->u2 + tile->u3 ) >> 2;
-      uv[ cv ] = ( tile->v0 + tile->v1 + tile->v2 + tile->v3 ) >> 2;
-   }
-
-
-   depth[ tNum ] = RotTransPers
-      (
-      &( svector[ tNum ] ),
-      &( screen[ tNum ] ),
-      interpolate,
-      flag
-      );
-
-   if ( !( *flag & ClipFlags ) )
-   {
-      clip |= top;
-      uv[ tu ] = ( tile->u0 + tile->u1 ) >> 1;
-      uv[ tv ] = ( tile->v0 + tile->v1 ) >> 1;
-   }
-
-
-   depth[ rNum ] = RotTransPers
-      (
-      &( svector[ rNum ] ),
-      &( screen[ rNum ] ),
-      interpolate,
-      flag
-      );
-
-   if ( !( *flag & ClipFlags ) )
-   {
-      clip |= right;
-      uv[ ru ] = ( tile->u1 + tile->u3 ) >> 1;
-      uv[ rv ] = ( tile->v1 + tile->v3 ) >> 1;
-   }
-
-
-   depth[ bNum ] = RotTransPers
-      (
-      &( svector[ bNum ] ),
-      &( screen[ bNum ] ),
-      interpolate,
-      flag
-      );
-
-   if ( !( *flag & ClipFlags ) )
-   {
-      clip |= bottom;
-      uv[ bu ] = ( tile->u2 + tile->u3 ) >> 1;
-      uv[ bv ] = ( tile->v2 + tile->v3 ) >> 1;
-   }
-
-
-   depth[ lNum ] = RotTransPers
-      (
-      &( svector[ lNum ] ),
-      &( screen[ lNum ] ),
-      interpolate,
-      flag
-      );
-
-   if ( !( *flag & ClipFlags ) )
-   {
-      clip |= left;
-      uv[ lu ] = ( tile->u0 + tile->u2 ) >> 1;
-      uv[ lv ] = ( tile->v0 + tile->v2 ) >> 1;
-   }
-
-
-   /* Check top, right, bottom and left before doing RotTransPers for corners */
-
-   if ( 1 || ( clip & top ) || ( clip & left ) )
-   {
-      depth[ tlNum ] = RotTransPers
-         (
-         tlVector,
-         &( screen[ tlNum ] ),
-         interpolate,
-         flag
-         );
-
-      if ( !( *flag & ClipFlags ) )
-         clip |= topLeft;
-   }
-
-
-   if ( 1 || ( clip & top ) || ( clip & right ) )
-   {
-      depth[ trNum ] = RotTransPers
-         (
-         trVector,
-         &( screen[ trNum ] ),
-         interpolate,
-         flag
-         );
-
-      if ( !( *flag & ClipFlags ) )
-         clip |= topRight;
-   }
-
-
-   if ( 1 || ( clip & bottom ) || ( clip & left ) )
-   {
-      depth[ blNum ] = RotTransPers
-         (
-         blVector,
-         &( screen[ blNum ] ),
-         interpolate,
-         flag
-         );
-
-      if ( !( *flag & ClipFlags ) )
-         clip |= bottomLeft;
-   }
-
-
-   if ( 1 || ( clip & bottom ) || ( clip & right ) )
-   {
-      depth[ brNum ] = RotTransPers
-         (
-         brVector,
-         &( screen[ brNum ] ),
-         interpolate,
-         flag
-         );
-
-      if ( !( *flag & ClipFlags ) )
-         clip |= bottomRight;
-   }
-
-   /* Check if centre coord is valid */
-
-   if ( clip & centre )
-   {
-      /* Meshing the quad into quarters */
-
-      if ( clip & topLeft )
-      {
-         if ( ( clip & top ) && ( clip & left ) )
-         {
-            ft4 = &( autoMesh->quad[ CurrentScreen ][ autoMesh->quadCount ] );
-
-            ft4->xy0.vx = screen[ tlNum ].vx;
-            ft4->xy0.vy = screen[ tlNum ].vy;
-            ft4->xy1.vx = screen[ tNum ].vx;
-            ft4->xy1.vy = screen[ tNum ].vy;
-            ft4->xy2.vx = screen[ lNum ].vx;
-            ft4->xy2.vy = screen[ lNum ].vy;
-            ft4->xy3.vx = screen[ cNum ].vx;
-            ft4->xy3.vy = screen[ cNum ].vy;
-            ft4->xy0.vz = depth[tlNum];
-            ft4->xy1.vz = depth[tNum];
-            ft4->xy2.vz = depth[lNum];
-            ft4->xy3.vz = depth[cNum];
-            ft4->xy0.pad = 1;
-            ft4->xy1.pad = 1;
-            ft4->xy2.pad = 1;
-            ft4->xy3.pad = 1;
-
-            //ft4->xy1 = screen[ tNum ];
-            //ft4->xy2 = screen[ lNum ];
-            //ft4->xy3 = screen[ cNum ];
-
-            ft4->u0 = tile->u0;
-            ft4->u1 = uv[ tu ];
-            ft4->u2 = uv[ lu ];
-            ft4->u3 = uv[ cu ];
-
-            ft4->v0 = tile->v0;
-            ft4->v1 = uv[ tv ];
-            ft4->v2 = uv[ lv ];
-            ft4->v3 = uv[ cv ];
-
-            ft4->cba = tile->cba;
-            ft4->tsb = tile->tsb;
-#if 1
-            ft4->colour0.r = face->red;
-            ft4->colour0.g = face->green;
-            ft4->colour0.b = face->blue;
-#else
-            ft4->colour0.r = 255;
-            ft4->colour0.g = 63;
-            ft4->colour0.b = 63;
-#endif
-            SetPolyFT4( ( POLY_FT4* )( ft4 ) );
-
-            AddPrim( OT[ CurrentScreen ] + depth[ cNum ], ( ulong* )( ft4 ) );
-
-            autoMesh->quadCount += 1;
-         }
-         else if ( clip & top )
-         {
-            ft3 = &( autoMesh->tri[ CurrentScreen ][ autoMesh->triCount ] );
-
-            //ft3->xy0 = screen[ tlNum ];
-            //ft3->xy1 = screen[ tNum ];
-            //ft3->xy2 = screen[ cNum ];
-            ft3->xy0.vx = screen[ tNum ].vx;
-            ft3->xy0.vy = screen[ tNum ].vy;
-            ft3->xy1.vx = screen[ lNum ].vx;
-            ft3->xy1.vy = screen[ lNum ].vy;
-            ft3->xy2.vx = screen[ cNum ].vx;
-            ft3->xy2.vy = screen[ cNum ].vy;
-            ft3->xy0.vz = depth[tNum];
-            ft3->xy1.vz = depth[lNum];
-            ft3->xy2.vz = depth[cNum];
-            ft3->xy0.pad = 1;
-            ft3->xy1.pad = 1;
-            ft3->xy2.pad = 1;
-
-            ft3->u0 = tile->u0;
-            ft3->u1 = uv[ tu ];
-            ft3->u2 = uv[ cu ];
-
-            ft3->v0 = tile->v0;
-            ft3->v1 = uv[ tv ];
-            ft3->v2 = uv[ cv ];
-
-            ft3->cba = tile->cba;
-            ft3->tsb = tile->tsb;
-#if 1
-            ft3->colour0.r = face->red;
-            ft3->colour0.g = face->green;
-            ft3->colour0.b = face->blue;
-#else
-            ft3->colour0.r = 63;
-            ft3->colour0.g = 255;
-            ft3->colour0.b = 63;
-#endif
-            SetPolyFT3( ( POLY_FT3* )( ft3 ) );
-
-            AddPrim( OT[ CurrentScreen ] + depth[ cNum ], ( ulong* )( ft3 ) );
-            autoMesh->triCount += 1;
-         }
-      }
-
-      if ( clip & topRight )
-      {
-         if ( ( clip & top ) && ( clip & right ) )
-         {
-            ft4 = &( autoMesh->quad[ CurrentScreen ][ autoMesh->quadCount ] );
-
-            //ft4->xy0 = screen[ tNum ];
-            //ft4->xy1 = screen[ trNum ];
-            //ft4->xy2 = screen[ cNum ];
-            //ft4->xy3 = screen[ rNum ];
-            ft4->xy0.vx = screen[ tNum ].vx;
-            ft4->xy0.vy = screen[ tNum ].vy;
-            ft4->xy1.vx = screen[ trNum ].vx;
-            ft4->xy1.vy = screen[ trNum ].vy;
-            ft4->xy2.vx = screen[ cNum ].vx;
-            ft4->xy2.vy = screen[ cNum ].vy;
-            ft4->xy3.vx = screen[ rNum ].vx;
-            ft4->xy3.vy = screen[ rNum ].vy;
-            ft4->xy0.vz = depth[tNum];
-            ft4->xy1.vz = depth[trNum];
-            ft4->xy2.vz = depth[cNum];
-            ft4->xy3.vz = depth[rNum];
-            ft4->xy0.pad = 1;
-            ft4->xy1.pad = 1;
-            ft4->xy2.pad = 1;
-            ft4->xy3.pad = 1;
-
-            ft4->u0 = uv[ tu ];
-            ft4->u1 = tile->u1;
-            ft4->u2 = uv[ cu ];
-            ft4->u3 = uv[ ru ];
-
-            ft4->v0 = uv[ tv ];
-            ft4->v1 = tile->v1;
-            ft4->v2 = uv[ cv ];
-            ft4->v3 = uv[ rv ];
-
-            ft4->cba = tile->cba;
-            ft4->tsb = tile->tsb;
-#if 1
-            ft4->colour0.r = face->red;
-            ft4->colour0.g = face->green;
-            ft4->colour0.b = face->blue;
-#else
-            ft4->colour0.r = 255;
-            ft4->colour0.g = 63;
-            ft4->colour0.b = 63;
-#endif
-            SetPolyFT4( ( POLY_FT4* )( ft4 ) );
-
-            AddPrim( OT[ CurrentScreen ] + depth[ cNum ], ( ulong* )( ft4 ) );
-            autoMesh->quadCount += 1;
-         }
-         else if ( clip & top )
-         {
-            ft3 = &( autoMesh->tri[ CurrentScreen ][ autoMesh->triCount ] );
-
-            //ft3->xy0 = screen[ trNum ];
-            //ft3->xy1 = screen[ cNum ];
-            //ft3->xy2 = screen[ tNum ];
-            ft3->xy0.vx = screen[ trNum ].vx;
-            ft3->xy0.vy = screen[ trNum ].vy;
-            ft3->xy1.vx = screen[ cNum ].vx;
-            ft3->xy1.vy = screen[ cNum ].vy;
-            ft3->xy2.vx = screen[ tNum ].vx;
-            ft3->xy2.vy = screen[ tNum ].vy;
-            ft3->xy0.vz = depth[trNum];
-            ft3->xy1.vz = depth[cNum];
-            ft3->xy2.vz = depth[tNum];
-            ft3->xy0.pad = 1;
-            ft3->xy1.pad = 1;
-            ft3->xy2.pad = 1;
-
-            ft3->u0 = tile->u1;
-            ft3->u1 = uv[ cu ];
-            ft3->u2 = uv[ tu ];
-
-            ft3->v0 = tile->v1;
-            ft3->v1 = uv[ cv ];
-            ft3->v2 = uv[ tv ];
-
-            ft3->cba = tile->cba;
-            ft3->tsb = tile->tsb;
-#if 1
-            ft3->colour0.r = face->red;
-            ft3->colour0.g = face->green;
-            ft3->colour0.b = face->blue;
-#else
-            ft3->colour0.r = 63;
-            ft3->colour0.g = 255;
-            ft3->colour0.b = 63;
-#endif
-            SetPolyFT3( ( POLY_FT3* )( ft3 ) );
-
-            AddPrim( OT[ CurrentScreen ] + depth[ cNum ], ( ulong* )( ft3 ) );
-            autoMesh->triCount += 1;
-         }
-      }
-
-
-      if ( clip & bottomLeft )
-      {
-         if ( ( clip & bottom ) && ( clip & left ) )
-         {
-            ft4 = &( autoMesh->quad[ CurrentScreen ][ autoMesh->quadCount ] );
-
-            //ft4->xy0 = screen[ lNum ];
-            //ft4->xy1 = screen[ cNum ];
-            //ft4->xy2 = screen[ blNum ];
-            //ft4->xy3 = screen[ bNum ];
-            ft4->xy0.vx = screen[ lNum ].vx;
-            ft4->xy0.vy = screen[ lNum ].vy;
-            ft4->xy1.vx = screen[ cNum ].vx;
-            ft4->xy1.vy = screen[ cNum ].vy;
-            ft4->xy2.vx = screen[ blNum ].vx;
-            ft4->xy2.vy = screen[ blNum ].vy;
-            ft4->xy3.vx = screen[ bNum ].vx;
-            ft4->xy3.vy = screen[ bNum ].vy;
-            ft4->xy0.vz = depth[lNum];
-            ft4->xy1.vz = depth[cNum];
-            ft4->xy2.vz = depth[blNum];
-            ft4->xy3.vz = depth[bNum];
-            ft4->xy0.pad = 1;
-            ft4->xy1.pad = 1;
-            ft4->xy2.pad = 1;
-            ft4->xy3.pad = 1;
-
-            ft4->u0 = uv[ lu ];
-            ft4->u1 = uv[ cu ];
-            ft4->u2 = tile->u2;
-            ft4->u3 = uv[ bu ];
-
-            ft4->v0 = uv[ lv ];
-            ft4->v1 = uv[ cv ];
-            ft4->v2 = tile->v2;
-            ft4->v3 = uv[ bv ];
-
-            ft4->cba = tile->cba;
-            ft4->tsb = tile->tsb;
-#if 1
-            ft4->colour0.r = face->red;
-            ft4->colour0.g = face->green;
-            ft4->colour0.b = face->blue;
-#else
-            ft4->colour0.r = 255;
-            ft4->colour0.g = 63;
-            ft4->colour0.b = 63;
-#endif
-            SetPolyFT4( ( POLY_FT4* )( ft4 ) );
-
-            AddPrim( OT[ CurrentScreen ] + depth[ cNum ], ( ulong* )( ft4 ) );
-
-            autoMesh->quadCount += 1;
-         }
-      }
-
-      if ( clip & bottomRight )
-      {
-         if ( ( clip & bottom ) && ( clip & right ) )
-         {
-            ft4 = &( autoMesh->quad[ CurrentScreen ][ autoMesh->quadCount ] );
-
-            ft4->xy0.vx = screen[ cNum ].vx;
-            ft4->xy0.vy = screen[ cNum ].vy;
-            ft4->xy1.vx = screen[ rNum ].vx;
-            ft4->xy1.vy = screen[ rNum ].vy;
-            ft4->xy2.vx = screen[ bNum ].vx;
-            ft4->xy2.vy = screen[ bNum ].vy;
-            ft4->xy3.vx = screen[ brNum ].vx;
-            ft4->xy3.vy = screen[ brNum ].vy;
-            ft4->xy0.vz = depth[cNum];
-            ft4->xy1.vz = depth[rNum];
-            ft4->xy2.vz = depth[bNum];
-            ft4->xy3.vz = depth[brNum];
-            ft4->xy0.pad = 1;
-            ft4->xy1.pad = 1;
-            ft4->xy2.pad = 1;
-            ft4->xy3.pad = 1;
-
-            //ft4->xy1 = screen[ rNum ];
-            //ft4->xy2 = screen[ bNum ];
-            //ft4->xy3 = screen[ brNum ];
-
-            ft4->u0 = uv[ cu ];
-            ft4->u1 = uv[ ru ];
-            ft4->u2 = uv[ bu ];
-            ft4->u3 = tile->u3;
-
-            ft4->v0 = uv[ cv ];
-            ft4->v1 = uv[ rv ];
-            ft4->v2 = uv[ bv ];
-            ft4->v3 = tile->v3;
-
-            ft4->cba = tile->cba;
-            ft4->tsb = tile->tsb;
-#if 1
-            ft4->colour0.r = face->red;
-            ft4->colour0.g = face->green;
-            ft4->colour0.b = face->blue;
-#else
-            ft4->colour0.r = 255;
-            ft4->colour0.g = 63;
-            ft4->colour0.b = 63;
-#endif
-            SetPolyFT4( ( POLY_FT4* )( ft4 ) );
-
-            AddPrim( OT[ CurrentScreen ] + depth[ cNum ], ( ulong* )( ft4 ) );
-            autoMesh->quadCount += 1;
-         }
-      }
-   }
-
-
-}
-
 
 void Test16Bit(long *Test16bitX, long *Test16bitY, long *Test16bitZ)
 {

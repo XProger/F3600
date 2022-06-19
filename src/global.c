@@ -21,7 +21,6 @@
 
 int            copyright_Psygnosis_1995 = 1;
 
-NegconBuff     neg1, neg2;
 int            ownShip;
 int            serialShip;
 char           gameType;
@@ -45,10 +44,6 @@ int            actualCdTrack;
 ushort         pad;
 ushort         opad, xpad;
 PadInfo        pCon;
-NegInfo        nCon;
-char          negSelect = 0;
-char          negBack = 0 ;
-char          negQuit = 0 ;
 
 
 /*** Sound Variables required for libSpu ***/
@@ -110,13 +105,6 @@ short          showFaceFlags = 0;
 
 
 Object         **objectTable;
-
-
-
-long           MeshRam0[ MeshRamSize ];
-long           MeshRam1[ MeshRamSize ];
-long*          MeshPtr;
-
 
 long           buffer1[ 32 ];
 Line3D         line3d[ Max3DLines ];

@@ -334,31 +334,6 @@ void HighScore (ConfigData *gameData)
 
          if(padDelay > 0) padDelay--;
 
-
-         if(neg1.head == 8960)
-         {
-            if(xpad & NEG_B)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               numChars -- ;
-               charX -= CharSet16[(nameEntered[numChars] - 'A')].width ;
-               nameEntered[numChars] = 0 ;
-               charVal = 0 ;
-            }
-            else
-            {
-               currChar = charVal + 'A' ;
-               if(xpad & NEG_A)
-               {
-                  nameEntered[numChars] = currChar ;
-                  nameEntered[numChars+1] = 0 ;
-                  numChars ++ ;
-                  charX += CharSet16[charVal].width ;
-               }
-            }
-
-         }
-         else
          {
             if ((xpad & PadCross0) && (charVal == 26))
             {

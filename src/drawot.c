@@ -1,22 +1,10 @@
-#include "wipesrc\psx26\include\sys\types.h"
-#include "wipesrc\psx26\include\libgte.h"
-#include "wipesrc\psx26\include\libgpu.h"
-//#include "cgl.h"            //jed
-//#include <graph.h>
 #include <conio.h>
 #include <stdio.h>
-//#include <stdlib.h>
 #include <malloc.h>
 #include <ctype.h>
-#include "pcgraph.h"
-//#include  <graph.h>
 #include <math.h>
-#include "winh.h"
+#include "standard.h"
 #include "drawot.h"
-
-#define VGA    0
-#define EAGLE  1
-#define WATCOM 2
 
 extern   char  Reallyinmenu;  // jed & dave
 extern   int   inattract;//jed
@@ -27,9 +15,6 @@ extern int           WinPitch;
 extern short         WinWidth;
 extern short         WinHeight;
 extern short         WinHeightX2;
-extern long numoff,numsmall;
-long maxoff=0,maxsmall=0;
-
 
 #define LET_STEVE_CLIP
 
@@ -93,8 +78,7 @@ void DrawOTag(P_TAG *primitive)
    CurBufferJ=CurBuffer;                  //jed
    tempbuffer=CurBuffer;
    setRenderBegin();
-   numoff=0;
-   numsmall=0;
+
    addr = (unsigned long) primitive;
 
    if (addr != 0xffffffff) do
@@ -108,12 +92,6 @@ void DrawOTag(P_TAG *primitive)
 
    sendList();
    setRenderEnd();
-// UnlockBackBuffer();  //Finished drawing
-
-   if(numoff>maxoff)
-      maxoff=numoff;
-   if(numsmall>maxsmall)
-      maxsmall=numsmall;
 }
 
 void Set_Device(int tmp)

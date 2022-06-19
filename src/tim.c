@@ -29,7 +29,7 @@ Texture* LoadTexture( char* name, short translucent )
    TimClut8*   tc8;
    Texture*    texture;
    long        length;
-   RECT        rect;
+   GRECT        rect;
     CLUT        cluts[256];
 
    int         x,y;

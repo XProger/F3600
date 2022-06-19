@@ -152,7 +152,7 @@ Texture* NewLoadTexture( long timPtr, short translucent )
    TimClut4*   tc4;
    TimClut8*   tc8;
    Texture*    texture;
-   RECT        rect;
+   GRECT        rect;
    CLUT        cluts[256];       // PCwipeout
 
    int         x,y;

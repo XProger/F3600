@@ -23,9 +23,6 @@
 #include "libgte.h"
 #include "utils.h"
 
-#include "wipesrc\win95\markk\libetc.h"      // DLS
-
-
 
 /**************************************************************************/
 /****             Rescue droid control update routine                  ****/
@@ -122,23 +119,7 @@ void UpdateRescueDroid(ShipData *shipIndex, Object** shipShapes, int shipNo, Wea
    /**** Needs PAL ****/
    if((playerShip->attr & IN_TOW) && (GetMagnitude(distance) < 800))
    {
-//    if(neg1.head == 8960)
-//    {
-//       playerShip->update = UpdatePlayerShipNeg;
-//    }
-//    else
-//    {
-//       playerShip->update = UpdatePlayerShipNorm;
-//
-//    }
-
-      if(etc_InputDeviceSelect == _KEYBOARD)
-         playerShip->update = UpdatePlayerShipNorm;
-      else if(etc_InputDeviceSelect == _MOUSE1)
-         playerShip->update = UpdatePlayerShipMouse;
-      else if(etc_InputDeviceSelect == _JOYSTICK1)
-         playerShip->update = UpdatePlayerShipJoystick;
-
+      playerShip->update = UpdatePlayerShipNorm;
       playerShip->updateCount = 0;
       playerShip->attr &= ~RESCUE;
    }

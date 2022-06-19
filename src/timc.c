@@ -1,9 +1,7 @@
 #include          <sys\types.h>
 
-#include "datacash.h"
 #include "wintime.h"
 
-char              *backup_cache;
 int                  processing_interupt = 0;
 char              *INT_STACK;
 long              stack_addr;
@@ -13,7 +11,6 @@ short             old_stack_select;
 char              imr_state;
 long              TimerInstalled = 0;
 extern long          frameRate30;
-extern unsigned long FastRam; // ajy
 extern char          fpstate;
 
 
@@ -57,19 +54,12 @@ void InstallTimer(void)
       FR7U = (7*30)/frameRate30;
       FR32U = (32*30)/frameRate30;
 
-      backup_cache = (char *)make_data_cache();
-
       InitialiseWinTimer();
       TimerInstalled = 1;
    }
 }
 
-
-
 void RemoveTimer(void)
 {
    EndWinTimer();
 }
-
-char  old_mask;
-

@@ -26,7 +26,6 @@
 #include "sound.h"
 #include "editor.h"
 #include "texplace.h"
-#include "trakview.h"
 #include "effects.h"
 #include "fileops.h"
 #include "sparks2.h"
@@ -36,15 +35,12 @@
 #include "cone.h"
 #include "race.h"
 #include "trackasm.h"
-#include "progress.h"
 #include "spline.h"
 #include "ajs.h"
 #include "racectrl.h"
 #include "wintime.h"
-#include "wincd.h"
 #include "credits.h"
 #include "andyscn.h"
-#include "input.h"
 
 #define START_EXTRO 0
 #define UPDATE_EXTRO 1
@@ -162,8 +158,6 @@ long  theFrameRate;
 long  fr_count;
 int fp;
 
-
-extern long NeedKeys;
 extern unsigned short   pad_stack[];
 extern int     Curpad;
 
@@ -194,27 +188,12 @@ void race( combatData *packetData, ConfigData *gameData, int mode, int timeout )
    ctrl_frame = 1;   //exactly one frame
    ctrl_remainder  = 0;
    fr_count = 0;
-#ifdef SMOOTH_CONTROL
-   while (NeedKeys)
-   {
-      ;
-   }
-#endif
    Curpad = 0;
    while(1)    //GAME LOOP
    {
       start_time = (HowLong() - ctrl_remainder);
       for (timeloop = 0; timeloop < ctrl_frame; timeloop++)
       {
-#ifdef SMOOTH_CONTROL
-         while (NeedKeys)
-         {
-            ;
-         }
-         pad = pad_stack[Curpad--];
-         if (Curpad < 0)
-            Curpad = 0;
-#endif
          racectrl();
       }
       DrawnShieldBefore = 0;     //Reset the shield prim.

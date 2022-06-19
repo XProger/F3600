@@ -6,3 +6,4 @@ int ScalarProduct(VECTOR vec1, VECTOR vec2);
 int GetAng(VECTOR vec1, VECTOR vec2);
 int ang(int a);
 int arccos(int value);
+

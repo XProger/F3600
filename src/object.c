@@ -26,6 +26,7 @@
 #include "ajs.h"
 #include "protos.h"
 #include "error.h"
+#include "render.h"
 
 // PCwipeout
 #define SHIELD_BODGE 50
@@ -43,19 +44,7 @@ extern char     pixdouble;
 extern char     ScreenSize;
 extern char     Resolution;
 
-void StartOTag(void *);
-void ContinueOTag(void);
-void EndOTag(void);
-
-
-
-DoubleBuffer    Screen[2];
 short    CurrentScreen;
-
-DRAWENV   DrawEnv0;
-DRAWENV   DrawEnv1;
-DISPENV   DispEnv0;
-DISPENV   DispEnv1;
 
 VECTOR     CameraPosition;
 SVECTOR   CameraDirection;
@@ -149,31 +138,13 @@ void      InitSystem(void)
 
    InitGeom();
 
-   /* Set Screen Geometry */
-#if  PAL
-   // SetVideoMode(MODE_PAL); // PCwipeout
-   SetDefDrawEnv(&DrawEnv0, 0, 256, 320, 256);
-   SetDefDrawEnv(&DrawEnv1, 0, 0, 320, 256);
-#else
-   // SetVideoMode(MODE_NTSC); // PCwipeout
-   SetDefDrawEnv(&DrawEnv0, 0, 240, 320, 240);
-   SetDefDrawEnv(&DrawEnv1, 0, 0, 320, 240);
-#endif
 
    /* Set up double buffers */
 
-   Screen[0].disp = &DispEnv0;
-   Screen[0].draw = &DrawEnv0;
-
-   Screen[1].disp = &DispEnv1;
-   Screen[1].draw = &DrawEnv1;
 
    InitGameDisplay();
 
    CurrentScreen = 0;
-
-   PutDrawEnv(Screen[CurrentScreen].draw);
-   PutDispEnv(Screen[CurrentScreen].disp);
 
    /* Enable Display */
 
@@ -194,137 +165,36 @@ void      InitSystem(void)
    prims.ptr = (char *)PrimitiveBuffer[CurrentScreen];
 }
 
-
-
-void      InitMenuDisplay(int geomOffset)
+void InitMenuDisplay(int geomOffset)
 {
-
-#if PAL
-
-   SetDefDispEnv(&DispEnv0, 0, 0, 320, 128);
-   SetDefDispEnv(&DispEnv1, 0, 256, 320, 128);
-
-   DispEnv0.screen.x = 2;
-   DispEnv0.screen.y = 24;
-   DispEnv0.screen.h = 256;
-
-   DispEnv1.screen.x = 2;
-   DispEnv1.screen.y = 24;
-   DispEnv1.screen.h = 256;
-
    SetGeomOffset(160, geomOffset);
    SetGeomScreen(160);
-
-#else
-
-   SetDefDispEnv(&DispEnv0, 0, 0, 320, 180);
-   SetDefDispEnv(&DispEnv1, 0, 240, 320, 180);
-   SetGeomOffset(160, geomOffset);
-   SetGeomScreen(160);
-
-#endif
-
-   PutDispEnv(Screen[CurrentScreen].disp);
 }
 
 
 
-void      InitGameDisplay(void)
+void InitGameDisplay(void)
 {
-
-#if PAL
-
-   SetDefDispEnv(&DispEnv0, 0, 0, 320, 256);
-   SetDefDispEnv(&DispEnv1, 0, 256, 320, 256);
-
-   DispEnv0.screen.x = 2;
-   DispEnv0.screen.y = 24;
-   DispEnv0.screen.h = 256;
-
-   DispEnv1.screen.x = 2;
-   DispEnv1.screen.y = 24;
-   DispEnv1.screen.h = 256;
-
-   SetGeomOffset(160, 128);
-   SetGeomScreen(160);
-
-#else
-
-   SetDefDispEnv(&DispEnv0, 0, 0, 320, 240);
-   SetDefDispEnv(&DispEnv1, 0, 240, 320, 240);
    SetGeomOffset(160, 120);
    SetGeomScreen(160);
-
-#endif
-   PutDispEnv(Screen[CurrentScreen].disp);
 }
 
 
-void      InitSonyDisplay(void)
+void InitSonyDisplay(void)
 {
-
-#if PAL
-
-   SetDefDispEnv(&DispEnv0, 0, 0, 640, 256);
-   SetDefDispEnv(&DispEnv1, 0, 256, 640, 256);
-
-   DispEnv0.screen.x = 2;
-   DispEnv0.screen.y = 24;
-   DispEnv0.screen.h = 256;
-
-   DispEnv1.screen.x = 2;
-   DispEnv1.screen.y = 24;
-   DispEnv1.screen.h = 256;
-
    SetGeomOffset(320, 128);
    SetGeomScreen(320);
-
-#else
-
-   SetDefDispEnv(&DispEnv0, 0, 0, 640, 256);
-   SetDefDispEnv(&DispEnv1, 0, 256, 640, 256);
-   SetGeomOffset(320, 128);
-   SetGeomScreen(320);
-
-#endif
-   PutDispEnv(Screen[CurrentScreen].disp);
 }
-
-
-long      max = 0;
-
-
-short    gpuWarning = 0;
-short    cpuWarning = 0;
-
 
 void Swap()
 {
-   long      size;
-
-// EndOTag();
-
-   // WIN95 message handling
    ProcessMessages();
 
    primCount = 0;
 
-   /* Count memory used for primitives */
-
-   size = (long) prims.ptr - (long) PrimitiveBuffer[CurrentScreen];
-
-   if (size > max)
-   {
-      max = size;
-   }
-
-
    /* Swap display and drawing environments */
 
    CurrentScreen = (CurrentScreen + 1) & 1;
-
-   PutDrawEnv(Screen[CurrentScreen].draw);
-   PutDispEnv(Screen[CurrentScreen].disp);
 
    /* Start GPU drawing new frame */
    DrawOTag(OT[(CurrentScreen + 1) & 1] + OT_SIZE - 1);
@@ -688,20 +558,9 @@ void      TransformStaticObjectHole(Object * object, Skeleton * camera)
 
    primCount += primitiveCount;
 
-
-   if (vertexCount <= 128)
-   {
-      screenPtr = (DVECTOR *) (FastRam);
-      depthPtr = (ushort *) (FastRam + 512);
-      flagsPtr = (ushort *) (FastRam + 768);
-   }
-   else
-   {
-      screenPtr = StaticScreen;
-      depthPtr = StaticDepth;
-      flagsPtr = StaticFlags;
-   }
-
+   screenPtr = StaticScreen;
+   depthPtr = StaticDepth;
+   flagsPtr = StaticFlags;
 
    /* Rotate and translate the vertices */
 
@@ -1494,21 +1353,9 @@ void      TransformStaticObject(Object * object, Skeleton * camera)
 
    primCount += primitiveCount;
 
-
-   if (vertexCount <= 128)
-   {
-      screenPtr = (DVECTOR *) (FastRam);
-      depthPtr = (ushort *) (FastRam + 512);
-      flagsPtr = (ushort *) (FastRam + 768);
-   }
-   else
-   {
-      screenPtr = StaticScreen;
-      depthPtr = StaticDepth;
-      flagsPtr = StaticFlags;
-   }
-
-
+   screenPtr = StaticScreen;
+   depthPtr = StaticDepth;
+   flagsPtr = StaticFlags;
 
    /* Rotate and translate the vertices */
 
@@ -2485,20 +2332,9 @@ void      TransformStaticObjectBodge(Object * object, Skeleton * camera)
 
    primCount += primitiveCount;
 
-
-   if (vertexCount <= 128)
-   {
-      screenPtr = (DVECTOR *) (FastRam);
-      depthPtr = (ushort *) (FastRam + 512);
-      flagsPtr = (ushort *) (FastRam + 768);
-   }
-   else
-   {
-      screenPtr = StaticScreen;
-      depthPtr = StaticDepth;
-      flagsPtr = StaticFlags;
-   }
-
+   screenPtr = StaticScreen;
+   depthPtr = StaticDepth;
+   flagsPtr = StaticFlags;
 
    /* Rotate and translate the vertices */
 
@@ -3302,19 +3138,9 @@ void      TransformStaticMenuObject(Object * object, Skeleton * camera)
 
    primCount += primitiveCount;
 
-
-   if (vertexCount <= 128)
-   {
-      screenPtr = (DVECTOR *) (FastRam);
-      depthPtr = (ushort *) (FastRam + 512);
-      flagsPtr = (ushort *) (FastRam + 768);
-   }
-   else
-   {
-      screenPtr = StaticScreen;
-      depthPtr = StaticDepth;
-      flagsPtr = StaticFlags;
-   }
+   screenPtr = StaticScreen;
+   depthPtr = StaticDepth;
+   flagsPtr = StaticFlags;
 
    /* Rotate and translate the vertices */
 

@@ -36,43 +36,28 @@
 #include "libgte.h"
 #include "sfx.h"
 #include "ayrace.h"
-#include "datacash.h"
 #include "timc.h"
-#include "regread.h"
 #include "card.h"
-
-#include "dos.h"
-
-
-// #include <windows.h>
-
-#include "wipesrc\win95\markk\libetc.h"  // PCwipeout
-void      CheckError();
+#include "utils.h"
 
 extern char Resolution;
 extern short screenres;
 extern short trackNum; //SJR
 extern int menuTexturesIn;
 extern u_long   _stacksize;     // PCwipeout
-ulong    FastRam; // PCwipeout
 
 short    drawenv_tpage = 5;      // PCwipeout
 short    BG_Colour = 0;  // PCwipeout
 
-extern TimData *AJSLoad16BitTexture(char *filename, char location);
 extern TimData *JJSLoad16BitTexture(char *filename, char location);
-// extern u_long __bss, __bsslen, _ramsize, _stacksize;
 
 extern char     thieving_git;
 
 /*
  * for 2 meg mode we need this in the obj file:: 2mbyte.obj
  */
-#define        TwoMegMode  1
 
-extern char    *VRam;      // PCwipeout
 char      copyRight[/*24*/] = "copyright_Psygnosis_1995";
-int        security = 0x2823217b;
 
 SPRT      sprtPrim[2][5];
 DR_MODE   drawmode[5];
@@ -86,7 +71,7 @@ extern long     this_frame_count, last_frame_count, ok_to_interrupt;
 extern char     andybodge;
 
 extern char    *CurBuffer;
-long      DrawDistance;
+long      DrawDistance = HIGH_DISTANCE;
 int        inattract = 0;
    TimData  *titleScreen;
 
@@ -114,7 +99,6 @@ void oldmain(void)
    int        i;
    combatData      packetData;
    ConfigData      gameData;
-   char      filename[20] = {"\\NTSCANIM.EXE;1"};
    // TimData           *titleScreen ;
    int        mode, timeout;
    int        toggle = 0;
@@ -124,7 +108,6 @@ void oldmain(void)
    int        TOut;
    static int      firstTime = 1;
    char     *nl = (char *) 0x0417;
-   char      lfilename[80];
 
 
    heap = (DynamicHeap *) malloc(HEAP_SIZE * 1024);
@@ -135,25 +118,11 @@ void oldmain(void)
    }
    InitDynamicMem(heap, HEAP_SIZE * 1024);
 
-#if 0
-   background_buffer = (char *) malloc(320 * 200);
-   if (background_buffer == NULL)
-   {
-      printf("Not Enough Memory Available (3)\n");
-      exit(0);
-   }
-#endif
-
    CreateSineTable();
 
-   FastRam = (ulong) make_data_cache();    // PCwipeout
-   etc_InputDeviceSelect = _KEYBOARD;      // PCwipeout
    Set_Device(0);   // PCwipeout
-   CdInit();          // PCWipeout
-   CheckError();
 
    InitSystem();
-   // GsInitVcount( );        // PCwipeout
    ClearVram();
    InitController();
 
@@ -168,14 +137,6 @@ void oldmain(void)
    InstallTimer();
 
    InitSonyDisplay();
-
-   // for( i = 0; i < 60; i++)     // PCwipeout
-   // {
-   // VSync(0);
-   // }
-
-   ShellGetPrefs();
-   StartPAD();
 
    InitGameDisplay();
    titleScreen = JJSLoad16BitTexture("wipeout\\textures\\wiptitle.tim", SCREEN);
@@ -214,16 +175,11 @@ void oldmain(void)
 
    InitGameData(&gameData);
 
-   MostRecentSaveFile(lfilename);
-
-   if (lfilename[0] != 0)
-      LoadCardData(lfilename, 0, &gameData, (SelectionData *) 0);
-
+/*TODO saves
+   LoadCardData(lfilename, 0, &gameData, (SelectionData *) 0);
+*/
 
    SfxSetVolume((char) ((0x3fff - (75 * gameData.currSliderPos)) >> 6));
-
-   nCon.twistFactor = 255;
-// _init_cont();
 
    InitPadSettings();
    InitChampionship();
@@ -281,9 +237,7 @@ void oldmain(void)
       while (1)
       {
          opad = pad;
-         pad = neg1.bits;
-         if ((neg1.head != 0xff))
-            pad = ~pad;
+         pad = gPad;
          xpad = (pad ^ opad) & pad;
 
          // ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
@@ -295,18 +249,6 @@ void oldmain(void)
             TOut = 30;
          else
             TOut = 5;
-
-#ifndef PC_DEMO
-         if (titleTimeout >= TOut * FR30)
-         {
-            mode = ATTRACT;
-            gameType = SINGLE;
-            ownShip = randy() % 8;
-            serialShip = -1;
-            firstTime = 0;
-            break;
-         }
-#endif
 
          if (titleTimeout > 1)
          {
@@ -321,25 +263,9 @@ void oldmain(void)
                firstTime = 1;
                break;
             }
-
-#if PC_DEMO
-            if (GetMenuKey(M_BACK))
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               ResetVMode();
-               printf("Thanks for playing the wipEout (PC-CD) demo, (c) Psygnosis, 1995\n");
-               printf("\nFull game available mid November 1995\n");
-               exit(0);
-            }
-#endif
-
          }
 
-
          Swap();
-
-         // AJSVSync(2);
-
 
          toggle++;
       }
@@ -363,25 +289,22 @@ void oldmain(void)
    gameData.continueConfirm = 1;
    gameData.Position = 8;
 
+   /*TODO cheats*/
    /* Enable cheat permanently */
-
     //gameData.RapierClass = 1 ;
     //totalTracks = 14 ;
-    //NumTracks = 7 ;
-    //gameData.showBonusTrack = 1 ; //SJR
+    NumTracks = 7 ;
+    gameData.showBonusTrack = 1 ; //SJR
 
    /****************************/
 
-#ifndef PC_DEMO
    while (1)
    {
-#endif
       for (i = 0; i < 2; i++)
       {
          ClearOTagR(OT[CurrentScreen], OT_SIZE);
          Swap();
       }
-#ifndef PC_DEMO
 
       if ((gameData.gameType != CHAMPIONSHIP) && (mode != ATTRACT))
       {
@@ -398,8 +321,6 @@ void oldmain(void)
          firstTime = 0;
          andybodge = 1;
       }
-
-#endif
 
 #if EditorOn
       ClearVram();
@@ -456,13 +377,7 @@ void oldmain(void)
       }
       else
       {
-#ifdef PC_DEMO
-         trackNo = 1;
-         gameData.actTrackNum = 2;
-         gameData.trackNum = 1;
-#else
          trackNo = gameData.actTrackNum;
-#endif
       }
       CdControlB(CdlStop, 0, 0);
 
@@ -583,21 +498,8 @@ void oldmain(void)
 
       gameData.newLapRecord = 0;
 
-
-#ifdef   PC_DEMO
-      gameType = SINGLE;
-      gameData.shipNum = 7;
-      gameData.gameType = SINGLE_RACE;
-      ownShip = gameData.shipNum;
-      serialShip = -1;
-#endif
-
       inmenu = 0;
       Reallyinmenu = 0;
-
-
-      // etc_InputDeviceSelect = _MOUSE1; // DLS
-      // StartPAD();
 
       race(&packetData, &gameData, mode, timeout);
       // inmenu=1;
@@ -673,11 +575,6 @@ void      UserAYInt(void)
    // if (ok_to_interrupt)
    // racectrl();
 }
-
-void      CheckError()
-{
-}
-
 
 void      QuitToDos(void)
 {

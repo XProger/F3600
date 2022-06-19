@@ -47,16 +47,10 @@ void  UpdateShipsSerial(ShipData *shipIndex, WeaponShape *weaponShapes, Object**
 int   InitController();
 void  GeneralStartProcs(ShipData *playerShip);
 
-void  UpdatePlayerShipNeg        (ShipData*, Object**, int, WeaponData*);
 void  UpdatePlayerShipNorm       (ShipData*, Object**, int, WeaponData*);
-void  UpdatePlayerShipMouse         (ShipData*, Object**, int, WeaponData*);
-void  UpdatePlayerShipJoystick      (ShipData*, Object**, int, WeaponData*);
 void  UpdateRemoteShip           (ShipData*, Object**, int, WeaponData*);
 void  UpdatePlayerShipNormStart     (ShipData*, Object**, int, WeaponData*);
-void  UpdatePlayerShipNegStart      (ShipData*, Object**, int, WeaponData*);
 void  UpdateRemoteShipStart         (ShipData*, Object**, int, WeaponData*);
-void  UpdateShipHoldLeft         (ShipData*, Object**, int, WeaponData*);
-void  UpdateRescuDroid           (ShipData*, Object**, int, WeaponData*);
 
 void  HoldCentre                 (VECTOR *result, ShipData *shipIndex, Face *facePtr, int);
 void  HoldRight                  (VECTOR *result, ShipData *shipIndex, Face *facePtr, int);
@@ -66,10 +60,7 @@ void  AvoidShip                  (VECTOR *blockVector, ShipData *shipIndex, Face
 void  AvoidOtherShips            (VECTOR *blockVector, ShipData *shipIndex, Face *facePtr, int);
 void  ZigZagShip                 (VECTOR *blockVector, ShipData *shipIndex, Face *facePtr, int);
 
-void SetSkeletonDirectionHRP( Skeleton* skeleton, short hdg, short roll, short pitch  );
 void SetSkeletonDirectionHPR( Skeleton* skeleton, short hdg, short pitch, short roll  );
 void SetSkeletonDirectionRPH( Skeleton* skeleton, short roll, short pitch, short hdg  );
 
-void Mouse2Neg(void);
-void Joy2Neg(void);
 void DoDetailKeys(void);

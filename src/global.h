@@ -17,7 +17,6 @@
 #define              TextureTableMax 800
 
 #define              SoundHeapSize (1024 * 20 / 4)
-// #define              FastRam     (( ulong ) 0x1f800000 )
 
 #define              Warning     0
 #define              NonFatal    1
@@ -29,7 +28,6 @@
 
 extern int           copyright_Psygnosis_1995;
 
-extern NegconBuff    neg1, neg2;
 extern TrackData     *track;
 extern int           ownShip;
 extern int           serialShip;
@@ -53,10 +51,6 @@ extern int           actualCdTrack;
 extern ushort        pad;
 extern ushort        opad, xpad;
 extern PadInfo       pCon;
-extern NegInfo       nCon;
-extern char             negSelect ;
-extern char             negBack  ;
-extern char             negQuit ;
 
 extern long          soundHead[ SoundHeapSize ];
 extern SpuCommonAttr c_attr;
@@ -136,13 +130,6 @@ extern long           buffer2[ ];
 #define     TrackHiTiles      (7*4*16)
 
 #define     TrackTextures     24
-
-//#if 0  // PCwipeout
-#if 1
-#define     MeshRamSize       (16384 * 4)
-#else
-#define     MeshRamSize       (0)
-#endif
 
 extern long           MeshRam0[ ];
 extern long           MeshRam1[ ];

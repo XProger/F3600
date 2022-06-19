@@ -26,11 +26,9 @@
 #include "sparks2.h"
 #include "global.h"
 #include "sfx.h"
-#include "config.h"
 
 #define _SIZE_T_DEFINED_
 #include <stdio.h>
-#include "wipesrc\win95\markk\input.h"
 
 
 extern   HiScores scoreTable[] ;
@@ -48,7 +46,7 @@ extern char ScreenSize;
 extern char Resolution;
 extern long DrawDistance;
 
-extern unsigned short OriginalKeyCodes[16];
+//extern unsigned short OriginalKeyCodes[16];
 
 extern short JoyMinX, JoyMaxX;
 extern short JoyMinY, JoyMaxY;
@@ -60,8 +58,9 @@ extern float left_scale_factor, right_scale_factor;
 
 //#define SAVEDIR       "wipeout\\"
 #define  FILE_EXTENSION ".wsf"
+/*TODO saves
 extern char *SaveDirBase;
-
+*/
 
 long GetCardInfo (int cardNum)
 {
@@ -147,6 +146,7 @@ void LoadCard (int cardNum)
 
 char SaveCardFile (char *saveName, int cardNum, ConfigData *gameData, short sliderVol)
 {
+/*TODO saves
    char  fileName[250];
    char  header[1];
 
@@ -159,6 +159,8 @@ char SaveCardFile (char *saveName, int cardNum, ConfigData *gameData, short slid
       return (0) ;
 
    return (1) ;
+*/
+   return 0;
 }
 
 void GetHeader (char *header)
@@ -168,6 +170,7 @@ void GetHeader (char *header)
 
 char WriteFile (char *header, char *fileName, ConfigData *gameData, short sliderVol)
 {
+/*TODO save
    FILE  *fd;
    int      temp;
    unsigned char  saveBuffer[256] ;
@@ -237,6 +240,8 @@ char WriteFile (char *header, char *fileName, ConfigData *gameData, short slider
       fclose(fd);
       return (1) ;
    }
+*/
+   return 0;
 }
 
 
@@ -326,6 +331,7 @@ void LoadCardFiles (SelectionData *selectData, char loadGames[][9], int cardNum)
 
 char LoadCardData (char *loadName, int cardNum, ConfigData *gameData, SelectionData *selectData)
 {
+/*TOSO saves
    FILE  *fd;
    int      temp;
    char  fileName[250];
@@ -492,12 +498,14 @@ char LoadCardData (char *loadName, int cardNum, ConfigData *gameData, SelectionD
       twist = gameData->negTwist;
       negtwist = gameData->negTwist;
 
-      c_attr.cd.volume.left  = 150 * gameData->currSliderPos;  /* Master volume (left) */
-      c_attr.cd.volume.right  = 150 * gameData->currSliderPos; /* Master volume (right) */
+      c_attr.cd.volume.left  = 150 * gameData->currSliderPos;  // Master volume (left)
+      c_attr.cd.volume.right  = 150 * gameData->currSliderPos; // Master volume (right)
       SfxSetVolume((char)((0x3fff - (75 * gameData->currSliderPos))>>6));
 
       fclose(fd);
       return (1);
    }
+*/
+   return 0;
 }
 

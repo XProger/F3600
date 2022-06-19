@@ -83,19 +83,3 @@ TrackSection *AsmTransformTrackHi
    short             loCount,
    short        dir
 );
-
-
-short CompareVertices( VECTOR* vertices, ushort a, ushort b );
-
-void NewInitAll( void );
-
-void AsmAutoMesh
-(
-   SVECTOR*       tlVector,
-   SVECTOR*       trVector,
-   SVECTOR*       blVector,
-   SVECTOR*       brVector,
-   Face*          face,
-   Tile*          tile,
-   AutoMeshData*  autoMesh
-);

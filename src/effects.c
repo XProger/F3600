@@ -29,13 +29,13 @@
 #include "global.h"
 #include "editor.h"
 #include "texplace.h"
-#include "trakview.h"
 #include "effects.h"
 #include "init.h"
 #include "ajs.h"
 #include "error.h"
 #include "libgte.h"
 #include "collide.h"
+#include "utils.h"
 
 extern float upres;
 
@@ -925,7 +925,7 @@ void InitWeaponSprtIcons(SPRT *weaponIcon, Texture** weaponIconTextures)
 void DrawWeaponSprtIcons(SPRT *weaponIcon, Texture** weaponIconTextures, ShipData *playerShip, DR_MODE *drawmode, DR_MODE *drawmode2)
 {
    int   icon;
-   RECT  tw;
+   GRECT  tw;
 
 
    icon = playerShip->weaponType;
@@ -957,25 +957,16 @@ void SetShake(int duration)
 
 void ShakeScreen()
 {
-
-   long  tempx, tempy;
-
    if(shakeCount > 1)
    {
-      DispEnv0.screen.x = DispEnv1.screen.x = -(randy()%shakeCount) + (shakeCount>>1);
-      DispEnv0.screen.y = DispEnv1.screen.y = -(randy()%shakeCount) + (shakeCount>>1);
+      renderOffset(-(randy() % shakeCount) + (shakeCount >> 1), -(randy() % shakeCount) + (shakeCount >> 1));
       shakeCount--;
    }
    else if(shakeCount == 1)
    {
-      DispEnv0.screen.x = DispEnv1.screen.x = 0;
-      DispEnv0.screen.y = DispEnv1.screen.y = 0;
+      renderOffset(0, 0);
       shakeCount--;
    }
-   tempx = abs(DispEnv0.screen.x >> 3);
-   tempy = abs(DispEnv0.screen.y * 80);
-
-   // SStart(tempx + tempy);
 }
 
 extern short arccos_tab[];

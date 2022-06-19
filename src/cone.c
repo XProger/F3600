@@ -26,10 +26,10 @@
 #include "global.h"
 #include "editor.h"
 #include "texplace.h"
-#include "trakview.h"
 #include "sprite.h"
 #include "cone.h"
 #include "error.h"
+#include "utils.h"
 
 void InitCone ( Cone *cone )
 {

@@ -25,7 +25,6 @@
 #include "sound.h"
 #include "editor.h"
 #include "texplace.h"
-#include "trakview.h"
 #include "effects.h"
 #include "fileops.h"
 #include "sparks2.h"
