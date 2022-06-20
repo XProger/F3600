@@ -18,17 +18,12 @@
 #include "camera.h"
 #include "draw.h"
 #include "scene.h"
-#include "main.h"
 #include "fileops.h"
 #include "sound.h"
 #include "control.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
-#include "iso9660.h"
-#include "sparks2.h"
-#include "main.h"
 #include "global.h"
 #include "ajs.h"
 #include "drawot.h"
@@ -36,7 +31,6 @@
 #include "libgte.h"
 #include "sfx.h"
 #include "ayrace.h"
-#include "timc.h"
 #include "card.h"
 #include "utils.h"
 
@@ -70,10 +64,9 @@ extern long     this_frame_count, last_frame_count, ok_to_interrupt;
 
 extern char     andybodge;
 
-extern char    *CurBuffer;
 long      DrawDistance = HIGH_DISTANCE;
 int        inattract = 0;
-   TimData  *titleScreen;
+TimData  *titleScreen;
 
 void reloadStartScr(void)
 {
@@ -97,9 +90,7 @@ void reloadStartScr(void)
 void oldmain(void)
 {
    int        i;
-   combatData      packetData;
    ConfigData      gameData;
-   // TimData           *titleScreen ;
    int        mode, timeout;
    int        toggle = 0;
    char      loadPath[48];
@@ -107,7 +98,6 @@ void oldmain(void)
    int        titleTimeout;
    int        TOut;
    static int      firstTime = 1;
-   char     *nl = (char *) 0x0417;
 
 
    heap = (DynamicHeap *) malloc(HEAP_SIZE * 1024);
@@ -123,18 +113,12 @@ void oldmain(void)
    Set_Device(0);   // PCwipeout
 
    InitSystem();
-   ClearVram();
+
    InitController();
 
    InitialiseAmbientColour();
    InitialiseColourMatrix();
    InitialiseLightMatrix();
-
-#ifdef DOS_VERSION
-   *nl &= 0xdf;       // Numlock off
-#endif
-
-   InstallTimer();
 
    InitSonyDisplay();
 
@@ -161,16 +145,6 @@ void oldmain(void)
    TextureTableCount = 0;
    InitText();
 
-#if 0    // PCwipeout
-
-   StartCARD();
-   _bu_init();
-
-   InitCardEvents();
-   ChangeClearSIO(1);
-   ChangeClearPAD(0);
-#endif
-
    srand(0);
 
    InitGameData(&gameData);
@@ -184,12 +158,7 @@ void oldmain(void)
    InitPadSettings();
    InitChampionship();
 
-
-#if PAL
-   timeout = 25 * 120;
-#else
    timeout = FR30 * 120;
-#endif
 
 #if CD_AUDIO
    //if (gameData.cdTrack == 1)
@@ -211,9 +180,6 @@ void oldmain(void)
    trackNum = 16; //SJR
    if ((gameData.gameType != CHAMPIONSHIP) || (mode == ATTRACT))
    {
-#if PAL
-      titleScreen = Load16BitTexture("wipeout\\textures\\paltitle.tim", VRAM);
-#else
       titleScreen = JJSLoad16BitTexture("wipeout\\textures\\wiptitle.tim", VRAM);
       inmenu = 1;
       for (i = 0; i < 2; i++)
@@ -227,9 +193,6 @@ void oldmain(void)
          CentreText("PRESS ENTER", text_data(0, 200, 8), RedText);
          Swap();
       }
-
-#endif
-
 
       InitAJSVSync();
       toggle = 0;
@@ -309,7 +272,7 @@ void oldmain(void)
       if ((gameData.gameType != CHAMPIONSHIP) && (mode != ATTRACT))
       {
          SetDrawDistance(HIGH_DISTANCE);
-         MenuControl(&(gameData), titleScreen, &mode, timeout);
+         MenuControl(&(gameData), &mode, timeout);
       }
 
       if (andybodge == 2)
@@ -321,15 +284,6 @@ void oldmain(void)
          firstTime = 0;
          andybodge = 1;
       }
-
-#if EditorOn
-      ClearVram();
-#endif
-
-#if CD_FS
-      close_iso_events();
-      iso_init(heap);
-#endif
 
       SetDrawDistance(DrawDistance);
 
@@ -501,86 +455,14 @@ void oldmain(void)
       inmenu = 0;
       Reallyinmenu = 0;
 
-      race(&packetData, &gameData, mode, timeout);
+      race(&gameData, mode, timeout);
       // inmenu=1;
       inattract = 0;
       mode = INTERACTIVE;
 
       InitDynamicMem(heap, HEAP_SIZE * 1024); /* The left over bit in
                       * the middle */
-#if CD_FS
-      close_iso_events();
-      iso_init(heap);
-#endif
       TextureTableCount = 0;
       InitText();
    }
-}
-
-
-void      ClearVram(void)
-{
-   BlkFill  *clearVram;
-
-#if EditorOn
-
-   clearVram = BlockFill(0, 0, 512, 256, 0xff, 0xff, 0xff);
-   DrawPrim(clearVram);
-   DrawSync(0);
-   DFree(heap, (char *) clearVram);
-
-   clearVram = BlockFill(0, 256, 512, 256, 0xff, 0xff, 0xff);
-   DrawPrim(clearVram);
-   DrawSync(0);
-   DFree(heap, (char *) clearVram);
-
-   clearVram = BlockFill(512, 0, 512, 256, 0xff, 0xff, 0xff);
-   DrawPrim(clearVram);
-   DrawSync(0);
-   DFree(heap, (char *) clearVram);
-
-   clearVram = BlockFill(512, 256, 512, 256, 0xff, 0xff, 0xff);
-   DrawPrim(clearVram);
-   DrawSync(0);
-   DFree(heap, (char *) clearVram);
-#else
-
-   clearVram = BlockFill(0, 0, 512, 256, 0, 0, 0);
-   DrawPrim((u_long *)clearVram);
-   DrawSync(0);
-   DFree(heap, (char *) clearVram);
-
-   clearVram = BlockFill(0, 256, 512, 256, 0, 0, 0);
-   DrawPrim((u_long *)clearVram);
-   DrawSync(0);
-   DFree(heap, (char *) clearVram);
-
-   clearVram = BlockFill(512, 0, 512, 256, 0, 0, 0);
-   DrawPrim((u_long *)clearVram);
-   DrawSync(0);
-   DFree(heap, (char *) clearVram);
-
-   clearVram = BlockFill(512, 256, 512, 256, 0, 0, 0);
-   DrawPrim((u_long *)clearVram);
-   DrawSync(0);
-   DFree(heap, (char *) clearVram);
-#endif
-}
-
-
-void      UserAYInt(void)
-{
-   this_frame_count++;
-   ProcessMessages();
-   // if (ok_to_interrupt)
-   // racectrl();
-}
-
-void      QuitToDos(void)
-{
-   WinQuit();
-   RemoveTimer();
-   SfxUnInit(1);
-   CdControlB(CdlStop, 0, 0);
-   exit(0);
 }

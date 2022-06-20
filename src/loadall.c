@@ -14,31 +14,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "file.h"
-char  jmax;
+#include "standard.h"
 
 /*************************************
 * Defines & Externs
 *************************************/
 
-extern   char *CurBuffer;
-
-#define  PAL      1
 #define  PIC      2
 #define  DEBUG 4
 #define  DONT_CHECK_SIZE   8
 #define  ALLOCATE_MEM      16
 
 char  *Path = "alltext\\";    //AJY for relative paths
-
-typedef struct {
-   int   width;
-   int   height;
-   int   vram_xpos;
-   int   vram_ypos;
-   unsigned char  *bitmap;
-   unsigned char  *palette;
-} bm;
-
 
 /******************************************
 * LoadALL() Reads All Textures For Ridgie

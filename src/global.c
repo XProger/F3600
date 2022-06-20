@@ -8,7 +8,6 @@
 #include "ships.h"
 #include "weapon.h"
 #include "control.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
@@ -16,7 +15,6 @@
 #include "camera.h"
 #include "scene.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 
 int            copyright_Psygnosis_1995 = 1;
@@ -106,17 +104,6 @@ short          showFaceFlags = 0;
 
 Object         **objectTable;
 
-long           buffer1[ 32 ];
-Line3D         line3d[ Max3DLines ];
-LineSkel       lineSkel[ Max3DLineSkels ];
-long           buffer2[ 32 ];
-
-
-PolyFT4        *prConfirm;
-
-
-
-
 uchar          PrimitiveBuffer0[ PrimitiveBufferSize ];
 uchar          PrimitiveBuffer1[ PrimitiveBufferSize ];
 uchar*         PrimitiveBuffer[ 2 ];
@@ -131,20 +118,8 @@ short          finishedExtro;
 short          extroLevel;
 
 unsigned int   this_frame = 0, last_frame = 0;
-long        frameRate30 = 30;
 long        DrawnShieldBefore;
 
-long        FR30;
-long        FR60;
-long        FR50;
-long        FR6;
-long        FR10;
-long        FR40;
-long        FR50U;
-long        FR15U;
-long        FR30U;
-long        FR7U;
-long        FR32U;
 long        TextureTrack = 1;
 long        SkyTrackFlags = 3;
 

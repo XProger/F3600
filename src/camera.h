@@ -1,7 +1,3 @@
-#define DEBUG_CAM 0
-#define COLLIDE_TEST 0
-
-
 void InitCamera                  (TrackCamera *camera, TrackSection *section);
 void UpdateCameraRaceExternal    (TrackCamera*, ShipData *camShip, RescueData*);
 void UpdateCameraRaceInternal    (TrackCamera*, ShipData *camShip, RescueData*);

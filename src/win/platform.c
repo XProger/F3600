@@ -7,12 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "resource.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <io.h>
-#include "timc.h"
 #include "utypes.h"
 #include "sfx.h"
 
@@ -22,25 +20,20 @@
 #include "render.h"
 #include "input.h"
 
-extern char winLoseIn;
-extern int inmenutest;
-
 short FrameState=0;
 
 //menu graphic detail stuff - SJR
 short ft=0;
 char MipMap = 0;
 
-HWND      hwnd;
+HWND hwnd;
 
 
 short trackNum = 0;
 
-void     oldmain(void);
-void     QuitToDos(void);
+void oldmain(void);
 
 BOOL      bActive;   // is application active?
-extern char    *CurBuffer, *CurBufferJ;
 
 HWND hWnd;
 
@@ -48,6 +41,27 @@ HWND hWnd;
 int gPad;
 
 int lastKey = 0;
+
+LARGE_INTEGER timerFreq;
+LARGE_INTEGER timerStart;
+
+void timerInit()
+{
+   QueryPerformanceFrequency(&timerFreq);
+   QueryPerformanceCounter(&timerStart);
+}
+
+long osGetTimeMS()
+{
+   LARGE_INTEGER count;
+   QueryPerformanceCounter(&count);
+   return (long)((count.QuadPart - timerStart.QuadPart) * 1000L / timerFreq.QuadPart);
+}
+
+void osQuit()
+{
+   PostQuitMessage(0);
+}
 
 void setKey(char ScanCode, char KeyDown)
 {
@@ -113,10 +127,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
          break;
 
       case WM_DESTROY:
-         renderFree();
-         SfxFree();
-         PostQuitMessage(0);
-         QuitToDos();
+         osQuit();
          break;
 
       case WM_SIZE:
@@ -135,7 +146,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
    }
 
    return 0;
-} 
+}
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -150,12 +161,16 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
    SetWindowLong(hWnd, GWL_WNDPROC, (LONG)&WndProc);
    ShowWindow(hWnd, SW_SHOWDEFAULT);
 
+   timerInit();
+   srand((int)timerStart.QuadPart);
+
    renderInit();
-   srand(GetTickCount());
 
    CDStop();
    oldmain();
 
+   renderFree();
+   SfxFree();
 
    DestroyWindow(hwnd);
 
@@ -165,20 +180,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 int ProcessMessages(void)
 {
    MSG msg;
+
    if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
    {
       TranslateMessage(&msg);
       DispatchMessage(&msg);
+      if (msg.message == WM_QUIT) {
+         /*TODO proper game loop*/
+         exit(0);
+         return 0;
+      }
    }
 
-   return 0;
-}
-
-void WinQuit(void)
-{
-   renderFree();
-   SfxFree();
-   PostQuitMessage(0);
+   return 1;
 }
 
 // dummy functions

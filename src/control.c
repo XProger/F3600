@@ -12,14 +12,12 @@
 #include "weapon.h"
 #include "control.h"
 #include "dynam.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
 #include "droid.h"
 #include "camera.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "utils.h"
 #include "libgte.h"
@@ -78,40 +76,6 @@ void UpdateShips(ShipData *shipIndex, WeaponShape *weaponShapes, Object** shipSh
       }
    }
 }
-
-
-
-void UpdateShipsSerial(ShipData *shipIndex, WeaponShape *weaponShapes, Object** shipShapes, WeaponData *weaponIndex)
-{
-   short    sx, sy, sz;
-   short    cx, cy, cz;
-
-
-   sy = rsin( shipIndex[ownShip].hdg );
-   sx = rsin( shipIndex[ownShip].pitch );
-   sz = rsin( shipIndex[ownShip].roll );
-   cy = rcos( shipIndex[ownShip].hdg );
-   cx = rcos( shipIndex[ownShip].pitch );
-   cz = rcos( shipIndex[ownShip].roll );
-
-   shipIndex[ownShip].unitVecNose.vx = -frac(sy,cx);
-   shipIndex[ownShip].unitVecNose.vy = -sx;
-   shipIndex[ownShip].unitVecNose.vz = frac(cy,cx);
-
-   shipIndex[ownShip].unitVecWing.vx = ((cy * cz) >> 12) + ((((sy * sz) >> 12) * sx) >> 12);
-   shipIndex[ownShip].unitVecWing.vy = -(sz * cx) >> 12;
-   shipIndex[ownShip].unitVecWing.vz = ((sy * cz) >> 12) - ((((cy * sx) >> 12) * sz) >> 12);
-
-   shipIndex[ownShip].prevShipSect = shipIndex[ownShip].nearTrkSect;
-   SectionSearch(&(shipIndex[ownShip]));
-
-   shipIndex[ownShip].prevSecNo = shipIndex[ownShip].prevShipSect->secNo;
-   shipIndex[ownShip].nearSecNo = shipIndex[ownShip].nearTrkSect->secNo;
-
-   (shipIndex[ownShip].update)(shipIndex, shipShapes, ownShip, weaponIndex);
-}
-
-
 
 /**********************************************************************/
 /***          Initialise Controller and determine type              ***/
@@ -1018,15 +982,9 @@ void UpdateRemoteShip(register ShipData *shipIndex, Object** shipShapes, int shi
       remoteShip->apivot.vy = (remoteShip->apivot.vy*60)/FR60;
       remoteShip->apivot.vz = (remoteShip->apivot.vz*60)/FR60;
 
-#if COLLIDE_TEST
-      remoteShip->vpivot.vx = 0;
-      remoteShip->vpivot.vy = 0;
-      remoteShip->vpivot.vz = 0;
-#else
       remoteShip->vpivot.vx += remoteShip->apivot.vx;
       remoteShip->vpivot.vy += remoteShip->apivot.vy;
       remoteShip->vpivot.vz += remoteShip->apivot.vz;
-#endif
       /***** If remote has gone over speed-up *****/
 
       /***** Can use control routine to determine position now *****/

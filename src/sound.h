@@ -97,32 +97,29 @@ typedef struct VagTable
 
 typedef struct _sfx_info
 {
-char  Volume;
-char  Pan;
-short Pitch;
+   char  Volume;
+   char  Pan;
+   short Pitch;
 
-short vagNo;
-short Playing;
+   short vagNo;
+   short Playing;
 
-short Priority;
-short Duration;
+   short Priority;
+   short Duration;
 
-int16 PlayID;
-int16 pad;
+   int16 PlayID;
+   int16 pad;
 }SFX_INFO;
 
-void     InitSpuSound();
-u_long      FindVagInVab (u_long, short);
-void     UpdateNotes (int paused);
-void     KillNote(int note);
-void     KillNotes();
-void     KillFadeNotes();
-short       PlayNote(short, short, short);
-short       PlayDirectionalNote(short vagID, short priority, short duration, VECTOR pos );
-void     SetPitch(short VagID, short pitch);
-void     SetVolume(short vagID, short voll, short volr);
-short       AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR pos );
-short       AdjustRemoteEngineSound(ShipData *shipIndex, Object** shipShapes, TrackCamera *camera );
-void     AdjustEngineSound(ShipData*, TrackCamera*);
-void StopNotes(void);
-
+void  InitSpuSound();
+void  UpdateNotes (int paused);
+void  KillNote(int note);
+void  KillNotes();
+short PlayNote(short, short, short);
+short PlayDirectionalNote(short vagID, short priority, short duration, VECTOR pos );
+void  SetPitch(short VagID, short pitch);
+void  SetVolume(short vagID, short voll, short volr);
+short AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR pos );
+short AdjustRemoteEngineSound(ShipData *shipIndex, Object** shipShapes, TrackCamera *camera );
+void  AdjustEngineSound(ShipData*, TrackCamera*);
+void  StopNotes(void);

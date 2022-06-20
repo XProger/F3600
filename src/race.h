@@ -1,4 +1,4 @@
-void race      ( combatData *packetData, ConfigData *gameData, int mode, int timeout );
+void race      ( ConfigData *gameData, int mode, int timeout );
 void Restart   (  ShipData       *shipIndex,
                   ConfigData     *gameData,
                   WeaponData     *weaponIndex,

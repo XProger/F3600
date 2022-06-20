@@ -19,7 +19,6 @@
 #include "droid.h"
 #include "camera.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "menus.h"
 #include "global.h"
 

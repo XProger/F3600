@@ -2,9 +2,7 @@
 
 #define              HEAP_SIZE         1536 // maybe too small (or too big ?)
 
-#define              CD_FS             0
 #define              COMBAT            1
-#define              EditorOn          0        /* editor on or off */
 #define              CD_AUDIO          1
 
 #define              INTERACTIVE       0
@@ -119,26 +117,11 @@ extern short          showFaceFlags;
 extern Object         **objectTable;
 
 
-extern long           buffer1[ ];
-extern Line3D         line3d[ ];
-extern LineSkel       lineSkel[ ];
-extern long           buffer2[ ];
-
-
 #define     TrackLoTiles      (7*80*1)
 #define     TrackMedTiles     (7*4*4)
 #define     TrackHiTiles      (7*4*16)
 
 #define     TrackTextures     24
-
-extern long           MeshRam0[ ];
-extern long           MeshRam1[ ];
-extern long*          MeshPtr;
-
-
-
-extern PolyFT4        *prConfirm;
-
 
 #define  PrimitiveBufferSize  65536
 
@@ -199,12 +182,23 @@ extern   char  inmenu;
 extern   char  Reallyinmenu;
 extern   char  *background_buffer;
 
+#define frameRate30  30
+#define FR30         (frameRate30)
+#define FR60         (frameRate30 * 2)
+#define FR50         (frameRate30 * 50 / 30)
+#define FR6          (frameRate30 * 6 / 30)
+#define FR10         (frameRate30 / 3)
+#define FR40         (frameRate30 * 40 / 30)
+#define FR50U        (50 * 30 / frameRate30)
+#define FR15U        (15 * 30 / frameRate30)
+#define FR30U        (30 * 30 / frameRate30)
+#define FR7U         (7 * 30 / frameRate30)
+#define FR32U        (32 * 30 / frameRate30)
+
 #define  CdControlB(a,b,c) CdControl(a,b,c)
 
 extern unsigned int  this_frame, last_frame;
 extern  char trackdir[];
-extern   long  frameRate30;
-
 
 #define  HIGH_DISTANCE  65535
 #define  MEDIUM_DISTANCE   38000
@@ -213,21 +207,10 @@ extern long DrawDistance;
 extern char Sky;
 extern char Wide;
 extern long DrawnShieldBefore;
-extern long       FR30;
-extern long       FR60;
-extern long       FR50;
-extern long       FR6;
-extern long       FR10;
-extern long       FR40;
-extern long       FR50U;
-extern long       FR15U;
-extern long       FR30U;
-extern long       FR7U;
-extern long       FR32U;
-extern long       TextureTrack;
-extern long       SkyTrackFlags;
+extern long TextureTrack;
+extern long SkyTrackFlags;
 
-extern int           WinPitch;
-extern short         WinWidth;
-extern short         WinHeight;
-extern short         WinHeightX2;
+extern int     WinPitch;
+extern short   WinWidth;
+extern short   WinHeight;
+extern short   WinHeightX2;

@@ -11,14 +11,12 @@
 #include "weapon.h"
 #include "control.h"
 #include "dynam.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
 #include "droid.h"
 #include "camera.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "libgte.h"
 #include "utils.h"
@@ -77,15 +75,9 @@ void UpdateRescueDroid(ShipData *shipIndex, Object** shipShapes, int shipNo, Wea
       target.vy += (nextSection->centre.vy - target.vy)>>7;
       target.vz += (nextSection->centre.vz - target.vz)>>7;
 
-#if PAL
-      playerShip->vpivot.vx = ((target.vx - playerShip->ppivot.vx)*60)/50;
-      playerShip->vpivot.vy = ((target.vy - playerShip->ppivot.vy)*60)/50;
-      playerShip->vpivot.vz = ((target.vz - playerShip->ppivot.vz)*60)/50;
-#else
       playerShip->vpivot.vx = ((target.vx - playerShip->ppivot.vx)*60)/FR60;
       playerShip->vpivot.vy = ((target.vy - playerShip->ppivot.vy)*60)/FR60;
       playerShip->vpivot.vz = ((target.vz - playerShip->ppivot.vz)*60)/FR60;
-#endif
 
       targetVector.vx = nextSection->centre.vx - playerShip->nearTrkSect->centre.vx;
       targetVector.vy = nextSection->centre.vy - playerShip->nearTrkSect->centre.vy;
@@ -96,8 +88,6 @@ void UpdateRescueDroid(ShipData *shipIndex, Object** shipShapes, int shipNo, Wea
       else if(playerShip->vhdg < -2048) playerShip->vhdg = playerShip->vhdg + 4096;
       playerShip->hdg += playerShip->vhdg>>6;
       playerShip->hdg   = ang(playerShip->hdg);
-
-
    }
 
    playerShip->vpivot.vx -= playerShip->vpivot.vx>>4;

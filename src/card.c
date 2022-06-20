@@ -13,8 +13,6 @@
 #include "ships.h"
 #include "weapon.h"
 #include "control.h"
-#include "wtl.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
@@ -23,7 +21,6 @@
 #include "fileops.h"
 #include "card.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "sfx.h"
 

@@ -17,8 +17,6 @@
 #include "menus.h"
 #include "camera.h"
 #include "sound.h"
-#include "combat.h"
-#include "sparks2.h"
 #include "global.h"
 #include "utils.h"
 #include "libgte.h"
@@ -123,29 +121,17 @@ void shipTrkReaction(register ShipData *playerShip, Object** shipShapes)
       {
          if(((facePtr->flags & SPEED_UP)  && (playerShip->attr & LSIDE)))
          {
-#if PAL
-            playerShip->vpivot.vx += ((playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx)*60)/50;
-            playerShip->vpivot.vy += ((playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy)*60)/50;
-            playerShip->vpivot.vz += ((playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz)*60)/50;
-#else
             playerShip->vpivot.vx += ((playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx)*60)/FR60;
             playerShip->vpivot.vy += ((playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy)*60)/FR60;
             playerShip->vpivot.vz += ((playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz)*60)/FR60;
-#endif
          }
          facePtr++;
 
          if ((facePtr->flags & SPEED_UP) && ((playerShip->attr & LSIDE) == 0))
          {
-#if PAL
-            playerShip->vpivot.vx += ((playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx)*60)/50;
-            playerShip->vpivot.vy += ((playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy)*60)/50;
-            playerShip->vpivot.vz += ((playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz)*60)/50;
-#else
             playerShip->vpivot.vx += ((playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx)*60)/FR60;
             playerShip->vpivot.vy += ((playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy)*60)/FR60;
             playerShip->vpivot.vz += ((playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz)*60)/FR60;
-#endif
          }
          facePtr--;
       }
@@ -173,27 +159,16 @@ void shipTrkReaction(register ShipData *playerShip, Object** shipShapes)
          playerShip->vpivot.vx -= (playerShip->vpivot.vx)>>3;
          playerShip->vpivot.vy -= (playerShip->vpivot.vy)>>3;
          playerShip->vpivot.vz -= (playerShip->vpivot.vz)>>3;
-#if PAL
-         playerShip->vpivot.vx -= (facePtr->normal.vx*60)/50;
-         playerShip->vpivot.vy -= (facePtr->normal.vy*60)/50;
-         playerShip->vpivot.vz -= (facePtr->normal.vz*60)/50;
-#else
+
          playerShip->vpivot.vx -= (facePtr->normal.vx*60)/FR60;
          playerShip->vpivot.vy -= (facePtr->normal.vy*60)/FR60;
          playerShip->vpivot.vz -= (facePtr->normal.vz*60)/FR60;
-#endif
       }
       else if (alpha <= 30)
       {
-#if PAL
-         playerShip->vpivot.vx += (facePtr->normal.vx*60)/50;
-         playerShip->vpivot.vy += (facePtr->normal.vy*60)/50;
-         playerShip->vpivot.vz += (facePtr->normal.vz*60)/50;
-#else
          playerShip->vpivot.vx += (facePtr->normal.vx*60)/FR60;
          playerShip->vpivot.vy += (facePtr->normal.vy*60)/FR60;
          playerShip->vpivot.vz += (facePtr->normal.vz*60)/FR60;
-#endif
       }
 
 
@@ -334,11 +309,7 @@ void shipTrkReaction(register ShipData *playerShip, Object** shipShapes)
       playerShip->ppivot.vy += sar(playerShip->vpivot.vy,6);
       playerShip->ppivot.vz += sar(playerShip->vpivot.vz,6);
 
-#if PAL
-      playerShip->vpitch -= 60;
-#else
       playerShip->vpitch -= FR50;
-#endif
       playerShip->vpitch -= playerShip->vpitch>>2;
 
       brake = sar(playerShip->r_brake_rot - playerShip->l_brake_rot,3);

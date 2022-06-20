@@ -15,123 +15,13 @@
 #include "control.h"
 #include "droid.h"
 #include "camera.h"
-#include "iso9660.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "error.h"
 
 #define _SIZE_T_DEFINED_         // PCwipeout
 #include <stdio.h>      // PCwipeout
 
-#if   CD_FS
-
-#include <sys/file.h>
-#include <kernel.h>
-#include "iso9660.h"
-
-void InitCDFS(DynamicHeap *heap)
-{
-   CdInit();
-   iso_init(heap);
-}
-
-long FileLength( char* name )
-{
-   FILE *file;
-   long length;
-
-   char *cleanname;
-
-   cleanname = (char *)strchr(name,':');
-   if (cleanname != NULL)
-      {
-      cleanname++;
-      }
-   else
-      {
-      cleanname = name;
-      }
-
-   file = fopen(cleanname,"rb");
-   fseek(file,0L,SEEK_END);
-   length = ftell(file);
-   fseek(file,0L,SEEK_SET);
-   fclose(file);
-   return(length);
-}
-
-long LoadFile( char* name, char* buffer )
-{
-   int   fd;
-   long  length;
-   long  to_read,i,left_over;
-   u_long tmp_buf[2048/4];          /* Used for last sector of read */
-   u_long *b, *t;
-
-   char *cleanname;
-
-   cleanname = (char *)strchr(name,':');
-   if (cleanname != NULL)
-      {
-      cleanname++;
-      }
-   else
-      {
-      cleanname = name;
-      }
-
-
-/* Open file */
-
-   fd = iso_open( cleanname, 0 );
-   if ( fd == -1 )
-   {
-      printf( "File.c:LoadFile(): Bad file name %s\n", name );
-      return( 0 );
-   }
-
-   /* length is the number of bytes to the nearest SECTOR size */
-
-   length = iso_filesize(fd);
-   to_read = length >> 11;    /* In sectors */
-
-/* Read file into buffer */
-
-   if ( iso_read( buffer, to_read ,fd) != to_read )
-   {
-      printf( "File.c:LoadFile(): Failed to load file %s\n", name );
-      iso_close( fd );
-      return( 0 );
-   }
-   /* So, we've read the whole sectors of the file. Now read the left overs at the end */
-   if (iso_read(tmp_buf, 1, fd) != 1)
-   {
-      printf( "File.c:LoadFile(): Failed to load file %s\n", name );
-      iso_close( fd );
-      return( 0 );
-   }
-   left_over = (length - to_read*2048 + 3) >> 2 ;  /* Number of long words left over */
-   b = (u_long *)(buffer+to_read*2048);   /* copy the left overs here */
-   t = tmp_buf;
-   for (i = 0; i < left_over;i++)
-   {
-      *b++ = *t++;
-   }
-/* Close file */
-
-   iso_close( fd );
-
-/* Return file length */
-
-   return( length );
-}
-void SaveFile( char* name, char* buffer, long length )
-{
-   printf("Save file called: %s , but not implemented 'cause we are CD FS\n", name);
-}
-
-#else /* PC FS */
 #ifdef SN_PCFS // PCwipeout
 
 long FileLength( char* name )
@@ -398,6 +288,4 @@ void SaveFile( char* name, char* buffer, long length )
    fclose( fd );
 }
 
-
-#endif   // PCwipeout
 #endif

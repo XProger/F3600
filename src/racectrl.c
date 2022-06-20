@@ -17,21 +17,15 @@
 #include "camera.h"
 #include "draw.h"
 #include "scene.h"
-#include "main.h"
 #include "dynam.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
 #include "sound.h"
-#include "editor.h"
-#include "texplace.h"
 #include "effects.h"
 #include "fileops.h"
-#include "sparks2.h"
 #include "options.h"
 #include "global.h"
-#include "sprite.h"
 #include "cone.h"
 #include "race.h"
 #include "trackasm.h"
@@ -49,21 +43,9 @@
 #define  AJSDELAY     60*30 // arbitrary number - linked to frame rate ? HOPE SO !
 //#define   AJSDELAY     20 // arbitrary number - linked to frame rate ? HOPE SO !
 
-#define SHIP_DEBUG 0
-
-// extern u_long __bss, __bsslen, _ramsize, _stacksize;
 extern long fr ;
 extern ChampionShip  winTable[] ;
 extern short starttrack,endtrack,CurrTrkNo;
-
-typedef struct {
-   int   width;
-   int   height;
-   int   vram_xpos;
-   int   vram_ypos;
-   char  *bitmap;
-   char  *palette;
-} bm;
 
 extern   int     inattract;
 extern   short   startIceText;
@@ -96,15 +78,6 @@ short          ctrlcount;
 short          ctrlweapCount;
 TrackSection   *ctrlnextSection;
 
-#if EditorOn
-Editor         ctrleditor;
-TexPlace       ctrltexPlace;
-Object         *ctrltexHighlight;
-short          ctrlface;
-long           ctrlbeforeVcount;
-#endif
-
-
 
 /**************************************************/
 /******           Dave additions              *****/
@@ -126,76 +99,67 @@ int            ctrlnoWeaponGrids;
 Texture        *ctrlweaponIconTextures[NO_OF_WEAPON_TYPES] ;
 
 short          ctrlsky;
-int         ctrlchoice;
+int            ctrlchoice;
 POLY_F4        ctrlselectBox[2];
 DR_MODE        ctrlselectTrans[2];
 TrackSection    *ctrlsection;
-Face        *ctrlfacePtr;
+Face           *ctrlfacePtr;
 VECTOR          ctrlfacePoint;
 Effect         *ctrleffects ;
-Texture     *ctrleffectTextures[NO_OF_EFFECT_TEXTURES] ;
+Texture        *ctrleffectTextures[NO_OF_EFFECT_TEXTURES] ;
 int            ctrlcdTrack;
 int            ctrlnoCdTracks;
-POLY_FT4    ctrlTarget[2];
+POLY_FT4       ctrlTarget[2];
 TIMlist        *ctrltimPtr;
 Shadow         *ctrlShadow;
-//POLY_FT4     ctrlweaponIcon[2];
-SPRT        ctrlweaponIcon[2];
+SPRT           ctrlweaponIcon[2];
 DR_MODE        ctrliconTPage;       // DLS
 DR_MODE        ctrlrealTPage;       // DLS
 u_char         ctrlparam;
 Object         *ctrllostad[20]; /* It wouldn`t suprise me ! */
 int            ctrlstadCount;
-short       ctrlsectCount;
-short       ctrlcheck;
-short       ctrljcheck;
+short          ctrlsectCount;
+short          ctrlcheck;
+short          ctrljcheck;
 short          ctrlji;
 TrackSection   *ctrljsection;
 short          ctrlbuttonPressed;
-Object*           ctrlredLight;
-Object*           ctrldonkey[2];
+Object*        ctrlredLight;
+Object*        ctrldonkey[2];
 int            ctrldoneExtro;
 int            ctrlplayCredits;
 int            ctrlgameOverTime;
 int            ctrlcdPause;
-int         ctrlnearShip;
-
-
-#if SHIP_DEBUG
-POLY_F3        ctrlmapShips[8];
-LINE_F2        ctrltrackMap[60];
-#endif
+int            ctrlnearShip;
 
 /**************************************************/
 /******           Stu additions               *****/
 /**************************************************/
-Speedo         ctrlspeedo;
-int               ctrlframe_cnt;
-ulong          ctrltoggleDisplay;
+Speedo      ctrlspeedo;
+int         ctrlframe_cnt;
+ulong       ctrltoggleDisplay;
 char        ctrlshowMenu;
 char        ctrlconfirm;
 char        ctrllConfirm;
-HiScoreData    ctrlhiScoreData   ;
-POLY_F4        ctrlfadeScreen[2];
-DR_MODE        ctrlfadeTrans[2];
-FadeData    ctrlfadeData ;
-SPRT        ctrllifeIcons[3][2] ;
-// POLY_FT4       ctrllifeIcons[3][2] ;
-char        ctrlrec[8] ;
+HiScoreData ctrlhiScoreData;
+POLY_F4     ctrlfadeScreen[2];
+DR_MODE     ctrlfadeTrans[2];
+FadeData    ctrlfadeData;
+SPRT        ctrllifeIcons[3][2];
+
+char        ctrlrec[8];
 char        ctrlmachinePaused;
 char        ctrlactivated;
-int            ctrlchoiceData;
+int         ctrlchoiceData;
 char        ctrlquitFlag;
-Texture        *ctrlwinLose [2] ;
-POLY_FT4    ctrlwinLosePrims[2] ;
-int            ctrlquitTwoPlayer;
-POLY_F4        ctrlbackFrame[2];
-DR_MODE        ctrlbackFrameTrans[2];
+Texture     *ctrlwinLose[2];
+POLY_FT4    ctrlwinLosePrims[2];
+int         ctrlquitTwoPlayer;
+POLY_F4     ctrlbackFrame[2];
+DR_MODE     ctrlbackFrameTrans[2];
 char        ctrlshowGameOver;
 
-
-combatData     ctrlpacketData;
-ConfigData     *ctrlgameData;
+ConfigData  *ctrlgameData;
 long        ctrlmode;
 long        ctrltimeout;
 
@@ -236,10 +200,6 @@ void raceinit(void)
       ctrl_says_quit = 0;
       ctrlprmCount = 0;
       ctrlnumLib = 0;
-#if EditorOn
-      ctrltexHighlight = NULL;
-      ctrlface = 0;
-#endif
       ctrlCDPaused = 0;
       ctrlnoWeaponGrids = 0;
       ctrlchoice = -1;
@@ -274,14 +234,8 @@ void raceinit(void)
       ctrlautoMesh->colourMeshed = 0;
       ctrlautoMesh->autoMeshedOn = 1;
 
-#if PAL
-      ctrlclear[ 0 ] = BlockFill( 0, 0, 320, 256, 0x00, 0x00, 0x00 );
-      ctrlclear[ 1 ] = BlockFill( 0, 256, 320, 256, 0x00, 0x00, 0x00 );
-#else
       ctrlclear[ 0 ] = BlockFill( 0, 0, 320, 240, 0x00, 0x00, 0x00 );
       ctrlclear[ 1 ] = BlockFill( 0, 240, 320, 240, 0x00, 0x00, 0x00 );
-#endif
-
 
       inattract = 0;
       InitCredits();
@@ -449,26 +403,6 @@ void raceinit(void)
          InitRedLight(ctrlprm, ctrlprmCount, &ctrlredLight);
       }
 
-
-
-#if EditorOn
-      //   printf( "Initialise Editor\n" );
-
-      ctrleditor.iconTextures = TextureTableCount;
-      LoadWtlFiles( "wipeout\\common\\icons.tex" );
-
-      ctrltexHighlight = CreateTexHighlight( );
-      ctrltexHighlight->skeleton->super = ctrlcamera.camPos;  /* from offset */
-
-      InitEditor( &ctrleditor );
-
-      ctrltexPlace.libraryTextures = ctrllibraryTextures;
-      ctrltexPlace.numLib = ctrlnumLib;
-      ctrltexPlace.emptyTexture = ctrleditor.iconTextures + fEmpty;
-      InitTexPlace( &ctrltexPlace, ctrltexTemplate );
-#endif
-
-
       InitCamera(&ctrlcamera, track->sections);
 
       ctrlShadow = InitShadow(ctrlcamera.camPos, ctrleffectTextures);
@@ -514,14 +448,7 @@ void raceinit(void)
       ctrleffects = ( Effect* )DAlloc( heap, (sizeof( Effect ) * NO_OF_EFFECTS) + 32 );
       InitEffects(ctrleffects, ctrlcamera.camPos, ctrleffectTextures);
 
-#if SHIP_DEBUG
-      InitMapShips(ctrlmapShips, ctrltrackMap);
-#endif
       CameraUpdate = UpdateCameraRaceStart;
-
-
-
-
 
       spareMax = 0;
 
@@ -665,8 +592,6 @@ void raceinit(void)
          InitFireCongratulations( );
       }
 
-      // PCWIPEOUT PALETTE SHIT
-
       inmenu=0;
       for( ctrl_i = 0; ctrl_i < 2; ctrl_i++)
       {
@@ -685,11 +610,9 @@ extern void ReadJoystick(void);
 
 void racectrl(void)
 {
-   combatData *packetData;
    ConfigData *gameData;
    int mode, timeout;
 
-   packetData = &ctrlpacketData;
    gameData = ctrlgameData;
    mode   = ctrlmode;
    timeout = ctrltimeout;
@@ -769,7 +692,7 @@ void racectrl(void)
          ctrlshipIndex[ownShip].attr &= ~VIEW_IN;
          ctrlshipIndex[ownShip].attr &= ~RACING;
          CameraUpdate = UpdateCameraAttractMode;
-         attractDelay = 30 * FR30;     //PAL 25
+         attractDelay = 30 * FR30;
          ctrlmode = ATTRACT;
          inattract=1;   //jed
          ctrlbuttonPressed = 0;
@@ -971,35 +894,16 @@ void racectrl(void)
 
          if(ctrlmode != ATTRACT)
          {
-            if(gameType == SINGLE)
-            {
-               if(pad == 0)
-                  ctrlbuttonPressed++;
-               else
-                  ctrlbuttonPressed = 0;
-            }
+            if(pad == 0)
+               ctrlbuttonPressed++;
+            else
+               ctrlbuttonPressed = 0;
          }
 
-
-         if (gameType != SINGLE)
-         {
-            LaunchWeapon(ctrlshipIndex, ctrlweaponIndex, 0);
-            for(ctrl_i = 0; ctrl_i < NO_OF_SHIPS; ctrl_i++)
-            {
-               ctrlshipIndex[ctrl_i].haveFired = NO_WEAPON;
-            }
-         }
-
-         if ((gameType == MASTER) || (gameType == SINGLE))
-            UpdateShips(ctrlshipIndex, ctrlweaponShapes, ctrlshipShapes, ctrlweaponIndex);
-         else
-            UpdateShipsSerial(ctrlshipIndex, ctrlweaponShapes, ctrlshipShapes, ctrlweaponIndex);
+         UpdateShips(ctrlshipIndex, ctrlweaponShapes, ctrlshipShapes, ctrlweaponIndex);
 
          (ctrlrescueDroid.droidUpdate)(&ctrlrescueDroid, &(ctrlshipIndex[ownShip]), ctrlshipShapes );
 
-#if COLLIDE_TEST
-         CameraUpdate = UpdateCameraCollideTest;
-#endif
          if( RobTest ||  ctrldoneExtro == UPDATE_EXTRO )
          {
             (CameraUpdate)(&ctrlcamera, ctrlshipIndex, &ctrlrescueDroid);
@@ -1064,13 +968,6 @@ void racectrl(void)
 
       else if(attractDelay > 0)
       {
-         if (gameType == MASTER || gameType == SLAVE)
-         {
-            if((ctrlshipIndex[ownShip].lapNo >= 4) && (ctrlshipIndex[serialShip].lapNo >= 4))
-               packetData->exit = 1 ;
-         }
-
-
          if(gameType == SINGLE)
          {
             attractDelay--;
@@ -1637,12 +1534,6 @@ void racectrl(void)
             /**** Draw, Mesh, AutoMesh, Reject, Don`t reject, Nurse, Bend Over  **/
             /**** Abuse & Call a Naughty boy  TRACK CODE                        **/
             /*********************************************************************/
-
-
-#if SHIP_DEBUG
-            DrawMapShips(ctrlmapShips, ctrlshipIndex, ctrltrackMap);
-#endif
-
             if (ctrlshipIndex[serialShip].haveFired == PAUSE && !ctrlactivated)
             {
                ctrlmachinePaused = SLAVE ;

@@ -1,13 +1,3 @@
-typedef struct {
-   int   width;
-   int   height;
-   int   vram_xpos;
-   int   vram_ypos;
-   char  *bitmap;
-   char  *palette;
-} bm;
-
-void ContinueOTag(void);
 void ReadPCX(char *fname, bm *BMptr,char Flg);
 char *LockPilot(void);
 void UnlockPilot(void);

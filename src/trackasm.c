@@ -24,7 +24,6 @@
 #include "draw.h"
 #include "scene.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "asmtrk.h"
 #include "wipesrc\win95\daves\pragmas.h"

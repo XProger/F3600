@@ -10,13 +10,22 @@
 #include "wipesrc\psx26\include\libcd.h"
 #include "wipesrc\psx26\include\libspu.h"
 
+
+#define  SLAVE       1
+#define  MASTER      0
+#define  SINGLE      2
+
+#define  PAUSE    0x30
+#define  CONT     0x31
+#define  RETIRE   0x32
+#define  QUIT     0x33
+#define  NULLDATA 0x34
+
 typedef unsigned char uchar;
 typedef unsigned long ulong;
 typedef unsigned int uint;
 
 typedef char* Ptr;
-
-#define PAL       0
 
 #ifndef NULL
 #define  NULL     0
@@ -40,14 +49,23 @@ long rsin( long angle );
 long rcos( long angle );
 */
 
+typedef struct {
+   int   width;
+   int   height;
+   int   vram_xpos;
+   int   vram_ypos;
+   char  *bitmap;
+   char  *palette;
+} bm;
 
+
+void  osQuit(void);
 
 int   JJSLoadSprites(void);
 void  changeScreen(void);
 void  setRenderBegin(void);
 void  setRenderEnd(void);
 int   ProcessMessages(void);
-void  sendList(void);
 void  JJSDrawPolyF3(POLY_F4* p);
 void  JJSDrawPolyFT3(POLY_FT3* p);
 void  JJSDrawPolyG3(POLY_G3* p);
@@ -56,9 +74,5 @@ void  JJSDrawPolyGT4(POLY_GT4* p);
 void  JJSDrawPolyF4(POLY_F4* p);
 void  JJSDrawPolyFT4(POLY_FT4* p);
 void  JJSDrawPolyG4(POLY_G4* p);
-void  WinQuit(void);
-unsigned short GetKeyNoBlock();
 
-void setRenderBegin(void);
-void setRenderEnd(void);
-void sendList(void);
+unsigned short GetKeyNoBlock();

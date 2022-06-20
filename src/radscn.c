@@ -18,7 +18,6 @@
 #include "camera.h"
 #include "draw.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "error.h"
 #include "libgte.h"

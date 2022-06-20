@@ -2,44 +2,29 @@
 
 #define NO_OF_WEAPONS 29
 
-#define NO_OF_MINES 15
-#define NO_OF_ROCKETS 4
-#define NO_OF_MISSILES 4
-#define NO_OF_SHIELDS 3
-#define NO_OF_EBOLTS 3
+#define NO_OF_MINES     15
+#define NO_OF_ROCKETS   4
+#define NO_OF_MISSILES  4
+#define NO_OF_SHIELDS   3
+#define NO_OF_EBOLTS    3
 
-#define MINE_OFFSET 4
-#define ROCKET_OFFSET 0
-#define MISSILE_OFFSET 19
-#define SHIELD_OFFSET 23
-#define EBOLT_OFFSET 26
+#define MINE_OFFSET     4
+#define ROCKET_OFFSET   0
+#define MISSILE_OFFSET  19
+#define SHIELD_OFFSET   23
+#define EBOLT_OFFSET    26
 
-#if PAL
-#define MINE_DURATION 350
-#define ROCKET_DURATION 150
-#define ELEC_DURATION 100
-#define REV_CON_DURATION 50
-#define MISSILE_DURATION 150
-#define SHIELD_DURATION 150
-#define FLARE_DURATION 150
-#define SPECIAL_DURATION 300
-#else
-#define MINE_DURATION (45*FR10)
-#define ROCKET_DURATION (20*FR10)
-#define ELEC_DURATION (14*FR10)
-#define REV_CON_DURATION (6*FR10)
-#define MISSILE_DURATION (20*FR10)
-#define SHIELD_DURATION (20*FR10)
-#define FLARE_DURATION (20*FR10)
-#define SPECIAL_DURATION (40*FR10)
-#endif
+#define MINE_DURATION      (45*FR10)
+#define ROCKET_DURATION    (20*FR10)
+#define ELEC_DURATION      (14*FR10)
+#define REV_CON_DURATION   (6*FR10)
+#define MISSILE_DURATION   (20*FR10)
+#define SHIELD_DURATION    (20*FR10)
+#define FLARE_DURATION     (20*FR10)
+#define SPECIAL_DURATION   (40*FR10)
 
-#define MINE_RELEASE_RATE 3
-#if PAL
-#define  WEAPON_DELAY 33
-#else
-#define WEAPON_DELAY (FR40)
-#endif
+#define MINE_RELEASE_RATE  3
+#define WEAPON_DELAY       (FR40)
 
 #define NO_WEAPON 0
 

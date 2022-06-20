@@ -13,8 +13,6 @@
 #include "ships.h"
 #include "weapon.h"
 #include "control.h"
-#include "wtl.h"
-#include "combat.h"
 #include "menus.h"
 #include "options.h"
 #include "hiscores.h"
@@ -24,11 +22,9 @@
 #include "fileops.h"
 #include "card.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "ajs.h"
 #include "decl.h"
-#include "main.h"
 #include "init.h"
 #include "scene.h"
 #include "utils.h"
@@ -39,10 +35,6 @@
 #include <stdlib.h>     // PCwipeout
 #include <string.h>
 
-typedef int BOOL;
-
-extern BOOL Screen565;
-
 extern short trackNum,screenres; //SJR
 extern float upres;
 
@@ -51,15 +43,6 @@ extern float upres;
 #define  DEBUG_FLAG        4
 #define  DONT_CHECK_SIZE   8
 #define  ALLOCATE_MEM      16
-
-typedef struct {
-   int   width;
-   int   height;
-   int   vram_xpos;
-   int   vram_ypos;
-   char  *bitmap;
-   char  *palette;
-} bm;
 
 #define MyLoad16Bit  1  // PCwipeout
 
@@ -119,14 +102,10 @@ char  orig_controller;
 char  changecontroller = 1;
 // end of temporary stuff
 
-extern   char *VRam;
-extern   char *CurBuffer;
-
 extern TexChar CharSet16[] ;
 extern HiScores scoreTable[] ;
 extern long fr,fw;      /* file descriptor */
 extern unsigned long ev0 ;
-int inmenutest=0;
 
 extern int short shipShapeOrder[];
 int short pilotShapeOrder [8] = {0, 4, 6, 7, 2, 5, 1, 3} ;
@@ -443,7 +422,7 @@ void reloadScr(void)
    menuScreen = JJSLoad16BitTexture ("wipeout\\textures\\wipeout1.tim", VRAM) ;
 }
 
-void MenuControl (ConfigData *gameData, TimData *titleScreen, int *mode, int timeout)
+void MenuControl (ConfigData *gameData, int *mode, int timeout)
 {
 
    BlkFill*       clear[ 2 ];
@@ -1629,8 +1608,7 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
       }
       else
       {
-         //       DumpVram16Bit("c:\\wipeout\\newgraph\\venom\\menus.rgb",&VRam);
-         QuitToDos();
+         osQuit();
       }
    }
 
@@ -4496,7 +4474,7 @@ void JJSReadTIM(char *filename , char *location, TimData *tim)
    for(i=0;i<320*240;++i)
    {
       fread(&pix0,2,1,fp);
-      /*TODO
+      /*
       if(Screen565)
          pix1=((pix0&0x1f)<<11)|((pix0&0x3e0)<<1)|(pix0>>10);
       else*/

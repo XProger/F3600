@@ -1,49 +1,21 @@
-#define NEGCON 0x23
-// #define NEGCON 1    // PCwipeout
 #define NORMALPAD 0
 #define HRP 0
-#if PAL
-#define JUST_FRONT_DELAY        125
-#define JUST_BEHIND_DELAY       166
-#define IN_SIGHT_DELAY          83
-#define STALL_DELAY                     75
-#define START_TIME                      166
-#define THREE                                   125
-#define RED_LIGHT                               83
-#define AMBER_LIGHT                     41
-#define RACE_START                      0
-#else
-#define JUST_FRONT_DELAY        (15*FR10)
-#define JUST_BEHIND_DELAY       (20*FR10)
-#define IN_SIGHT_DELAY          (20*FR10)
-#define STALL_DELAY                     (9 * FR10)
-#define START_TIME                      (20*FR10)
-#define THREE                                   (15*FR10)
-#define RED_LIGHT                               (10*FR10)
+
+#define JUST_FRONT_DELAY   (15*FR10)
+#define JUST_BEHIND_DELAY  (20*FR10)
+#define IN_SIGHT_DELAY     (20*FR10)
+#define STALL_DELAY        (9 * FR10)
+#define START_TIME         (20*FR10)
+#define THREE              (15*FR10)
+#define RED_LIGHT          (10*FR10)
 #define AMBER_LIGHT        (5*FR10)
 #define RACE_START         0
-#endif
-
-
 
 #define SWITCH_TO_RACE_VIEW 100
 
 #define STALL              -1
 
-typedef struct NegconBuff
-{
-   u_short  head;
-   u_short  bits;
-   char     twist;
-   char     i;
-   char     ii;
-   char     lShift;
-} NegconBuff;
-
-
-
 void  UpdateShips(ShipData *shipIndex, WeaponShape *weaponShapes, Object** shipShapes, WeaponData*);
-void  UpdateShipsSerial(ShipData *shipIndex, WeaponShape *weaponShapes, Object** shipShapes, WeaponData *weaponIndex);
 int   InitController();
 void  GeneralStartProcs(ShipData *playerShip);
 

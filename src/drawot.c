@@ -77,7 +77,7 @@ void DrawOTag(P_TAG *primitive)
 
    CurBufferJ=CurBuffer;                  //jed
    tempbuffer=CurBuffer;
-   setRenderBegin();
+   renderBegin();
 
    addr = (unsigned long) primitive;
 
@@ -90,8 +90,7 @@ void DrawOTag(P_TAG *primitive)
    }
    while ((addr = getaddr(primitive)) != 0xffffffff);
 
-   sendList();
-   setRenderEnd();
+   renderEnd();
 }
 
 void Set_Device(int tmp)
@@ -379,6 +378,4 @@ void MaskSprite(u_long *primitive)
 
    op.clut = drawenv_tpage;
    op.r0 = ip->r0;
-   sendList();
-   setRenderEnd();
 }

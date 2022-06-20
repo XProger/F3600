@@ -15,7 +15,6 @@
 #include "control.h"
 #include "droid.h"
 #include "dynam.h"
-#include "combat.h"
 #include "search.h"
 #include "menus.h"
 #include "hiscores.h"
@@ -24,13 +23,9 @@
 #include "draw.h"
 #include "sound.h"
 #include "fileops.h"
-#include "sparks2.h"
 #include "global.h"
-#include "main.h"
-#include "texplace.h"
 #include "effects.h"
 #include "options.h"
-#include "sprite.h"
 #include "trackasm.h"
 #include "ajs.h"
 #include "libgte.h"
@@ -261,15 +256,11 @@ void FireWeapon(ShipData *playerShip, WeaponData *weaponIndex, int shipNo, char 
 
          case TURBO:
             playerShip->weaponType = NO_WEAPON;
-#if PAL
-            playerShip->vpivot.vx += (playerShip->unitVecNose.vx)<<3;
-            playerShip->vpivot.vy += (playerShip->unitVecNose.vy)<<3;
-            playerShip->vpivot.vz += (playerShip->unitVecNose.vz)<<3;
-#else
+
             playerShip->vpivot.vx += (((playerShip->unitVecNose.vx)<<3)*FR60)/50;
             playerShip->vpivot.vy += (((playerShip->unitVecNose.vy)<<3)*FR60)/50;
             playerShip->vpivot.vz += (((playerShip->unitVecNose.vz)<<3)*FR60)/50;
-#endif
+
             if(shipNo == ownShip)
             {
                PlayNote(TURBO_SOUND, 1, 100);
@@ -1924,93 +1915,6 @@ void UpdateShield(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* we
       weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
       shieldID = weapon->currentWeapon - SHIELD_OFFSET;
       //    TransformTransparentObject( weaponShapes[weapon->currentWeapon].shapePtr, cameraPtr->camPos , shieldID);
-   }
-   else
-   {
-#if PCwipeout
-      if (current_palette==MAIN_PAL)
-      {
-         CopyPal(shield_palette,0,255);
-         current_palette=SHIELD_PAL;
-      }
-      poly.prim = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
-      primitiveCount = weaponShapes[weapon->currentWeapon].shapePtr->primitiveCount;
-
-      screen0.vx = 0;
-      screen0.vy = 0;
-
-      screen1.vx = 320;
-      screen1.vy = 0;
-
-#if PAL
-      screen2.vx = 0;
-      screen2.vy = 256;
-      screen3.vx = 320;
-      screen3.vy = 256;
-#else
-      screen2.vx = 0;
-      screen2.vy = 240;
-      screen3.vx = 320;
-      screen3.vy = 240;
-#endif
-
-      for ( k = 0; k < primitiveCount; k++ )
-      {
-         switch ( poly.prim->type )
-         {
-            case TypeG3 :
-            poly.g3 += 1;
-            break;
-
-         case TypeG4 :
-            /* prim.g4 = poly.g4->quad + CurrentScreen;*/
-            coords = poly.g4->coords;
-
-            SetPolyG4( ( POLY_G4* )prims.ptr );
-            SetSemiTrans(prims.ptr, 1);
-
-            col0 = (rsin(weapon->count*coords[0]<<1)>>5) + 128;
-            col1 = (rsin(weapon->count*coords[1]<<1)>>5) + 128;
-            col2 = (rsin(weapon->count*coords[2]<<1)>>5) + 128;
-            col3 = (rsin(weapon->count*coords[3]<<1)>>5) + 128;
-
-            if(col0 > 255) col0 = 255;
-            if(col1 > 255) col1 = 255;
-            if(col2 > 255) col2 = 255;
-            if(col3 > 255) col2 = 255;
-
-            prims.g4->colour0.r = (char)col0;
-            prims.g4->colour1.r = (char)col1;
-            prims.g4->colour2.r = (char)col2;
-            prims.g4->colour3.r = (char)col3;
-
-            prims.g4->colour0.g = 0;
-            prims.g4->colour1.g = 0;
-            prims.g4->colour2.g = 0;
-            prims.g4->colour3.g = 0;
-
-            prims.g4->colour0.b = RED_TRANSL;
-
-            prims.g4->xy0 = screen0;
-            prims.g4->xy1 = screen1;
-            prims.g4->xy2 = screen2;
-            prims.g4->xy3 = screen3;
-
-            //             AddPrim( OT[ CurrentScreen ] , ( ulong* ) prims.prim );
-            prims.g4 += 1;
-
-            shieldID = weapon->currentWeapon - SHIELD_OFFSET;
-            //             AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(shieldParams[(64 * shieldID)][CurrentScreen]));
-            prims.drmode += 1;
-
-            /* poly.g4 += 1;*/
-            return;
-
-         default:
-            break;
-         }
-      }
-#endif
    }
 
 }

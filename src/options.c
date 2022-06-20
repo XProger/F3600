@@ -15,15 +15,12 @@
 #include "camera.h"
 #include "draw.h"
 #include "scene.h"
-#include "main.h"
 #include "sound.h"
 #include "dynam.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
 #include "options.h"
-#include "sparks2.h"
 #include "global.h"
 #include "ajs.h"
 
@@ -170,17 +167,10 @@ void DeSelectScreen (POLY_F4* selectBox, DR_MODE* selectTrans)
    selectBox[CurrentScreen].g0=0;
    selectBox[CurrentScreen].b0=BLACK2_TRANSL;
 
-#if PAL
-   setXY4(&(selectBox[CurrentScreen]),0 , 0,
-                          320 , 0,
-                          0 , 256,
-                          320 , 256);
-#else
    setXY4(&(selectBox[CurrentScreen]),0 , 0,
                           320 , 0,
                           0 , 240,
                           320 , 240);
-#endif
 
    SetSemiTrans((P_TAG *)&(selectBox[CurrentScreen]), 1);
 

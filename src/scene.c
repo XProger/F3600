@@ -18,7 +18,6 @@
 #include "droid.h"
 #include "camera.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "error.h"
 #include "file.h"

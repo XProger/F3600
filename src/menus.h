@@ -383,7 +383,7 @@ typedef struct SortTable
 } SortTable;
 
 
-void     MenuControl(ConfigData *, TimData *, int *, int);
+void     MenuControl(ConfigData *, int *, int);
 void     InitMenuSystem(Menus *);
 TimData     *Load16BitTexture(char *, char);
 void     ShowMenuBackground(POLY_FT4 *, POLY_FT4 *, TimData *);

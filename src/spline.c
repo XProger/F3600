@@ -16,21 +16,15 @@
 #include "camera.h"
 #include "draw.h"
 #include "scene.h"
-#include "main.h"
 #include "dynam.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
 #include "sound.h"
-#include "editor.h"
-#include "texplace.h"
 #include "effects.h"
 #include "fileops.h"
-#include "sparks2.h"
 #include "options.h"
 #include "global.h"
-#include "sprite.h"
 #include "cone.h"
 #include "race.h"
 #include "trackasm.h"
@@ -357,15 +351,9 @@ void UpdateShipRemote(register ShipData *shipIndex, Object** shipShapes, int shi
       remoteShip->apivot.vy = (remoteShip->apivot.vy*60)/FR60;
       remoteShip->apivot.vz = (remoteShip->apivot.vz*60)/FR60;
 
-#if COLLIDE_TEST
-      remoteShip->vpivot.vx = 0;
-      remoteShip->vpivot.vy = 0;
-      remoteShip->vpivot.vz = 0;
-#else
       remoteShip->vpivot.vx += remoteShip->apivot.vx;
       remoteShip->vpivot.vy += remoteShip->apivot.vy;
       remoteShip->vpivot.vz += remoteShip->apivot.vz;
-#endif
       /***** If remote has gone over speed-up *****/
 
       /****** Speed Test, should not make much difference ******/
@@ -996,11 +984,9 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             camVx = 4350;
             camVy = 9850;
             camVz = 4400;
-#if PAL
-            timeOut = 25*13;
-#else
+
             timeOut = FR30*13;
-#endif
+
             CameraUpdate = UpdateCameraHighUp;
             camShip[ownShip].attr &= ~VIEW_IN;
             break;
@@ -1280,7 +1266,6 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
 #endif
       switch( count )
       {
-
          case 0:
          /* spline */
 
@@ -1358,7 +1343,6 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             camShip[ ownShip ].attr &= ~VIEW_IN;
             break;
 
-
          case 1:
          /* stationary camera */
          /* put the remotes out of the way */
@@ -1395,20 +1379,13 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             camVy = 2750;
             camVz = 0;
 
-#if PAL
-            timeOut = 25*3;
-#else
             timeOut = FR30*3;
-#endif
 
             camera->section = startSection + 12;
-
 
             CameraUpdate = UpdateCameraStationary;
             camShip[ownShip].attr &= ~VIEW_IN;
             break;
-
-
 
          case 2:
          /* stationary camera */
@@ -1442,11 +1419,7 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             camVy = 1500;
             camVz = -1500;
 
-#if PAL
-            timeOut = 25*6;
-#else
             timeOut = FR30*6;
-#endif
 
             camera->section = startSection + 12;
 
@@ -1454,9 +1427,6 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             CameraUpdate = UpdateCameraStationary;
             camShip[ownShip].attr &= ~VIEW_IN;
             break;
-
-
-
 
          case 3:
          /* high camera */
@@ -1496,16 +1466,11 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             camVy = 11100;
             camVz = -2850;
 
-#if PAL
-            timeOut = 25*6;
-#else
             timeOut = FR30*6;
-#endif
+
             CameraUpdate = UpdateCameraHighUp;
             camShip[ownShip].attr &= ~VIEW_IN;
             break;
-
-
 
          case 4:
          /* spline */
@@ -1594,8 +1559,6 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             camShip[ ownShip ].attr &= ~VIEW_IN;
             break;
 
-
-
          case 5:
          /* spline */
 
@@ -1673,8 +1636,6 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             camShip[ ownShip ].attr &= ~VIEW_IN;
             break;
 
-
-
          case 6:
          /* high camera */
          /* put the remotes out of the way */
@@ -1713,25 +1674,15 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             camShip[ ownShip ].vpivot.vy = targetVector.vy>>2;
             camShip[ ownShip ].vpivot.vz = targetVector.vz>>2;
 
-
-
-
             camVx = 1100;
             camVy = 7850;
             camVz = 4400;
 
-#if PAL
-            timeOut = 25*7;
-#else
             timeOut = FR30*7;
-#endif
 
             CameraUpdate = UpdateCameraHighUp;
             camShip[ownShip].attr &= ~VIEW_IN;
             break;
-
-
-
 
          case 7:
 //            printf( "\nfinished silverstream extro \n" );

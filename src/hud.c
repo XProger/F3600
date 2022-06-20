@@ -10,8 +10,6 @@
 #include "ships.h"
 #include "weapon.h"
 #include "control.h"
-#include "wtl.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
@@ -19,7 +17,6 @@
 #include "droid.h"
 #include "camera.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "ajs.h"
 #include "drawot.h"
@@ -214,7 +211,6 @@ void fill_speedo (Speedo *speedo, int speed, int thrust)
 
 
 void AddTime(int time, TEXT_DATA *pos_data, int colour)
-
 {
    int j;
    int index = 0;
@@ -256,13 +252,8 @@ void AddTime(int time, TEXT_DATA *pos_data, int colour)
                break ;
    }
 
-#if PAL
-   tenths = (time / 5) % 10;
-   time = time/50;
-#else
    tenths = (time / FR6) % 10;
    time = time/FR60;
-#endif
 
    secs = time % 60;
    mins = time / 60;
@@ -982,52 +973,6 @@ void UpdateRaceHud(ShipData* shipIndex, Speedo *speedo, int choice, ConfigData *
 
    }
 
-   if(shipIndex[ownShip].attr & RACING)
-   {
-#if PAL
-
-      if (gameType == MASTER || gameType == SLAVE)
-      {
-         AddText ("P", text_data (260, 60, 8), RedText) ;
-         AddNumber (2, text_data (274, 60, 8), RedText) ;
-         AddNumber (winTable[serialShip].racePosition, text_data (290, 60, 8), WhiteText) ;
-      }
-
-      AddText ("LAP", text_data (15, 4, 8), RedText) ; // PCwipeout Y was 10
-      AddNumber (shipIndex[ownShip].lapNo, text_data (10, 16, 16), WhiteText) ;  // Y was 20
-
-      width = Text16[(shipIndex[ownShip].lapNo+26)] % 100 ;
-
-      AddText ("OF", text_data ((10+width), 24, 8), RedText) ; // PCwipeout Y was 28
-
-      width += 22 ;
-
-      AddNumber (3, text_data ((10+width), 16, 16), WhiteText) ;  // PCwipeout Y was 20
-
-      if(raceType != TIME_TRIAL)
-      {
-         AddText ("POSITION", text_data (240, 4, 8), RedText) ; // PCwipeout Y was 10
-         AddNumber (winTable[ownShip].racePosition, text_data (270, 16, 16), WhiteText) ; // PCwipeout
-   }
-      AddText ("LAP RECORD", text_data (15, 40, 8), RedText) ;
-
-
-      if (gameData->gameType == TIME_TRIAL)
-         AddTime(scoreTable[((gameData->trackNum-1)+HiScoreTracks)].lapRecord,
-                      text_data (15, 52, 8), WhiteText);
-      else
-         AddTime(scoreTable[(gameData->trackNum-1)].lapRecord,
-                      text_data (15, 52, 8), WhiteText);
-
-      if((shipIndex[ownShip].attr & DIRECTION) == 0)
-      {
-         CentreText ("WRONG WAY", text_data (0, 120, 16), RedText) ;
-      }
-#else
-
-#endif
-   }
-
    /************ HAVE FINISHED RACE *****************/
    for(i = 0; i < NO_OF_SHIPS; i++)
    {
@@ -1531,13 +1476,8 @@ void DisplayLives (SPRT lifeIcons[][2], ConfigData *gameData) // PCwipeout
       lifeIcons[i][CurrentScreen].g0=0;
       lifeIcons[i][CurrentScreen].b0=BLACK_NOT_DRAWN;
 
-#if PAL
-      setXY0(&(lifeIcons[i][CurrentScreen]),294-(ySpace*i),215);
-      setWH(&(lifeIcons[i][CurrentScreen]),11,9);
-#else
       setXY0(&(lifeIcons[i][CurrentScreen]),speedo_x[screenres]+115-(ySpace*i),speedo_y[screenres]-5);
       setWH(&(lifeIcons[i][CurrentScreen]),11,9);
-#endif
 
       setUV0(&(lifeIcons[i][CurrentScreen]),livesTex->u0, livesTex->v0);
 

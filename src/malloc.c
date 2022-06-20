@@ -21,7 +21,6 @@
 #include "camera.h"
 #include "scene.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "error.h"
 

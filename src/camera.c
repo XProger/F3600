@@ -14,7 +14,6 @@
 #include "camera.h"
 #include "dynam.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "search.h" // PCwipeout
 #include "utils.h"

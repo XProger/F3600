@@ -10,8 +10,6 @@
 #include "ships.h"
 #include "weapon.h"
 #include "control.h"
-#include "wtl.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
@@ -19,7 +17,6 @@
 #include "droid.h"
 #include "camera.h"
 #include "sound.h"
-#include "sparks2.h"
 #include "global.h"
 #include "ajs.h"
 
@@ -176,7 +173,6 @@ void HighScore (ConfigData *gameData)
       FillHighScoreNames(&(scoreTable[26]), "STU", "DAV", "DOM", "MOR", "GAN");
       FillHighScoreNames(&(scoreTable[27]), "THA", "NKS", "FOR", "PLA", "YIN");
 
-#if PAL
       scoreTable[0].lapRecord =  (4950/60)*FR60+200 ;
       scoreTable[1].lapRecord =  (3120/60)*FR60+200 ;
       scoreTable[2].lapRecord =  (3250/60)*FR60+200 ;
@@ -206,37 +202,6 @@ void HighScore (ConfigData *gameData)
       scoreTable[25].lapRecord = (3745/60)*FR60+200 ;
       scoreTable[26].lapRecord = (3354/60)*FR60+200 ;
       scoreTable[27].lapRecord = (3100/60)*FR60+200 ;
-#else
-      scoreTable[0].lapRecord =  (4950/60)*FR60+200 ;
-      scoreTable[1].lapRecord =  (3120/60)*FR60+200 ;
-      scoreTable[2].lapRecord =  (3250/60)*FR60+200 ;
-      scoreTable[3].lapRecord =  (4910/60)*FR60+200 ;
-      scoreTable[4].lapRecord =  (4610/60)*FR60+200 ;
-      scoreTable[5].lapRecord =  (3500/60)*FR60+200 ;
-      scoreTable[6].lapRecord =  (3630/60)*FR60+200 ;
-      scoreTable[7].lapRecord =  (3970/60)*FR60+200 ;
-      scoreTable[8].lapRecord =  (2640/60)*FR60+200 ;
-      scoreTable[9].lapRecord =  (2670/60)*FR60+200 ;
-      scoreTable[10].lapRecord = (4405/60)*FR60+200 ;
-      scoreTable[11].lapRecord = (3745/60)*FR60+200 ;
-      scoreTable[12].lapRecord = (3354/60)*FR60+200 ;
-      scoreTable[13].lapRecord = (3100/60)*FR60+200 ;
-
-      scoreTable[14].lapRecord = (4950/60)*FR60+200 ;
-      scoreTable[15].lapRecord = (3120/60)*FR60+200 ;
-      scoreTable[16].lapRecord = (3250/60)*FR60+200 ;
-      scoreTable[17].lapRecord = (4910/60)*FR60+200 ;
-      scoreTable[18].lapRecord = (4610/60)*FR60+200 ;
-      scoreTable[19].lapRecord = (3500/60)*FR60+200 ;
-      scoreTable[20].lapRecord = (3630/60)*FR60+200 ;
-      scoreTable[21].lapRecord = (3970/60)*FR60+200 ;
-      scoreTable[22].lapRecord = (2640/60)*FR60+200 ;
-      scoreTable[23].lapRecord = (2670/60)*FR60+200 ;
-      scoreTable[24].lapRecord = (4405/60)*FR60+200 ;
-      scoreTable[25].lapRecord = (3745/60)*FR60+200 ;
-      scoreTable[26].lapRecord = (3354/60)*FR60+200 ;
-      scoreTable[27].lapRecord = (3100/60)*FR60+200 ;
-#endif
 
       firstUsed = 0 ;
       return ;

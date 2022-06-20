@@ -12,10 +12,6 @@
 
 Object* LoadPrm( char* name, short textureStart );
 
-Object* LoadScn( char* name, short textureStart );
-
-void IntelObject( char *start, char *finish, short convert );
-
 void IntelShort( short* svalue );
 
 void IntelLong( long* lvalue );

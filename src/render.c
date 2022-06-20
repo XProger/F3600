@@ -1147,18 +1147,13 @@ TimData* JJSLoad16BitTexture(char* filename, char location)
    return timData;
 }
 
-void setRenderBegin(void)
+void renderBegin(void)
 {
    texpage = 420;
    renderClear();
 }
 
-void setRenderEnd(void)
-{
-
-}
-
-void sendList(void)
+void renderEnd(void)
 {
 
 }

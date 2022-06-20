@@ -1,1 +1,1 @@
-void race( combatData *packetData, ConfigData *gameData, int mode, int timeout );
+void race( ConfigData *gameData, int mode, int timeout );

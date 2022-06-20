@@ -26,7 +26,6 @@
     <ClCompile Include="..\card.c" />
     <ClCompile Include="..\clearot.c" />
     <ClCompile Include="..\collide.c" />
-    <ClCompile Include="..\combat.c" />
     <ClCompile Include="..\cone.c" />
     <ClCompile Include="..\control.c" />
     <ClCompile Include="..\credits.c" />
@@ -42,7 +41,6 @@
     <ClCompile Include="..\hud.c" />
     <ClCompile Include="..\init.c" />
     <ClCompile Include="..\libgte.c" />
-    <ClCompile Include="..\libsnd.c" />
     <ClCompile Include="..\loadall.c" />
     <ClCompile Include="..\lzss.c" />
     <ClCompile Include="..\main.c" />
@@ -61,15 +59,12 @@
     <ClCompile Include="..\skeleton.c" />
     <ClCompile Include="..\sound.c" />
     <ClCompile Include="..\spline.c" />
-    <ClCompile Include="..\texplace.c" />
     <ClCompile Include="..\tim.c" />
-    <ClCompile Include="..\timc.c" />
     <ClCompile Include="..\track.c" />
     <ClCompile Include="..\trackasm.c" />
     <ClCompile Include="..\ttf.c" />
     <ClCompile Include="..\utils.c" />
     <ClCompile Include="..\weapon.c" />
-    <ClCompile Include="..\wintime.c" />
     <ClCompile Include="platform.c" />
   </ItemGroup>
   <ItemGroup>
@@ -80,32 +75,26 @@
     <ClInclude Include="..\camera.h" />
     <ClInclude Include="..\card.h" />
     <ClInclude Include="..\collide.h" />
-    <ClInclude Include="..\combat.h" />
     <ClInclude Include="..\common.h" />
     <ClInclude Include="..\cone.h" />
     <ClInclude Include="..\control.h" />
     <ClInclude Include="..\credits.h" />
     <ClInclude Include="..\decl.h" />
-    <ClInclude Include="..\dpa.h" />
     <ClInclude Include="..\draw.h" />
     <ClInclude Include="..\drawot.h" />
     <ClInclude Include="..\droid.h" />
     <ClInclude Include="..\dynam.h" />
-    <ClInclude Include="..\editor.h" />
     <ClInclude Include="..\effects.h" />
     <ClInclude Include="..\error.h" />
     <ClInclude Include="..\file.h" />
     <ClInclude Include="..\fileops.h" />
     <ClInclude Include="..\global.h" />
-    <ClInclude Include="..\handlers.h" />
     <ClInclude Include="..\hiscores.h" />
     <ClInclude Include="..\hud.h" />
     <ClInclude Include="..\init.h" />
     <ClInclude Include="..\input.h" />
-    <ClInclude Include="..\iso9660.h" />
     <ClInclude Include="..\libgte.h" />
     <ClInclude Include="..\lzss.h" />
-    <ClInclude Include="..\main.h" />
     <ClInclude Include="..\malloc.h" />
     <ClInclude Include="..\menus.h" />
     <ClInclude Include="..\object.h" />
@@ -116,29 +105,21 @@
     <ClInclude Include="..\racectrl.h" />
     <ClInclude Include="..\radscn.h" />
     <ClInclude Include="..\render.h" />
-    <ClInclude Include="..\resource.h" />
     <ClInclude Include="..\scene.h" />
     <ClInclude Include="..\search.h" />
     <ClInclude Include="..\sfx.h" />
     <ClInclude Include="..\ships.h" />
     <ClInclude Include="..\skeleton.h" />
     <ClInclude Include="..\sound.h" />
-    <ClInclude Include="..\sparks2.h" />
     <ClInclude Include="..\spline.h" />
-    <ClInclude Include="..\sprite.h" />
     <ClInclude Include="..\standard.h" />
-    <ClInclude Include="..\texplace.h" />
-    <ClInclude Include="..\tilelib.h" />
     <ClInclude Include="..\tim.h" />
-    <ClInclude Include="..\timc.h" />
     <ClInclude Include="..\track.h" />
     <ClInclude Include="..\trackasm.h" />
     <ClInclude Include="..\ttf.h" />
     <ClInclude Include="..\utils.h" />
     <ClInclude Include="..\utypes.h" />
     <ClInclude Include="..\weapon.h" />
-    <ClInclude Include="..\wintime.h" />
-    <ClInclude Include="..\wtl.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -17,28 +17,21 @@
 #include "camera.h"
 #include "draw.h"
 #include "scene.h"
-#include "main.h"
 #include "dynam.h"
-#include "combat.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
 #include "sound.h"
-#include "editor.h"
-#include "texplace.h"
 #include "effects.h"
 #include "fileops.h"
-#include "sparks2.h"
 #include "options.h"
 #include "global.h"
-#include "sprite.h"
 #include "cone.h"
 #include "race.h"
 #include "trackasm.h"
 #include "spline.h"
 #include "ajs.h"
 #include "racectrl.h"
-#include "wintime.h"
 #include "credits.h"
 #include "andyscn.h"
 
@@ -48,21 +41,9 @@
 
 #define PrmMax       64
 
-#define SHIP_DEBUG 0
-
-// extern u_long __bss, __bsslen, _ramsize, _stacksize;
 extern long fr ;
 extern ChampionShip  winTable[] ;
 extern char winLoseIn;
-
-typedef struct {
-   int   width;
-   int   height;
-   int   vram_xpos;
-   int   vram_ypos;
-   char  *bitmap;
-   char  *palette;
-} bm;
 
 extern   u_char         ctrlparam;
 
@@ -104,7 +85,6 @@ extern Speedo        ctrlspeedo;
 
 #define RobTest 0
 
-extern combatData    ctrlpacketData;
 extern ConfigData    *ctrlgameData;
 extern long          ctrlmode;
 extern long          ctrltimeout;
@@ -158,14 +138,10 @@ long  theFrameRate;
 long  fr_count;
 int fp;
 
-extern unsigned short   pad_stack[];
-extern int     Curpad;
-
-void race( combatData *packetData, ConfigData *gameData, int mode, int timeout )
+void race( ConfigData *gameData, int mode, int timeout )
 {
    InitAJSVSync();
    ctrl_init = 0;
-   ctrlpacketData = *packetData;
    ctrlgameData = gameData;      //archive off the gamedata;
    ctrlmode = mode;
    ctrltimeout = timeout;
@@ -180,18 +156,17 @@ void race( combatData *packetData, ConfigData *gameData, int mode, int timeout )
    CDRestartNeeded = 0;
    ok_to_interrupt = 1;
    CDloopCheck = 0;
-   start_time = HowLong();
-   end_time = HowLong();
+   start_time = end_time = osGetTimeMS();
    racectrl();
    racectrl();
    racectrl();
    ctrl_frame = 1;   //exactly one frame
    ctrl_remainder  = 0;
    fr_count = 0;
-   Curpad = 0;
+
    while(1)    //GAME LOOP
    {
-      start_time = (HowLong() - ctrl_remainder);
+      start_time = (osGetTimeMS() - ctrl_remainder);
       for (timeloop = 0; timeloop < ctrl_frame; timeloop++)
       {
          racectrl();
@@ -219,14 +194,6 @@ void race( combatData *packetData, ConfigData *gameData, int mode, int timeout )
       //    CDLoopCheck();
       //    CDloopCheck = 0;
       //    }
-#if 0
-      _disable();
-      copy_glob_from_spare();
-      _enable();
-
-      xpad = glo.xpad;  //bodge to try and ensure that xpad is preserved throughout this loop
-      pad = glo.pad; //bodge to try and ensure that xpad is preserved throughout this loop
-#endif
 #if CD_AUDIO
       switch (ctrlCDPaused)
       {
@@ -407,7 +374,7 @@ void race( combatData *packetData, ConfigData *gameData, int mode, int timeout )
       Swap( );
       //do
       //{
-      end_time = HowLong();
+      end_time = osGetTimeMS();
       //}
       //while((end_time - start_time) <=TIME_CONSTANT);  //never faster than 30fps
       duration = end_time - start_time;
