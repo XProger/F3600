@@ -29,25 +29,24 @@
 // PCwipeout
 #define SHIELD_BODGE 50
 
-
-#define FULL      0
-#define HIGH      0
-#define  MEDIUM      1
-#define LOW       2
-#define SMALL     2
-
-extern float    halfxf;
-extern float    halfyf;
-extern char     pixdouble;
 extern char     ScreenSize;
 extern char     Resolution;
 
 short    CurrentScreen;
 
 VECTOR     CameraPosition;
-SVECTOR   CameraDirection;
+SVECTOR    CameraDirection;
 MATRIX     Camera;
 
+#define    MaxVertices    1024
+
+DVECTOR    StaticScreen[MaxVertices];
+ushort     StaticDepth[MaxVertices];
+ushort     StaticFlags[MaxVertices];
+
+#define     ClipFlag    ( ( CrtClipped | ZLarge | ZNegative | ZSmall ) >> 12 )
+
+#define  ShortClipFlag  ( ( XClipped | YClipped | ZLarge | ZNegative | ZSmall ) >> 12 )
 
 
 // uchar   PrimitiveBuffer0[ 49152 * 2 ]; // PCwipeout
@@ -459,31 +458,6 @@ void      SetupLights
       SetLightMatrix(&lm);
    }
 }
-
-
-
-
-
-#define     MaxVertices    1024
-
-SVECTOR   StaticVertex[MaxVertices];
-DVECTOR   StaticScreen[MaxVertices];
-ushort     StaticDepth[MaxVertices];
-ushort     StaticFlags[MaxVertices];
-ushort      StaticZ[MaxVertices];
-
-
-#if 0
-#define     ClipFlag    ( 0xfbfe )
-#else
-#define     ClipFlag    ( ( CrtClipped | ZLarge | ZNegative | ZSmall ) >> 12 )
-#endif
-
-
-#define  ShortClipFlag  ( ( XClipped | YClipped | ZLarge | ZNegative | ZSmall ) >> 12 )
-
-
-
 
 void      TransformStaticObjectHole(Object * object, Skeleton * camera)
 {
@@ -2157,7 +2131,7 @@ PolyF4    *Quad
 
 
 
-BlkFill  *BlockFill
+BlkFill *BlockFill
       (
              short x,
              short y,
@@ -2194,7 +2168,7 @@ BlkFill  *BlockFill
 
 
 
-void      InitFonts()
+void InitFonts()
 {
 
    /* Initialise the system font */
@@ -2204,76 +2178,7 @@ void      InitFonts()
 
 }
 
-
-void      DoJedvars(void)
-{
-   if (ScreenSize == FULL)
-   {
-      switch (Resolution)
-      {
-      case HIGH:
-         halfxf = 0;
-         halfyf = 0;
-         pixdouble = 0;
-         break;
-      case MEDIUM:
-         halfxf = 2;
-         halfyf = 0;
-         pixdouble = 1;
-         break;
-      case LOW:
-         halfxf = 2;
-         halfyf = 2;
-         pixdouble = 2;
-         break;
-      }
-   }
-   if (ScreenSize == MEDIUM)
-   {
-      switch (Resolution)
-      {
-      case HIGH:
-         halfxf = 1.5;
-         halfyf = 1.5;
-         pixdouble = 0;
-         break;
-      case MEDIUM:
-         halfxf = 3;
-         halfyf = 1.5;
-         pixdouble = 1;
-         break;
-      case LOW:
-         halfxf = 3;
-         halfyf = 3;
-         pixdouble = 2;
-         break;
-      }
-   }
-   if (ScreenSize == SMALL)
-   {
-      switch (Resolution)
-      {
-      case HIGH:
-         halfxf = 2;
-         halfyf = 2;
-         pixdouble = 0;
-         break;
-      case MEDIUM:
-         halfxf = 4;
-         halfyf = 2;
-         pixdouble = 1;
-         break;
-      case LOW:
-         halfxf = 4;
-         halfyf = 4;
-         pixdouble = 2;
-         break;
-      }
-   }
-}
-
-
-void      TransformStaticObjectBodge(Object * object, Skeleton * camera)
+void TransformStaticObjectBodge(Object * object, Skeleton * camera)
 {
    DVECTOR  *screenPtr;
    ushort    *depthPtr;

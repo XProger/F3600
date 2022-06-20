@@ -26,7 +26,7 @@
 #include "collide.h"
 #include "utils.h"
 
-extern short ft,screenres;
+extern short screenres;
 
 
 extern short behindSpeed[];
@@ -34,22 +34,13 @@ extern short shipOrder[];
 
 #define FULL      0
 #define HIGH      3
-#define  MEDIUM      2
+#define MEDIUM    2
 #define LOW       1
 #define SMALL     0
 
-extern char  ScreenSize;
 extern char  Resolution;
-extern char  PersCorr;
-extern char  PersCorrLvl;
-
-extern short JoyMinX, JoyMaxX;
-extern short JoyMinY, JoyMaxY;
-extern short JoyCentreX, JoyCentreY;
-extern short left_scale, right_scale;
-extern float left_scale_factor, right_scale_factor;
-extern short JoyCentreFudge;
-
+extern int   gPadStickX;
+extern int   gPadStickY;
 
 /**********************************************************************/
 /***              Call update routine for each ship                 ***/
@@ -194,7 +185,6 @@ void UpdatePlayerShipNormStart(ShipData *shipIndex, Object** shipShapes, int shi
    }
 
    SetBrake(playerShip, pCon.lBrake, pCon.rBrake);
-   DoDetailKeys();
 
    if(playerShip->attr & RACING)
       SetView(playerShip, pCon.view);
@@ -259,20 +249,23 @@ void UpdatePlayerShipNorm(ShipData *shipIndex, Object** shipShapes, int shipNo, 
       revRight       = 0;
    }
 
+   int headingInc = playerShip->headingInc * gPadStickX >> 8;
+   int vpitchInc = FR30U * gPadStickY >> 8;
+
    if (pad & pCon.left)    /** Inc = 128 , max 2048 **/
    {
-      if(playerShip->vhdg >= 0) playerShip->vhdg += playerShip->headingInc;
-      else if(playerShip->vhdg < 0) playerShip->vhdg += (playerShip->headingInc<<1);
+      if(playerShip->vhdg >= 0) playerShip->vhdg += headingInc;
+      else if(playerShip->vhdg < 0) playerShip->vhdg += (headingInc<<1);
    }
    else if (pad & pCon.right)
    {
-      if(playerShip->vhdg <= 0) playerShip->vhdg -= playerShip->headingInc;
-      else if(playerShip->vhdg > 0) playerShip->vhdg -= (playerShip->headingInc<<1);
+      if(playerShip->vhdg <= 0) playerShip->vhdg -= headingInc;
+      else if(playerShip->vhdg > 0) playerShip->vhdg -= (headingInc<<1);
    }
    else
    {
-      if(playerShip->vhdg > 0) playerShip->vhdg -= playerShip->headingInc;
-      else if(playerShip->vhdg < 0) playerShip->vhdg += playerShip->headingInc;
+      if(playerShip->vhdg > 0) playerShip->vhdg -= headingInc;
+      else if(playerShip->vhdg < 0) playerShip->vhdg += headingInc;
    }
    if(playerShip->vhdg < -playerShip->maxHeading) playerShip->vhdg = -playerShip->maxHeading;
    if(playerShip->vhdg > playerShip->maxHeading) playerShip->vhdg = playerShip->maxHeading;
@@ -286,8 +279,9 @@ void UpdatePlayerShipNorm(ShipData *shipIndex, Object** shipShapes, int shipNo, 
       playerShip->vhdg += (randy()%600)-300;
    }
 
-   if (pad & pCon.down) playerShip->vpitch += FR30U;
-   if (pad & pCon.up) playerShip->vpitch -= FR30U;
+
+   if (pad & pCon.down) playerShip->vpitch += vpitchInc;
+   if (pad & pCon.up) playerShip->vpitch -= vpitchInc;
 
    /**** Check for Stall and set thrust ***/
    if(playerShip->updateCount == STALL_DELAY)
@@ -325,8 +319,6 @@ void UpdatePlayerShipNorm(ShipData *shipIndex, Object** shipShapes, int shipNo, 
 
    if((playerShip->attr & ELECTROED) && ((randy() % 80) == 0))
       playerShip->thrust_mag -= playerShip->thrust_mag >> 2;
-
-   DoDetailKeys();         // DLS
 
    SetBrake(playerShip, pCon.lBrake, pCon.rBrake);
    SetView(playerShip, pCon.view);
@@ -1190,117 +1182,4 @@ void SetSkeletonDirectionRPH( Skeleton* skeleton, short roll, short pitch, short
    /* Mark skeleton for update */
 
    skeleton->update = 1;
-}
-
-
-
-
-void Mouse2Neg(void)
-{
-/*TODO input
-   neg1.twist = etc_Mouse1.mX;
-*/
-}
-
-
-
-void Joy2Neg(void)
-{
-   /*TODO input
-   if(etc_Joy1.jX > JoyMaxX)
-      etc_Joy1.jX = JoyMaxX;
-   else if(etc_Joy1.jX < JoyMinX)
-      etc_Joy1.jX = JoyMinX;
-
-   if(etc_Joy1.jY > JoyMaxY)
-      etc_Joy1.jY = JoyMaxY;
-   else if(etc_Joy1.jY < JoyMinY)
-      etc_Joy1.jY = JoyMinY;
-
-   // if (etc_Joy1.jX < 128)
-   //    neg1.twist = etc_Joy1.jX;
-   // else
-   //    neg1.twist =
-
-   //if(etc_Joy1.jX < (JoyCentreX - JoyCentreFudge))
-   //neg1.twist = (etc_Joy1.jX - JoyMinX) * left_scale_factor;
-   //else if(etc_Joy1.jX > (JoyCentreX + JoyCentreFudge))
-   //neg1.twist = ((etc_Joy1.jX - JoyCentreX) * right_scale_factor) + 128;
-
-   neg1.twist = etc_Joy1.jX;
-
-
-   if (etc_Joy1.jY < 100)
-      pad |= pCon.up;
-   else if (etc_Joy1.jY > 156)
-      pad |= pCon.down;
-   // if (etc_Joy1.jY < 155)
-   //    pad |= pCon.up;
-   // else if (etc_Joy1.jY > 165)
-   //    pad |= pCon.down;
-   //if(etc_Joy1.jY < (JoyCentreY - JoyCentreFudge - 100))
-   //pad |= pCon.up;
-   //else if(etc_Joy1.jY > (JoyCentreY + JoyCentreFudge + 100))
-   //pad |= pCon.down;
-*/
-}
-
-
-
-
-void DoDetailKeys(void)
-{
-   if (xpad & PadTopLeft1)       // DLS - Draw Distance
-   {
-      switch(DrawDistance)
-      {
-      case HIGH_DISTANCE:
-         DrawDistance = MEDIUM_DISTANCE;
-         break;
-
-      case MEDIUM_DISTANCE:
-         DrawDistance = LOW_DISTANCE;
-         break;
-
-      case LOW_DISTANCE:
-         DrawDistance = HIGH_DISTANCE;
-         break;
-      }
-
-      SetDrawDistance(DrawDistance);
-   }
-
-   if (xpad & PadSquare0)        // DLS - Screen Size
-   {
-      Sky ^= 1;
-   }
-
-   if (xpad & PadUnused1)        // DLS - Detail
-   {
-      switch(Resolution)
-      {
-      case SMALL:
-         screenres=Resolution=LOW;
-         changeScreen();
-         break;
-      case LOW:
-         screenres=Resolution=MEDIUM;
-         changeScreen();
-         break;
-      case MEDIUM:
-         screenres=Resolution=HIGH;
-         changeScreen();
-         break;
-      case HIGH:
-         screenres=Resolution=SMALL;
-         changeScreen();
-         break;
-      }
-   }
-
-   if (xpad & PadUnused2)
-   {
-      if(++ft>1)
-         ft=0;
-   }
 }

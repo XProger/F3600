@@ -53,7 +53,6 @@ POLY_FT4    symbols[2] ;
 
 extern   HiScores scoreTable[] ;
 extern   ChampionShip   winTable[] ;
-extern   int   inattract;
 extern long theFrameRate;
 
 void InitText()
@@ -996,9 +995,6 @@ void UpdateRaceHud(ShipData* shipIndex, Speedo *speedo, int choice, ConfigData *
 
    if(shipIndex[ownShip].lapNo > END_LAP /*&& ownSecNo == (startLinePos[ trackNo ]+1))*/ && (shipIndex[ownShip].attr & RACING))
    {
-
-      inattract=1;
-
       gameData->Position = winTable[ownShip].racePosition;
 
 //    printf ("Position = %d \n", gameData->Position) ;

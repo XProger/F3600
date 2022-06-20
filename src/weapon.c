@@ -1914,7 +1914,6 @@ void UpdateShield(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
       weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
       shieldID = weapon->currentWeapon - SHIELD_OFFSET;
-      //    TransformTransparentObject( weaponShapes[weapon->currentWeapon].shapePtr, cameraPtr->camPos , shieldID);
    }
 
 }
@@ -2051,7 +2050,6 @@ void CycleWeaponGrids(ShipData *shipIndex, WeaponGrid *weaponGrid, int noWeaponG
 
 
 #define     ClipFlag    ( ( CrtClipped | ZLarge | ZNegative | ZSmall ) >> 12 )
-extern SVECTOR     StaticVertex[  ];
 extern DVECTOR     StaticScreen[  ];
 extern ushort      StaticDepth[  ];
 extern ushort      StaticFlags[  ];

@@ -36,11 +36,6 @@
 
 #define TrackVersion 8
 
-//#define AsmTransformTrackMed AsmTransformTrackLo
-
-
-extern   int   inattract;
-
 void IntelVertex( void )
 {
    VECTOR      *vert;
@@ -58,9 +53,6 @@ void IntelVertex( void )
       vert += 1;
    }
 }
-
-
-
 
 void IntelFace( void )
 {
@@ -84,7 +76,6 @@ void IntelFace( void )
       face += 1;
    }
 }
-
 
 void IntelSection( void )
 {
@@ -136,7 +127,6 @@ void IntelSection( void )
    }
 }
 
-
 void CheckVersion( void )
 {
    TrackSection      *section;
@@ -152,9 +142,6 @@ void CheckVersion( void )
       section += 1;
    }
 }
-
-
-
 
 void IndexToPointers( void )
 {
@@ -179,11 +166,6 @@ void IndexToPointers( void )
    }
 }
 
-
-
-
-
-
 void PointersToIndex( void )
 {
    TrackSection      *section;
@@ -206,9 +188,6 @@ void PointersToIndex( void )
       section += 1;
    }
 }
-
-
-
 
 void InitVertices( char *file )
 {
@@ -240,9 +219,6 @@ void InitVertices( char *file )
 
    IntelVertex( );
 }
-
-
-
 
 void InitFaces( char *file )
 {
@@ -481,7 +457,6 @@ void DrawNewTrack( TrackCamera *camera, AutoMeshData *autoMesh )
 
       for ( i=0; i<camera->section->northViewCount[ 0 ]; i+=2 )
       {
-      //if ((TextureTrack) || (inattract))
          AsmTransformTrackHi // PCwipeout
          (
             track->sections + camera->section->northViewSection[ 0 ][ i ],

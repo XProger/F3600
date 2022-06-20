@@ -15,10 +15,8 @@ VECTOR *ApplyMatrix(MATRIX *RTM, SVECTOR *v, VECTOR *r);
 
 static float tmp;
 
-extern int              WinPitch;
 extern short            WinWidth;
 extern short            WinHeight;
-extern short            WinHeightX2;
 
 // Global Variables for GTE...
 

@@ -35,9 +35,6 @@
 #include "collide.h"
 #include "utils.h"
 
-#define RobTest 0
-
-
 /* the spline position we are currently on */
 short   camerasplineCount = 0;
 short   shipsplineCount = 0;
@@ -1243,16 +1240,7 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
 
       }
 
-
       count++;
-
-#if RobTest
-      if ( count > 4 )
-      {
-         count = 0;
-      }
-#endif
-
    }
 
 
@@ -1695,17 +1683,7 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
       }
 
       count++;
-
-#if RobTest
-      if ( count > 6 )
-      {
-         count = 0;
-      }
-#endif
    }
-
-
-
 
    if ( !finishedExtro )
    {

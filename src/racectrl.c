@@ -47,17 +47,9 @@ extern long fr ;
 extern ChampionShip  winTable[] ;
 extern short starttrack,endtrack,CurrTrkNo;
 
-extern   int     inattract;
 extern   short   startIceText;
 extern   short   startFireText;
 int   ajscount=0;                // oh shit another global flag
-
-#define RobTest 0
-
-
-
-
-
 
 
 //All race locals now globals, as RaceCtrl has to be re-entrant
@@ -186,7 +178,6 @@ long        ctrlfirsttime;
 extern   long  CDRestartNeeded;
 
 extern	long	ctrl_init;
-extern	long	ok_to_interrupt;
 extern	long	ctrl_says_quit;
 
 void raceinit(void)
@@ -237,7 +228,6 @@ void raceinit(void)
       ctrlclear[ 0 ] = BlockFill( 0, 0, 320, 240, 0x00, 0x00, 0x00 );
       ctrlclear[ 1 ] = BlockFill( 0, 240, 320, 240, 0x00, 0x00, 0x00 );
 
-      inattract = 0;
       InitCredits();
 
       /**********************************************************/
@@ -477,39 +467,8 @@ void raceinit(void)
 
       InitCone( &ctrlcone );
 
-
-
-
-
-
-#if RobTest
-      if ( 1 )
-      {
-         ctrlmode = ATTRACT;
-
-         ownShip = 4;
-
-         if(ctrlmode == ATTRACT)
-         {
-            //         printf( "init attract\n" );
-
-            ctrlshipIndex[ownShip].attr &= ~RACING;
-            CameraUpdate = UpdateCameraExtroAttract;
-
-            for(ctrl_i = 0; ctrl_i < NO_OF_SHIPS; ctrl_i++)
-            {
-               ctrlshipIndex[ctrl_i].remoteMaxThrust = 3160;
-               ctrlshipIndex[ctrl_i].remoteThrustMag = 32;
-               ctrlshipIndex[ctrl_i].speed = 3160;
-            }
-
-            attractDelay = 8000 * 30;
-         }
-      }
-#else
       if(ctrlmode == ATTRACT)
       {
-         inattract=1;   //jed
          ctrlshipIndex[ownShip].update = UpdatePlayerShipNormStart;
          ctrlshipIndex[ownShip].updateCount = START_TIME;
          ctrlshipIndex[ownShip].remoteMaxThrust = 3160;
@@ -530,7 +489,6 @@ void raceinit(void)
          }
          //          if(ctrlplayCredits == 1)
       }
-#endif
 
       ctrlnextSection = ctrlcamera.section;
 
@@ -555,33 +513,6 @@ void raceinit(void)
 
       //    printf( "Heap free before main loop: %d\n", heap->free );
 
-#if RobTest
-      printf ( "\n" );
-      printf ( "fire\n" );
-      printf( "camSpline 0 prim %d\n", camSpline[ 0 ]->primitiveCount );
-      printf( "shipSpline 0 prim %d\n", shipSpline[ 0 ]->primitiveCount );
-      printf ( "\n" );
-      printf( "camSpline 1 prim %d\n", camSpline[ 1 ]->primitiveCount );
-      printf( "shipSpline 1 prim %d\n", shipSpline[ 1 ]->primitiveCount );
-      printf ( "\n" );
-      printf( "camSpline 2 prim %d\n", camSpline[ 2 ]->primitiveCount );
-      printf( "shipSpline 2 prim %d\n", shipSpline[ 2 ]->primitiveCount );
-      printf ( "\n" );
-      printf( "camSpline 3 prim %d\n", camSpline[ 3 ]->primitiveCount );
-      printf( "shipSpline 3 prim %d\n", shipSpline[ 3 ]->primitiveCount );
-      printf ( "\n" );
-      printf ( "ice\n" );
-      printf( "camSpline 4 prim %d\n", camSpline[ 4 ]->primitiveCount );
-      printf( "shipSpline 4 prim %d\n", shipSpline[ 4 ]->primitiveCount );
-      printf ( "\n" );
-      printf( "camSpline 5 prim %d\n", camSpline[ 5 ]->primitiveCount );
-      printf( "shipSpline 5 prim %d\n", shipSpline[ 5 ]->primitiveCount );
-      printf ( "\n" );
-      printf( "camSpline 6 prim %d\n", camSpline[ 6 ]->primitiveCount );
-      printf( "shipSpline 6 prim %d\n", shipSpline[ 6 ]->primitiveCount );
-#endif
-
-
       if ( gameData->actTrackNum == 13 )
       {
          InitIceCongratulations( );
@@ -598,9 +529,6 @@ void raceinit(void)
          ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
          Swap( );    //Should have no problems with this on interrupt
       }
-
-      InitAJSVSync();
-
    }
 
 }
@@ -616,35 +544,6 @@ void racectrl(void)
    gameData = ctrlgameData;
    mode   = ctrlmode;
    timeout = ctrltimeout;
-
-   if (!ok_to_interrupt)
-      return;
-
-
-      /*/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-         ###############      #############  ##############  ##############
-         #          #     #         #  #            #
-         #          #      #        #  #            #
-         #         #    #        #  #            #
-         #        #     #        #  #            #
-         #       #         #        #  #            #
-         #      #       #        #  #            #
-         #########         #############  #            #########
-         #      #       #        #  #            #
-         #       #         #        #  #            #
-         #        #     #        #  #            #
-         #        #     #        #  #            #
-         #         #    #        #  #            #
-         #          #      #        #  ##############   ##############
-
-   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-
-
-
 
    //Reset all of my little Drawing markers
    ctrlNeedEndText = 0;
@@ -694,7 +593,6 @@ void racectrl(void)
          CameraUpdate = UpdateCameraAttractMode;
          attractDelay = 30 * FR30;
          ctrlmode = ATTRACT;
-         inattract=1;   //jed
          ctrlbuttonPressed = 0;
       }
 
@@ -718,8 +616,6 @@ void racectrl(void)
 
       if(ctrlchoice > -1)                       // we are in pause state
       {
-         DoDetailKeys();
-
          UpdateNotes(PAUSED);                // service the held notes
          if ((GetMenuKey(M_UP)) && ctrlshowMenu)      // hit up key
          {
@@ -904,7 +800,7 @@ void racectrl(void)
 
          (ctrlrescueDroid.droidUpdate)(&ctrlrescueDroid, &(ctrlshipIndex[ownShip]), ctrlshipShapes );
 
-         if( RobTest ||  ctrldoneExtro == UPDATE_EXTRO )
+         if( ctrldoneExtro == UPDATE_EXTRO )
          {
             (CameraUpdate)(&ctrlcamera, ctrlshipIndex, &ctrlrescueDroid);
          }
@@ -953,7 +849,6 @@ void racectrl(void)
       {
          attractDelay--;
          if ((GetMenuKey(M_START)) ||
-            (GetMenuKey(M_QUIT))  ||
             (GetMenuKey(M_SELECT)) ||
             (attractDelay == 0))
          {
@@ -979,7 +874,6 @@ void racectrl(void)
                {
                   if (gameData->Position == 1)
                   {
-                     inattract=1;   //jed
                      ctrlNeedWinLose = 1;
                      ctrlNeedEndText = 1;
                      ctrlNeedBackPoly = 1;
@@ -990,7 +884,6 @@ void racectrl(void)
                   }
                   else
                   {
-                     inattract=1;   //jed
                      ctrlNeedWinLose = 1;
                      ctrlNeedEndText = 1;
                      ctrlNeedBackPoly = 1;
@@ -1069,7 +962,6 @@ void racectrl(void)
                         attractDelay = 0 ;
                         ctrlhiScoreData.confirm = 2 ;
                         ctrlhiScoreData.lConfirm = 0 ;
-                        inattract=0;
                         CDRestartNeeded=1;
                         ctrlNeedDeSelectScreen = 0;
                         InitHiScoreData(&ctrlhiScoreData);
@@ -1181,7 +1073,6 @@ void racectrl(void)
                            attractDelay = 0 ;
                            ctrlhiScoreData.confirm = 2 ;
                            ctrlhiScoreData.lConfirm = 0 ;
-                           inattract=0;
                            CDRestartNeeded=1;
                            InitHiScoreData(&ctrlhiScoreData);
                            Restart( ctrlshipIndex,
@@ -1489,7 +1380,6 @@ void racectrl(void)
                                                 attractDelay = 0 ;
                                                 ctrlhiScoreData.confirm = 2 ;
                                                 ctrlhiScoreData.lConfirm = 0 ;
-                                                inattract=0;
                                                 Restart( ctrlshipIndex,
                                                    gameData,
                                                    ctrlweaponIndex,

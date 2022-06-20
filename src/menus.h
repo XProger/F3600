@@ -272,10 +272,10 @@ typedef struct menu
 
 typedef struct ConfigData
 {
-   int            defaultMenu;
-   int            masterWins;
-   int            slaveWins;
-    int           modelHdg;
+   int         defaultMenu;
+   int         masterWins;
+   int         slaveWins;
+   int         modelHdg;
 
    short       gameOverCount;
    short       showPilotCount;
@@ -283,20 +283,16 @@ typedef struct ConfigData
    short       showPointCount;
    short       showChampCount;
 
-    short           currSliderPos;
-    short         oldSliderPos;
+   short       currSliderPos;
+   short       oldSliderPos;
 
    short       venomComplete;
-    unsigned char negTwist;
-    unsigned char oldNegTwist;
 
-    signed char     negconPreset;
-    signed char     oldNegPreset;
-    signed char     normpadPreset;
-    signed char     oldPadPreset;
+   signed char normpadPreset;
+   signed char oldPadPreset;
 
-   signed char    cdTrack;
-    signed char     oldCdTrack;
+   signed char cdTrack;
+   signed char oldCdTrack;
    char        pad1;
    char        pad2;
 
@@ -323,25 +319,25 @@ typedef struct ConfigData
    char        continueConfirm;
    char        RapierClass;
    char        CheatMode;
-    char          cardPresent;
+   char        cardPresent;
 
    char        prevLap;
    char        newLapRecord;
-    char          gotoMenu;
-    char          showGameOver;
+   char        gotoMenu;
+   char        showGameOver;
 
-    char            showBonusTrack;
-    char            trackInc;
-    char            lostGame;
+   char        showBonusTrack;
+   char        trackInc;
+   char        lostGame;
    char        pad3;
 } ConfigData;
 
 typedef struct SelectionData
 {
 // short       currSliderPos;
-   signed char    slotRow;
-   signed char    slotColumn;
-   signed char    optionNo;
+   signed char slotRow;
+   signed char slotColumn;
+   signed char optionNo;
    char        slotsFilled;
    char        select;
    char        firstTime;
@@ -350,14 +346,14 @@ typedef struct SelectionData
    char        trackNum;
    char        fadeHeight;
    char        confirm;
-   signed char    speechMode;
-   signed char    hiscoreTrack;
+   signed char speechMode;
+   signed char hiscoreTrack;
    Menus       *menuSystem;
    ulong       toggle;
    char        combatInit;
    char        combatComplete;
-   CdlLOC         loc[20];
-   int            cardNum;
+   CdlLOC      loc[20];
+   int         cardNum;
    char        card1;
    char        card2;
    char        formatCard;
@@ -421,7 +417,6 @@ void     DrawMainMenu(Menus *, int *, int, int *);
 void     DrawNegCon(Menus *, int *, int, int *);
 void     DrawPlayPad(Menus *, int *, int, int *);
 
-void     MenuNegCon(MusicPrims *, SlideTextures *, SelectionData *, char [][9], ConfigData *);
 void     MenuPlayPad(MusicPrims *, SlideTextures *, SelectionData *, char [][9], ConfigData *);
 
 void     DrawOptionMenus(Menus *, int *, int, int *);

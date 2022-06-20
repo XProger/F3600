@@ -11,10 +11,10 @@ extern HWND hWnd;
 HDC hDC;
 HGLRC hRC;
 
-extern int           WinPitch;
 extern short         WinWidth;
 extern short         WinHeight;
-extern short         WinHeightX2;
+
+int gWidth, gHeight;
 
 #ifndef GL_UNSIGNED_SHORT_5_6_5
    #define GL_UNSIGNED_SHORT_5_6_5 0x8363
@@ -1232,7 +1232,6 @@ void changeScreen(void)
    upres = reses[screenres].mult;
    WinWidth = reses[screenres].xsize;
    WinHeight = reses[screenres].ysize;
-   WinHeightX2 = WinHeight * 2;
    setupScreens();
    restoreTextures();
 }
@@ -1280,7 +1279,6 @@ void renderInit()
    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
    WinWidth = reses[screenres].xsize;
    WinHeight = reses[screenres].ysize;
-   WinHeightX2 = WinHeight * 2;
 
    setupScreens();
 
@@ -1306,8 +1304,6 @@ void renderSwap()
 
 }
 
-int gWidth, gHeight;
-
 void renderResize(int width, int height)
 {
    gWidth = width;
@@ -1317,7 +1313,7 @@ void renderResize(int width, int height)
 
 void renderOffset(int x, int y)
 {
-   glViewport(x * upres, y * upres, gWidth, gHeight);
+   glViewport(x * gWidth / 320, y * gHeight / 240, gWidth, gHeight);
 }
 
 void renderClear()

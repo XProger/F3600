@@ -180,7 +180,6 @@ extern short         extroLevel;
 
 extern   char  inmenu;
 extern   char  Reallyinmenu;
-extern   char  *background_buffer;
 
 #define frameRate30  30
 #define FR30         (frameRate30)
@@ -197,7 +196,6 @@ extern   char  *background_buffer;
 
 #define  CdControlB(a,b,c) CdControl(a,b,c)
 
-extern unsigned int  this_frame, last_frame;
 extern  char trackdir[];
 
 #define  HIGH_DISTANCE  65535
@@ -205,12 +203,7 @@ extern  char trackdir[];
 #define  LOW_DISTANCE   18000
 extern long DrawDistance;
 extern char Sky;
-extern char Wide;
 extern long DrawnShieldBefore;
-extern long TextureTrack;
-extern long SkyTrackFlags;
 
-extern int     WinPitch;
 extern short   WinWidth;
 extern short   WinHeight;
-extern short   WinHeightX2;

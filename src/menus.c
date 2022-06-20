@@ -76,30 +76,14 @@ extern long CommSerialBaudRate=1;
 
 
 // OTHER FUCKERS
-extern float halfxf;
-extern float halfyf;
-extern char  pixdouble;
-
 char  ScreenSize=FULL;
 char  Resolution=HIGH;
-extern   short ft;
-extern   char MipMap;
-extern  char PersCorr;
-extern  char PersCorrLvl;
 
 char my_ScreenSize;
 char my_Resolution;
 char  my_Sky;
 char  my_PC;//SJR
 long  my_DrawDistance;
-long  my_TextureTrack;
-long  my_SkyTrackFlags;
-
-char  mouse_sensitivity=MEDIUM_SENS;
-char cur_mouse_setting=MEDIUM_SENS;
-
-char  orig_controller;
-char  changecontroller = 1;
 // end of temporary stuff
 
 extern TexChar CharSet16[] ;
@@ -114,7 +98,6 @@ ChampionShip   winTable [NO_OF_SHIPS] ;
 int   modelHdg = 0 ;
 int   zoomInOut = 0 ;
 int   downUp = 0 ;
-char  twist = 0 ;
 Skeleton    *root ;
 /*TODO input mapping
 unsigned short Keycons[10];
@@ -376,22 +359,11 @@ char  ScanToAscii[110] =
 #define  BOTTOMRIGHT 1
 #define  CENTRE      2
 
-#define  JOY_BODGE   8
 //#define SAVEDIR       "wipeout\\"
 #define  FILE_EXTENSION ".wsf"
 /*TODO saves
 extern char *SaveDirBase;
 */
-
-short JoyMinX = 0, JoyMaxX = 255;
-short JoyMinY = 0, JoyMaxY = 255;
-short JoyCentreX = 128, JoyCentreY = 128;
-short left_scale = 127, right_scale = 127;
-float left_scale_factor = 1.0, right_scale_factor = 1.0;
-short JoyCentreFudge = 16;
-
-
-char  JoystickCalibrationMode = TOPLEFT;
 
 char  DelayCounter = 0;
 char  KeyToChange = NONE;
@@ -413,7 +385,6 @@ void KeyConfig(void);
 void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
 void DisplayPadMenu1 (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
 void DisplayPadMenu2 (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
-void  MouseConfig(void);
 void ResetKeys(void);
 
 
@@ -620,7 +591,6 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
          menuSystem[PADCONFIG_MENU].displayMenu = MenuPlayPad ;
          menuSystem[PADCONFIG_MENU].displayObject = DrawPlayPad ;
          menuSystem[PADCONFIG_MENU].prevMenu = OPTION_MENU ;
-         gameData->oldNegPreset = gameData->negconPreset ;
       }
 
 
@@ -661,6 +631,7 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
             if (currMenu == MAIN_MENU && currOption == 0)
             {
                // CHEAT ACTIVATION BITS - need to be changed for PCwipeout
+               /*TODO cheats*/
 
                if( (pad & PadLeft0) && (pad & PadCross0))
                {
@@ -1076,7 +1047,6 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
       {
          *currMenu = CONTROLLER_MENU;
          *currOption = 0;
-         changecontroller = 1;
       }
 
       if (*currOption == DETAILS)
@@ -1548,14 +1518,12 @@ void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Me
       {
          *currOption = 0 ;
          *currMenu = PADCONFIG_MENU ;
-         gameData->oldNegPreset = gameData->negconPreset ;
       }
 
       if (*currOption == 1)
       {
          *currOption = 0 ;
          *currMenu = TWIST_MENU ;
-         twist = gameData->negTwist ;
       }
       return ;
    }
@@ -1871,13 +1839,8 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
          if((Reallyinmenu) && (*currMenu == DETAILS_MENU))
          {
             ScreenSize = my_ScreenSize;
-            MipMap = my_Sky;
             Resolution = my_Resolution;
             DrawDistance = my_DrawDistance;
-            ft = my_TextureTrack;
-            SkyTrackFlags = my_SkyTrackFlags;
-
-
          }
 
          *currMenu = menuSystem[(*currMenu)].prevMenu ;
@@ -2660,7 +2623,6 @@ void DrawPlayPad (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
 
 void DrawNegCon(Menus* menuSystem, int* currMenu, int shapeNo, int* swapDelay)
 {
-   /*TODO negcon */
 }
 
 void NegConButtonDisplay (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
@@ -3400,10 +3362,8 @@ void InitGameData (ConfigData *gameData)
    gameData->slaveWins = 0 ;
    gameData->prevLap = 0 ;
    gameData->gotoMenu = 0 ;
-   gameData->negconPreset = 1 ;
-   gameData->normpadPreset = 0 ;
+   gameData->normpadPreset = 1 ;
    gameData->cardPresent = 0 ;
-   gameData->negTwist = 255 ;
    gameData->currSliderPos = 150 ;
    gameData->showBonusTrack = 0 ;
    gameData->trackInc = 1 ;
@@ -3534,312 +3494,6 @@ void SetUpPilots (int teamNum, Menus *menuSystem)
    {
       strcpy (menuSystem[7].menuOptions[0].optionText,"SOFIA DE LA RENTE") ;
       strcpy (menuSystem[7].menuOptions[1].optionText,"PAUL JACKSON") ;
-   }
-}
-
-#if 0 // Mark - now in PCcombat.c
-void MenuMaster (ConfigData *gameData, int *currMenu)
-{
-   short    i ;
-   u_long   cts ;
-   char     send [96], receive [96] ;
-
-
-   send[0] = gameData->Class ;
-   send[1] = gameData->gameType ;
-   send[2] = gameData->team ;
-   send[3] = gameData->shipNum ;
-   send[4] = gameData->trackNum ;
-   send[5] = gameData->actTrackNum ;
-   send[6] = *currMenu ;
-   send[7] = gameData->exitMenu ;
-   send[8] = gameData->gameType ;
-
-
-   // SetRTSDTR( SIOCL_DTRON | SIOCL_RTSON );   /* Signal that data is waiting */
-
-   // cts = ReadCTS();
-   // while( cts == 0 )                         /* wait for OK to send */
-   // {
-   //    cts = ReadCTS();
-   // }
-
-   // cts = 0;
-   // while( cts < 200 )
-   //    cts++;
-
-   WriteSIOData( &(send[0]), 96);
-
-   // cts = ReadCTS();
-   // while( cts == 1 )                         /* wait for acknowledge */
-   // {
-   //    cts = ReadCTS();
-   // }
-
-   // SetRTSDTR( 0 );                           /* remove signals */
-
-
-   // cts = ReadDSR();
-   // while( cts == 0 )
-   // {
-   //    cts = ReadDSR();
-   // }
-
-   /* Read Data */
-   // EnterCriticalSection();
-
-   // SetRTSDTR( SIOCL_DTRON | SIOCL_RTSON );      /* Set OK to send */
-
-   ReadSIOData( &(receive[0]), 96);
-
-   // SetRTSDTR( 0 );                              /* remove OK to send */
-
-   // cts = ReadCTS();
-   // while( cts == 1 )                            /* wait for acknowledge */
-   // {
-   //    cts = ReadCTS();
-   // }
-
-   // ExitCriticalSection();
-
-   gameData->Class = receive[0] ;
-   gameData->gameType = receive[1] ;
-   gameData->team2 = receive[2] ;
-   gameData->ship2Num = receive[3] ;
-   gameData->trackNum = receive[4] ;
-   gameData->actTrackNum = receive[5] ;
-   gameData->oppMenu = receive[6] ;
-   gameData->exit2Menu = receive[7] ;
-   raceType = gameData->gameType = receive[8] ;
-
-}
-
-
-void CaptainBirdsEye (ConfigData *gameData, int *currMenu)
-{
-   short    i ;
-   u_long   cts ;
-   char     send [96], receive [96] ;
-
-   /* Read Data */
-   // cts = ReadDSR();
-   // while( cts == 0 )
-   //    cts = ReadDSR();
-
-   // EnterCriticalSection();
-
-   // SetRTSDTR( SIOCL_DTRON | SIOCL_RTSON );      /* Set OK to send */
-
-   ReadSIOData( &(receive[0]), 96);
-
-   // SetRTSDTR( 0 );                              /* remove OK to send */
-
-   // cts = ReadCTS();
-   // while( cts == 1 )                            /* wait for acknowledge */
-   // {
-   //    cts = ReadCTS();
-   // }
-
-   // ExitCriticalSection();
-
-
-   gameData->Class = receive[0] ;
-   gameData->gameType = receive[1] ;
-   gameData->team2 = receive[2] ;
-   gameData->ship2Num = receive[3] ;
-   gameData->trackNum = receive[4] ;
-   gameData->actTrackNum = receive[5] ;
-   gameData->oppMenu = receive[6] ;
-   gameData->exit2Menu = receive[7] ;
-   raceType = gameData->gameType = receive[8] ;
-
-
-   send[0] = gameData->Class ;
-   send[1] = gameData->gameType ;
-   send[2] = gameData->team ;
-   send[3] = gameData->shipNum ;
-   send[4] = gameData->trackNum ;
-   send[5] = gameData->actTrackNum ;
-   send[6] = *currMenu ;
-   send[7] = gameData->exitMenu ;
-   send[8] = gameData->gameType ;
-
-
-   // SetRTSDTR( SIOCL_DTRON | SIOCL_RTSON );   /* Signal that data is waiting */
-
-   // cts = ReadCTS();
-   // while( cts == 0 )                         /* wait for OK to send */
-   // {
-   //    cts = ReadCTS();
-   // }
-
-   // cts = 0;
-   // while( cts < 200 )
-   //    cts++;
-
-   WriteSIOData( &(send[0]), 96);
-
-   // cts = ReadCTS();
-   // while( cts == 1 )                         /* wait for acknowledge */
-   // {
-   //    cts = ReadCTS();
-   // }
-
-   // SetRTSDTR( 0 );                           /* remove signals */
-
-}
-
-void StartTwoPlayer (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
-{
-
-   if (gameData->oppMenu != START_TWO_PLAYER_MENU)
-   {
-      ownShip = gameData->shipNum ;
-      serialShip = gameData->ship2Num ;
-
-      if (gameType == MASTER)
-      {
-         CentreText ("WAITING FOR PLAYER TWO",
-            text_data (1,116, 8), RedText) ;
-      }
-
-      if (gameType == SLAVE)
-      {
-         CentreText ("WAITING FOR PLAYER ONE",
-            text_data (1,116, 8), RedText) ;
-      }
-   }
-}
-#endif // end of mark comment
-
-/*************************************************************/
-/******************* NEGCON & PLAY PAD ***********************/
-/*************************************************************/
-
-
-void MenuNegCon (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
-{
-   static int  delay = 0 ;
-   static char key = 0 ;
-   static int  toggleDisplay = 0 ;
-   char     temp = 0 ;
-
-   DisplayButtons ( 30, 210, PSELECT) ;
-   DisplayButtons ( 240, 210, PBACK) ;
-
-   if ((toggleDisplay % 30) <= 20)
-   {
-      DisplayButtons ( 290, 116, ARROWR) ;
-      DisplayButtons ( 20, 116, ARROWL) ;
-   }
-
-
-   toggleDisplay ++ ;
-
-
-   CentreText ("NEGCON CONFIGURATION",
-      text_data (1,21, 8), RedText) ;
-
-   temp = 0 ;
-
-   if (delay == 0)
-   {
-      if ((GetMenuKey(M_RIGHT)))
-      {
-         delay = 32 ;
-         key = 1 ;
-         temp = 1 ;
-         PlayNote(MENU_MOVE, 1, 20);
-         gameData->oldNegPreset ++ ;
-         if (gameData->oldNegPreset == NEGCON_PRESETS)
-            gameData->oldNegPreset = 1 ;
-      }
-
-      if ((GetMenuKey(M_LEFT)))
-      {
-         delay = 32 ;
-         key = 2 ;
-         temp = 1 ;
-         PlayNote(MENU_MOVE, 1, 20);
-         gameData->oldNegPreset -- ;
-         if (gameData->oldNegPreset < 1)
-            gameData->oldNegPreset = (NEGCON_PRESETS-1) ;
-      }
-
-      if (temp == 0)
-      {
-         DisplayButtons ( 22, 47, LBRAKE) ;
-         DisplayButtons ( 230, 47, RBRAKE) ;
-
-         switch (gameData->oldNegPreset)
-         {
-         case 0:  DrawLine (221, 93, 252, 88, musicPrims->lines, 0) ; /* B */
-            DrawLine (216, 125, 178, 181, musicPrims->lines, 2) ; /* I */
-            DrawLine (206, 110, 118, 170, musicPrims->lines, 3) ; /* II */
-            DisplayButtons ( 255, 88, VIEW) ;
-            DisplayButtons ( 118, 175, PADFIRE) ;
-            DisplayButtons ( 178, 186, THRUST) ;
-            break ;
-
-         case 1:  CentreText ("PRESET A", text_data (1,40, 8), RedText) ;
-            DrawLine (221, 93, 252, 88, musicPrims->lines, 0) ; /* B */
-            DrawLine (216, 125, 178, 181, musicPrims->lines, 2) ; /* I */
-            DrawLine (206, 110, 118, 170, musicPrims->lines, 3) ; /* II */
-            DisplayButtons ( 255, 88, VIEW) ;
-            DisplayButtons ( 118, 175, PADFIRE) ;
-            DisplayButtons ( 178, 186, THRUST) ;
-            break ;
-
-         case 2:  CentreText ("PRESET B", text_data (1,40, 8), RedText) ;
-            DrawLine (221, 93, 252, 88, musicPrims->lines, 0) ; /* B */
-            DrawLine (216, 125, 178, 181, musicPrims->lines, 2) ; /* I */
-            DrawLine (206, 110, 118, 170, musicPrims->lines, 3) ; /* II */
-            DisplayButtons ( 255, 88, VIEW) ;
-            DisplayButtons ( 118, 175, THRUST) ;
-            DisplayButtons ( 178, 186, PADFIRE) ;
-            break ;
-
-         case 3:  CentreText ("PRESET C", text_data (1,40, 8), RedText) ;
-            DrawLine (221, 93, 252, 88, musicPrims->lines, 0) ; /* B */
-            DrawLine (237, 109, 252, 144, musicPrims->lines, 1) ; /* A */
-            DrawLine (206, 110, 118, 170, musicPrims->lines, 3) ; /* II */
-            DisplayButtons ( 252, 147, THRUST) ;
-            DisplayButtons ( 255, 88, PADFIRE) ;
-            DisplayButtons ( 118, 175, VIEW) ;
-            break ;
-
-         case 4:  CentreText ("PRESET D", text_data (1,40, 8), RedText) ;
-            DrawLine (221, 93, 252, 88, musicPrims->lines, 0) ; /* B */
-            DrawLine (237, 109, 252, 144, musicPrims->lines, 1) ; /* A */
-            DrawLine (206, 110, 118, 170, musicPrims->lines, 3) ; /* II */
-            DisplayButtons ( 252, 147, PADFIRE) ;
-            DisplayButtons ( 255, 88, THRUST) ;
-            DisplayButtons ( 118, 175, VIEW) ;
-            break ;
-         }
-      }
-   }
-   else
-   {
-      delay -- ;
-
-      if (key == 1)
-         modelHdg += 256 ;
-
-      if (key == 2)
-         modelHdg -= 256 ;
-
-      if (delay > 15)
-      {
-         zoomInOut += 500 ;
-         downUp += 500 ;
-      }
-
-      if (delay <= 15)
-      {
-         zoomInOut -= 500 ;
-         downUp -= 500 ;
-      }
    }
 }
 
@@ -4034,57 +3688,64 @@ void SetNormPadPresets (ConfigData *gameData)
 {
    switch (gameData->normpadPreset)
    {
-
-   case 0 : pCon.thrust    = PadCross0;
+   case 0 :
+      pCon.thrust    = PadCross0;
       pCon.view      = PadTriangle0;
       pCon.fire      = PadCircle0;
       pCon.lBrake    = PadTopRight2;
       pCon.rBrake    = PadTopLeft2;
       break ;
 
-   case 1 : pCon.thrust    = PadCross0;
+   case 1 :
+      pCon.thrust    = PadCross0;
       pCon.view      = PadTriangle0;
       pCon.fire      = PadSquare0;
       pCon.lBrake    = PadTopRight2;
       pCon.rBrake    = PadTopLeft2;
       break ;
 
-   case 2 : pCon.thrust    = PadCross0;
+   case 2 :
+      pCon.thrust    = PadCross0;
       pCon.view      = PadTopLeft1;
       pCon.fire      = PadTopRight1;
       pCon.lBrake    = PadTopRight2;
       pCon.rBrake    = PadTopLeft2;
       break ;
 
-   case 3 : pCon.thrust    = PadSquare0;
+   case 3 :
+      pCon.thrust    = PadSquare0;
       pCon.view      = PadCircle0;
       pCon.fire      = PadCross0;
       pCon.lBrake    = PadTopRight2;
       pCon.rBrake    = PadTopLeft2;
       break ;
 
-   case 4 : pCon.thrust    = PadCross0;
+   case 4 :
+      pCon.thrust    = PadCross0;
       pCon.view      = PadTriangle0;
       pCon.fire      = PadCircle0;
       pCon.lBrake    = PadTopRight1;
       pCon.rBrake    = PadTopLeft1;
       break ;
 
-   case 5 : pCon.thrust    = PadCross0;
+   case 5 :
+      pCon.thrust    = PadCross0;
       pCon.view      = PadTriangle0;
       pCon.fire      = PadSquare0;
       pCon.lBrake    = PadTopRight1;
       pCon.rBrake    = PadTopLeft1;
       break ;
 
-   case 6 : pCon.thrust    = PadTriangle0;
+   case 6 :
+      pCon.thrust    = PadTriangle0;
       pCon.view      = PadSquare0;
       pCon.fire      = PadCircle0;
       pCon.lBrake    = PadTopRight2;
       pCon.rBrake    = PadTopLeft2;
       break ;
 
-   case 7 : pCon.thrust    = PadCircle0;
+   case 7 :
+      pCon.thrust    = PadCircle0;
       pCon.view      = PadSquare0;
       pCon.fire      = PadTriangle0;
       pCon.lBrake    = PadTopRight2;
@@ -4543,11 +4204,8 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    if(andybodge)
    {
       my_ScreenSize = ScreenSize;
-      my_Sky = MipMap;
       my_Resolution = Resolution;
       my_DrawDistance = DrawDistance;
-      my_TextureTrack = ft;
-      my_SkyTrackFlags = SkyTrackFlags;
 
       andybodge=0;
       inmenu = 0;
@@ -4604,15 +4262,6 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
             break;
          }
          break;
-         case 2:
-            ft--;
-            if(ft<0)
-               ft=1;
-            TextureTrack = 1;
-            break;
-         case 3:
-            Sky ^= 1;
-            break;
       }
    }
 
@@ -4644,14 +4293,6 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
             break;
          }
          break;
-         case 2:
-            ft++;
-            if(ft>1)
-               ft=0;
-            TextureTrack = 1;
-            break;
-         case 3:
-            Sky ^= 1;
       }
    }
 
@@ -4729,16 +4370,6 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    if (Sky) strcpy(SkyStr,"ON");
    if (!Sky) strcpy(SkyStr,"OFF");
 
-   switch(ft)
-   {
-   case 0:
-      strcpy(TexStr,"OFF");
-      break;
-   case 1:
-      strcpy(TexStr,"ON");
-      break;
-   }
-
    AddText (DrawStr, text_data (x+180, y, 8), RedText);
    AddText (ResStr, text_data (x+180, y+l, 8), RedText) ;
    //AddText (ScreenStr, text_data (x+190, y+(l*2), 8), RedText) ;
@@ -4771,7 +4402,6 @@ void ControllerOptions(MusicPrims *musicPrims, SlideTextures *musicTex, Selectio
 
    if (andybodge)
    {
-      changecontroller=1;
       andybodge=0;
    }
 
@@ -5283,87 +4913,6 @@ void KeyConfig(void)
       break;
    }
 */
-}
-
-void  MouseConfig(void)
-{
-   static int toggle = 0;
-   char  x=50, y=140, l=12;
-
-   if (andybodge2)
-   {
-      cur_mouse_setting=mouse_sensitivity;
-      andybodge2=0;
-   }
-
-
-   if (GetMenuKey(M_UP))
-   {
-      if (cur_mouse_setting==HIGH_SENS) cur_mouse_setting=LOW_SENS;
-      else
-         if (cur_mouse_setting==MEDIUM_SENS) cur_mouse_setting=HIGH_SENS;
-         else
-            if (cur_mouse_setting==LOW_SENS) cur_mouse_setting=MEDIUM_SENS;
-   }
-
-   if (GetMenuKey(M_DOWN))
-   {
-      if (cur_mouse_setting==HIGH_SENS) cur_mouse_setting=MEDIUM_SENS;
-      else
-         if (cur_mouse_setting==MEDIUM_SENS) cur_mouse_setting=LOW_SENS;
-         else
-            if (cur_mouse_setting==LOW_SENS) cur_mouse_setting=HIGH_SENS;
-   }
-
-#ifdef PORT_MOUSE
-   if (GetMenuKey(M_SELECT))
-   {
-      mouse_sensitivity=cur_mouse_setting;
-
-      etc_regs.w.ax = 0x000F;          // Sensitivity
-      etc_regs.w.cx = mouse_sensitivity;  // Default 8
-      etc_regs.w.dx = 16;              // Default 16
-      int386(_MOUSE_INT, &etc_regs, &etc_regs);
-
-      davebodge=2;
-   }
-
-#else
-   if (GetMenuKey(M_SELECT))
-   {
-      mouse_sensitivity=cur_mouse_setting;
-      davebodge=2;
-   }
-#endif
-
-   switch(cur_mouse_setting)
-   {
-   case HIGH_SENS:
-      CentreText ("HIGH", text_data (x, y, 8), RedText);
-      CentreText ("MEDIUM", text_data (x, y+(l), 8), WhiteText) ;
-      CentreText ("LOW", text_data (x, y+(l*2), 8), WhiteText) ;
-      break;
-   case MEDIUM_SENS:
-      CentreText ("HIGH", text_data (x, y, 8), WhiteText) ;
-      CentreText ("MEDIUM", text_data (x, y+l, 8), RedText) ;
-      CentreText ("LOW", text_data (x, y+(l*2), 8), WhiteText) ;
-      break;
-   case LOW_SENS:
-      CentreText ("HIGH", text_data (x, y, 8), WhiteText) ;
-      CentreText ("MEDIUM", text_data (x, y+(l), 8), WhiteText) ;
-      CentreText ("LOW", text_data (x, y+(l*2), 8), RedText) ;
-      break;
-   }
-
-   toggle ++ ;
-}
-
-void JoystickConfig(void)
-{
-   JoyMinX = 0;
-   PlayNote(MENU_SELECT, 1, 20);
-   davebodge = 2;
-   changecontroller = 0;
 }
 
 void DrawControllerEdit (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)

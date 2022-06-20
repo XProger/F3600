@@ -17,11 +17,9 @@
 #include "libgte.h"
 #include "ajs.h"
 
-extern SVECTOR     StaticVertex[ ];
-extern DVECTOR     StaticScreen[ ];
-extern ushort      StaticDepth[ ];
-extern ushort      StaticFlags[ ];
-extern ushort     StaticZ[ ];
+extern DVECTOR    StaticScreen[ ];
+extern ushort     StaticDepth[ ];
+extern ushort     StaticFlags[ ];
 
 #define     ClipFlag    ( ( CrtClipped | ZLarge | ZNegative | ZSmall ) >> 12 )
 

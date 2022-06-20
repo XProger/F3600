@@ -1,5 +1,4 @@
 void  SetPolyGT3(POLY_GT3 *p);
-void  InitAJSVSync(void);
 void setWinLose(void);
 void  AddPrim(P_TAG *ordt, u_long *p);
 void SetSemiTrans(P_TAG *p, long abe);

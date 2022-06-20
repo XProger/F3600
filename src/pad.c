@@ -18,10 +18,7 @@
 #include "sound.h"
 #include "global.h"
 
-extern int           andyTimeout;
-extern unsigned short   OriginalKeyCodes[16];
-
-
+extern int andyTimeout;
 
 void InitPadSettings()
 {
@@ -38,31 +35,36 @@ void InitPadSettings()
 
 void SetBrake(ShipData *playerShip, short padLeft, short padRight)
 {
-   if (pad & pCon.rBrake)  playerShip->r_brake_rot += FR32U;
-   else if(playerShip->r_brake_rot > 0) playerShip->r_brake_rot -= FR32U;
+// right
+   if (pad & padRight)
+      playerShip->r_brake_rot += FR32U;
+   else
+      if(playerShip->r_brake_rot > 0)
+         playerShip->r_brake_rot -= FR32U;
 
-   if(playerShip->r_brake_rot < 0) playerShip->r_brake_rot = 0;
-
-// if (pad & pCon.rBrake)  playerShip->r_brake_rot += 32;
-// else if(playerShip->r_brake_rot > 0) playerShip->r_brake_rot -= 32;
+   if(playerShip->r_brake_rot < 0)
+      playerShip->r_brake_rot = 0;
 
    if (playerShip->r_brake_rot > 256)
       playerShip->r_brake_rot = 256;
 
-   if (pad & pCon.lBrake)  playerShip->l_brake_rot += FR32U;
-   else if(playerShip->l_brake_rot > 0) playerShip->l_brake_rot -= FR32U;
+// left
+   if (pad & padLeft)
+      playerShip->l_brake_rot += FR32U;
+   else
+      if(playerShip->l_brake_rot > 0)
+         playerShip->l_brake_rot -= FR32U;
 
-   if(playerShip->l_brake_rot < 0) playerShip->l_brake_rot = 0;
+   if(playerShip->l_brake_rot < 0)
+      playerShip->l_brake_rot = 0;
 
    if (playerShip->l_brake_rot > 256)
       playerShip->l_brake_rot = 256;
 }
 
-
-
 void SetView(ShipData *playerShip, short padView)
 {
-   if (xpad & pCon.view)
+   if (xpad & padView)
    {
       if((playerShip->attr & VIEW_IN) == 0)
       {
@@ -81,7 +83,7 @@ void SetView(ShipData *playerShip, short padView)
 
 void SetFire(ShipData *playerShip, short padFire, WeaponData *weaponIndex, int shipNo)
 {
-   if ((xpad & pCon.fire) && (playerShip->weaponType != NO_WEAPON))
+   if ((xpad & padFire) && (playerShip->weaponType != NO_WEAPON))
    {
       if((playerShip->attr & SHIELDED) == 0)
          FireWeapon(playerShip, weaponIndex, shipNo, playerShip->weaponType);
@@ -109,17 +111,14 @@ short GetMenuKey(short key)
          if (xpad & PadRight0) andyTimeout=0;
          return(xpad & PadRight0);
       case M_BACK:
-         if (xpad & PadTopRight1) andyTimeout=0;
-         return(xpad & PadTopRight1);
+         if (xpad & (PadCircle0 | PadStart)) andyTimeout=0;
+         return(xpad & (PadCircle0 | PadStart));
       case M_SELECT:
-         if (xpad & PadSelect) andyTimeout=0;
-         return(xpad & PadSelect);
+         if (xpad & PadCross0) andyTimeout=0;
+         return(xpad & PadCross0);
       case M_START:
          if (xpad & PadStart) andyTimeout=0;
          return(xpad & PadStart);
-      case M_QUIT:
-         if (xpad & PadTopRight1) andyTimeout=0;
-         return(xpad & PadTopRight1);
       default:
          break;
    }

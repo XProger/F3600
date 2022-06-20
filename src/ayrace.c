@@ -48,42 +48,39 @@ extern char winLoseIn;
 extern   u_char         ctrlparam;
 
 char Sky = 1;
-extern   char* VRam;             // PCwipeout
 
 extern short         ctrlsky;
 extern Object        *ctrlshipShapes[];
-extern Effect        *ctrleffects ;
-extern TrackCamera      ctrlcamera;
+extern Effect        *ctrleffects;
+extern TrackCamera   ctrlcamera;
 extern Shadow        *ctrlShadow;
-extern AutoMeshData   *ctrlautoMesh;
+extern AutoMeshData  *ctrlautoMesh;
 extern RescueData    ctrlrescueDroid;
-extern char       ctrlshowGameOver;
-extern long       ctrlNeedEndText;
-extern long       ctrlNeedWinLose;
-extern long       ctrlNeedBackPoly;
-extern long       ctrlNeedRaceInfo;
-extern long       ctrlNeedDeSelectScreen;
-extern long       ctrlNeedNewHighScores;
-extern long       ctrlNeedRacePoints;
-extern long       ctrlNeedChampTable;
-extern long       ctrlNeedAllVenomComplete;
-extern long       ctrlNeedVenomComplete;
-extern long       ctrlNeedContinueGameConfirm;
-extern long       ctrlNeedEndTextVar;
-extern long       ctrlNeedWinLoseVar;
-extern long       ctrlNeedInGameReset;
-extern long       ctrlNeedInSingleGameConfirm;
-extern long       ctrlNeedInGameConfirm;
-extern long       ctrlNeedTargetIcon;
-extern long       ctrlCDPaused;
-extern long       ctrlfirsttime;
-extern char       ctrlmachinePaused;
+extern char          ctrlshowGameOver;
+extern long          ctrlNeedEndText;
+extern long          ctrlNeedWinLose;
+extern long          ctrlNeedBackPoly;
+extern long          ctrlNeedRaceInfo;
+extern long          ctrlNeedDeSelectScreen;
+extern long          ctrlNeedNewHighScores;
+extern long          ctrlNeedRacePoints;
+extern long          ctrlNeedChampTable;
+extern long          ctrlNeedAllVenomComplete;
+extern long          ctrlNeedVenomComplete;
+extern long          ctrlNeedContinueGameConfirm;
+extern long          ctrlNeedEndTextVar;
+extern long          ctrlNeedWinLoseVar;
+extern long          ctrlNeedInGameReset;
+extern long          ctrlNeedInSingleGameConfirm;
+extern long          ctrlNeedInGameConfirm;
+extern long          ctrlNeedTargetIcon;
+extern long          ctrlCDPaused;
+extern long          ctrlfirsttime;
+extern char          ctrlmachinePaused;
 extern int           ctrlcdPause;
-extern   short   startIceText;
-extern   short   startFireText;
+extern short         startIceText;
+extern short         startFireText;
 extern Speedo        ctrlspeedo;
-
-#define RobTest 0
 
 extern ConfigData    *ctrlgameData;
 extern long          ctrlmode;
@@ -92,42 +89,38 @@ extern POLY_F4       ctrlselectBox[2];
 extern DR_MODE       ctrlselectTrans[2];
 extern char          ctrlconfirm;
 extern char          ctrllConfirm;
-extern SPRT       ctrlweaponIcon[2];
-extern Texture          *ctrlweaponIconTextures[NO_OF_WEAPON_TYPES] ;
-extern SPRT          ctrllifeIcons[3][2] ;
-extern ShipData         *ctrlshipIndex;
+extern SPRT          ctrlweaponIcon[2];
+extern Texture       *ctrlweaponIconTextures[NO_OF_WEAPON_TYPES];
+extern SPRT          ctrllifeIcons[3][2];
+extern ShipData      *ctrlshipIndex;
 extern Object        *ctrlprm[PrmMax];
 extern int           ctrlchoice;
 extern Object        *ctrlredLight;
 extern Object        *ctrldonkey[2];
-extern Texture          *ctrleffectTextures[NO_OF_EFFECT_TEXTURES] ;
-extern WeaponShape      *ctrlweaponShapes;
-extern Texture       *ctrlwinLose [2] ;
+extern Texture       *ctrleffectTextures[NO_OF_EFFECT_TEXTURES];
+extern WeaponShape   *ctrlweaponShapes;
+extern Texture       *ctrlwinLose [2];
 extern POLY_F4       ctrlbackFrame[2];
 extern DR_MODE       ctrlbackFrameTrans[2];
-extern POLY_FT4         ctrlwinLosePrims[2] ;
+extern POLY_FT4      ctrlwinLosePrims[2];
 extern ulong         ctrltoggleDisplay;
 extern long          ctrlCDPaused;
 extern int           ctrlplayCredits;
-extern WeaponShape    *ctrlweaponShapes;
+extern WeaponShape   *ctrlweaponShapes;
 extern WeaponData    *ctrlweaponIndex;
 extern DR_MODE       ctrliconTPage;
 extern DR_MODE       ctrlrealTPage;
-extern HiScoreData      ctrlhiScoreData;
-extern int           inattract;
+extern HiScoreData   ctrlhiScoreData;
 extern long          confirmRestart;
 extern long          ctrlNeedTargetIcon;
-extern POLY_FT4         ctrlTarget[2];
+extern POLY_FT4      ctrlTarget[2];
 extern short         Shielded;
 extern short         CurrTrkNo;
 
 long  ctrl_init;
-long  ok_to_interrupt;
 long  ctrl_says_quit;
-long  last_frame_count = 0, this_frame_count = 0;
 long  CDRestartNeeded;
 long  CDloopCheck;
-extern   char thieving_git;
 unsigned long  start_time;
 unsigned long  end_time;
 unsigned long  duration;
@@ -136,11 +129,9 @@ unsigned long  ctrl_frame;
 unsigned long  ctrl_remainder;
 long  theFrameRate;
 long  fr_count;
-int fp;
 
 void race( ConfigData *gameData, int mode, int timeout )
 {
-   InitAJSVSync();
    ctrl_init = 0;
    ctrlgameData = gameData;      //archive off the gamedata;
    ctrlmode = mode;
@@ -154,7 +145,6 @@ void race( ConfigData *gameData, int mode, int timeout )
    UpdateNotes(NOT_PAUSED);
 
    CDRestartNeeded = 0;
-   ok_to_interrupt = 1;
    CDloopCheck = 0;
    start_time = end_time = osGetTimeMS();
    racectrl();
@@ -178,7 +168,6 @@ void race( ConfigData *gameData, int mode, int timeout )
 #if CD_AUDIO
          CdControlB(CdlStop, 0, 0);
 #endif
-         ok_to_interrupt = 0;
          return;
       }
 
@@ -220,7 +209,6 @@ void race( ConfigData *gameData, int mode, int timeout )
 
       if(ctrlmode == ATTRACT)
       {
-         inattract=1;   //jed
          if(ctrlplayCredits == 1)
             ShowCredits(attractDelay);
       }
@@ -260,7 +248,7 @@ void race( ConfigData *gameData, int mode, int timeout )
 
 
       //TRACK
-      if( RobTest || ((ctrlshipIndex[ownShip].attr & RACING) == 0) )
+      if( (ctrlshipIndex[ownShip].attr & RACING) == 0 )
       {
          DrawAllTrack( &ctrlcamera, ctrlautoMesh );
       }
@@ -450,33 +438,4 @@ void QuitGame()
    KillNotes();
    r_attr.depth.left = 2000;
    r_attr.depth.right = 2000;
-   return ;
 }
-
-#if 0
-void CdRestart(ConfigData *gameData)
-{
-   //#if CD_AUDIO
-#if 0
-   u_char         param;
-   ok_to_interrupt = 0;
-   param = CdlModeRept|CdlModeDA;
-   CdControlB(CdlStop, 0, 0);
-   CdControlB(CdlSetmode, &param, 0);
-
-   if(gameData->cdTrack == 1)
-   {
-      //    CdControlB(CdlSetloc, (u_char *)&loc[(rand()%(ntoc-1)) + 2], 0);  // DLS
-      CurrTrkNo = (rand() % (ntoc - 1)) + 3;
-   }
-   else
-   {
-      //    CdControlB(CdlSetloc, (u_char *)&loc[gameData->cdTrack], 0);      // DLS
-      CurrTrkNo = gameData->cdTrack;
-   }
-
-   CdControlB(CdlPlay, 0, 0);
-   ok_to_interrupt = 1;
-#endif
-}
-#endif

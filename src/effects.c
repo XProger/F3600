@@ -952,6 +952,9 @@ void SetShake(int duration)
 
 void ShakeScreen()
 {
+   if (shakeCount == 0)
+      return;
+
    if(shakeCount > 1)
    {
       renderOffset(-(randy() % shakeCount) + (shakeCount >> 1), -(randy() % shakeCount) + (shakeCount >> 1));
@@ -962,6 +965,8 @@ void ShakeScreen()
       renderOffset(0, 0);
       shakeCount--;
    }
+
+   osJoyVibrate(0, shakeCount, shakeCount);
 }
 
 extern short arccos_tab[];

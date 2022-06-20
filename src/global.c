@@ -117,17 +117,7 @@ Object             *shipSpline[ 20 ];
 short          finishedExtro;
 short          extroLevel;
 
-unsigned int   this_frame = 0, last_frame = 0;
 long        DrawnShieldBefore;
 
-long        TextureTrack = 1;
-long        SkyTrackFlags = 3;
-
-unsigned short JoyXVal;
-unsigned short JoyYVal;
-
-char        JoyButtons;
-int            WinPitch;
 short       WinWidth;
 short       WinHeight;
-short       WinHeightX2;

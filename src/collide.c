@@ -19,6 +19,12 @@
 #include "utils.h"
 #include "libgte.h"
 
+void ForceFeedback(int mag)
+{
+   int rumble = mag >> 3;
+   if (rumble > 255) rumble = 255;
+   osJoyVibrate(0, rumble, rumble);
+}
 
 void CallShip2ShipCollision(ShipData *shipIndex, Object** shipShapes)
 {
@@ -164,6 +170,8 @@ void Ship2ShipCollision(ShipData *shipIndex, Object** shipShapes, int i, int j)
                soundPos.vy = (shipIndex[i].ppivot.vy + shipIndex[j].ppivot.vy)>>1;
                soundPos.vz = (shipIndex[i].ppivot.vz + shipIndex[j].ppivot.vz)>>1;
                PlayDirectionalNote(SHIP_2_SHIP, 0, 30, soundPos);
+
+               ForceFeedback(192);
             }
          }
          shipIndex[i].attr |= SHIP_COLL;
@@ -519,7 +527,6 @@ void Ship2Track(ShipData *playerShip, Face *facePtr, Object** shipShapes )
                   }
                }
             }
-
             else
                NoseCollision(playerShip, facePtr, -downTrack, alpha);
             return;
@@ -660,7 +667,6 @@ void Ship2Track(ShipData *playerShip, Face *facePtr, Object** shipShapes )
                   NoseCollision(playerShip, facePtr, downTrack, alpha);
                }
             }
-
             else
                WingCollision(playerShip, facePtr, downTrack, alpha);
             return;
@@ -671,7 +677,6 @@ void Ship2Track(ShipData *playerShip, Face *facePtr, Object** shipShapes )
 
 int CheckPolygonCollision(Face *facePtr, VECTOR pos, int alpha)
 {
-
    VECTOR         planePoint;
    VECTOR         vec0, vec1, vec2, vec3;/* vectors between plane coords and intersection point */
    int            angle;
@@ -706,6 +711,7 @@ int CheckPolygonCollision(Face *facePtr, VECTOR pos, int alpha)
    {
       collide = 0;
    }
+
    return(collide);
 }
 
@@ -760,18 +766,14 @@ void WingCollision(ShipData *playerShip, Face *facePtr, int direction, int alpha
 
    /***** Magnitude returns approx between 0 & 1000    *****/
    /***** scale this and shift to a figure around zero *****/
+   ForceFeedback(magnitude);
 
    magnitude = magnitude - 500;
    magnitude = magnitude << 2;
 
-   SetVolume(SHIP_2_TRACK, chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
+   SetVolume(SHIP_2_TRACK,
+      chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
       chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
-
-#if 0
-   chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left += magnitude;
-   chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right += magnitude;
-   SpuSetVoiceAttr(&(chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr));
-#endif
 }
 
 void NoseCollision(ShipData *playerShip, Face *facePtr, int direction, int alpha)
@@ -814,18 +816,14 @@ void NoseCollision(ShipData *playerShip, Face *facePtr, int direction, int alpha
    /***** Magnitude returns approx between 0 & 1000    *****/
    /***** scale this and shift to a figure around zero *****/
 
+   ForceFeedback(magnitude);
+
    magnitude = magnitude - 500;
    magnitude = magnitude << 2;
 
-
-   SetVolume(SHIP_2_TRACK, chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
+   SetVolume(SHIP_2_TRACK,
+      chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
       chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
-
-#if 0
-   chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left += magnitude;
-   chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right += magnitude;
-   SpuSetVoiceAttr(&(chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr));
-#endif
 }
 
 void Reflection(VECTOR *incidence, SVector normal)

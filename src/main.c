@@ -45,7 +45,6 @@ short    BG_Colour = 0;  // PCwipeout
 
 extern TimData *JJSLoad16BitTexture(char *filename, char location);
 
-extern char     thieving_git;
 
 /*
  * for 2 meg mode we need this in the obj file:: 2mbyte.obj
@@ -53,19 +52,12 @@ extern char     thieving_git;
 
 char      copyRight[/*24*/] = "copyright_Psygnosis_1995";
 
-SPRT      sprtPrim[2][5];
-DR_MODE   drawmode[5];
-
 char      inmenu = 0, Reallyinmenu = 0;
-char     *background_buffer;
 char      trackdir[21];
-
-extern long     this_frame_count, last_frame_count, ok_to_interrupt;
 
 extern char     andybodge;
 
 long      DrawDistance = HIGH_DISTANCE;
-int        inattract = 0;
 TimData  *titleScreen;
 
 void reloadStartScr(void)
@@ -84,7 +76,6 @@ void reloadStartScr(void)
       CentreText("PRESS ENTER", text_data(0, 200, 8), RedText);
       Swap();
    }
-   InitAJSVSync();
 }
 
 void oldmain(void)
@@ -194,7 +185,6 @@ void oldmain(void)
          Swap();
       }
 
-      InitAJSVSync();
       toggle = 0;
 
       while (1)
@@ -256,8 +246,8 @@ void oldmain(void)
    /* Enable cheat permanently */
     //gameData.RapierClass = 1 ;
     //totalTracks = 14 ;
-    NumTracks = 7 ;
-    gameData.showBonusTrack = 1 ; //SJR
+    //NumTracks = 7 ;
+    //gameData.showBonusTrack = 1 ; //SJR
 
    /****************************/
 
@@ -457,7 +447,6 @@ void oldmain(void)
 
       race(&gameData, mode, timeout);
       // inmenu=1;
-      inattract = 0;
       mode = INTERACTIVE;
 
       InitDynamicMem(heap, HEAP_SIZE * 1024); /* The left over bit in

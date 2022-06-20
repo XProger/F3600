@@ -7,7 +7,6 @@
 #define M_BACK    4
 #define M_SELECT  5
 #define M_START   6
-#define M_QUIT    7
 
 typedef struct PadInfo
 {

@@ -7,14 +7,11 @@
 #include "drawot.h"
 
 extern   char  Reallyinmenu;  // jed & dave
-extern   int   inattract;//jed
 extern   char  inmenu;   //jed
 extern   int   mode;     //jed
 
-extern int           WinPitch;
 extern short         WinWidth;
 extern short         WinHeight;
-extern short         WinHeightX2;
 
 #define LET_STEVE_CLIP
 
@@ -24,15 +21,6 @@ static int dev = 0;
 
 
 int gfx_device;
-
-char  halfx=0;                   //jed
-char  halfy=0;                   //jed
-float halfxf=0.0;                //jed
-float halfyf=0.0;                //jed
-char  pixdouble=0;               //jed
-
-int   screenw=0;                 //jed
-int   screenh=0;                 //jed
 
 #define  Alloc(x,s)  malloc ((x)*(s))
 #define  DeAlloc(p)  free ((p))

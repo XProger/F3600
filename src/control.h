@@ -34,5 +34,3 @@ void  ZigZagShip                 (VECTOR *blockVector, ShipData *shipIndex, Face
 
 void SetSkeletonDirectionHPR( Skeleton* skeleton, short hdg, short pitch, short roll  );
 void SetSkeletonDirectionRPH( Skeleton* skeleton, short roll, short pitch, short hdg  );
-
-void DoDetailKeys(void);

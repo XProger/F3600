@@ -6,7 +6,4 @@ void UpdateCameraAttractCircle   (TrackCamera*, ShipData *camShip, RescueData*);
 void UpdateCameraAttractInternal (TrackCamera*, ShipData *camShip, RescueData*);
 void UpdateCameraStaticFollow    (TrackCamera*, ShipData *camShip, RescueData*);
 void UpdateCameraAttractMode     (TrackCamera*, ShipData *camShip, RescueData*);
-void UpdateCameraEditorStep      (TrackCamera*, ShipData *camShip, RescueData*);
 void UpdateCameraDroidView       (TrackCamera*, ShipData *camShip, RescueData*);
-void UpdateCameraCollideTest     (TrackCamera*, ShipData *camShip, RescueData* );
-void SetCameraToRedPoly          (TrackCamera *camera, Face *facePtr);

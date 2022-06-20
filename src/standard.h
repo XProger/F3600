@@ -76,3 +76,5 @@ void  JJSDrawPolyFT4(POLY_FT4* p);
 void  JJSDrawPolyG4(POLY_G4* p);
 
 unsigned short GetKeyNoBlock();
+
+void osJoyVibrate(int index, int L, int R);

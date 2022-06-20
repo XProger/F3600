@@ -102,7 +102,6 @@ void InitRevCon      (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponDat
 void UpdateRevCon    (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
 void InitSpecial     (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
 
-void TransformTransparentObject( Object* object, Skeleton* camera, int shieldID);
 void Weapon2Mine(WeaponData *weapon, WeaponData *weaponIndex, WeaponShape *weaponShapes);
 void GetFireVector(VECTOR *result, VECTOR target, Face *facePtr, VECTOR shipPos);
 void CycleWeaponGrids(ShipData *shipIndex, WeaponGrid *weaponGrid, int noWeaponGrids);

@@ -23,7 +23,6 @@ char winLoseIn=0;
 char winPic[35840];
 char losePic[35840];
 extern char inmenu,Reallyinmenu;
-extern unsigned int  this_frame, last_frame;
 
 //#define   LOADTEXTURES   1              // standard load stuff (LoadImage4, LoadImage8 etc.);
 //#define   LOADAS24BIT 1                 // if you want to load vram as 1 byte red, 1 byte green & 1 byte blue (requires 6 mb vram)
@@ -1004,9 +1003,4 @@ void  LoadPilotIntoVram(char *filename)
    fp=fopen(picfile,"rb");
    fread(losePic,35840,1,fp);
    fclose(fp);
-}
-
-void  InitAJSVSync(void)
-{
-   last_frame=this_frame;
 }

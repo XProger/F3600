@@ -22,45 +22,232 @@
 
 short FrameState=0;
 
-//menu graphic detail stuff - SJR
-short ft=0;
-char MipMap = 0;
-
 HWND hwnd;
-
 
 short trackNum = 0;
 
 void oldmain(void);
 
-BOOL      bActive;   // is application active?
+BOOL bActive;   // is application active?
 
 HWND hWnd;
 
-
 int gPad;
+int gPadStickX;
+int gPadStickY;
 
 int lastKey = 0;
 
-LARGE_INTEGER timerFreq;
-LARGE_INTEGER timerStart;
+LARGE_INTEGER gTimerFreq;
+LARGE_INTEGER gTimerStart;
 
 void timerInit()
 {
-   QueryPerformanceFrequency(&timerFreq);
-   QueryPerformanceCounter(&timerStart);
+   QueryPerformanceFrequency(&gTimerFreq);
+   QueryPerformanceCounter(&gTimerStart);
 }
 
 long osGetTimeMS()
 {
    LARGE_INTEGER count;
    QueryPerformanceCounter(&count);
-   return (long)((count.QuadPart - timerStart.QuadPart) * 1000L / timerFreq.QuadPart);
+   return (long)((count.QuadPart - gTimerStart.QuadPart) * 1000L / gTimerFreq.QuadPart);
 }
 
 void osQuit()
 {
    PostQuitMessage(0);
+}
+
+#define INPUT_JOY_COUNT 4
+
+// gamepad
+typedef struct _XINPUT_GAMEPAD {
+   WORD                                wButtons;
+   BYTE                                bLeftTrigger;
+   BYTE                                bRightTrigger;
+   SHORT                               sThumbLX;
+   SHORT                               sThumbLY;
+   SHORT                               sThumbRX;
+   SHORT                               sThumbRY;
+} XINPUT_GAMEPAD;
+
+typedef struct _XINPUT_STATE {
+   DWORD                               dwPacketNumber;
+   XINPUT_GAMEPAD                      Gamepad;
+} XINPUT_STATE;
+
+typedef struct _XINPUT_VIBRATION {
+   WORD                                wLeftMotorSpeed;
+   WORD                                wRightMotorSpeed;
+} XINPUT_VIBRATION;
+
+#define XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE  7849
+#define XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE 8689
+#define XINPUT_GAMEPAD_TRIGGER_THRESHOLD    30
+
+DWORD(WINAPI* _XInputGetState) (DWORD dwUserIndex, XINPUT_STATE* pState);
+DWORD(WINAPI* _XInputSetState) (DWORD dwUserIndex, XINPUT_VIBRATION* pVibration);
+
+#define JOY_MIN_UPDATE_FX_TIME   50
+#define JOY_RUMBLE_FADE          16
+
+typedef struct JoyDevice {
+   int32 vL, vR; // current value for left/right motor vibration
+   int32 oL, oR; // last applied value
+   int32 time;   // time when we can send vibration update
+   int32 mask;   // buttons mask
+   int32 ready;
+} JoyDevice;
+
+JoyDevice joyDevice[INPUT_JOY_COUNT];
+
+int32 osJoyReady(int index) {
+   return joyDevice[index].ready;
+}
+
+void osJoyVibrate(int index, int L, int R)
+{ 
+   joyDevice[index].vL = L;
+   joyDevice[index].vR = R;
+}
+
+void joyRumble(int index)
+{
+   JoyDevice* joy = joyDevice + index;
+
+   if (!joy->ready)
+      return;
+
+   if (!(joy->vL + joy->vR + joy->oL + joy->oR))
+      return;
+
+   if (osGetTimeMS() < joy->time)
+      return;
+
+   XINPUT_VIBRATION vibration;
+   vibration.wLeftMotorSpeed = (WORD)(joy->vL << 8);
+   vibration.wRightMotorSpeed = (WORD)(joy->vR << 8);
+   _XInputSetState(index, &vibration);
+
+   joy->oL = joy->vL;
+   joy->oR = joy->vR;
+   joy->vL -= JOY_RUMBLE_FADE;
+   joy->vR -= JOY_RUMBLE_FADE;
+   if (joy->vL < 0) joy->vL = 0;
+   if (joy->vR < 0) joy->vR = 0;
+   joy->time = osGetTimeMS() + JOY_MIN_UPDATE_FX_TIME;
+}
+
+void inputInit() {
+   memset(joyDevice, 0, sizeof(joyDevice));
+
+   HMODULE h = LoadLibrary("xinput1_3.dll");
+   if (h == NULL) {
+      h = LoadLibrary("xinput9_1_0.dll");
+   }
+
+   if (!h)
+      return;
+
+   #define GetProcAddr(lib, x) (x = GetProcAddress(lib, #x + 1))
+
+   GetProcAddr(h, _XInputGetState);
+   GetProcAddr(h, _XInputSetState);
+
+   for (int i = 0; i < INPUT_JOY_COUNT; i++)
+   {
+      XINPUT_STATE state;
+      int res = _XInputGetState(i, &state);
+      joyDevice[i].ready = (_XInputGetState(i, &state) == ERROR_SUCCESS);
+
+      if (joyDevice[i].ready)
+         printf("Gamepad %d is ready\n", i + 1);
+   }
+}
+
+void inputFree()
+{
+   memset(joyDevice, 0, sizeof(joyDevice));
+}
+
+void inputUpdate()
+{
+   if (!_XInputGetState)
+      return;
+
+   for (int i = 0; i < INPUT_JOY_COUNT; i++)
+   {
+      if (!joyDevice[i].ready)
+         continue;
+
+      joyRumble(i);
+
+      XINPUT_STATE state;
+      if (_XInputGetState(i, &state) != ERROR_SUCCESS)
+      {
+         inputFree();
+         inputInit();
+         break;
+      }
+
+      static const int buttons[] = { PadUp0, PadDown0, PadLeft0, PadRight0, PadStart, PadSelect, 0, 0, PadTopLeft1, PadTopRight1, 0, 0, PadCross0, PadCircle0, PadSquare0, PadTriangle0, PadTopLeft2, PadTopRight2 };
+
+      int32 curMask = state.Gamepad.wButtons;
+      int32 oldMask = joyDevice[i].mask;
+
+      gPadStickX = gPadStickY = 256;
+
+      if (state.Gamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
+         curMask |= (1 << 16); // PadTopLeft2
+
+      if (state.Gamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
+         curMask |= (1 << 17); // PadTopRight2
+
+      if (state.Gamepad.sThumbLY > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+      {
+         curMask |= (1 << 0); // PadUp0
+         gPadStickY = state.Gamepad.sThumbLY >> 6;
+      }
+
+      if (state.Gamepad.sThumbLY < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+      {
+         curMask |= (1 << 1); // PadDown0
+         gPadStickY = -state.Gamepad.sThumbLY >> 6;
+      }
+
+      if (state.Gamepad.sThumbLX < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+      {
+         curMask |= (1 << 2); // PadLeft0
+         gPadStickX = -state.Gamepad.sThumbLX >> 7;
+      }
+
+      if (state.Gamepad.sThumbLX > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+      {
+         curMask |= (1 << 3); // PadRight0
+         gPadStickX = state.Gamepad.sThumbLX >> 7;
+      }
+
+      if (gPadStickX > 256) gPadStickX = 256;
+      if (gPadStickY > 256) gPadStickY = 256;
+
+      for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++)
+      {
+         int wasDown = (oldMask & (1 << i)) != 0;
+         int isDown = (curMask & (1 << i)) != 0;
+
+         if (isDown == wasDown)
+            continue;
+
+         if (isDown && !wasDown) {
+            gPad |= buttons[i];
+         } else {
+            gPad &= ~buttons[i];
+         }
+      }
+
+      joyDevice[i].mask = curMask;
+   }
 }
 
 void setKey(char ScanCode, char KeyDown)
@@ -77,20 +264,24 @@ void setKey(char ScanCode, char KeyDown)
       case 'X':
          p = PadTopRight2;
          break;
-      case 'P':
-         p = PadStart;
+      case 'A':
+         p = PadTopLeft1;
          break;
+      case 'S':
+         p = PadTopRight1;
+         break;
+      case VK_RETURN:
       case VK_CONTROL:
          p = PadCross0;
          break;
       case VK_MENU:
-         p = PadCircle0;
+         p = PadSquare0;
          break;
       case VK_TAB:
          p = PadTriangle0;
          break;
-      case VK_RETURN:
-         p = PadSelect;
+      case VK_ESCAPE:
+         p = PadStart;
          break;
       case VK_LEFT:
          p = PadLeft0;
@@ -141,6 +332,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
          setKey((char)wParam, (msg == WM_KEYDOWN) || (msg == WM_SYSKEYDOWN));
          break;
 
+      case WM_DEVICECHANGE:
+         inputFree();
+         inputInit();
+         return 1;
+
       default:
          return DefWindowProc(hWnd, msg, wParam, lParam);
    }
@@ -162,13 +358,16 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
    ShowWindow(hWnd, SW_SHOWDEFAULT);
 
    timerInit();
-   srand((int)timerStart.QuadPart);
+   inputInit();
+
+   srand((int)gTimerStart.QuadPart);
 
    renderInit();
 
    CDStop();
    oldmain();
 
+   inputFree();
    renderFree();
    SfxFree();
 
@@ -180,6 +379,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 int ProcessMessages(void)
 {
    MSG msg;
+
+   inputUpdate();
 
    if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
    {

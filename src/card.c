@@ -1,9 +1,5 @@
 #include "standard.h"
 #include <string.h>
-//#include  <sys\file.h>
-#define     LANGUAGE_C
-#include "wipesrc\psx26\include\asm.h"
-#include "wipesrc\psx26\include\kernel.h"
 #include "malloc.h"
 #include "tim.h"
 #include "object.h"
@@ -27,32 +23,6 @@
 #define _SIZE_T_DEFINED_
 #include <stdio.h>
 
-
-extern   HiScores scoreTable[] ;
-
-unsigned long ev0,ev1,ev2,ev3;
-unsigned long ev10,ev11,ev12,ev13;
-extern char twist ;
-extern char negtwist ;
-Texture *gameIcon ;
-
-extern char mouse_sensitivity;
-extern char controller;
-//extern char  Sky;
-extern char ScreenSize;
-extern char Resolution;
-extern long DrawDistance;
-
-//extern unsigned short OriginalKeyCodes[16];
-
-extern short JoyMinX, JoyMaxX;
-extern short JoyMinY, JoyMaxY;
-extern short JoyCentreX, JoyCentreY;
-extern short left_scale, right_scale;
-extern float left_scale_factor, right_scale_factor;
-
-
-
 //#define SAVEDIR       "wipeout\\"
 #define  FILE_EXTENSION ".wsf"
 /*TODO saves
@@ -61,83 +31,24 @@ extern char *SaveDirBase;
 
 long GetCardInfo (int cardNum)
 {
-#ifdef   PCwipeout
-   long  cardStatus = 0 ;
-
-   if (cardNum == 0)
-      _card_info (0) ;
-   else
-      _card_info (16) ;
-
-   cardStatus = CheckCardEvents () ;
-   return (cardStatus) ;
-#endif // PCwipeout
    return (0); // PCwipeout
 }
-
-
 long CheckHWCardEvents ()
 {
-#ifdef   PCwipeout
-   while(1)
-   {
-      if(TestEvent(ev10)==1)
-      {         /* IOE */
-         return 0;
-      }
-
-      if(TestEvent(ev11)==1)
-      {         /* ERROR */
-         return 1;
-      }
-
-      if(TestEvent(ev12)==1)
-      {         /* TIMEOUT */
-         return 2;
-      }
-
-      if(TestEvent(ev13)==1)
-      {         /* NEW CARD */
-         return 3;
-      }
-   }
-#endif //   PCwipeout
-return(0); // PCwipeout
+   return(0); // PCwipeout
 }
-
-
 
 void ClearEventHW ()
 {
-#ifdef   PCwipeout
-   TestEvent (ev10) ;
-   TestEvent (ev11) ;
-   TestEvent (ev12) ;
-   TestEvent (ev13) ;
-#endif // PCwipeout
 }
 
 long CardContentStatus ()
 {
-#ifdef PCwipeout
-   long cardStatus = 0 ;
-
-   cardStatus = CheckCardEvents () ;
-
-   return (cardStatus) ;
-#endif // PCwipeout
-return(0); // PCwipeout
+   return(0); // PCwipeout
 }
 
 void LoadCard (int cardNum)
 {
-#ifdef   PCwipeout
-   ClearEventSW () ;
-   if (cardNum == 0)
-      _card_load (0) ;
-   else
-      _card_load (16) ;
-#endif // PCwipeout
 }
 
 

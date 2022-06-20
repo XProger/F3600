@@ -384,31 +384,3 @@ void UpdateCameraAttractMode(TrackCamera *camera, ShipData *camShip, RescueData 
    }
    (CameraUpdate)(camera, camShip, rescueDroid);
 }
-
-void UpdateCameraEditorStep(TrackCamera *camera, ShipData *camShip, RescueData *rescueDroid)
-{
-   short          sx, sy, sz;
-   short          cx, cy, cz;
-   VECTOR         unitFinVector;
-   VECTOR         pos;
-   Face           *facePtr;
-
-   facePtr = track->faces + camera->section->faceStart;
-   while((facePtr->flags & TRACK_BASE) == 0)
-   {
-      facePtr++ ;
-   }
-
-   pos.vx = camera->section->centre.vx;
-   pos.vy = camera->section->centre.vy;
-   pos.vz = camera->section->centre.vz;
-
-   pos.vx += ((facePtr->normal.vx*200)>>12);
-   pos.vy += ((facePtr->normal.vy*200)>>12);
-   pos.vz += ((facePtr->normal.vz*200)>>12);
-
-   SetSkeletonPosition(camera->camPos, -pos.vx, -pos.vy, -pos.vz);
-
-   SetSkeletonDirectionRPH(camera->camPos->super, 0, camera->pitch, camera->hdg);
-   camera->camPos->super->update = 1;
-}
