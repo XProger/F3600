@@ -22,15 +22,15 @@ extern int andyTimeout;
 
 void InitPadSettings()
 {
-   pCon.thrust    = PadCross0;
-   pCon.view      = PadTriangle0;
-   pCon.fire      = PadCircle0;
-   pCon.lBrake    = PadTopRight2;
-   pCon.rBrake    = PadTopLeft2;
-   pCon.up        = PadUp0;
-   pCon.down      = PadDown0;
-   pCon.left      = PadLeft0;
-   pCon.right     = PadRight0;
+   pCon.thrust    = IN_A;
+   pCon.view      = IN_Y;
+   pCon.fire      = IN_B;
+   pCon.lBrake    = IN_RT;
+   pCon.rBrake    = IN_LT;
+   pCon.up        = IN_UP;
+   pCon.down      = IN_DOWN;
+   pCon.left      = IN_LEFT;
+   pCon.right     = IN_RIGHT;
 }
 
 void SetBrake(ShipData *playerShip, short padLeft, short padRight)
@@ -99,26 +99,26 @@ short GetMenuKey(short key)
    switch(key)
    {
       case M_UP:
-         if (xpad & PadUp0) andyTimeout=0;
-         return(xpad & PadUp0);
+         if (xpad & IN_UP) andyTimeout=0;
+         return(xpad & IN_UP);
       case M_DOWN:
-         if (xpad & PadDown0) andyTimeout=0;
-         return(xpad & PadDown0);
+         if (xpad & IN_DOWN) andyTimeout=0;
+         return(xpad & IN_DOWN);
       case M_LEFT:
-         if (xpad & PadLeft0) andyTimeout=0;
-         return(xpad & PadLeft0);
+         if (xpad & IN_LEFT) andyTimeout=0;
+         return(xpad & IN_LEFT);
       case M_RIGHT:
-         if (xpad & PadRight0) andyTimeout=0;
-         return(xpad & PadRight0);
+         if (xpad & IN_RIGHT) andyTimeout=0;
+         return(xpad & IN_RIGHT);
       case M_BACK:
-         if (xpad & (PadCircle0 | PadStart)) andyTimeout=0;
-         return(xpad & (PadCircle0 | PadStart));
+         if (xpad & (IN_B | IN_START)) andyTimeout=0;
+         return(xpad & (IN_B | IN_START));
       case M_SELECT:
-         if (xpad & PadCross0) andyTimeout=0;
-         return(xpad & PadCross0);
+         if (xpad & IN_A) andyTimeout=0;
+         return(xpad & IN_A);
       case M_START:
-         if (xpad & PadStart) andyTimeout=0;
-         return(xpad & PadStart);
+         if (xpad & IN_START) andyTimeout=0;
+         return(xpad & IN_START);
       default:
          break;
    }

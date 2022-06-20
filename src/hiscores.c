@@ -266,7 +266,7 @@ void HighScore (ConfigData *gameData)
 
          charVal = currChar - 'A' ;
 
-         if ((pad & PadRight0) && (padDelay == 0) )
+         if ((pad & IN_RIGHT) && (padDelay == 0) )
          {
             PlayNote(MENU_MOVE, 1, 20);
             padDelay = 5;
@@ -281,7 +281,7 @@ void HighScore (ConfigData *gameData)
 
          }
 
-         if ((pad & PadLeft0) && (padDelay == 0) )
+         if ((pad & IN_LEFT) && (padDelay == 0) )
          {
             PlayNote(MENU_MOVE, 1, 20);
             padDelay = 5;
@@ -300,7 +300,7 @@ void HighScore (ConfigData *gameData)
          if(padDelay > 0) padDelay--;
 
          {
-            if ((xpad & PadCross0) && (charVal == 26))
+            if ((xpad & IN_A) && (charVal == 26))
             {
                if (numChars >= 1)
                {
@@ -314,7 +314,7 @@ void HighScore (ConfigData *gameData)
             else
             {
                currChar = charVal + 'A' ;
-               if ((xpad & PadCross0) && (numChars != (nameLetters+1))  && (charVal != 26) &&  (charVal != 27))
+               if ((xpad & IN_A) && (numChars != (nameLetters+1))  && (charVal != 26) &&  (charVal != 27))
                {
                   PlayNote(MENU_SELECT, 1, 20);
                   nameEntered[numChars] = currChar ;
@@ -328,7 +328,7 @@ void HighScore (ConfigData *gameData)
                   }
                }
                else
-                  if ((xpad & PadCross0) && (charVal == 27))
+                  if ((xpad & IN_A) && (charVal == 27))
                   {
                      nameEntered[numChars] = currChar ;
                      nameEntered[numChars+1] = 0 ;
@@ -395,7 +395,7 @@ void HighScore (ConfigData *gameData)
          if(count == 200)
             break ;
 
-         if (xpad & PadCross0)
+         if (xpad & IN_A)
             break ;
 
 //       VSync (0) ; // PCwipeout
@@ -591,7 +591,7 @@ void NewHighScore (ConfigData *gameData, HiScoreData *hiScoreData)
 
       hiScoreData->charVal = hiScoreData->currChar - 'A' ;
 
-      if ((pad & PadRight0) && (hiScoreData->padDelay == 0) )
+      if ((pad & IN_RIGHT) && (hiScoreData->padDelay == 0) )
       {
          ajscount=0;
          PlayNote(MENU_MOVE, 1, 20);
@@ -606,7 +606,7 @@ void NewHighScore (ConfigData *gameData, HiScoreData *hiScoreData)
          }
       }
 
-      if ((pad & PadLeft0) && (hiScoreData->padDelay == 0) )
+      if ((pad & IN_LEFT) && (hiScoreData->padDelay == 0) )
       {
          ajscount=0;
          PlayNote(MENU_MOVE, 1, 20);

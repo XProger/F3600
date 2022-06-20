@@ -26,9 +26,6 @@
 #include "collide.h"
 #include "utils.h"
 
-extern short screenres;
-
-
 extern short behindSpeed[];
 extern short shipOrder[];
 
@@ -38,7 +35,6 @@ extern short shipOrder[];
 #define LOW       1
 #define SMALL     0
 
-extern char  Resolution;
 extern int   gPadStickX;
 extern int   gPadStickY;
 
@@ -232,8 +228,8 @@ void UpdatePlayerShipNorm(ShipData *shipIndex, Object** shipShapes, int shipNo, 
 
    if((playerShip->combatAttr & REVCONNED) && (revLeft == 0))
    {
-      pCon.left      = PadRight0;
-      pCon.right     = PadLeft0;
+      pCon.left      = IN_RIGHT;
+      pCon.right     = IN_LEFT;
       revLeft        = pCon.lBrake;
       revRight       = pCon.rBrake;
       pCon.lBrake    = revRight;
@@ -241,8 +237,8 @@ void UpdatePlayerShipNorm(ShipData *shipIndex, Object** shipShapes, int shipNo, 
    }
    else if(((playerShip->combatAttr & REVCONNED) == 0) && (revLeft != 0))
    {
-      pCon.left      = PadLeft0;
-      pCon.right     = PadRight0;
+      pCon.left      = IN_LEFT;
+      pCon.right     = IN_RIGHT;
       pCon.lBrake    = revLeft;
       pCon.rBrake    = revRight;
       revLeft        = 0;

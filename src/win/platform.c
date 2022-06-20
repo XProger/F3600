@@ -20,16 +20,12 @@
 #include "render.h"
 #include "input.h"
 
-short FrameState=0;
-
-HWND hwnd;
-
+short FrameState = 0;
 short trackNum = 0;
 
 void oldmain(void);
 
-BOOL bActive;   // is application active?
-
+BOOL bActive;
 HWND hWnd;
 
 int gPad;
@@ -191,7 +187,7 @@ void inputUpdate()
          break;
       }
 
-      static const int buttons[] = { PadUp0, PadDown0, PadLeft0, PadRight0, PadStart, PadSelect, 0, 0, PadTopLeft1, PadTopRight1, 0, 0, PadCross0, PadCircle0, PadSquare0, PadTriangle0, PadTopLeft2, PadTopRight2 };
+      static const int buttons[] = { IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_SELECT, IN_L, IN_R, IN_LB, IN_RB, 0, 0, IN_A, IN_B, IN_X, IN_Y, IN_LT, IN_RT };
 
       int32 curMask = state.Gamepad.wButtons;
       int32 oldMask = joyDevice[i].mask;
@@ -199,32 +195,32 @@ void inputUpdate()
       gPadStickX = gPadStickY = 256;
 
       if (state.Gamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
-         curMask |= (1 << 16); // PadTopLeft2
+         curMask |= (1 << 16); // IN_LT
 
       if (state.Gamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
-         curMask |= (1 << 17); // PadTopRight2
+         curMask |= (1 << 17); // IN_RT
 
       if (state.Gamepad.sThumbLY > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
       {
-         curMask |= (1 << 0); // PadUp0
+         curMask |= (1 << 0); // IN_UP
          gPadStickY = state.Gamepad.sThumbLY >> 6;
       }
 
       if (state.Gamepad.sThumbLY < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
       {
-         curMask |= (1 << 1); // PadDown0
+         curMask |= (1 << 1); // IN_DOWN
          gPadStickY = -state.Gamepad.sThumbLY >> 6;
       }
 
       if (state.Gamepad.sThumbLX < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
       {
-         curMask |= (1 << 2); // PadLeft0
+         curMask |= (1 << 2); // IN_LEFT
          gPadStickX = -state.Gamepad.sThumbLX >> 7;
       }
 
       if (state.Gamepad.sThumbLX > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
       {
-         curMask |= (1 << 3); // PadRight0
+         curMask |= (1 << 3); // IN_RIGHT
          gPadStickX = state.Gamepad.sThumbLX >> 7;
       }
 
@@ -259,41 +255,41 @@ void setKey(char ScanCode, char KeyDown)
    switch (ScanCode)
    {
       case 'Z':
-         p = PadTopLeft2;
+         p = IN_LT;
          break;
       case 'X':
-         p = PadTopRight2;
+         p = IN_RT;
          break;
       case 'A':
-         p = PadTopLeft1;
+         p = IN_LB;
          break;
       case 'S':
-         p = PadTopRight1;
+         p = IN_RB;
          break;
       case VK_RETURN:
       case VK_CONTROL:
-         p = PadCross0;
+         p = IN_A;
          break;
       case VK_MENU:
-         p = PadSquare0;
+         p = IN_X;
          break;
       case VK_TAB:
-         p = PadTriangle0;
+         p = IN_Y;
          break;
       case VK_ESCAPE:
-         p = PadStart;
+         p = IN_START;
          break;
       case VK_LEFT:
-         p = PadLeft0;
+         p = IN_LEFT;
          break;
       case VK_RIGHT:
-         p = PadRight0;
+         p = IN_RIGHT;
          break;
       case VK_UP:
-         p = PadUp0;
+         p = IN_UP;
          break;
       case VK_DOWN:
-         p = PadDown0;
+         p = IN_DOWN;
          break;
    }
 
@@ -371,7 +367,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
    renderFree();
    SfxFree();
 
-   DestroyWindow(hwnd);
+   DestroyWindow(hWnd);
 
    return 0;
 }

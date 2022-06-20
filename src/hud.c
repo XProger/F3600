@@ -26,16 +26,15 @@
 
 #define END_LAP 3
 
-extern short FrameState,screenres;
-extern float upres;
+extern short FrameState;
 
 TexChar  CharSet16[40] ;
 TexChar  CharSet12[40] ;
 TexChar  CharSet8[40] ;
 extern char globalPilot[];
 
-short speedo_x[]={179,259,371,499};
-short speedo_y[]={195,255,337,435};
+const short speedo_x = 179;
+const short speedo_y = 195;
 
 ushort Text16[] =    {25, 24, 17, 24, 24, 17, 25, 18, 7, 17,
                   117, 117, 128, 117, 124, 124, 126, 124, 118, 117,
@@ -101,7 +100,7 @@ void InitSpeedo (Speedo *speedo)
       speedo->facia[j].r0=230; // PCwipeout
       speedo->facia[j].g0=0; // PCwipeout
       speedo->facia[j].b0=BLACK_NOT_DRAWN; // PCwipeout
-      setXY0(&(speedo->facia[j]),speedo_x[screenres],speedo_y[screenres]);
+      setXY0(&(speedo->facia[j]),speedo_x,speedo_y);
       setUV0(&(speedo->facia[j]),tex_ptr->u0, tex_ptr->v0);
       setWH(&(speedo->facia[j]),SPEEDO_WIDTH,SPEEDO_HEIGHT);
          speedo->facia[j].clut = tex_ptr->cba;
@@ -110,7 +109,7 @@ void InitSpeedo (Speedo *speedo)
       speedo->transbar[j].r0=230; // PCwipeout
       speedo->transbar[j].b0=RED_TRANSL; // PCwipeout
       speedo->transbar[j].g0=0; // PCwipeout
-      setXY0(&(speedo->transbar[j]),speedo_x[screenres],speedo_y[screenres]);
+      setXY0(&(speedo->transbar[j]),speedo_x,speedo_y);
       setUV0(&(speedo->transbar[j]),tex_ptr->u0+128, tex_ptr->v0-30);
       setWH(&(speedo->transbar[j]),SPEEDO_WIDTH,SPEEDO_HEIGHT);
          speedo->transbar[j].clut = tex_ptr->cba;
@@ -119,7 +118,7 @@ void InitSpeedo (Speedo *speedo)
       speedo->solidbar[j].r0=230; // PCwipeout
       speedo->solidbar[j].g0=0; // PCwipeout
       speedo->solidbar[j].b0=BLACK_NOT_DRAWN; // PCwipeout
-      setXY0(&(speedo->solidbar[j]),speedo_x[screenres],speedo_y[screenres]);
+      setXY0(&(speedo->solidbar[j]),speedo_x,speedo_y);
       setUV0(&(speedo->solidbar[j]),tex_ptr->u0+128, tex_ptr->v0);
       setWH(&(speedo->solidbar[j]),SPEEDO_WIDTH,SPEEDO_HEIGHT);
       speedo->solidbar[j].clut = tex_ptr->cba;
@@ -225,9 +224,6 @@ void AddTime(int time, TEXT_DATA *pos_data, int colour)
 
    x = pos_data->start_pos_x;
    y = pos_data->start_pos_y;
-
-   x*=upres;
-   y*=upres;
 
    size= pos_data->size ;
    small_num_size = size>>1;
@@ -445,8 +441,8 @@ void AddText(char* text_ptr, TEXT_DATA *pos_data, int colour)
    uchar    letter=0;
    char     AValue=0;
    Texture  *charTex, *redTex ;
-   int      size=0 ;
-   int      x=0, y=0, i=0 ,newx,newy;
+   int      size;
+   int      x, y, i=0;
    short    vramRow=0, vramY=0, vramX=0 ;
    short    j=0;
    ushort    currLett=0, searchLett=0 ;
@@ -491,10 +487,7 @@ void AddText(char* text_ptr, TEXT_DATA *pos_data, int colour)
 
          currLett = charSet[j].width ;
 
-         newx = x*upres + ((currLett*upres)-currLett)/2;
-         newy = y*upres;
-
-         setXY0(&display_text[textPrim],newx,newy);   // PCwipeout
+         setXY0(&display_text[textPrim],x,y);   // PCwipeout
          setUV0(&display_text[textPrim],charSet[j].vramX, charSet[j].vramY);  // PCwipeout
          setWH(&display_text[textPrim],currLett,size);   // PCwipeout
 
@@ -532,7 +525,7 @@ void AddNumber(int num, TEXT_DATA *pos_data, int colour)
 {
    int i,j;
    int digit[12];
-   int x, y , newx ,newy;
+   int x, y;
    Texture *charTex, *redTex ;
    int size, charNum ;
    short    vramRow=0, vramY=0, vramX=0 ;
@@ -572,10 +565,7 @@ void AddNumber(int num, TEXT_DATA *pos_data, int colour)
       charNum = (digit[j]+26) ;
       currLett = charSet[charNum].width ;
 
-      newx = x*upres + ((currLett*upres)-currLett)/2;
-      newy = y*upres;
-
-      setXY0(&display_text[textPrim],newx,newy);   // PCwipeout
+      setXY0(&display_text[textPrim],x,y);   // PCwipeout
       setUV0(&display_text[textPrim],charSet[charNum].vramX, charSet[charNum].vramY);  // PCwipeout
       setWH(&display_text[textPrim],currLett,size);   // PCwipeout
 
@@ -608,14 +598,11 @@ void AddNumber(int num, TEXT_DATA *pos_data, int colour)
 void AddDelEnd(char dispChar, TEXT_DATA *pos_data, int colour)
 {
    Texture  *endTex, *delTex, *redTex ;
-   int      size=0 ;
-   int      x=0, y=0 ,newx ,newy;
+   int      size;
+   int      x, y;
 
    x = pos_data->start_pos_x;
    y = pos_data->start_pos_y;
-
-   newx = x * upres;
-   newy = y * upres;
 
    size = pos_data->size ;
 
@@ -624,13 +611,13 @@ void AddDelEnd(char dispChar, TEXT_DATA *pos_data, int colour)
 
    if (dispChar)
    {
-      setXY0(&display_text[textPrim],newx,newy);   // PCwipeout
+      setXY0(&display_text[textPrim],x,y);   // PCwipeout
       setUV0(&display_text[textPrim],endTex->u0, endTex->v0);  // PCwipeout
       setWH(&display_text[textPrim],24,size);   // PCwipeout
    }
    else
    {
-      setXY0(&display_text[textPrim],newx,newy);   // PCwipeout
+      setXY0(&display_text[textPrim],x,y);   // PCwipeout
       setUV0(&display_text[textPrim],delTex->u0, delTex->v0);  // PCwipeout
       setWH(&display_text[textPrim],24,size);   // PCwipeout
    }
@@ -1300,7 +1287,7 @@ void ScreenFooter (int x, int y, int colour)
 
       if (i == 0)
       {
-         setXY4(&(symbols[i]), x * upres, y * upres,
+         setXY4(&(symbols[i]),  x, y,
                                 x+20, y,
                                 x, y+16,
                                 x+20, y+16) ;
@@ -1310,7 +1297,7 @@ void ScreenFooter (int x, int y, int colour)
       }
       else
       {
-         setXY4(&(symbols[i]), (x+offSet) * upres, y * upres,
+         setXY4(&(symbols[i]),  x+offSet, y,
                                 x+20+offSet, y,
                                 x+offSet, y+16,
                                 x+20+offSet, y+16) ;
@@ -1341,15 +1328,13 @@ void ScreenFooter (int x, int y, int colour)
 
 }
 
-
-
-void CentreText(char* the_text_ptr, TEXT_DATA *pos_data, int colour)
+void CentreText(const char* the_text_ptr, TEXT_DATA *pos_data, int colour)
 {
    uchar    letter=0;
    char     AValue=0, *tmpPtr ;
    Texture  *charTex, *redTex ;
-   int      size=0 ;
-   int      x=0, y=0, i=0 , newx , newy;
+   int      size;
+   int      x, y, i=0;
    short    vramRow=0, vramY=0, vramX=0 ;
    short    j=0;
    ushort    currLett=0, searchLett=0 ;
@@ -1357,8 +1342,6 @@ void CentreText(char* the_text_ptr, TEXT_DATA *pos_data, int colour)
    short    totSize = 0 ;
 
    y = pos_data->start_pos_y;
-
-// y*=upres;
 
    size = pos_data->size ;
 
@@ -1420,10 +1403,7 @@ void CentreText(char* the_text_ptr, TEXT_DATA *pos_data, int colour)
 
          currLett = charSet[j].width ;
 
-         newx = x*upres + ((currLett*upres)-currLett)/2;
-         newy = y*upres;
-
-         setXY0(&display_text[textPrim],newx,newy);   // PCwipeout
+         setXY0(&display_text[textPrim],x,y);   // PCwipeout
          setUV0(&display_text[textPrim],charSet[j].vramX, charSet[j].vramY);  // PCwipeout
          setWH(&display_text[textPrim],currLett,size);   // PCwipeout
 
@@ -1472,7 +1452,7 @@ void DisplayLives (SPRT lifeIcons[][2], ConfigData *gameData) // PCwipeout
       lifeIcons[i][CurrentScreen].g0=0;
       lifeIcons[i][CurrentScreen].b0=BLACK_NOT_DRAWN;
 
-      setXY0(&(lifeIcons[i][CurrentScreen]),speedo_x[screenres]+115-(ySpace*i),speedo_y[screenres]-5);
+      setXY0(&(lifeIcons[i][CurrentScreen]),speedo_x+115-(ySpace*i),speedo_y-5);
       setWH(&(lifeIcons[i][CurrentScreen]),11,9);
 
       setUV0(&(lifeIcons[i][CurrentScreen]),livesTex->u0, livesTex->v0);
@@ -1929,7 +1909,6 @@ void DrawHud(ShipData* shipIndex, Speedo *speedo, int choice, ConfigData *gameDa
 {
 int i;
 int width;
-static char fixof[]={0,2,3,4};
 
    if(shipIndex[ownShip].lapNo > 0) //gone past start line
    {
@@ -1973,7 +1952,7 @@ static char fixof[]={0,2,3,4};
 
       width = Text16[(shipIndex[ownShip].lapNo+26)] % 100 ;
 
-      AddText ("OF", text_data ((10+width), 27-fixof[screenres], 8), RedText) ;
+      AddText ("OF", text_data ((10+width), 27, 8), RedText) ;
 
       width += 22 ;
 
@@ -2020,9 +1999,9 @@ static char fixof[]={0,2,3,4};
 
       for(j=0;j<2;++j)
       {
-         setXY0(&(speedo->facia[j]),speedo_x[screenres],speedo_y[screenres]);
-         setXY0(&(speedo->transbar[j]),speedo_x[screenres],speedo_y[screenres]);
-         setXY0(&(speedo->solidbar[j]),speedo_x[screenres],speedo_y[screenres]);
+         setXY0(&(speedo->facia[j]),speedo_x,speedo_y);
+         setXY0(&(speedo->transbar[j]),speedo_x,speedo_y);
+         setXY0(&(speedo->solidbar[j]),speedo_x,speedo_y);
       }
       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(speedo->facia[CurrentScreen]) );
 

@@ -34,11 +34,8 @@
 #include "card.h"
 #include "utils.h"
 
-extern char Resolution;
-extern short screenres;
 extern short trackNum; //SJR
 extern int menuTexturesIn;
-extern u_long   _stacksize;     // PCwipeout
 
 short    drawenv_tpage = 5;      // PCwipeout
 short    BG_Colour = 0;  // PCwipeout
@@ -78,6 +75,10 @@ void reloadStartScr(void)
    }
 }
 
+
+extern int TOut;
+
+
 void oldmain(void)
 {
    int        i;
@@ -87,7 +88,6 @@ void oldmain(void)
    char      loadPath[48];
    char      loadNo[2];
    int        titleTimeout;
-   int        TOut;
    static int      firstTime = 1;
 
 
@@ -150,15 +150,6 @@ void oldmain(void)
    InitChampionship();
 
    timeout = FR30 * 120;
-
-#if CD_AUDIO
-   //if (gameData.cdTrack == 1)
-   //{
-      //InitCD(loc, 0);
-   //}
-   //else
-      //InitCD(loc, 0);
-#endif
 
    mode = ATTRACT;
 
@@ -230,11 +221,6 @@ void oldmain(void)
       Swap();
    }
 
-   if(Resolution!=screenres)
-   {
-      screenres=Resolution;
-      changeScreen();
-   }
    gameType = SINGLE;
 
    gameData.Lives = 3;

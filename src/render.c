@@ -32,7 +32,7 @@ int gWidth, gHeight;
    #define GL_CLAMP_TO_EDGE 0x812F
 #endif
 
-#define  SCALEIT(x) ((x)*upres)
+#define  SCALEIT(x) (x)
 #define  SCALEZ(z) ((z)*zscale)
 
 extern HWND hWnd;
@@ -67,20 +67,6 @@ char* TextureBuffer;
 char JJSTextureTable[]={0,1,2,3,4,0,1,2,3,4,5,6,7,8,9,10,16,17,18,19,20,11,20,12,13,21,14,15,16,17,18,19};
 char JJSTextureMenuTable[]={0,1,2,3,4,0,1,2,10,4,5,6,7,8,9,3,16,17,18,19,20,11,20,12,13,21,14,15,16,17,18,19};
 
-typedef struct {
-   short xsize, ysize;
-   float mult;
-}RESOLUTION;
-
-RESOLUTION reses[] = {
-   {320,240,1.0f},
-   {400,300,1.25f},
-   {512,384,1.6f},
-   {640,480,2.0f}
-};
-
-short screenres = 3;
-float upres = 2.0f;
 float zscale = 1.0 / 65536.0f;//1.0/32768.0f;
 int menuTexturesIn = 0;
 short PageXOff, PageYOff;
@@ -178,11 +164,11 @@ void JJSDrawSprite(SPRT_8* sp, short w, short h)
       s2.y0=0;
    }
    else
-   if(s2.y0+h>=reses[screenres].ysize)
+   if(s2.y0+h>=240)
    {
-      if(s2.y0>=reses[screenres].ysize)
+      if(s2.y0>=240)
          return;
-      h=reses[screenres].ysize-s2.y0;
+      h=240-s2.y0;
    }
    tpage=GetThePage(s2.clut,nu,nv);
    if(tpage==415)
@@ -1222,20 +1208,16 @@ static void restoreTextures(void)
 
 void setupScreens(void)
 {
-   upres = reses[screenres].mult;
-
    JJSLoadSprites();
 }
 
 void changeScreen(void)
 {
-   upres = reses[screenres].mult;
-   WinWidth = reses[screenres].xsize;
-   WinHeight = reses[screenres].ysize;
+   WinWidth = 320;
+   WinHeight = 240;
    setupScreens();
    restoreTextures();
 }
-
 
 void renderInit()
 {
@@ -1272,13 +1254,13 @@ void renderInit()
 
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glOrtho(0, 640, 480, 0, 0, 1);
+   glOrtho(0, 320, 240, 0, 0, 1);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 
    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-   WinWidth = reses[screenres].xsize;
-   WinHeight = reses[screenres].ysize;
+   WinWidth = 320;
+   WinHeight = 240;
 
    setupScreens();
 
@@ -1301,7 +1283,6 @@ void renderSwap()
    //   sprintf(buf, "%d = G3:%d G4:%d F3:%d F4:%d GT3:%d GT4:%d FT3:%d FT4:%d\n", (dbg_G3 + dbg_G4 + dbg_F3 + dbg_F4 + dbg_GT3 + dbg_GT4 + dbg_FT3 + dbg_FT4), dbg_G3, dbg_G4, dbg_F3, dbg_F4, dbg_GT3, dbg_GT4, dbg_FT3, dbg_FT4);
    //   OutputDebugString(buf);
    dbg_G3 = dbg_G4 = dbg_F3 = dbg_F4 = dbg_GT3 = dbg_GT4 = dbg_FT3 = dbg_FT4 = 0;
-
 }
 
 void renderResize(int width, int height)
@@ -1320,8 +1301,6 @@ void renderClear()
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
-
-
 
 #if 0
 BOOL SetState(C3D_EPRIM Quad, C3D_ESHADE Shade, BOOL BTexEn, BOOL Trans, C3D_ETLIGHT Light)

@@ -35,8 +35,7 @@
 #include <stdlib.h>     // PCwipeout
 #include <string.h>
 
-extern short trackNum,screenres; //SJR
-extern float upres;
+extern short trackNum; //SJR
 
 #define  PALETTE           1
 #define  PICTURE           2
@@ -62,34 +61,10 @@ TimData  *menuScreen ;
 #define LOW       1
 #define SMALL     0
 
-#define  HIGH_SENS   8
-#define  MEDIUM_SENS 16
-#define  LOW_SENS 32
-
-// MARK'S EXTERNS
-
-extern long CommNetSocket=0;
-extern long CommNetPlayers=2;
-extern long CommSerialDevice=1;
-extern long CommSerialBaudRate=1;
-//extern long global_mark_error;
-
-
-// OTHER FUCKERS
-char  ScreenSize=FULL;
-char  Resolution=HIGH;
-
-char my_ScreenSize;
-char my_Resolution;
-char  my_Sky;
-char  my_PC;//SJR
-long  my_DrawDistance;
-// end of temporary stuff
+int  TOut;
 
 extern TexChar CharSet16[] ;
 extern HiScores scoreTable[] ;
-extern long fr,fw;      /* file descriptor */
-extern unsigned long ev0 ;
 
 extern int short shipShapeOrder[];
 int short pilotShapeOrder [8] = {0, 4, 6, 7, 2, 5, 1, 3} ;
@@ -437,8 +412,6 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
    long           length;
    int            frame_cnt = 0 ;
    int            x = 0, y = 0 ;
-   int            TOut = 180;
-
 
    menuTexturesIn = 1;
    //JJSNewTexture ("wipeout\\newgraph\\menu\\menus.bmp");
@@ -633,12 +606,12 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
                // CHEAT ACTIVATION BITS - need to be changed for PCwipeout
                /*TODO cheats*/
 
-               if( (pad & PadLeft0) && (pad & PadCross0))
+               if( (pad & IN_LEFT) && (pad & IN_A))
                {
                   gameData->RapierClass = 1 ;
                }
 
-               if( (pad & PadRight0) && (pad & PadTriangle0))
+               if( (pad & IN_RIGHT) && (pad & IN_Y))
                {
                   totalTracks = 14 ;
                   NumTracks = 7 ;
@@ -1836,12 +1809,6 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
                ResetKeys();
             }
          }
-         if((Reallyinmenu) && (*currMenu == DETAILS_MENU))
-         {
-            ScreenSize = my_ScreenSize;
-            Resolution = my_Resolution;
-            DrawDistance = my_DrawDistance;
-         }
 
          *currMenu = menuSystem[(*currMenu)].prevMenu ;
          *currOption = 0 ;
@@ -2607,18 +2574,18 @@ void DrawPlayPad (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton),250, -3440,10);
    TransformStaticObject(menuSystem[(*currMenu)].menuModel[1], NULL);
 
-   if (pad & PadUp0)       pitch += 10 ;
-   if (pad & PadDown0)     pitch -= 10 ;
-   if (pad & PadLeft0)     hdg -= 10 ;
-   if (pad & PadRight0)    hdg += 10 ;
-   if (pad & PadSquare0)   roll -= 10 ;
-   if (pad & PadCircle0)   roll += 10 ;
-   if (pad & PadTopLeft1)  zoom += 10 ;
-   if (pad & PadTopRight1) zoom -= 10 ;
-   if (pad & PadTopLeft2)  x -= 10 ;
-   if (pad & PadTopRight2) x += 10 ;
-   if (pad & PadStart)     y += 10 ;
-   if (pad & PadSelect)    y -= 10 ;
+   if (pad & IN_UP)        pitch += 10 ;
+   if (pad & IN_DOWN)      pitch -= 10 ;
+   if (pad & IN_LEFT)      hdg -= 10 ;
+   if (pad & IN_RIGHT)     hdg += 10 ;
+   if (pad & IN_X)         roll -= 10 ;
+   if (pad & IN_B)         roll += 10 ;
+   if (pad & IN_LB)        zoom += 10 ;
+   if (pad & IN_RB)        zoom -= 10 ;
+   if (pad & IN_LT)        x -= 10 ;
+   if (pad & IN_RT)        x += 10 ;
+   if (pad & IN_START)     y += 10 ;
+   if (pad & IN_SELECT)    y -= 10 ;
 }
 
 void DrawNegCon(Menus* menuSystem, int* currMenu, int shapeNo, int* swapDelay)
@@ -2725,7 +2692,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
 
    extern   short CurrTrkNo;
 
-   if (xpad & PadUp0)
+   if (xpad & IN_UP)
    {
       PlayNote(MENU_MOVE, 1, 2);
       selectData->optionNo -- ;
@@ -2733,7 +2700,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
          selectData->optionNo = 1 ;
    }
 
-   if (xpad & PadDown0)
+   if (xpad & IN_DOWN)
    {
       PlayNote(MENU_MOVE, 1, 2);
       selectData->optionNo ++ ;
@@ -2799,7 +2766,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
       AddText ("SFX",text_data (33, 51, 8),RedText) ;
       AddText ("MUSIC",text_data (250, 139, 8),RedText) ;
 
-      if (pad & PadLeft0)
+      if (pad & IN_LEFT)
       {
          andyTimeout = 0;
          if (!ShieldOn)
@@ -2817,7 +2784,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
          CdSetVol(gameData->oldSliderPos);
          SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos))>>6));
       }
-      else if (pad & PadRight0)
+      else if (pad & IN_RIGHT)
       {
          andyTimeout = 0;
          if (!ShieldOn)
@@ -2867,7 +2834,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
          KillNote(SHIELDS);
          ShieldOn = 0;
       }
-      if (xpad & PadLeft0)
+      if (xpad & IN_LEFT)
       {
          andyTimeout = 0;
          PlayNote(MENU_MOVE, 1, 2);
@@ -2897,7 +2864,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
          }
       }
 
-      if (xpad & PadRight0)
+      if (xpad & IN_RIGHT)
       {
          andyTimeout = 0;
          PlayNote(MENU_MOVE, 1, 2);
@@ -3689,67 +3656,67 @@ void SetNormPadPresets (ConfigData *gameData)
    switch (gameData->normpadPreset)
    {
    case 0 :
-      pCon.thrust    = PadCross0;
-      pCon.view      = PadTriangle0;
-      pCon.fire      = PadCircle0;
-      pCon.lBrake    = PadTopRight2;
-      pCon.rBrake    = PadTopLeft2;
+      pCon.thrust    = IN_A;
+      pCon.view      = IN_Y;
+      pCon.fire      = IN_B;
+      pCon.lBrake    = IN_RT;
+      pCon.rBrake    = IN_LT;
       break ;
 
    case 1 :
-      pCon.thrust    = PadCross0;
-      pCon.view      = PadTriangle0;
-      pCon.fire      = PadSquare0;
-      pCon.lBrake    = PadTopRight2;
-      pCon.rBrake    = PadTopLeft2;
+      pCon.thrust    = IN_A;
+      pCon.view      = IN_Y;
+      pCon.fire      = IN_X;
+      pCon.lBrake    = IN_RT;
+      pCon.rBrake    = IN_LT;
       break ;
 
    case 2 :
-      pCon.thrust    = PadCross0;
-      pCon.view      = PadTopLeft1;
-      pCon.fire      = PadTopRight1;
-      pCon.lBrake    = PadTopRight2;
-      pCon.rBrake    = PadTopLeft2;
+      pCon.thrust    = IN_A;
+      pCon.view      = IN_LB;
+      pCon.fire      = IN_RB;
+      pCon.lBrake    = IN_RT;
+      pCon.rBrake    = IN_LT;
       break ;
 
    case 3 :
-      pCon.thrust    = PadSquare0;
-      pCon.view      = PadCircle0;
-      pCon.fire      = PadCross0;
-      pCon.lBrake    = PadTopRight2;
-      pCon.rBrake    = PadTopLeft2;
+      pCon.thrust    = IN_X;
+      pCon.view      = IN_B;
+      pCon.fire      = IN_A;
+      pCon.lBrake    = IN_RT;
+      pCon.rBrake    = IN_LT;
       break ;
 
    case 4 :
-      pCon.thrust    = PadCross0;
-      pCon.view      = PadTriangle0;
-      pCon.fire      = PadCircle0;
-      pCon.lBrake    = PadTopRight1;
-      pCon.rBrake    = PadTopLeft1;
+      pCon.thrust    = IN_A;
+      pCon.view      = IN_Y;
+      pCon.fire      = IN_B;
+      pCon.lBrake    = IN_RB;
+      pCon.rBrake    = IN_LB;
       break ;
 
    case 5 :
-      pCon.thrust    = PadCross0;
-      pCon.view      = PadTriangle0;
-      pCon.fire      = PadSquare0;
-      pCon.lBrake    = PadTopRight1;
-      pCon.rBrake    = PadTopLeft1;
+      pCon.thrust    = IN_A;
+      pCon.view      = IN_Y;
+      pCon.fire      = IN_X;
+      pCon.lBrake    = IN_RB;
+      pCon.rBrake    = IN_LB;
       break ;
 
    case 6 :
-      pCon.thrust    = PadTriangle0;
-      pCon.view      = PadSquare0;
-      pCon.fire      = PadCircle0;
-      pCon.lBrake    = PadTopRight2;
-      pCon.rBrake    = PadTopLeft2;
+      pCon.thrust    = IN_Y;
+      pCon.view      = IN_X;
+      pCon.fire      = IN_B;
+      pCon.lBrake    = IN_RT;
+      pCon.rBrake    = IN_LT;
       break ;
 
    case 7 :
-      pCon.thrust    = PadCircle0;
-      pCon.view      = PadSquare0;
-      pCon.fire      = PadTriangle0;
-      pCon.lBrake    = PadTopRight2;
-      pCon.rBrake    = PadTopLeft2;
+      pCon.thrust    = IN_B;
+      pCon.view      = IN_X;
+      pCon.fire      = IN_Y;
+      pCon.lBrake    = IN_RT;
+      pCon.rBrake    = IN_LT;
       break ;
    }
 }
@@ -4074,10 +4041,6 @@ void DisplayButtons (int x, int y, int buttType)
 {
    GRECT  tw;
 
-
-   x *= upres;
-   y *= upres;
-
    SetDrawMode(&(drmode[buttType][CurrentScreen]), 0, 0, FONT_TPAGE, &tw);
    AddPrim(OT[CurrentScreen], (ulong *)&(drmode[buttType][CurrentScreen]));
 
@@ -4203,10 +4166,6 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
 
    if(andybodge)
    {
-      my_ScreenSize = ScreenSize;
-      my_Resolution = Resolution;
-      my_DrawDistance = DrawDistance;
-
       andybodge=0;
       inmenu = 0;
       Reallyinmenu = 1;
@@ -4238,29 +4197,13 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
       PlayNote(MENU_SELECT, 1, 20);
       switch(listpos)
       {
-      case 0:  if (DrawDistance==HIGH_DISTANCE)
-               DrawDistance=LOW_DISTANCE;
+      case 0:
+         if (DrawDistance==HIGH_DISTANCE)
+            DrawDistance=LOW_DISTANCE;
          else if (DrawDistance==MEDIUM_DISTANCE)
             DrawDistance=HIGH_DISTANCE;
          else if (DrawDistance==LOW_DISTANCE)
             DrawDistance=MEDIUM_DISTANCE;
-         break;
-      case 1:
-         switch(Resolution)
-         {
-         case HIGH:
-            Resolution=MEDIUM;
-            break;
-         case MEDIUM:
-            Resolution=LOW;
-            break;
-         case LOW:
-            Resolution=SMALL;
-            break;
-         case SMALL:
-            Resolution=HIGH;
-            break;
-         }
          break;
       }
    }
@@ -4276,23 +4219,6 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
             else
                if (DrawDistance==LOW_DISTANCE) DrawDistance=HIGH_DISTANCE;
                break;
-      case 1:
-         switch(Resolution)
-         {
-         case HIGH:
-            Resolution=SMALL;
-            break;
-         case MEDIUM:
-            Resolution=HIGH;
-            break;
-         case LOW:
-            Resolution=MEDIUM;
-            break;
-         case SMALL:
-            Resolution=LOW;
-            break;
-         }
-         break;
       }
    }
 
@@ -4344,29 +4270,8 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    if (DrawDistance==MEDIUM_DISTANCE) strcpy(DrawStr,"MEDIUM");
    if (DrawDistance==LOW_DISTANCE) strcpy(DrawStr,"NEAR");
 
-   switch(Resolution)
-   {
-   case HIGH:
-      strcpy(ResStr,"640X480");
-      break;
-   case MEDIUM:
-      strcpy(ResStr,"512X384");
-      break;
-   case LOW:
-      strcpy(ResStr,"400X300");
-      break;
-   case SMALL:
-      strcpy(ResStr,"320X240");
-      break;
-   }
+   strcpy(ResStr, "320X240");
 
-#if 0
-   if (ScreenSize==FULL) strcpy(ScreenStr,"FULL");
-   if (ScreenSize==MEDIUM) strcpy(ScreenStr,"MEDIUM");
-   if (ScreenSize==SMALL) strcpy(ScreenStr,"SMALL");
-
-
-#endif
    if (Sky) strcpy(SkyStr,"ON");
    if (!Sky) strcpy(SkyStr,"OFF");
 
@@ -4377,13 +4282,7 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    AddText (TexStr, text_data (x+180, y+(l*2), 8), RedText) ;
    //    AddText (PCStr, text_data (x+180, y+(l*3), 8), RedText) ;
 
-   toggle ++ ;
-   if(Resolution!=screenres)
-   {
-      screenres=Resolution;
-      changeScreen();
-      my_Resolution = screenres;
-   }
+   toggle++;
 }
 
 

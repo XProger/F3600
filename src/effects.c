@@ -32,8 +32,6 @@
 #include "collide.h"
 #include "utils.h"
 
-extern float upres;
-
 char tranny_table[] = {YELLOW_WHITE_TRANSL,      // MISSILE/ROCKET EXPLODE HIT NOTHING
    WHITE2_TRANSL, // MISSILE/ROCKET TRAIL
    YELLOW_TRANSL, // MISSILE/ROCKEY EXPLODE HIT SHIP
@@ -932,8 +930,8 @@ void DrawWeaponSprtIcons(SPRT *weaponIcon, Texture** weaponIconTextures, ShipDat
       SetDrawMode(drawmode2, 0, 0, FONT_TPAGE, &tw);
       AddPrim(OT[CurrentScreen], (ulong *)drawmode2);
 
-      weaponIcon[CurrentScreen].x0 = 144 * upres;
-      weaponIcon[CurrentScreen].y0 = 20 * upres;
+      weaponIcon[CurrentScreen].x0 = 144;
+      weaponIcon[CurrentScreen].y0 = 20;
       weaponIcon[CurrentScreen].u0 = weaponIconTextures[icon]->u0;
       weaponIcon[CurrentScreen].v0 = weaponIconTextures[icon]->v0;
       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(weaponIcon[ CurrentScreen ]) );

@@ -74,7 +74,7 @@ TEXT_DATA* text_data         (int, int, int) ;
 void UpdateRaceHud     (ShipData*, Speedo*, int, ConfigData *);
 void SetCharTextures   (char) ;
 void AddDelEnd         (char, TEXT_DATA *, int) ;
-void CentreText        (char* , TEXT_DATA *, int ) ;
+void CentreText        (const char* , TEXT_DATA *, int ) ;
 void DisplayLives      (SPRT [][2], ConfigData *) ; // PCwipeout
 int  CalcPosition      (ShipData *shipIndex);
 void ScreenFooter      (int x, int y, int colour);
