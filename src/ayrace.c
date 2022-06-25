@@ -28,12 +28,9 @@
 #include "global.h"
 #include "cone.h"
 #include "race.h"
-#include "trackasm.h"
 #include "spline.h"
-#include "ajs.h"
 #include "racectrl.h"
 #include "credits.h"
-#include "andyscn.h"
 
 #define START_EXTRO 0
 #define UPDATE_EXTRO 1
@@ -45,16 +42,11 @@ extern long fr ;
 extern ChampionShip  winTable[] ;
 extern char winLoseIn;
 
-extern   u_char         ctrlparam;
-
-char Sky = 1;
-
 extern short         ctrlsky;
 extern Object        *ctrlshipShapes[];
 extern Effect        *ctrleffects;
 extern TrackCamera   ctrlcamera;
 extern Shadow        *ctrlShadow;
-extern AutoMeshData  *ctrlautoMesh;
 extern RescueData    ctrlrescueDroid;
 extern char          ctrlshowGameOver;
 extern long          ctrlNeedEndText;
@@ -85,13 +77,9 @@ extern Speedo        ctrlspeedo;
 extern ConfigData    *ctrlgameData;
 extern long          ctrlmode;
 extern long          ctrltimeout;
-extern POLY_F4       ctrlselectBox[2];
-extern DR_MODE       ctrlselectTrans[2];
 extern char          ctrlconfirm;
 extern char          ctrllConfirm;
-extern SPRT          ctrlweaponIcon[2];
 extern Texture       *ctrlweaponIconTextures[NO_OF_WEAPON_TYPES];
-extern SPRT          ctrllifeIcons[3][2];
 extern ShipData      *ctrlshipIndex;
 extern Object        *ctrlprm[PrmMax];
 extern int           ctrlchoice;
@@ -100,20 +88,14 @@ extern Object        *ctrldonkey[2];
 extern Texture       *ctrleffectTextures[NO_OF_EFFECT_TEXTURES];
 extern WeaponShape   *ctrlweaponShapes;
 extern Texture       *ctrlwinLose [2];
-extern POLY_F4       ctrlbackFrame[2];
-extern DR_MODE       ctrlbackFrameTrans[2];
-extern POLY_FT4      ctrlwinLosePrims[2];
 extern ulong         ctrltoggleDisplay;
 extern long          ctrlCDPaused;
 extern int           ctrlplayCredits;
 extern WeaponShape   *ctrlweaponShapes;
 extern WeaponData    *ctrlweaponIndex;
-extern DR_MODE       ctrliconTPage;
-extern DR_MODE       ctrlrealTPage;
 extern HiScoreData   ctrlhiScoreData;
 extern long          confirmRestart;
 extern long          ctrlNeedTargetIcon;
-extern POLY_FT4      ctrlTarget[2];
 extern short         Shielded;
 extern short         CurrTrkNo;
 
@@ -127,8 +109,6 @@ unsigned long  duration;
 unsigned long  timeloop;
 unsigned long  ctrl_frame;
 unsigned long  ctrl_remainder;
-long  theFrameRate;
-long  fr_count;
 
 void race( ConfigData *gameData, int mode, int timeout )
 {
@@ -140,7 +120,9 @@ void race( ConfigData *gameData, int mode, int timeout )
    StopNotes();
    raceinit();
    UpdateEffects(ctrleffects);
-   CdControlB(CdlStop, 0, 0);
+
+   /*TODO audio*/
+   //CdControlB(CdlStop, 0, 0);
 
    UpdateNotes(NOT_PAUSED);
 
@@ -152,7 +134,6 @@ void race( ConfigData *gameData, int mode, int timeout )
    racectrl();
    ctrl_frame = 1;   //exactly one frame
    ctrl_remainder  = 0;
-   fr_count = 0;
 
    while(1)    //GAME LOOP
    {
@@ -166,7 +147,8 @@ void race( ConfigData *gameData, int mode, int timeout )
       if (ctrl_says_quit)
       {
 #if CD_AUDIO
-         CdControlB(CdlStop, 0, 0);
+         /*TODO audio*/
+         //CdControlB(CdlStop, 0, 0);
 #endif
          return;
       }
@@ -198,21 +180,7 @@ void race( ConfigData *gameData, int mode, int timeout )
       }
 #endif
 
-      ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
-
-      textPrim = CurrentScreen * 300;
-
-#ifdef FRI
-      if (ctrlfadeData.fadeFlag == FADE_ACTIVE || ctrlfadeData.fadeFlag == FADE_OUT)
-         ScreenFade (&(ctrlfadeScreen[0]), &(ctrlfadeTrans[0]), &ctrlfadeData) ;
-#endif
-
-      if(ctrlmode == ATTRACT)
-      {
-         if(ctrlplayCredits == 1)
-            ShowCredits(attractDelay);
-      }
-
+      renderClear();
 
       // if(trackNo == 13)
       //    AuroraBorialis(ctrlprm[ctrlsky]);
@@ -227,35 +195,24 @@ void race( ConfigData *gameData, int mode, int timeout )
       }
       // ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
 
-      //WEAPONS
-      DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex );
-      if (ctrlNeedTargetIcon == 1)
-         DrawTargetIcon(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes, ctrlTarget);
+      renderBegin3D();
 
-      //Effects
-      AddEffects(ctrleffects, ctrlweaponIndex, ctrleffectTextures, ctrlshipIndex);
-      DrawEffects(ctrleffects);
-
-
+      //The Sky
+      ctrlprm[ctrlsky]->skeleton->update = 1;
+      renderSky(ctrlprm[ctrlsky]);
 
       //LANDSCAPE
       DrawLandscape( &(ctrlshipIndex[ownShip]), &ctrlcamera );
-      //SHADOW
-      if(ctrlshipIndex[ownShip].attr & RACING) /* TODO enable for cinematics? */
-         DrawShadow(ctrlshipShapes, ctrlshipIndex, ctrlShadow);
+
+      //TRACK
+      renderTrack();
+
       //SHIPS
       DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip, ctrlcamera);
 
-
-      //TRACK
-      if( (ctrlshipIndex[ownShip].attr & RACING) == 0 )
-      {
-         DrawAllTrack( &ctrlcamera, ctrlautoMesh );
-      }
-      else
-      {
-         DrawNewTrack( &ctrlcamera, ctrlautoMesh );
-      }
+      //SHADOW
+      if (ctrlshipIndex[ownShip].attr & RACING) /* TODO enable for cinematics? */
+         DrawShadow(ctrlshipShapes, ctrlshipIndex, ctrlShadow);
 
       //DROID
       SetSkeletonPosition( ctrlshipShapes[RESCUE_DROID]->skeleton,
@@ -271,20 +228,28 @@ void race( ConfigData *gameData, int mode, int timeout )
       ctrlshipShapes[RESCUE_DROID]->skeleton->update = 1;
       TransformStaticObject( ctrlshipShapes[RESCUE_DROID], ctrlcamera.camPos);
 
+      //WEAPONS
+      DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
+      if (ctrlNeedTargetIcon == 1)
+         DrawTargetIcon(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
+
+      //Effects
+      AddEffects(ctrleffects, ctrlweaponIndex, ctrleffectTextures, ctrlshipIndex);
+      DrawEffects(ctrleffects);
+
+      renderEnd3D();
+
+      if (ctrlmode == ATTRACT)
+      {
+         if (ctrlplayCredits == 1)
+            ShowCredits(attractDelay);
+      }
 
 
       //All game overs
       if ((ctrlshowGameOver == 1) || (gameData->showGameOver == 1) || (gameData->lostGame == 1))
          CentreText ("GAME OVER",text_data (60, 112, 16),RedText) ;
 
-
-
-
-
-      //The Sky
-      ctrlprm[ctrlsky]->skeleton->update = 1;
-      if (Sky)
-         DrawObjectFixedAsm( ctrlprm[ ctrlsky ], ctrlcamera.camPos, 8191 );
 
       //Text at end.
       if (ctrlNeedEndText)
@@ -309,7 +274,7 @@ void race( ConfigData *gameData, int mode, int timeout )
       if (ctrlNeedWinLose)
       {
          setWinLose();
-         DisplayWinLose (ctrlwinLose[ctrlNeedWinLoseVar], &(ctrlwinLosePrims[0]), 180, 50, 140, RACE) ;
+         DisplayPicture(ctrlwinLose[ctrlNeedWinLoseVar], 180, 50, 128, 140);
       }
       //High score bollox
       if (ctrlNeedRaceInfo)
@@ -332,8 +297,10 @@ void race( ConfigData *gameData, int mode, int timeout )
          InGameReset(ctrlchoice, &ctrltoggleDisplay, ctrlmachinePaused, gameData, &ctrlcdPause);
       if (ctrlNeedInGameConfirm)
          InGameConfirm (&ctrlconfirm, ctrlchoice, xpad, &ctrllConfirm, &ctrltoggleDisplay) ;
+      /*TODO deselect screen?
       if (ctrlNeedDeSelectScreen)
          DeSelectScreen (ctrlselectBox, ctrlselectTrans) ;
+         */
       if ( startIceText )
       {
          ShowIceCongratulations( );
@@ -345,17 +312,18 @@ void race( ConfigData *gameData, int mode, int timeout )
 
 
       //Semi trans bit.
+      /*TODO back poly (end race?)
       if (ctrlNeedBackPoly)
          BackPoly (&(ctrlbackFrame[0]), &(ctrlbackFrameTrans[0]), 180, 50, 128, 140) ;
-
+         */
 
       //HUD display
       if(ctrlshipIndex[ownShip].attr & RACING)
       {
          if (gameData->gameType == CHAMPIONSHIP)
-            DisplayLives (&(ctrllifeIcons[0]), gameData) ;
+            DisplayLives(gameData);
 
-         DrawWeaponSprtIcons(ctrlweaponIcon, ctrlweaponIconTextures, &(ctrlshipIndex[ownShip]),&ctrliconTPage, &ctrlrealTPage );
+         DrawWeaponSprtIcons(ctrlweaponIconTextures, &(ctrlshipIndex[ownShip]));
          DrawHud(ctrlshipIndex, &ctrlspeedo, ctrlchoice, gameData);
       }
 
@@ -366,15 +334,8 @@ void race( ConfigData *gameData, int mode, int timeout )
       //}
       //while((end_time - start_time) <=TIME_CONSTANT);  //never faster than 30fps
       duration = end_time - start_time;
-      if (fr_count++ > 5)
-      {
-         fr_count=0;
-         theFrameRate = (1000 / (duration - ctrl_remainder));
-      }
       ctrl_frame = duration / TIME_CONSTANT;
       ctrl_remainder = duration - (ctrl_frame * TIME_CONSTANT);
-
-
    }/*Main while loop*/
 }
 
@@ -413,9 +374,9 @@ void Restart(  ShipData       *shipIndex,
       effects[i].count = 0;
    }
 
-
-   r_attr.depth.left = 2000;
-   r_attr.depth.right = 2000;
+   /*TODO audio*/
+   //r_attr.depth.left = 2000;
+   //r_attr.depth.right = 2000;
 
    CameraUpdate = UpdateCameraRaceStart;
    CDRestartNeeded = 1;
@@ -427,15 +388,18 @@ void QuitGame()
 {
    int i;
 
+   /*TODO audio
    for(i = 0; i < 10; i++)
    {
-      c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   /* Master volume (left) */
-      c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   /* Master volume (right) */
+      c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   // Master volume (left)
+      c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   // Master volume (right)
       UpdateNotes(NOT_PAUSED);
    }
 
-   Shielded = 0;
-   KillNotes();
    r_attr.depth.left = 2000;
    r_attr.depth.right = 2000;
+   */
+
+   Shielded = 0;
+   KillNotes();
 }

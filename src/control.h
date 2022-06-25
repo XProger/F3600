@@ -16,7 +16,6 @@
 #define STALL              -1
 
 void  UpdateShips(ShipData *shipIndex, WeaponShape *weaponShapes, Object** shipShapes, WeaponData*);
-int   InitController();
 void  GeneralStartProcs(ShipData *playerShip);
 
 void  UpdatePlayerShipNorm       (ShipData*, Object**, int, WeaponData*);

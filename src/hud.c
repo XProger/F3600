@@ -18,15 +18,11 @@
 #include "camera.h"
 #include "sound.h"
 #include "global.h"
-#include "ajs.h"
-#include "drawot.h"
 #include "init.h"
 #include "utils.h"
-#include "libgte.h"
+#include "render.h"
 
 #define END_LAP 3
-
-extern short FrameState;
 
 TexChar  CharSet16[40] ;
 TexChar  CharSet12[40] ;
@@ -48,11 +44,33 @@ ushort Text12[] =    {19, 19, 14, 19, 19, 13, 19, 14, 6, 13, 14, 14,
 ushort Text8[] =  {13, 13, 10, 13, 13, 9, 13, 10, 4, 9, 10, 10, 16, 10, 13, 13, 14,
       113, 110, 109, 109, 109, 116, 114, 109, 110, 113, 106, 111, 110, 110, 111, 110, 110, 112, 114, 104, 104} ;
 
-POLY_FT4    symbols[2] ;
-
 extern   HiScores scoreTable[] ;
 extern   ChampionShip   winTable[] ;
-extern long theFrameRate;
+
+Texture* speedoTex;
+
+void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, int clut, int page)
+{
+   Quad quad;
+
+   quad.x = x;
+   quad.y = y;
+   quad.w = w;
+   quad.h = h;
+   quad.u0 = u0;
+   quad.v0 = v0;
+   quad.u1 = u1;
+   quad.v1 = v1;
+   quad.clut = clut;
+   quad.page = page;
+
+   renderQuad(&quad);
+}
+
+void AddGlyph(int x, int y, int w, int h, int u, int v, int clut)
+{
+   AddQuad(x, y, w, h, u, v, u + w, v + h, clut, FONT_TPAGE);
+}
 
 void InitText()
 {
@@ -70,61 +88,11 @@ void InitText()
    DRTEXT_12 = DRTEXT_16 + 1 ;
    DRTEXT_8 = DRTEXT_16 + 2 ;
    DRTEXT_RED = DRTEXT_16 + 4 ;
-
-   SetDrawMode((DR_MODE*)&dmode,0,0,FONT_TPAGE,0);
-   DrawPrim((u_long *)&dmode);
-   for(i = 0; i < 600; i++)
-   {
-//    SetPolyFT4(&(display_text[i]));  // PCwipeout
-      SetSprt(&(display_text[i]));
-
-//    setTPage(&(display_text[i]),0,0,576, 256); // PCwipeout
-      display_text[i].code=0x64;
-      display_text[i].r0=230; // PCwipeout
-      display_text[i].g0=0;
-      display_text[i].b0=BLACK_NOT_DRAWN;
-   }
 }
 
 void InitSpeedo (Speedo *speedo)
 {
-
-   int j;
-   Texture *tex_ptr ;
-
-   tex_ptr = LoadTexture ( "wipeout\\textures\\speedo.tim", 1 ) ;
-
-   for(j = 0; j < 2; j++)
-   {
-      SetSprt(&(speedo->facia[j]));
-      speedo->facia[j].r0=230; // PCwipeout
-      speedo->facia[j].g0=0; // PCwipeout
-      speedo->facia[j].b0=BLACK_NOT_DRAWN; // PCwipeout
-      setXY0(&(speedo->facia[j]),speedo_x,speedo_y);
-      setUV0(&(speedo->facia[j]),tex_ptr->u0, tex_ptr->v0);
-      setWH(&(speedo->facia[j]),SPEEDO_WIDTH,SPEEDO_HEIGHT);
-         speedo->facia[j].clut = tex_ptr->cba;
-
-      SetSprt(&(speedo->transbar[j]));
-      speedo->transbar[j].r0=230; // PCwipeout
-      speedo->transbar[j].b0=RED_TRANSL; // PCwipeout
-      speedo->transbar[j].g0=0; // PCwipeout
-      setXY0(&(speedo->transbar[j]),speedo_x,speedo_y);
-      setUV0(&(speedo->transbar[j]),tex_ptr->u0+128, tex_ptr->v0-30);
-      setWH(&(speedo->transbar[j]),SPEEDO_WIDTH,SPEEDO_HEIGHT);
-         speedo->transbar[j].clut = tex_ptr->cba;
-
-      SetSprt(&(speedo->solidbar[j]));
-      speedo->solidbar[j].r0=230; // PCwipeout
-      speedo->solidbar[j].g0=0; // PCwipeout
-      speedo->solidbar[j].b0=BLACK_NOT_DRAWN; // PCwipeout
-      setXY0(&(speedo->solidbar[j]),speedo_x,speedo_y);
-      setUV0(&(speedo->solidbar[j]),tex_ptr->u0+128, tex_ptr->v0);
-      setWH(&(speedo->solidbar[j]),SPEEDO_WIDTH,SPEEDO_HEIGHT);
-      speedo->solidbar[j].clut = tex_ptr->cba;
-
-      SetDrawMode(&(speedo->fred[j]), 1, 1, FONT_TPAGE , 0); //PCWipeout
-   }
+   speedoTex = LoadTexture ( "wipeout\\textures\\speedo.tim", 1 );
 
    speedo->barInfo[0].Left.topx = 3 ;
    speedo->barInfo[0].Right.topx =  10 ;
@@ -167,46 +135,47 @@ void fill_speedo (Speedo *speedo, int speed, int thrust)
 {
    int target;
    int width, barIntervalXTop;
-   int   andy=0;
+   int andy=0;
 
-   target = speed/2000;
-   if(target > NUM_BARS) target = NUM_BARS;
+   target = speed / 2000;
+   if(target > NUM_BARS)
+      target = NUM_BARS;
 
-// THE FOLLOWING DOES ALL THE LOVELY SPEEDO STUFF
-      andy = (speed/2000);
-      if(andy > NUM_BARS) andy = NUM_BARS;
-      if (andy==NUM_BARS)
-      {
-         setWH(&(speedo->solidbar[CurrentScreen]),SPEEDO_WIDTH,SPEEDO_HEIGHT);
-      }
-      else
-      {
-         target = speed%2000;
-         width =  (speedo->barInfo[andy].Right.topx) - (speedo->barInfo[andy].Left.topx);
-         barIntervalXTop = (width*target)/2000;
-         setWH(&(speedo->solidbar[CurrentScreen]),speedo->barInfo[andy].Left.topx+barIntervalXTop,SPEEDO_HEIGHT);
-      }
-      AddPrim(OT[CurrentScreen], (u_long *)&(speedo->solidbar[CurrentScreen]));
+   andy = speed / 2000;
+   if(andy > NUM_BARS)
+      andy = NUM_BARS;
 
-      andy = (thrust/70);
-      if(andy > NUM_BARS) andy = NUM_BARS;
-      if (andy==NUM_BARS)
-      {
-         setWH(&(speedo->transbar[CurrentScreen]),SPEEDO_WIDTH,SPEEDO_HEIGHT);
-      }
-      else
-      {
-         target = thrust%70;
-         width =  (speedo->barInfo[andy].Right.topx) - (speedo->barInfo[andy].Left.topx);
-         barIntervalXTop = (width*target)/70;
-         setWH(&(speedo->transbar[CurrentScreen]),speedo->barInfo[andy].Left.topx+barIntervalXTop  ,SPEEDO_HEIGHT);
-      }
+   if (andy==NUM_BARS)
+   {
+      width = SPEEDO_WIDTH;
+   }
+   else
+   {
+      target = speed % 2000;
+      width = speedo->barInfo[andy].Right.topx - speedo->barInfo[andy].Left.topx;
+      barIntervalXTop = (width * target) / 2000;
+      width = speedo->barInfo[andy].Left.topx + barIntervalXTop;
+   }
+   AddGlyph(speedo_x, speedo_y, width, SPEEDO_HEIGHT, speedoTex->u0 + 128, speedoTex->v0, speedoTex->cba);
 
-      AddPrim(OT[CurrentScreen], (u_long *)&(speedo->transbar[CurrentScreen]));
-// BIT SHORTER THAN STU'S
+   andy = thrust / 70;
+   if(andy > NUM_BARS)
+      andy = NUM_BARS;
+
+   if (andy==NUM_BARS)
+   {
+      width = SPEEDO_WIDTH;
+   }
+   else
+   {
+      target = thrust % 70;
+      width = speedo->barInfo[andy].Right.topx - speedo->barInfo[andy].Left.topx;
+      barIntervalXTop = (width * target) / 70;
+      width = speedo->barInfo[andy].Left.topx + barIntervalXTop;
+   }
+   /*TODO speedo transp*/
+   AddGlyph(speedo_x, speedo_y, width, SPEEDO_HEIGHT, speedoTex->u0 + 128, speedoTex->v0 - 30, speedoTex->cba);
 }
-
-
 
 void AddTime(int time, TEXT_DATA *pos_data, int colour)
 {
@@ -228,24 +197,24 @@ void AddTime(int time, TEXT_DATA *pos_data, int colour)
    size= pos_data->size ;
    small_num_size = size>>1;
 
-// SetDrawMode((DR_MODE*)&dmode,0,0,FONT_TPAGE,0);
-// DrawPrim((u_long *)&dmode);
-
    switch (size)
    {
       case 16: charSet = &(CharSet16[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_16] ;
+               charTex = TextureTable [DRTEXT_16];
                break ;
 
       case 12: charSet = &(CharSet12[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_12] ;
+               charTex = TextureTable [DRTEXT_12];
                break ;
 
       case  8:
       default: charSet = &(CharSet8[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_8] ;
+               charTex = TextureTable [DRTEXT_8];
                break ;
    }
+
+   if (colour != WhiteText)
+      charTex = TextureTable[DRTEXT_RED];
 
    tenths = (time / FR6) % 10;
    time = time/FR60;
@@ -268,64 +237,16 @@ void AddTime(int time, TEXT_DATA *pos_data, int colour)
       charNum = (digit[j]+26) ;
       currLett = charSet[charNum].width ;
 
+      AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, charTex->cba);
 
-      setXY0(&display_text[textPrim],x,y);   // PCwipeout
-      setUV0(&display_text[textPrim],charSet[charNum].vramX, charSet[charNum].vramY);  // PCwipeout
-      setWH(&display_text[textPrim],currLett,size);   // PCwipeout
-
-      if (colour == WhiteText)
-      {
-         display_text[textPrim].clut = charTex->cba;
-            display_text[textPrim].r0 = 230;
-            display_text[textPrim].g0 = 0;
-            display_text[textPrim].b0 = BLACK_NOT_DRAWN;
-      }
-      else
-      {
-         redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-            display_text[textPrim].r0 = 230;
-            display_text[textPrim].g0 = BRIGHT_RED_TRANSL;
-            display_text[textPrim].b0 = 0;
-         display_text[textPrim].clut = redTex->cba;
-      }
-
-      AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
       x += currLett;
-      textPrim++;
    }
 
+   currLett = charSet[36].width;
 
-   currLett = charSet[36].width ;
-
-
-      setXY0(&display_text[textPrim],x,y);   // PCwipeout
-      setUV0(&display_text[textPrim],charSet[36].vramX, charSet[36].vramY);   // PCwipeout
-      setWH(&display_text[textPrim],currLett,size);   // PCwipeout
-
-
-   if (colour == WhiteText)
-   {
-         display_text[textPrim].clut = charTex->cba;
-         display_text[textPrim].r0 = 230;
-         display_text[textPrim].g0 = 0;
-         display_text[textPrim].b0 = BLACK_NOT_DRAWN;
-   }
-   else
-   {
-      redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-      display_text[textPrim].r0 = 230;
-      display_text[textPrim].g0 = BRIGHT_RED_TRANSL;
-      display_text[textPrim].b0 = 0;
-      display_text[textPrim].clut = redTex->cba;
-   }
-
-   AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
-
+   AddGlyph(x, y, currLett, size, charSet[36].vramX, charSet[36].vramY, charTex->cba);
 
    x += currLett;
-
-   textPrim++;
-
 
    digit[0] = secs%10;
    if(secs > 9)
@@ -340,62 +261,16 @@ void AddTime(int time, TEXT_DATA *pos_data, int colour)
       charNum = (digit[j]+26) ;
       currLett = charSet[charNum].width ;
 
-
-      setXY0(&display_text[textPrim],x,y);   // PCwipeout
-      setUV0(&display_text[textPrim],charSet[charNum].vramX, charSet[charNum].vramY);  // PCwipeout
-      setWH(&display_text[textPrim],currLett,size);   // PCwipeout
-
-      if (colour == WhiteText)
-      {
-         display_text[textPrim].clut = charTex->cba;
-         display_text[textPrim].r0 = 230;
-         display_text[textPrim].g0 = 0;
-         display_text[textPrim].b0 = BLACK_NOT_DRAWN;
-      }
-      else
-      {
-         redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-         display_text[textPrim].r0 = 230;
-         display_text[textPrim].g0 = BRIGHT_RED_TRANSL;
-         display_text[textPrim].b0 = 0;
-         display_text[textPrim].clut = redTex->cba;
-      }
-
-      AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
+      AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, charTex->cba);
 
       x += currLett;
-      textPrim++;
    }
 
    currLett = charSet[37].width ;
 
-   setXY0(&display_text[textPrim],x,y);   // PCwipeout
-   setUV0(&display_text[textPrim],charSet[37].vramX, charSet[37].vramY);   // PCwipeout
-   setWH(&display_text[textPrim],currLett,size);   // PCwipeout
-
-   if (colour == WhiteText)
-   {
-      display_text[textPrim].clut = charTex->cba;
-      display_text[textPrim].r0 = 230;
-      display_text[textPrim].g0 = 0;
-      display_text[textPrim].b0 = BLACK_NOT_DRAWN;
-   }
-   else
-   {
-      redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-      display_text[textPrim].r0 = 230;
-      display_text[textPrim].g0 = BRIGHT_RED_TRANSL;
-      display_text[textPrim].b0 = 0;
-      display_text[textPrim].clut = redTex->cba;
-   }
-
-
-   AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
-
+   AddGlyph(x, y, currLett, size, charSet[37].vramX, charSet[37].vramY, charTex->cba);
 
    x += currLett;
-
-   textPrim++;
 
    charSet = &(CharSet8[0]) ;
    charTex = (Texture *) TextureTable [DRTEXT_8] ;
@@ -408,39 +283,16 @@ void AddTime(int time, TEXT_DATA *pos_data, int colour)
 
    currLett = charSet[(tenths+26)].width ;
 
+   AddGlyph(x, y, currLett, size, charSet[tenths + 26].vramX, charSet[tenths + 26].vramY, charTex->cba);
 
-   setXY0(&display_text[textPrim],x,y);   // PCwipeout
-   setUV0(&display_text[textPrim],charSet[tenths+26].vramX, charSet[tenths+26].vramY); // PCwipeout
-   setWH(&display_text[textPrim],currLett,size);   // PCwipeout
-
-   if (colour == WhiteText)
-   {
-      display_text[textPrim].clut = charTex->cba;
-      display_text[textPrim].r0 = 230;
-      display_text[textPrim].g0 = 0;
-      display_text[textPrim].b0 = BLACK_NOT_DRAWN;
-   }
-   else
-   {
-      redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-      display_text[textPrim].r0 = 230;
-      display_text[textPrim].g0 = BRIGHT_RED_TRANSL;
-      display_text[textPrim].b0 = 0;
-      display_text[textPrim].clut = redTex->cba;
-   }
-
-   AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
-
-   x += currLett ;
-   textPrim++;
-
+   x += currLett;
 }
 
 void AddText(char* text_ptr, TEXT_DATA *pos_data, int colour)
 {
    uchar    letter=0;
    char     AValue=0;
-   Texture  *charTex, *redTex ;
+   Texture  *charTex;
    int      size;
    int      x, y, i=0;
    short    vramRow=0, vramY=0, vramX=0 ;
@@ -456,24 +308,26 @@ void AddText(char* text_ptr, TEXT_DATA *pos_data, int colour)
    switch (size)
    {
       case 16: charSet = &(CharSet16[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_16] ;
+               charTex = TextureTable [DRTEXT_16] ;
                break ;
 
       case 12: charSet = &(CharSet12[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_12] ;
+               charTex = TextureTable [DRTEXT_12] ;
                break ;
 
       case  8:
       default: charSet = &(CharSet8[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_8] ;
+               charTex = TextureTable [DRTEXT_8] ;
                break ;
    }
+
+   if (colour != WhiteText)
+      charTex = TextureTable [DRTEXT_RED];
 
    while(1)
    {
       letter = *text_ptr;
       text_ptr++;
-
 
       if (letter != 32)
       {
@@ -487,46 +341,23 @@ void AddText(char* text_ptr, TEXT_DATA *pos_data, int colour)
 
          currLett = charSet[j].width ;
 
-         setXY0(&display_text[textPrim],x,y);   // PCwipeout
-         setUV0(&display_text[textPrim],charSet[j].vramX, charSet[j].vramY);  // PCwipeout
-         setWH(&display_text[textPrim],currLett,size);   // PCwipeout
+         AddGlyph(x, y, currLett, size, charSet[j].vramX, charSet[j].vramY, charTex->cba);
 
-
-         if (colour == WhiteText)
-         {
-               display_text[textPrim].clut = charTex->cba;
-            display_text[textPrim].r0 = 230;
-            display_text[textPrim].g0 = 0;
-            display_text[textPrim].b0 = BLACK_NOT_DRAWN;
-         }
-         else
-         {
-            redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-            display_text[textPrim].r0 = 230;
-            display_text[textPrim].g0 = BRIGHT_RED_TRANSL;
-            display_text[textPrim].b0 = 0;
-               display_text[textPrim].clut = redTex->cba;
-         }
-
-            AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
-
-         textPrim++;
-         x += currLett ;
+         x += currLett;
       }
       else
       {
-         x += 8 ;
+         x += 8;
       }
    }
 }
-
 
 void AddNumber(int num, TEXT_DATA *pos_data, int colour)
 {
    int i,j;
    int digit[12];
    int x, y;
-   Texture *charTex, *redTex ;
+   Texture *charTex;
    int size, charNum ;
    short    vramRow=0, vramY=0, vramX=0 ;
    ushort   currLett=0, searchLett=0 ;
@@ -539,18 +370,21 @@ void AddNumber(int num, TEXT_DATA *pos_data, int colour)
    switch (size)
    {
       case 16: charSet = &(CharSet16[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_16] ;
+               charTex = TextureTable [DRTEXT_16];
                break ;
 
       case 12: charSet = &(CharSet12[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_12] ;
+               charTex = TextureTable [DRTEXT_12];
                break ;
 
       case  8:
       default: charSet = &(CharSet8[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_8] ;
+               charTex = TextureTable [DRTEXT_8];
                break ;
    }
+
+   if (colour != WhiteText)
+      charTex = TextureTable [DRTEXT_RED];
 
    for (i = 0; i < 12; i++)
    {
@@ -565,39 +399,16 @@ void AddNumber(int num, TEXT_DATA *pos_data, int colour)
       charNum = (digit[j]+26) ;
       currLett = charSet[charNum].width ;
 
-      setXY0(&display_text[textPrim],x,y);   // PCwipeout
-      setUV0(&display_text[textPrim],charSet[charNum].vramX, charSet[charNum].vramY);  // PCwipeout
-      setWH(&display_text[textPrim],currLett,size);   // PCwipeout
+      AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, charTex->cba);
 
-      if (colour == WhiteText)
-      {
-
-         display_text[textPrim].r0 = 230;
-         display_text[textPrim].g0 = 0;
-         display_text[textPrim].b0 = BLACK_NOT_DRAWN;
-         display_text[textPrim].clut = charTex->cba;
-      }
-      else
-      {
-         redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-         display_text[textPrim].r0 = 230;
-         display_text[textPrim].g0 = BRIGHT_RED_TRANSL;
-         display_text[textPrim].b0 = 0;
-         display_text[textPrim].clut = redTex->cba;
-      }
-
-
-      AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
-      textPrim++;
       x += currLett;
    }
-
 }
 
 
 void AddDelEnd(char dispChar, TEXT_DATA *pos_data, int colour)
 {
-   Texture  *endTex, *delTex, *redTex ;
+   Texture  *endTex, *charTex;
    int      size;
    int      x, y;
 
@@ -606,33 +417,18 @@ void AddDelEnd(char dispChar, TEXT_DATA *pos_data, int colour)
 
    size = pos_data->size ;
 
-   endTex = (Texture *) TextureTable [DRTEXT_RED+3] ;
-   delTex = (Texture *) TextureTable [DRTEXT_RED+4] ;
+   endTex = TextureTable[DRTEXT_RED + 3];
 
-   if (dispChar)
+   if (!dispChar)
    {
-      setXY0(&display_text[textPrim],x,y);   // PCwipeout
-      setUV0(&display_text[textPrim],endTex->u0, endTex->v0);  // PCwipeout
-      setWH(&display_text[textPrim],24,size);   // PCwipeout
-   }
-   else
-   {
-      setXY0(&display_text[textPrim],x,y);   // PCwipeout
-      setUV0(&display_text[textPrim],delTex->u0, delTex->v0);  // PCwipeout
-      setWH(&display_text[textPrim],24,size);   // PCwipeout
+      endTex = TextureTable[DRTEXT_RED + 4]; // delTex
    }
 
-   if (colour == WhiteText)
-         display_text[textPrim].clut = endTex->cba;
-   else
-   {
-      redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-         display_text[textPrim].clut = redTex->cba;
-   }
+   charTex = endTex;
+   if (colour != WhiteText)
+      charTex = TextureTable[DRTEXT_RED];
 
-   AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
-
-   textPrim++;
+   AddGlyph(x, y, 24, size, endTex->u0, endTex->v0, charTex->cba);
 }
 
 void SetCharTextures (char size)
@@ -642,8 +438,6 @@ void SetCharTextures (char size)
    short vramY, vramX ;
    short searchLett, vramRow ;
    ushort *charSet ;
-
-
 
    switch (size)
    {
@@ -1272,6 +1066,7 @@ int CalcPosition(ShipData *shipIndex)
 
 void ScreenFooter (int x, int y, int colour)
 {
+/*TODO screen footer
    Texture     *symbolTex, *redTex ;
    int         i ;
    int         offSet = 110 ;
@@ -1325,14 +1120,17 @@ void ScreenFooter (int x, int y, int colour)
 
 
    }
-
+*/
 }
+
+
 
 void CentreText(const char* the_text_ptr, TEXT_DATA *pos_data, int colour)
 {
    uchar    letter=0;
-   char     AValue=0, *tmpPtr ;
-   Texture  *charTex, *redTex ;
+   char     AValue=0 ;
+   const char* tmpPtr;
+   Texture* charTex;
    int      size;
    int      x, y, i=0;
    short    vramRow=0, vramY=0, vramX=0 ;
@@ -1348,20 +1146,21 @@ void CentreText(const char* the_text_ptr, TEXT_DATA *pos_data, int colour)
    switch (size)
    {
       case 16: charSet = &(CharSet16[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_16] ;
+               charTex = TextureTable[DRTEXT_16];
                break ;
 
       case 12: charSet = &(CharSet12[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_12] ;
+               charTex = TextureTable[DRTEXT_12];
                break ;
 
       case  8:
-      default: charSet = &(CharSet8[0]) ;
-               charTex = (Texture *) TextureTable [DRTEXT_8] ;
+      default: charSet = &(CharSet8[0]);
+               charTex = TextureTable[DRTEXT_8];
                break ;
    }
 
-
+   if (colour != WhiteText)
+      charTex = TextureTable[DRTEXT_RED];
 
    tmpPtr = the_text_ptr ;
 
@@ -1402,68 +1201,31 @@ void CentreText(const char* the_text_ptr, TEXT_DATA *pos_data, int colour)
             j = letter - AValue;
 
          currLett = charSet[j].width ;
+         
+         AddGlyph(x, y, currLett, size, charSet[j].vramX, charSet[j].vramY, charTex->cba);
 
-         setXY0(&display_text[textPrim],x,y);   // PCwipeout
-         setUV0(&display_text[textPrim],charSet[j].vramX, charSet[j].vramY);  // PCwipeout
-         setWH(&display_text[textPrim],currLett,size);   // PCwipeout
-
-         if (colour == WhiteText)
-         {
-            display_text[textPrim].r0 = 230;
-            display_text[textPrim].g0 = 0;
-            display_text[textPrim].b0 = BLACK_NOT_DRAWN;
-               display_text[textPrim].clut = charTex->cba;
-         }
-         else
-         {
-            redTex = (Texture *) TextureTable [DRTEXT_RED] ;
-            display_text[textPrim].r0 = 230;
-            display_text[textPrim].g0 = BRIGHT_RED_TRANSL;
-            display_text[textPrim].b0 = 0;
-               display_text[textPrim].clut = redTex->cba;
-         }
-
-            AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(display_text[textPrim]) );
-
-         textPrim++;
-         x += currLett ;
+         x += currLett;
       }
       else
       {
-         x += 8 ;
+         x += 8;
       }
    }
 }
 
 
-void DisplayLives (SPRT lifeIcons[][2], ConfigData *gameData) // PCwipeout
+void DisplayLives(ConfigData *gameData)
 {
+   int i;
+   Texture* livesTex ;
+   short ySpace = 13;
 
-   int i ;
-   Texture  *livesTex ;
-   short    ySpace = 13 ;
+   livesTex = TextureTable[DRTEXT_RED + 5];
 
-   livesTex = (Texture *) TextureTable [DRTEXT_RED+5] ;
-
-   for (i=0; i < gameData->Lives; i++)
+   for (i = 0; i < gameData->Lives; i++)
    {
-      SetSprt(&(lifeIcons[i][CurrentScreen]));
-      lifeIcons[i][CurrentScreen].r0=230;
-      lifeIcons[i][CurrentScreen].g0=0;
-      lifeIcons[i][CurrentScreen].b0=BLACK_NOT_DRAWN;
-
-      setXY0(&(lifeIcons[i][CurrentScreen]),speedo_x+115-(ySpace*i),speedo_y-5);
-      setWH(&(lifeIcons[i][CurrentScreen]),11,9);
-
-      setUV0(&(lifeIcons[i][CurrentScreen]),livesTex->u0, livesTex->v0);
-
-      lifeIcons[i][CurrentScreen].clut = livesTex->cba ;
-
-      AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(lifeIcons[i][CurrentScreen]) );
-
+      AddGlyph(speedo_x + 115 - (ySpace * i), speedo_y - 5, 11, 9, livesTex->u0, livesTex->v0, livesTex->cba);
    }
-
-
 }
 
 void InitChampTable ()
@@ -1583,37 +1345,15 @@ void InitScreenTex (Texture **screenTex, char *fileName)
    strcpy(globalPilot,modelFile);
 }
 
-void DisplayWinLose (Texture *winLose, POLY_FT4 *picPrim, short x, short y, short height, char type)
+void DisplayPicture(Texture* pic, short x, short y, short width, short height)
 {
-      short width = 128 ;
-
-      SetPolyFT4(&(picPrim[CurrentScreen]));
-      picPrim[CurrentScreen].r0=230 ; // PCwipeout
-      picPrim[CurrentScreen].g0=0 ;
-      picPrim[CurrentScreen].b0=BLACK_NOT_DRAWN ;
-
-
-      setXY4(&(picPrim[CurrentScreen]),x, y, x + width, y, x, y + height, x + width, y + height);
-
-      setUV4(&(picPrim[CurrentScreen]),
-         winLose->u0, winLose->v0,
-         winLose->u1, winLose->v1,
-         winLose->u2, winLose->v2+1,
-         winLose->u3, winLose->v3+1) ;
-
-      setPAD4(&(picPrim[CurrentScreen]),0x4000);
-
-      setTPage(&(picPrim[CurrentScreen]),1,0,winLose->textureX,winLose->textureY);
-
-//    picPrim[CurrentScreen].clut = winLose->cba ; // PCwipeout
-
-      AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(picPrim[CurrentScreen]) );
+   short tpage = GetTPage(1, 0, pic->textureX, pic->textureY);
+   AddQuad(x, y, width, height, pic->u0, pic->v0, pic->u3, pic->v3 + 1, pic->cba, tpage);
 }
 
-
-void BackPoly (POLY_F4* selectBox, DR_MODE* selectTrans, short x, short y, short w, short h)
+void BackPoly(short x, short y, short w, short h)
 {
-
+/*TODO back poly
    SetPolyF4(&(selectBox[CurrentScreen]));
    selectBox[CurrentScreen].r0=230; // PCwipeout
    selectBox[CurrentScreen].g0=0;
@@ -1631,12 +1371,11 @@ void BackPoly (POLY_F4* selectBox, DR_MODE* selectTrans, short x, short y, short
 
    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(selectBox[CurrentScreen]) );
    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(selectTrans[CurrentScreen]) );
-
+   */
 }
 
 void DisplayVenomComplete ()
 {
-
    CentreText ("WELL DONE",text_data (60, 40, 8),WhiteText) ;
 
    CentreText ("VENOM CLASS",text_data (85, 65, 8),WhiteText) ;
@@ -1651,7 +1390,6 @@ void DisplayVenomComplete ()
 
 void DisplayAllVenomComplete ()
 {
-
    CentreText ("AMAZING",text_data (60, 40, 8),RedText) ;
 
    CentreText ("YOU HAVE COMPLETED THE FULL",text_data (85, 65, 8),WhiteText) ;
@@ -1661,12 +1399,10 @@ void DisplayAllVenomComplete ()
    CentreText ("NOW TAKE ON THE FULL",text_data (240, 126, 8),WhiteText) ;
    CentreText ("RAPIER CLASS CHAMPIONSHIP",text_data (240, 138, 8),WhiteText) ;
    CentreText ("KEEP GOING",text_data (240, 162, 8),WhiteText) ;
-
 }
 
 void InitTrackTex (Texture **trackTex)
 {
-
    TIMlist        *timPtr;
    short          tablePos ;
    Texture *t;
@@ -1907,17 +1643,17 @@ void DisplayRaceInfo (ConfigData *gameData, HiScoreData *hiScoreData)
 
 void DrawHud(ShipData* shipIndex, Speedo *speedo, int choice, ConfigData *gameData)
 {
-int i;
-int width;
+   int i;
+   int width;
 
    if(shipIndex[ownShip].lapNo > 0) //gone past start line
    {
       if(shipIndex[ownShip].attr & RACING)   //in race mode
       {
          if(shipIndex[ownShip].lapNo < END_LAP+1)  //not the last lap
-            AddTime(shipIndex[ownShip].lapTimes[shipIndex[ownShip].lapNo-1], text_data (16, 210, 16), WhiteText);
+            AddTime(shipIndex[ownShip].lapTimes[shipIndex[ownShip].lapNo-1], text_data(16, 210, 16), WhiteText);
          else
-            AddTime(shipIndex[ownShip].lapTimes[2], text_data (16, 210, 16), WhiteText);
+            AddTime(shipIndex[ownShip].lapTimes[2], text_data(16, 210, 16), WhiteText);
       }
    }
    if(shipIndex[ownShip].attr & RACING)
@@ -1929,13 +1665,11 @@ int width;
             if (i < END_LAP)
             {
                AddTime(shipIndex[ownShip].lapTimes[i-1],
-                      text_data (16, 205 - (10 * i), 8), RedText);
+               text_data(16, 205 - (10 * i), 8), RedText);
             }
          }
       }
    }
-
-
 
    if(shipIndex[ownShip].attr & RACING)
    {
@@ -1945,7 +1679,6 @@ int width;
          AddNumber (2, text_data (274, 50, 8), RedText) ;
          AddNumber (winTable[serialShip].racePosition, text_data (290, 50, 8), WhiteText) ;
       }
-
 
       AddText ("LAP", text_data (15, 8, 8), RedText) ; // PCwipeout
       AddNumber (shipIndex[ownShip].lapNo, text_data (10, 19, 16), WhiteText) ;  // PCwipeout
@@ -1965,17 +1698,6 @@ int width;
          AddNumber (winTable[ownShip].racePosition, text_data (260, 19, 16), WhiteText) ;
       }
 
-#if 1
-      if(FrameState)
-      {
-         AddText ("FRAME", text_data (230, 41, 8), RedText) ; // PCwipeout
-         AddText ("RATE", text_data (235, 52, 8), RedText) ; // PCwipeout
-         AddNumber ((theFrameRate / 10), text_data (245, 63, 16), WhiteText) ;
-         AddNumber ((theFrameRate % 10), text_data (275, 63, 16), WhiteText) ;
-      }
-#endif
-
-
       /* pc WIPEOUT TEXT BIT */
 //    CentreText("WORK IN PROGRESS",text_data(0,74,8),RedText);
 
@@ -1990,25 +1712,16 @@ int width;
       {
          CentreText ("WRONG WAY", text_data (0, 110, 16), RedText) ;
       }
-
    }
 
    if(shipIndex[ownShip].attr & RACING)
    {
-      int j;
-
-      for(j=0;j<2;++j)
-      {
-         setXY0(&(speedo->facia[j]),speedo_x,speedo_y);
-         setXY0(&(speedo->transbar[j]),speedo_x,speedo_y);
-         setXY0(&(speedo->solidbar[j]),speedo_x,speedo_y);
-      }
-      AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(speedo->facia[CurrentScreen]) );
-
       if(CameraUpdate == UpdateCameraAttractInternal)
          fill_speedo(speedo, shipIndex[ownShip].speed*7, shipIndex[ownShip].thrust_mag);
       else
          fill_speedo(speedo, shipIndex[ownShip].speed, shipIndex[ownShip].thrust_mag);
+
+      AddGlyph(speedo_x, speedo_y, SPEEDO_WIDTH, SPEEDO_HEIGHT, speedoTex->u0, speedoTex->v0, speedoTex->cba);
    }
 }
 

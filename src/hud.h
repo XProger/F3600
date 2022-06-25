@@ -13,7 +13,6 @@
 #define RACE            0
 #define MENU            1
 
-
 typedef struct
 {
    short topx;
@@ -32,14 +31,7 @@ typedef struct
 
 typedef struct
 {
-   SPRT     facia[2];
-   SPRT     transbar[2];
-   SPRT     solidbar[2];
-   DR_MODE     fred[2];
-// POLY_GT4    bars[NUM_BARS][2];
-// DR_MODE     transPrim[NUM_BARS][2];
-// POLY_G4     thrustBar[NUM_BARS][2];
-   BarPos      barInfo[NUM_BARS];
+   BarPos barInfo[NUM_BARS];
 } Speedo;
 
 typedef struct
@@ -75,17 +67,17 @@ void UpdateRaceHud     (ShipData*, Speedo*, int, ConfigData *);
 void SetCharTextures   (char) ;
 void AddDelEnd         (char, TEXT_DATA *, int) ;
 void CentreText        (const char* , TEXT_DATA *, int ) ;
-void DisplayLives      (SPRT [][2], ConfigData *) ; // PCwipeout
+void DisplayLives      (ConfigData *); // PCwipeout
 int  CalcPosition      (ShipData *shipIndex);
 void ScreenFooter      (int x, int y, int colour);
 void InitChampTable    ();
 void DisplayChampTable ();
 void DisplayRacePoints ();
 void InitScreenTex     (Texture **screenTex, char *fileName);
-void DisplayWinLose    (Texture *winLose, POLY_FT4 *picPrim, short x, short y, short height, char type);
+void DisplayPicture    (Texture* pic, short x, short y, short width, short height);
 void DisplayVenomComplete ();
 void DisplayAllVenomComplete ();
 void InitTrackTex      (Texture **trackTex);
-void BackPoly          (POLY_F4 *, DR_MODE *, short, short, short, short) ;
+void BackPoly          (short, short, short, short) ;
 void DisplayRaceInfo (ConfigData *gameData, HiScoreData *hiScoreData);
 void DrawHud(ShipData* shipIndex, Speedo *speedo, int choice, ConfigData *gameData);

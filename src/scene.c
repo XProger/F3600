@@ -226,8 +226,7 @@ void IntelPrim( Prm prm )
 
 
       default :
-         sprintf( errorString, "Scene:IntelPrim: Bad primitive type $%x \n", prm.f3->type );
-         Error( errorString, Fatal );
+         Error("Scene:IntelPrim: Bad primitive type $%x \n", prm.f3->type);
          break;
    }
 }
@@ -298,27 +297,22 @@ Object* LoadPrm( char* name, short textureStart )
 
    if ( length <= 0 )
    {
-      sprintf( errorString, "scene.c:LoadPrm: File %s not found\n", name);
-      Error( errorString, Fatal );
+      Error("scene.c:LoadPrm: File %s not found\n", name);
    }
 
-   start = DAlloc( heap, length + 32 );
+   start = malloc( length + 32 );
    finish = start + length;
 
    if ( !start )
    {
     /* Memory Allocation Failed! */
-
-      sprintf( errorString, "scene.c:LoadPrm(): Failed to allocate memory for file %s\n", name);
-      Error( errorString, Fatal );
+      Error("scene.c:LoadPrm(): Failed to allocate memory for file %s\n", name);
    }
 
    if ( LoadFile( name, start ) != length )
    {
    /* File Error! */
-
-      sprintf( errorString, "scene.c:LoadPrm(): Failed to load file %s\n", name );
-      Error( errorString, Fatal );
+      Error("scene.c:LoadPrm(): Failed to load file %s\n", name);
    }
 
    prm.ptr = start;
@@ -632,8 +626,7 @@ Object* LoadPrm( char* name, short textureStart )
                break;
 
             default :
-               sprintf( errorString, "Bad primitive type %x in %s \n", prm.f3->type, name );
-               Error( errorString, Fatal );
+               Error("Bad primitive type %x in %s \n", prm.f3->type, name);
                break;
 
          }

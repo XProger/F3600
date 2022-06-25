@@ -21,11 +21,8 @@
 #include "sound.h"
 #include "menus.h"
 #include "global.h"
-
-#include "utypes.h"
 #include "sfx.h"
 #include "utils.h"
-#include "libgte.h"
 
 #define NO_SOUND  1
 
@@ -304,11 +301,10 @@ void InitSpuSound()
       SampTable[i].Playing =0;
    }
 
-   if (error !=NO_SOUND)
+   if (error != NO_SOUND)
    {
       SfxSetMaxEffects(PLAY_CHANNELS); //Up to eight effects
       SfxSetVolume(100);            //Set Volume to maximum.
-      SfxOn();                //Start to DMA circ buffer.
 
       /** Init Reverb **/
       SfxInitReverb(100);    //Default value for reverb effect
@@ -327,12 +323,14 @@ void InitSpuSound()
    }
 
    //THIS ONE IS STILL INTERESTING
-   chanTable[POWER_UP].s_attr.pitch = 0x0800;
+   /*TODO audio*/
+   //chanTable[POWER_UP].s_attr.pitch = 0x0800;
 
    sampleLevel = 8190;
 
    //Set the DA volume to that required
-   SfxSetCdVolume(ConvCDVol(c_attr.cd.volume.left,c_attr.cd.volume.right));
+   /*TODO audio*/
+   //SfxSetCdVolume(ConvCDVol(c_attr.cd.volume.left,c_attr.cd.volume.right));
 }
 
 

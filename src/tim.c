@@ -19,7 +19,6 @@
 #include "sound.h"
 #include "global.h"
 #include "error.h"
-#include "ajs.h"
 
 Texture* LoadTexture( char* name, short translucent )
 {
@@ -40,31 +39,27 @@ Texture* LoadTexture( char* name, short translucent )
    length = FileLength( name );
    if ( length <= 0 )
    {
-      sprintf( errorString, "Tim.c:LoadTexture: File %s not found\n", name );
-      Error( errorString, Warning );
+      Error("Tim.c:LoadTexture: File %s not found\n", name);
       return(NULL);
    }
 
-   tim = ( Tim* )DAlloc( heap, length + 32 );
+   tim = ( Tim* )malloc( length + 32 );
 
    if ( !tim )
    {
-      sprintf( errorString, "Tim.c:LoadTexture(): Failed to allocate memory for file %s\n", name );
-      Error( errorString, Fatal );
+      Error("Tim.c:LoadTexture(): Failed to allocate memory for file %s\n", name);
    }
 
    if ( LoadFile( name, (Ptr)tim ) != length )
    {
    /* File Error! */
-
-      sprintf( errorString, "Tim.c:LoadTexture(): Failed to load file %s\n", name );
-      Error( errorString, Fatal );
+      Error("Tim.c:LoadTexture(): Failed to load file %s\n", name);
    }
 
    if ( ClutType( tim ) == Clut4Bit )
    {
       tc4 = ( TimClut4* )( tim );
-      texture = ( Texture* )DAlloc( heap, sizeof( Texture ) );
+      texture = ( Texture* )malloc( sizeof( Texture ) );
 
       texture->type = CLUT4;
 
@@ -125,25 +120,23 @@ Texture* LoadTexture( char* name, short translucent )
       rect.w = tc4->clutW;
       rect.h = tc4->clutH;
       LoadClut4( &rect, ( ushort* )( &tc4->clut ), cluts );
-      DrawSync( 0 );
 
       rect.x = tc4->textureX;
       rect.y = tc4->textureY;
       rect.w = tc4->textureW;
       rect.h = tc4->textureH;
       LoadImage4( &rect, ( ulong* )( tc4+1 ), cluts );
-      DrawSync( 0 );
    }
    else if ( ClutType( tim ) == Clut8Bit )
    {
       tc8 = ( TimClut8* )( tim );
-      texture = ( Texture* )DAlloc( heap, sizeof( Texture ) );
+      texture = ( Texture* )malloc( sizeof( Texture ) );
 
       texture->type = CLUT8;
 
       if ( ( !tc8->textureX ) && ( !tc8->textureY ) )
       {
-         Error( "tim.c:LoadTexture(): Cannot auto place 8 bit textures", Fatal );
+         Error( "tim.c:LoadTexture(): Cannot auto place 8 bit textures" );
 
 #if 0
          tc8->clutX = clutX;
@@ -201,21 +194,19 @@ Texture* LoadTexture( char* name, short translucent )
       rect.w = tc8->clutW;
       rect.h = tc8->clutH;
       LoadClut8( &rect, ( ushort* )( &tc8->clut ), cluts );
-      DrawSync( 0 );
 
       rect.x = tc8->textureX;
       rect.y = tc8->textureY;
       rect.w = tc8->textureW;
       rect.h = tc8->textureH;
       LoadImage8( &rect, ( ulong* )( tc8+1 ), cluts );
-      DrawSync( 0 );
    }
    else
    {
       texture = NULL;
    }
 
-   DFree( heap, ( Ptr )( tim ) );
+   free( tim );
 
    return( texture );
 }

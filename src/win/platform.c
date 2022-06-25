@@ -11,21 +11,20 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <io.h>
-#include "utypes.h"
-#include "sfx.h"
-
 #include <math.h>
+#include "sfx.h"
 #include "decl.h"
 #include "malloc.h"
+#include "standard.h"
+#include "object.h"
 #include "render.h"
 #include "input.h"
 
-short FrameState = 0;
 short trackNum = 0;
 
 void oldmain(void);
 
-BOOL bActive;
+BOOL isActive;
 HWND hWnd;
 
 int gPad;
@@ -167,8 +166,27 @@ void inputFree()
    memset(joyDevice, 0, sizeof(joyDevice));
 }
 
+void inputReset()
+{
+   int index;
+   for (index = 0; index < INPUT_JOY_COUNT; index++)
+   {
+      if (!joyDevice[index].ready)
+         return;
+
+      XINPUT_VIBRATION vibration;
+      vibration.wLeftMotorSpeed = 0;
+      vibration.wRightMotorSpeed = 0;
+      _XInputSetState(index, &vibration);
+   }
+
+   gPad = 0;
+}
+
 void inputUpdate()
 {
+   gPadStickX = gPadStickY = 256;
+
    if (!_XInputGetState)
       return;
 
@@ -191,8 +209,6 @@ void inputUpdate()
 
       int32 curMask = state.Gamepad.wButtons;
       int32 oldMask = joyDevice[i].mask;
-
-      gPadStickX = gPadStickY = 256;
 
       if (state.Gamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
          curMask |= (1 << 16); // IN_LT
@@ -246,13 +262,13 @@ void inputUpdate()
    }
 }
 
-void setKey(char ScanCode, char KeyDown)
+void setKey(char code, char KeyDown)
 {
    int p = 0;
 
-   lastKey = KeyDown ? ScanCode : -1;
+   lastKey = KeyDown ? code : -1;
 
-   switch (ScanCode)
+   switch (code)
    {
       case 'Z':
          p = IN_LT;
@@ -271,7 +287,7 @@ void setKey(char ScanCode, char KeyDown)
          p = IN_A;
          break;
       case VK_MENU:
-         p = IN_X;
+         p = IN_B;
          break;
       case VK_TAB:
          p = IN_Y;
@@ -310,7 +326,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
    switch (msg)
    {
       case WM_ACTIVATE:
-         bActive = TRUE;// (wParam == WA_ACTIVE);
+         isActive = (wParam == WA_ACTIVE);
+         if (!isActive) {
+            inputReset();
+         }
          break;
 
       case WM_DESTROY:
@@ -325,6 +344,41 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       case WM_KEYUP:
       case WM_SYSKEYDOWN:
       case WM_SYSKEYUP:
+         if (msg == WM_SYSKEYDOWN)
+         {
+            // Alt + Enter - switch to fullscreen or window
+            if (wParam == VK_RETURN)
+            {
+               static WINDOWPLACEMENT pLast;
+               DWORD style = GetWindowLong(hWnd, GWL_STYLE);
+               if (style & WS_OVERLAPPEDWINDOW)
+               {
+                  MONITORINFO mInfo;
+                  mInfo.cbSize = sizeof(mInfo);
+                  if (GetWindowPlacement(hWnd, &pLast) && GetMonitorInfo(MonitorFromWindow(hWnd, MONITOR_DEFAULTTOPRIMARY), &mInfo))
+                  {
+                     const RECT* r = &mInfo.rcMonitor;
+                     SetWindowLong(hWnd, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+                     MoveWindow(hWnd, r->left, r->top, r->right - r->left, r->bottom - r->top, FALSE);
+                     ShowCursor(FALSE);
+                  }
+               }
+               else {
+                  SetWindowLong(hWnd, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+                  SetWindowPlacement(hWnd, &pLast);
+                  ShowCursor(TRUE);
+               }
+               break;
+            }
+
+            // Alt + F4 - close application
+            if (wParam == VK_F4)
+            {
+               osQuit();
+               break;
+            }
+         }
+
          setKey((char)wParam, (msg == WM_KEYDOWN) || (msg == WM_SYSKEYDOWN));
          break;
 
@@ -340,9 +394,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
    return 0;
 }
 
+#define WND_WIDTH  640//1280
+#define WND_HEIGHT 480//960
+
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-   RECT r = { 0, 0, 640, 480 };
+   RECT r = { 0, 0, WND_WIDTH, WND_HEIGHT };
 
    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
    int wx = (GetSystemMetrics(SM_CXSCREEN) - (r.right - r.left)) / 2;
@@ -400,7 +457,6 @@ uint16 SfxInitReverb(uint16 wDelay) { return 0; }
 void SfxReverbOn(void) {}
 void SfxReverbOff(void) {}
 void SfxSetReverbDepth(uint8 bDepth) {}
-void SfxUnInitReverb(void) {}
 
 uint16 SfxSetMaxEffects(uint16 wNum) { return 0; }
 
@@ -417,11 +473,6 @@ void SfxStopAll() {}
 void SfxEffectVol(int16 wPlayId, uint8 bVolume) {}
 void SfxEffectPitch(int16 wPlayId, uint16 wPitch) {}
 void SfxEffectPan(int16 wPlayId, uint16 bPan) {}
-
-void SfxOn(void) {}
-void SfxOff(void) {}
-void SfxDoSfx(void) {}
-void SfxUnInit(uint8 bFlag) {}
 
 // cd
 int CdControl(unsigned char Cmd, struct CdlPos* parm1, unsigned char* parm2) {}

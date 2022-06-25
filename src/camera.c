@@ -17,7 +17,6 @@
 #include "global.h"
 #include "search.h" // PCwipeout
 #include "utils.h"
-#include "libgte.h"
 
 static short target = 0;
 
@@ -183,8 +182,11 @@ void UpdateCameraRaceStart(TrackCamera *camera, ShipData *camShip, RescueData *r
 
    if(camShip->updateCount == SWITCH_TO_RACE_VIEW)
    {
-      camShip->attr |= VIEW_IN;
-      CameraUpdate = UpdateCameraRaceInternal;
+      /* TODO camera save default view */
+      //camShip->attr |= VIEW_IN; 
+      //CameraUpdate = UpdateCameraRaceInternal;
+      camShip->attr &= ~VIEW_IN;
+      CameraUpdate = UpdateCameraRaceExternal;
    }
 }
 

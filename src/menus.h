@@ -229,15 +229,16 @@ typedef struct
 {
    Texture  *slideTex;
    Texture  *sliderTex;
-
 } SlideTextures;
 
 typedef struct
 {
-   POLY_FT4    pointer;
-   POLY_FT4    slidePrim;
-   POLY_FT4    sliderPrim;
-   POLY_F4        lines[12];
+   /*TODO music options*/
+   //POLY_FT4    pointer;
+   //POLY_FT4    slidePrim;
+   //POLY_FT4    sliderPrim;
+   //POLY_F4     lines[12];
+   int TODO;
 } MusicPrims;
 
 typedef struct
@@ -352,7 +353,6 @@ typedef struct SelectionData
    ulong       toggle;
    char        combatInit;
    char        combatComplete;
-   CdlLOC      loc[20];
    int         cardNum;
    char        card1;
    char        card2;
@@ -382,14 +382,12 @@ typedef struct SortTable
 void     MenuControl(ConfigData *, int *, int);
 void     InitMenuSystem(Menus *);
 TimData     *Load16BitTexture(char *, char);
-void     ShowMenuBackground(POLY_FT4 *, POLY_FT4 *, TimData *);
 void     CallMenuSelector(Menus *, int *, int *, Object **, ConfigData *, MusicPrims *, SlideTextures *, SelectionData *, char [][9]);
 void     CallMenuActivator(ConfigData *, int *, int *, Menus *, SelectionData *, char [][9]);
 void     LoadModel(Object**, char *);
 void     LoadTexModel(Object** , char *);
 void     LoadNegConTexModel(Object** , char *);
 void     DrawShip(Menus *, int *, int,  int *);
-void     DrawAudio(Menus *, int *, int,  int *);
 void     MusicVSfx(MusicPrims *, SlideTextures *, SelectionData *, char [][9], ConfigData *);
 void     LoadGame(MusicPrims *, SlideTextures *, SelectionData *, char [][9], ConfigData *);
 void     SaveGame(MusicPrims *, SlideTextures *, SelectionData *, char [][9], ConfigData *);
@@ -400,7 +398,6 @@ void     MenuErrors(int *, Menus *);
 void     InitMusicVSfx(SlideTextures *);
 void     InitSelectData(SelectionData *);
 void     InitGameData(ConfigData *);
-void     FadeScreen(POLY_F4 *, POLY_F4 *, SelectionData *);
 void     ConfirmSaveGame(MusicPrims *, SlideTextures *, SelectionData *, char [][9], ConfigData *);
 void     DrawPilot(Menus *, int *, int , int *);
 void     DrawTeams(Menus *, int *, int , int *);
@@ -429,7 +426,7 @@ void     CheckSaveType(SelectionData *, char [][9], ConfigData *);
 void     NegConButtonDisplay(Menus *, int *, int, int *);
 void     InitButtons(char *);
 void     DisplayButtons(int, int, int);
-void     DrawLine(int, int, int, int, POLY_F4 *, int);
+void     DrawLine(int, int, int, int, int);
 void     WaitForMaster(SelectionData *);
 void     WaitForSlave(SelectionData *);
 void     DrawGames(Menus *, int *, int, int *);

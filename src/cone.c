@@ -55,7 +55,7 @@ void InitCone ( Cone *cone )
             case TypeF3 :
                if ( prm.f3->flag & ShipEngine )
                {
-                  Error ( "F3 ::SE marked polys should be ft3's", Warning );
+                  Error ( "F3 ::SE marked polys should be ft3's" );
                }
                prm.f3 += 1;
                break;
@@ -63,7 +63,7 @@ void InitCone ( Cone *cone )
             case TypeF4 :
                if ( prm.f4->flag & ShipEngine )
                {
-                  Error ( "F4 ::SE marked polys should be ft3's", Fatal );
+                  Error ( "F4 ::SE marked polys should be ft3's" );
                }
                prm.f4 += 1;
                break;
@@ -100,7 +100,7 @@ void InitCone ( Cone *cone )
             case TypeFT4 :
                if ( prm.ft4->flag & ShipEngine )
                {
-                  Error ( "FT4 ::SE marked polys should be ft3's", Fatal );
+                  Error ( "FT4 ::SE marked polys should be ft3's" );
                }
                prm.ft4 += 1;
                break;
@@ -108,7 +108,7 @@ void InitCone ( Cone *cone )
             case TypeG3 :
                if ( prm.g3->flag & ShipEngine )
                {
-                  Error ( "G3 ::SE marked polys should be ft3's", Fatal );
+                  Error ( "G3 ::SE marked polys should be ft3's" );
                }
                prm.g3 += 1;
                break;
@@ -116,7 +116,7 @@ void InitCone ( Cone *cone )
             case TypeG4 :
                if ( prm.g4->flag & ShipEngine )
                {
-                  Error ( "G4 ::SE marked polys should be ft3's", Fatal );
+                  Error ( "G4 ::SE marked polys should be ft3's" );
                }
                prm.g4 += 1;
                break;
@@ -155,14 +155,13 @@ void InitCone ( Cone *cone )
             case TypeGT4 :
                if ( prm.gt4->flag & ShipEngine )
                {
-                  Error ( "GT3 ::SE marked polys should be ft3's", Fatal );
+                  Error ( "GT3 ::SE marked polys should be ft3's" );
                }
                prm.gt4 += 1;
                break;
 
             default :
-               sprintf( errorString, "cone.c::InitCone:Bad primitive type %x\n", prm.f3->type );
-               Error( errorString, Fatal );
+               Error("cone.c::InitCone:Bad primitive type %x\n", prm.f3->type);
                break;
          }
       }

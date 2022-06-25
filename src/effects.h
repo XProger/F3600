@@ -13,7 +13,6 @@ typedef struct Effect
 {
    VECTOR            pos;
    SVECTOR           vel;
-   POLY_FT4          sprite[2];
    short             count;
    short             type;
    char              u, v;
@@ -22,7 +21,8 @@ typedef struct Effect
 
 typedef struct Shadow
 {
-   POLY_FT3          poly[4][2];
+   /*TODO shadow*/
+   int TODO;
 } Shadow;
 
 
@@ -41,7 +41,7 @@ void AuroraBorialis     (Object* object);
 void ColourRedLight(Object *redLight);
 void MoveDonkey(Object **donkey);
 void DrawEffects(Effect* effects);
-void DrawWeaponSprtIcons(SPRT *weaponIcon, Texture** weaponIconTextures, ShipData *playerShip, DR_MODE *drawmode, DR_MODE *drawmode2);
+void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip);
 void InitRedLight(Object** prm, short prmCount, Object **redLight);
 void InitDonkey(Object** prm, short prmCount, Object **donkey);
-void InitWeaponSprtIcons(SPRT *weaponIcon, Texture** weaponIconTextures);
+void InitWeaponSprtIcons(Texture** weaponIconTextures);

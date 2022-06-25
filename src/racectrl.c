@@ -28,11 +28,9 @@
 #include "global.h"
 #include "cone.h"
 #include "race.h"
-#include "trackasm.h"
 #include "spline.h"
 #include "credits.h"
 #include "init.h"
-#include "ajs.h"
 #include "collide.h"
 
 #define START_EXTRO 0
@@ -54,7 +52,6 @@ int   ajscount=0;                // oh shit another global flag
 
 //All race locals now globals, as RaceCtrl has to be re-entrant
 TrackData      ctrltrackStart;
-BlkFill*       ctrlclear[ 2 ];
 TexTemplate*   ctrltexTemplate;
 Object*        ctrlprm[ PrmMax ];
 Object*        ctrlobj;
@@ -62,8 +59,6 @@ short          ctrllibraryTextures;
 short          ctrlprmCount;
 long           ctrl_i, ctrl_j, ctrl_k;
 short          ctrlnumLib;
-
-AutoMeshData   *ctrlautoMesh;
 Cone           ctrlcone;
 long           ctrlbefore;
 short          ctrlcount;
@@ -92,22 +87,15 @@ Texture        *ctrlweaponIconTextures[NO_OF_WEAPON_TYPES] ;
 
 short          ctrlsky;
 int            ctrlchoice;
-POLY_F4        ctrlselectBox[2];
-DR_MODE        ctrlselectTrans[2];
-TrackSection    *ctrlsection;
+TrackSection   *ctrlsection;
 Face           *ctrlfacePtr;
-VECTOR          ctrlfacePoint;
+VECTOR         ctrlfacePoint;
 Effect         *ctrleffects ;
 Texture        *ctrleffectTextures[NO_OF_EFFECT_TEXTURES] ;
 int            ctrlcdTrack;
 int            ctrlnoCdTracks;
-POLY_FT4       ctrlTarget[2];
 TIMlist        *ctrltimPtr;
 Shadow         *ctrlShadow;
-SPRT           ctrlweaponIcon[2];
-DR_MODE        ctrliconTPage;       // DLS
-DR_MODE        ctrlrealTPage;       // DLS
-u_char         ctrlparam;
 Object         *ctrllostad[20]; /* It wouldn`t suprise me ! */
 int            ctrlstadCount;
 short          ctrlsectCount;
@@ -134,21 +122,13 @@ char        ctrlshowMenu;
 char        ctrlconfirm;
 char        ctrllConfirm;
 HiScoreData ctrlhiScoreData;
-POLY_F4     ctrlfadeScreen[2];
-DR_MODE     ctrlfadeTrans[2];
-FadeData    ctrlfadeData;
-SPRT        ctrllifeIcons[3][2];
-
 char        ctrlrec[8];
 char        ctrlmachinePaused;
 char        ctrlactivated;
 int         ctrlchoiceData;
 char        ctrlquitFlag;
 Texture     *ctrlwinLose[2];
-POLY_FT4    ctrlwinLosePrims[2];
 int         ctrlquitTwoPlayer;
-POLY_F4     ctrlbackFrame[2];
-DR_MODE     ctrlbackFrameTrans[2];
 char        ctrlshowGameOver;
 
 ConfigData  *ctrlgameData;
@@ -179,6 +159,13 @@ extern   long  CDRestartNeeded;
 
 extern	long	ctrl_init;
 extern	long	ctrl_says_quit;
+
+char winLoseIn;
+
+void setWinLose(void)
+{
+   winLoseIn = 1;
+}
 
 void raceinit(void)
 {
@@ -216,17 +203,6 @@ void raceinit(void)
       ctrlshowGameOver = 0;
       ctrlfirsttime = 1;
       finishedExtro = 0;
-
-
-      ctrlautoMesh = ( AutoMeshData* )DAlloc( heap, sizeof(AutoMeshData ) + 32 );
-
-      ctrlautoMesh->triCount = 0;
-      ctrlautoMesh->quadCount = 0;
-      ctrlautoMesh->colourMeshed = 0;
-      ctrlautoMesh->autoMeshedOn = 1;
-
-      ctrlclear[ 0 ] = BlockFill( 0, 0, 320, 240, 0x00, 0x00, 0x00 );
-      ctrlclear[ 1 ] = BlockFill( 0, 240, 320, 240, 0x00, 0x00, 0x00 );
 
       /**********************************************************/
       /***                 Initialise Camera                  ***/
@@ -339,9 +315,9 @@ void raceinit(void)
       NoOfMainSections = 0;
 
       /*** Reserve memory for weapons functions ***/
-      ctrlweaponGrid = ( WeaponGrid* )DAlloc( heap, (sizeof( WeaponGrid) * 64) + 32 );
-      ctrlweaponShapes = ( WeaponShape* )DAlloc( heap, (sizeof( WeaponShape) * NO_OF_WEAPONS) + 32 );
-      ctrlweaponIndex = ( WeaponData* )DAlloc( heap, (sizeof( WeaponData) * NO_ACTIVE_WEAPONS) + 32 );
+      ctrlweaponGrid = ( WeaponGrid* )malloc( (sizeof( WeaponGrid) * 64) + 32 );
+      ctrlweaponShapes = ( WeaponShape* )malloc( (sizeof( WeaponShape) * NO_OF_WEAPONS) + 32 );
+      ctrlweaponIndex = ( WeaponData* )malloc( (sizeof( WeaponData) * NO_ACTIVE_WEAPONS) + 32 );
 
       while(ctrlcheck)
       {
@@ -373,7 +349,7 @@ void raceinit(void)
       InitSpeedo(&ctrlspeedo);
       InitText();
 
-      ctrlshipIndex = ( ShipData* )DAlloc( heap, ((sizeof( ShipData) + 32) * (NO_OF_SHIPS )) );
+      ctrlshipIndex = ( ShipData* )malloc( ((sizeof( ShipData) + 32) * (NO_OF_SHIPS )) );
       loadShipData(track->sections, ctrlshipIndex, ctrlshipShapes, ctrlcamera.camPos);
       ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
 
@@ -398,7 +374,7 @@ void raceinit(void)
       if(trackNo == 13)
          InitAuroraBorialis(ctrlprm[ctrlsky]);
 
-      InitWeaponSprtIcons(ctrlweaponIcon, ctrlweaponIconTextures);
+      InitWeaponSprtIcons(ctrlweaponIconTextures);
       //   printf("after wicons\n");
       switch (gameData->shipNum)
       {
@@ -431,14 +407,12 @@ void raceinit(void)
       initShipData(track->sections, ctrlshipIndex, gameData);
       InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
 
-      initWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex, ctrlTarget);
+      initWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
 
-      ctrleffects = ( Effect* )DAlloc( heap, (sizeof( Effect ) * NO_OF_EFFECTS) + 32 );
+      ctrleffects = ( Effect* )malloc( (sizeof( Effect ) * NO_OF_EFFECTS) + 32 );
       InitEffects(ctrleffects, ctrlcamera.camPos, ctrleffectTextures);
 
       CameraUpdate = UpdateCameraRaceStart;
-
-      spareMax = 0;
 
       /* Initialize hi-score and game */
 
@@ -449,9 +423,6 @@ void raceinit(void)
       gameData->Position = 8 ;
       gameData->EndOfGame = 0 ;
       gameData->gameOverCount = 0 ;
-
-      ctrlfadeData.fadeCount = FADE_INACTIVE ;
-      ctrlfadeData.fadeFlag = FADE_INACTIVE ;
 
       ctrlhiScoreData.confirm = 2 ;
       ctrlhiScoreData.lConfirm = 0 ;
@@ -497,20 +468,6 @@ void raceinit(void)
 
       SetNormPadPresets (gameData) ;
 
-
-
-
-#if 0
-      VsyncEnd( );
-#endif
-
-      //    printf( "Heap free before init track tiles: %d\n", heap->free );
-
-      //   printf( "Initialise Track Tiles\n" );
-      AsmGenerateTiles( ctrltexTemplate, ctrlnumLib );
-
-      //    printf( "Heap free before main loop: %d\n", heap->free );
-
       if ( gameData->actTrackNum == 13 )
       {
          InitIceCongratulations( );
@@ -522,17 +479,9 @@ void raceinit(void)
       }
 
       inmenu=0;
-      for( ctrl_i = 0; ctrl_i < 2; ctrl_i++)
-      {
-         ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
-         Swap( );    //Should have no problems with this on interrupt
-      }
    }
 
 }
-
-extern void ReadJoystick(void);
-
 
 void racectrl(void)
 {
@@ -816,7 +765,7 @@ void racectrl(void)
                (ctrlshipIndex[ownShip].weaponType == REV_CON)  )
                && (ctrlshipIndex[ownShip].attr & RACING) )
             {
-               MissileLock(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes, ctrlTarget);
+               MissileLock(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
             }
 
             ShakeScreen();
@@ -1457,7 +1406,6 @@ void racectrl(void)
                   ctrlactivated = 0 ;
                   ctrlmachinePaused = SINGLE ;
                   ctrlchoice = -1 ;
-                  ctrlfadeData.fadeFlag = FADE_ACTIVE ;
                   gameData->Lives -- ;
 
                   Restart( ctrlshipIndex,

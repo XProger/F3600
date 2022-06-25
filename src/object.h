@@ -184,20 +184,6 @@ typedef struct Tag
 } Tag;
 
 
-
-
-/* Screen Double Buffering Structure
-*/
-
-typedef struct DoubleBuffer
-{
-   DRAWENV*    draw;
-   DISPENV*    disp;
-} DoubleBuffer;
-
-
-
-
 /* Skeleton Structure ( Hierarchical Coordinate System )
 */
 
@@ -251,12 +237,12 @@ typedef struct FT3
    short             texture;
    short             cba;
    short             tsb;
-   char              u0;
-   char              v0;
-   char              u1;
-   char              v1;
-   char              u2;
-   char              v2;
+   unsigned char     u0;
+   unsigned char     v0;
+   unsigned char     u1;
+   unsigned char     v1;
+   unsigned char     u2;
+   unsigned char     v2;
    short             pad1;
    CVECTOR           colour;
 } FT3;
@@ -277,14 +263,14 @@ typedef struct FT4
    short             texture;
    short             cba;
    short             tsb;
-   char              u0;
-   char              v0;
-   char              u1;
-   char              v1;
-   char              u2;
-   char              v2;
-   char              u3;
-   char              v3;
+   unsigned char     u0;
+   unsigned char     v0;
+   unsigned char     u1;
+   unsigned char     v1;
+   unsigned char     u2;
+   unsigned char     v2;
+   unsigned char     u3;
+   unsigned char     v3;
    short             pad1;
    CVECTOR           colour;
 } FT4;
@@ -306,12 +292,12 @@ typedef struct GT3
    short             texture;
    short             cba;
    short             tsb;
-   char              u0;
-   char              v0;
-   char              u1;
-   char              v1;
-   char              u2;
-   char              v2;
+   unsigned char     u0;
+   unsigned char     v0;
+   unsigned char     u1;
+   unsigned char     v1;
+   unsigned char     u2;
+   unsigned char     v2;
    short             pad1;
    CVECTOR           colour[ 3 ];
 } GT3;
@@ -332,14 +318,14 @@ typedef struct GT4
    short             texture;
    short             cba;
    short             tsb;
-   char              u0;
-   char              v0;
-   char              u1;
-   char              v1;
-   char              u2;
-   char              v2;
-   char              u3;
-   char              v3;
+   unsigned char     u0;
+   unsigned char     v0;
+   unsigned char     u1;
+   unsigned char     v1;
+   unsigned char     u2;
+   unsigned char     v2;
+   unsigned char     u3;
+   unsigned char     v3;
    short             pad1;
    CVECTOR           colour[ 4 ];
 } GT4;
@@ -368,12 +354,12 @@ typedef struct LSFT3
    short             texture;
    short             cba;
    short             tsb;
-   char              u0;
-   char              v0;
-   char              u1;
-   char              v1;
-   char              u2;
-   char              v2;
+   unsigned char     u0;
+   unsigned char     v0;
+   unsigned char     u1;
+   unsigned char     v1;
+   unsigned char     u2;
+   unsigned char     v2;
    CVECTOR           colour;
 } LSFT3;
 
@@ -653,7 +639,6 @@ typedef union StdPoly
    PolyGT4*          gt4;
    LineF2*           lf2;
    SPR*              spr;
-   DR_MODE*          drmode;
 } StdPoly;
 
 
@@ -804,23 +789,7 @@ typedef union Prm
 
 } Prm;
 
-
-
-
 extern ulong*        ObjectTable[ ];
-extern DoubleBuffer  Screen[ ];
-extern short         CurrentScreen;
-
-
-extern DRAWENV       DrawEnv0;
-extern DRAWENV       DrawEnv1;
-extern DISPENV       DispEnv0;
-extern DISPENV       DispEnv1;
-
-extern VECTOR        CameraPosition;
-extern SVECTOR       CameraDirection;
-extern MATRIX        Camera;
-
 
 #define CrtClipped   0x80000000
 #define XLarge       0x01000000
@@ -832,72 +801,12 @@ extern MATRIX        Camera;
 #define YClipped     0x00002000
 #define OutFog       0x00001000
 
+void Swap();
 
-
-
-
-PolyF4* GenerateQuad( );
-
-PolyF4* ClearScreen
-(
-   short          red,
-   short          green,
-   short          blue
-);
-
-void InitSystem( void );
-void Swap( );
-
-void SetCameraPosition( long x, long y, long z );
-void SetCameraDirection( short x, short y, short z );
-
-
-void TransformStaticObject( Object* object, Skeleton* camera );
-void TransformObjects( Object* object, short minDepth, short follow );
-void MatrixMultiply( MATRIX* m1, MATRIX* m2, MATRIX* m3 );
-
-void InitialiseAmbientColour( void );
-void InitialiseColourMatrix( void );
-void InitialiseLightMatrix( void );
-
-void SetupLights( Object* lights );
-
-void InitFonts( );
 void InitGameDisplay( void );
 void InitMenuDisplay( int geomOffset );
 
-
-PolyF4* Quad
-(
-   short          red,
-   short          green,
-   short          blue,
-   short          border
-);
-
-BlkFill* BlockFill
-(
-   short          x,
-   short          y,
-   short          w,
-   short          h,
-   short          red,
-   short          green,
-   short          blue
-);
-
-
-
-void      InitSonyDisplay(void);
-
-void      TransformStaticMenuObject(Object * object, Skeleton * camera);
 void InitGeom( void );
-void      TransformStaticObjectBodge(Object * object, Skeleton * camera);
-
-
-
-
-
-
-
-
+void TransformStaticMenuObject(Object* object);
+void TransformStaticObjectBodge(Object* object);
+void TransformStaticObject(Object* object, Skeleton* camera);

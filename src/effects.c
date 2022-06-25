@@ -26,9 +26,7 @@
 #include "global.h"
 #include "effects.h"
 #include "init.h"
-#include "ajs.h"
 #include "error.h"
-#include "libgte.h"
 #include "collide.h"
 #include "utils.h"
 
@@ -42,6 +40,7 @@ char tranny_table[] = {YELLOW_WHITE_TRANSL,      // MISSILE/ROCKET EXPLODE HIT N
 
 void InitEffects(Effect* effects, Skeleton *camPos, Texture** effectTextures)
 {
+/*TODO effects
    int i, j;
    TIMlist        *timPtr;
    short          loc;
@@ -81,6 +80,7 @@ void InitEffects(Effect* effects, Skeleton *camPos, Texture** effectTextures)
             effectTextures[SMOKE]->u3, effectTextures[SMOKE]->v3) ;
       }
    }
+   */
 }
 
 void UpdateEffects(Effect* effects)
@@ -118,6 +118,7 @@ void UpdateEffects(Effect* effects)
 
 void DrawEffects(Effect* effects)
 {
+   /*TODO effects
    int         i;
    SVECTOR     vertex;
    DVECTOR     sxy;
@@ -162,9 +163,9 @@ void DrawEffects(Effect* effects)
          if(!(flag & (CrtClipped | ZNegative | ZLarge | ZSmall)))
          {
 
-            /** effects[i].size is the shift right */
-            /** The bit mask is to set the maximum */
-            /** screen size to avoid framing out   */
+            // effects[i].size is the shift right
+            // The bit mask is to set the maximum
+            // screen size to avoid framing out
 
             size = ( 160 << effects[i].size ) / depth;
 
@@ -194,10 +195,13 @@ void DrawEffects(Effect* effects)
          }
       }
    }
+   */
 }
 
 void AddEffects(Effect* effects, WeaponData *weaponIndex, Texture** effectTextures, ShipData *shipIndex)
 {
+   /*TODO effects*/
+#if 0
    int i, j, k;
    int exploType;
    short noToRelease = 0;
@@ -377,6 +381,7 @@ void AddEffects(Effect* effects, WeaponData *weaponIndex, Texture** effectTextur
          weaponIndex[i].count = NON_ACTIVE;
       }
    }
+#endif
 }
 
 void ColourStartBoom(int noToLight)
@@ -499,7 +504,7 @@ void InitStartBoom(Object** prm, short prmCount)
 
          if(startBoomCount > 4)
          {
-            Error( "Too many start booms !!!!!\n", Fatal );
+            Error("Too many start booms !!!!!\n");
          }
 
          obj = obj->next;
@@ -616,7 +621,7 @@ Shadow *InitShadow(Skeleton *camPos, Texture** effectTextures)
       effectTextures[SHADOW] = LoadTexture ( "wipeout\\textures\\shad4.tim", 1 ) ;
 
 
-   shadow = ( Shadow* )DAlloc( heap, (sizeof( Shadow) * NO_OF_SHIPS) + 32 );
+   shadow = ( Shadow* )malloc( (sizeof( Shadow) * NO_OF_SHIPS) + 32 );
 
    u[0] = (effectTextures[SHADOW]->u0 + effectTextures[SHADOW]->u1) >> 1;
    v[0] = (effectTextures[SHADOW]->v0 + effectTextures[SHADOW]->v1) >> 1;
@@ -631,7 +636,7 @@ Shadow *InitShadow(Skeleton *camPos, Texture** effectTextures)
    u[5] = (u[2] + u[0]) >> 1;
    v[5] = (v[2] + v[0]) >> 1;
 
-
+   /*TODO shadow
    for(i = 0; i < NO_OF_SHIPS; i++)
    {
       for(j = 0; j < 2; j++)
@@ -670,12 +675,13 @@ Shadow *InitShadow(Skeleton *camPos, Texture** effectTextures)
             u[2], v[2]);
       }
    }
+   */
    return(shadow);
 }
 
 void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
 {
-
+   /*TODO shadow
    Face        *facePtr;
    VECTOR      a, b, c;
    int         i;
@@ -752,9 +758,9 @@ void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
             vertex[2].vz = c.vz + cameraPtr->camPos->relative.t[ 2 ];
 
 
-            /*** Depth returned is 1/4 the Z component sz of the screen coords   ***/
-            /*** corresponding to v2                                             ***/
-            /***           Faster but inaccurate sorting !!!!                    ***/
+            // Depth returned is 1/4 the Z component sz of the screen coords
+            // corresponding to v2
+            //           Faster but inaccurate sorting !!!!
 #if 0
             depth = RotTransPers3(  &(vertex[0]),
                &(vertex[1]),
@@ -766,8 +772,8 @@ void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
                &flag);
 
 #else
-            /***              Depth returned for each vertex                     ***/
-            /***           Slower but slightly better sorting  !!!!              ***/
+            // Depth returned for each vertex
+            // Slower but slightly better sorting  !!!!
 
             depth[0] = RotTransPers(   &(vertex[0]),
                &(sxy[0]),
@@ -876,9 +882,10 @@ void DrawShadow(Object **shipShapes, ShipData *shipIndex, Shadow *shadow)
          }
       }
    }
+   */
 }
 
-void InitWeaponSprtIcons(SPRT *weaponIcon, Texture** weaponIconTextures)
+void InitWeaponSprtIcons(Texture** weaponIconTextures)
 {
    int i;
    TIMlist        *timPtr;
@@ -898,46 +905,16 @@ void InitWeaponSprtIcons(SPRT *weaponIcon, Texture** weaponIconTextures)
    weaponIconTextures[REV_CON-1]    = TextureTable[loc++];
    weaponIconTextures[SHIELD-1]     = TextureTable[loc++];
    weaponIconTextures[TURBO-1]      = TextureTable[loc++];
-
-   for(i = 0; i < 2; i++)
-   {
-      SetSprt(&(weaponIcon[i]));
-
-      weaponIcon[i].r0 = 230; // PCwipeout
-      weaponIcon[i].g0 = 0;
-      weaponIcon[i].b0 = BLACK_NOT_DRAWN;
-
-      weaponIcon[i].x0 = 144;
-      weaponIcon[i].y0 = 20;
-      weaponIcon[i].w  = 32;
-      weaponIcon[i].h  = 32;
-   }
 }
 
-
-void DrawWeaponSprtIcons(SPRT *weaponIcon, Texture** weaponIconTextures, ShipData *playerShip, DR_MODE *drawmode, DR_MODE *drawmode2)
+void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip)
 {
-   int   icon;
-   GRECT  tw;
+   int icon = playerShip->weaponType;
 
-
-   icon = playerShip->weaponType;
-
-   if(icon != NO_WEAPON)
+   if (icon != NO_WEAPON)
    {
       icon -= 1;
-
-      SetDrawMode(drawmode2, 0, 0, FONT_TPAGE, &tw);
-      AddPrim(OT[CurrentScreen], (ulong *)drawmode2);
-
-      weaponIcon[CurrentScreen].x0 = 144;
-      weaponIcon[CurrentScreen].y0 = 20;
-      weaponIcon[CurrentScreen].u0 = weaponIconTextures[icon]->u0;
-      weaponIcon[CurrentScreen].v0 = weaponIconTextures[icon]->v0;
-      AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(weaponIcon[ CurrentScreen ]) );
-
-      SetDrawMode(drawmode, 0, 0, 22, &tw);
-      AddPrim(OT[CurrentScreen], (ulong *)drawmode);
+      AddGlyph(144, 20, 32, 32, weaponIconTextures[icon]->u0, weaponIconTextures[icon]->v0, weaponIconTextures[icon]->cba);
    }
 }
 

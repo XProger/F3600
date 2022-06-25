@@ -85,8 +85,8 @@ typedef struct WeaponGrid
 void UpdateWeapons   (ShipData *shipIndex,WeaponShape* weaponShapes, WeaponData *weaponIndex );
 void LaunchWeapon    (ShipData *shipIndex, WeaponData *weaponIndex, int shipNo);
 void FireWeapon      (ShipData*, WeaponData*, int, char);
-void MissileLock     (ShipData *playerShip, ShipData *shipIndex, Object** shipShapes, POLY_FT4*);
-void initWeapons     (WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weaponIndex, POLY_FT4* );
+void MissileLock     (ShipData *playerShip, ShipData *shipIndex, Object** shipShapes);
+void initWeapons     (WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weaponIndex);
 
 void UpdateRocket    (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
 void InitRocket      (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
@@ -106,7 +106,7 @@ void Weapon2Mine(WeaponData *weapon, WeaponData *weaponIndex, WeaponShape *weapo
 void GetFireVector(VECTOR *result, VECTOR target, Face *facePtr, VECTOR shipPos);
 void CycleWeaponGrids(ShipData *shipIndex, WeaponGrid *weaponGrid, int noWeaponGrids);
 void DrawWeapons(ShipData *shipIndex,WeaponShape* weaponShapes, WeaponData *weaponIndex );
-void DrawTargetIcon(ShipData *playerShip, ShipData *shipIndex, Object** shipShapes, POLY_FT4 *target);
+void DrawTargetIcon(ShipData *playerShip, ShipData *shipIndex, Object** shipShapes);
 void SetTargetShip(ShipData *shipIndex, int shipNo);
 int GetNewWeapon(void);
 int GetNewWeaponBodge(void);

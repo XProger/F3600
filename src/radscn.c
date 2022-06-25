@@ -20,7 +20,6 @@
 #include "sound.h"
 #include "global.h"
 #include "error.h"
-#include "libgte.h"
 
 
 
@@ -37,7 +36,6 @@ void CalcNewRadius( TrackSection *section, Object* objects )
    MATRIX*        matrix;
    Vector*        sectionCentre;
    VECTOR         vector;
-//   long long      distance; // PCwipeout
    long      distance;         // PCwipeout
    short          i, j;
    short          objectCount;
@@ -49,7 +47,7 @@ void CalcNewRadius( TrackSection *section, Object* objects )
    short          objectList[ ObjectListMax ];
 
 
-   DFree( heap, ( Ptr )section->objects );
+   free( section->objects );
    section->objectCount = 0;
 
 
@@ -184,7 +182,7 @@ void CalcNewRadius( TrackSection *section, Object* objects )
          }
          else
          {
-            Error( "Radius.c:SceneRadiusCheck: Maximum number of objects exceeded", Fatal );
+            Error("Radius.c:SceneRadiusCheck: Maximum number of objects exceeded");
          }
       }
 
@@ -192,10 +190,10 @@ void CalcNewRadius( TrackSection *section, Object* objects )
       allCount++;
    }
 
-   section->objects = ( short* )DAlloc(heap, objectCount * sizeof(short) );
+   section->objects = ( short* )malloc( objectCount * sizeof(short) );
    if (!section->objects)
    {
-      Error( "Error:: radius.c: Not enough memory for section object list", Fatal );
+      Error("Error:: radius.c: Not enough memory for section object list");
    }
    section->objectCount = objectCount;
 
@@ -241,10 +239,10 @@ void SceneRadiusCheck( Object* objects )
    printf( "num of objects = %d\n", objectCount );
 #endif
 
-   objectTable = ( Object** )DAlloc ( heap, ( objectCount + 1 ) * sizeof( Object* ) );
+   objectTable = ( Object** )malloc( ( objectCount + 1 ) * sizeof( Object* ) );
    if ( !objectTable )
    {
-      Error( "radscn.c::SceneRadiusCheck(): No memory for global object table", Fatal );
+      Error("radscn.c::SceneRadiusCheck(): No memory for global object table");
    }
 
    object = objects;
@@ -394,7 +392,7 @@ void SceneRadiusCheck( Object* objects )
             }
             else
             {
-               Error( "Radius.c:SceneRadiusCheck: Maximum number of objects exceeded", Fatal );
+               Error("Radius.c:SceneRadiusCheck: Maximum number of objects exceeded");
             }
          }
 
@@ -402,10 +400,10 @@ void SceneRadiusCheck( Object* objects )
          allCount++;
       }
 
-      section->objects = ( short* )DAlloc(heap, objectCount * sizeof(short) );
+      section->objects = ( short* )malloc( objectCount * sizeof(short) );
       if (!section->objects)
       {
-         Error( "Error:: radius.c: Not enough memory for section object list", Fatal );
+         Error("Error:: radius.c: Not enough memory for section object list");
       }
       section->objectCount = objectCount;
 

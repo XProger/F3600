@@ -7,3 +7,10 @@ int GetAng(VECTOR vec1, VECTOR vec2);
 int ang(int a);
 int arccos(int value);
 
+long rcos(long a);
+long rsin(long a);
+long ratan2(long y, long x);
+long SquareRoot0(long a);
+
+void RotTrans(SVECTOR* v0, VECTOR* v1, long* flag);
+void MulMatrix0(MATRIX* m0, MATRIX* m1, MATRIX* ret);

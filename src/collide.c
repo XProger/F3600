@@ -17,7 +17,6 @@
 #include "sound.h"
 #include "global.h"
 #include "utils.h"
-#include "libgte.h"
 
 void ForceFeedback(int mag)
 {
@@ -770,10 +769,11 @@ void WingCollision(ShipData *playerShip, Face *facePtr, int direction, int alpha
 
    magnitude = magnitude - 500;
    magnitude = magnitude << 2;
-
+   /*TODO audio
    SetVolume(SHIP_2_TRACK,
       chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
       chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
+      */
 }
 
 void NoseCollision(ShipData *playerShip, Face *facePtr, int direction, int alpha)
@@ -820,10 +820,10 @@ void NoseCollision(ShipData *playerShip, Face *facePtr, int direction, int alpha
 
    magnitude = magnitude - 500;
    magnitude = magnitude << 2;
-
-   SetVolume(SHIP_2_TRACK,
-      chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
-      chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
+   /*TODO audio*/
+   //SetVolume(SHIP_2_TRACK,
+   //   chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
+   //   chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
 }
 
 void Reflection(VECTOR *incidence, SVector normal)

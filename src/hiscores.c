@@ -18,7 +18,6 @@
 #include "camera.h"
 #include "sound.h"
 #include "global.h"
-#include "ajs.h"
 
 extern TexChar CharSet16[] ;
 
@@ -57,8 +56,6 @@ void HighScore (ConfigData *gameData)
 
    BlkFill     *clear[ 2 ];
    TimData     *timInfo = NULL;
-   POLY_FT4    scorePrim[2] ;
-   POLY_FT4    scorePrim1[2] ;
    short       charX=40, charY=185 ;
    char        nameEntered[9] ;
    char        currChar = 'A' ;
@@ -78,13 +75,6 @@ void HighScore (ConfigData *gameData)
    int         padDelay = 0;
 
 /* timInfo = Load16BitTexture ("c:\\wipeout\\textures\\hiscore.tim", VRAM) ;
-*/
-
-/*
-   clear[ 0 ] = BlockFill( 0, 0, 320, 240, 0x00, 0x00, 0x00 );
-   clear[ 1 ] = BlockFill( 0, 240, 320, 240, 0x00, 0x00, 0x00 );
-
-   ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
 */
    if (firstUsed)
    {
@@ -207,9 +197,10 @@ void HighScore (ConfigData *gameData)
       return ;
    }
 
+   highScore = 0;
 
-   highScore = 0 ;
-
+/*TODO highscores*/
+#if TODO
    for (j=0; j < 3; j++)
    {
          bestLap += tempLapTimes[j] ;
@@ -230,9 +221,6 @@ void HighScore (ConfigData *gameData)
 
    while (1)
    {
-
-      textPrim = CurrentScreen * 300;
-
       ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
       UpdateNotes(NOT_PAUSED);
 
@@ -271,7 +259,7 @@ void HighScore (ConfigData *gameData)
             PlayNote(MENU_MOVE, 1, 20);
             padDelay = 5;
             charVal ++ ;
-            if (charVal > 27)    /* 25 */
+            if (charVal > 27)    // 25
             {
                if (numChars != 3)
                   charVal = 0 ;
@@ -293,7 +281,7 @@ void HighScore (ConfigData *gameData)
 
             if (charVal < checkVal)
             {
-               charVal = 27 ;    /* 25 */
+               charVal = 27 ;    // 25
             }
          }
 
@@ -403,12 +391,7 @@ void HighScore (ConfigData *gameData)
       }
 
    }
-
-
-   DrawSync (0) ;
-
-   return ;
-
+#endif
 }
 
 

@@ -22,7 +22,6 @@
 #include "hud.h"
 #include "options.h"
 #include "global.h"
-#include "ajs.h"
 
 extern short starttrack, endtrack;
 
@@ -159,9 +158,9 @@ void  InGameConfirm (char *confirm, int choice, short xpad, char *lConfirm, ulon
 }
 
 
-void DeSelectScreen (POLY_F4* selectBox, DR_MODE* selectTrans)
+void DeSelectScreen ()
 {
-
+/*TODO deselect screen?
    SetPolyF4(&(selectBox[CurrentScreen]));
    selectBox[CurrentScreen].r0=230;
    selectBox[CurrentScreen].g0=0;
@@ -180,7 +179,7 @@ void DeSelectScreen (POLY_F4* selectBox, DR_MODE* selectTrans)
 
    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(selectBox[CurrentScreen]) );
    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(selectTrans[CurrentScreen]) );
-
+   */
 }
 
 

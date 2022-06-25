@@ -1,5 +1,3 @@
-#include "utypes.h"
-
 #define SOUND  1
 
 #define NOT_PAUSED 1
@@ -86,7 +84,7 @@ typedef struct ChanTable
    int      duration;
    short       priority;
    short       vagID;
-   SpuVoiceAttr s_attr;
+   //SpuVoiceAttr s_attr; /*TODO audio*/
 } ChanTable;
 
 typedef struct VagTable

@@ -19,7 +19,6 @@
 #include "camera.h"
 #include "sound.h"
 #include "global.h"
-#include "libgte.h"
 
 
 
@@ -27,7 +26,7 @@ Skeleton* NewSkeleton( )
 {
    Skeleton*     skeleton;
 
-   skeleton = ( Skeleton* )DAlloc( heap, sizeof( Skeleton ) );
+   skeleton = ( Skeleton* )malloc( sizeof( Skeleton ) );
    if ( !skeleton )
    {
    /* Memory allocation failed! */
@@ -122,8 +121,6 @@ void SetSkeletonDirection( Skeleton* skeleton, short xa, short ya, short za  )
    skeleton->update = 1;
 }
 
-
-
 MATRIX* GetSkeletonMatrix( Skeleton* skeleton )
 {
    MATRIX*     m1;
@@ -155,18 +152,6 @@ MATRIX* GetSkeletonMatrix( Skeleton* skeleton )
 
       return( &( skeleton->absolute ) );
    }
-}
-
-
-
-void SetSkeletonTransform( Skeleton* skeleton )
-{
-   MATRIX*     matrix;
-
-   matrix = GetSkeletonMatrix( skeleton );
-
-   SetTransMatrix( matrix );
-   SetRotMatrix( matrix );
 }
 
 

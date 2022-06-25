@@ -18,15 +18,12 @@
 #include "global.h"
 #include "tilelib.h"
 #include "ttf.h"
-#include "trackasm.h"
 #include "effects.h"
 #include "fileops.h"
 #include "menus.h"
 #include "hiscores.h"
 #include "hud.h"
-#include "libgte.h"
 #include "utils.h"
-#include "andyscn.h"
 
 extern TrackCamera      ctrlcamera;
 
@@ -69,15 +66,6 @@ char TrackDirection
    }
 }
 
-
-
-
-
-long  count = 0;
-
-
-long  c = 0;
-
 void DrawLandscape
 (
    ShipData       *playerShip,
@@ -90,11 +78,6 @@ void DrawLandscape
    TrackSection*  section;
    long           extent;
    SVECTOR        centre;
-
-   for ( i=0; i<MaxUnique; i++ )
-   {
-      sharedPrimCount[ i ] = 0;
-   }
 
    section = camera->section;
 
@@ -131,35 +114,17 @@ void DrawLandscape
             ( result.vy <=  ( extent + 120 ) )
             )
          {
-
-#if 1
-
             if ( playerShip->attr & VIEW_IN )
             {
-               DrawObjectAsm( objectTable[ section->objects[ i ] ], ctrlcamera.camPos, playerShip->roll, 0 );
+               renderObject( objectTable[ section->objects[ i ] ], playerShip->roll );
             }
             else
             {
-               DrawObjectAsm( objectTable[ section->objects[ i ] ], ctrlcamera.camPos, 0, 0 );
+               renderObject( objectTable[ section->objects[ i ] ], 0 );
             }
-
-#else
-
-            if ( playerShip->attr & VIEW_IN )
-            {
-               TransformLibraryObject( objectTable[ section->objects[ i ] ], &glo.camPos, playerShip->roll );
-            }
-            else
-            {
-               TransformLibraryObject( objectTable[ section->objects[ i ] ], &glo.camPos, 0 );
-            }
-
-#endif
          }
+
       }
    }
-
-   count += 1;
-
 }
 

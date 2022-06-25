@@ -2,10 +2,19 @@
 #include <stdio.h>
 #include <windows.h>
 #include <gl/GL.h>
+#include <gl/glu.h>
+
 #include "standard.h"
 #include "malloc.h"
-#include "render.h"
 #include "decl.h"
+#include "object.h"
+#include "skeleton.h"
+#include "track.h"
+#include "tim.h"
+#include "ttf.h"
+#include "render.h"
+
+extern Texture* TextureTable[];
 
 extern HWND hWnd;
 HDC hDC;
@@ -13,6 +22,11 @@ HGLRC hRC;
 
 extern short         WinWidth;
 extern short         WinHeight;
+
+extern const TrackCamera ctrlcamera;
+
+long xOffset;
+long yOffset;
 
 int gWidth, gHeight;
 
@@ -39,14 +53,10 @@ extern HWND hWnd;
 HDC hDC;
 HGLRC hRC;
 
-int dbg_G3, dbg_G4, dbg_F3, dbg_F4, dbg_GT3, dbg_GT4, dbg_FT3, dbg_FT4;
-
 short texpage = -1;
 
 extern short trackNum;
 
-extern DynamicHeap* heap;
-void Swap(void);
 void LoadPilotIntoVram(char* filename);
 
 char globalPilot[255] = { 0 };
@@ -55,9 +65,9 @@ char globalPilot[255] = { 0 };
 
 typedef struct {
    GLuint Texture;
-} TEXTURE;
+} TextureGL;
 
-TEXTURE gTex[500]={0};
+TextureGL gTex[500]={0};
 char lastfile[256];
 
 char tempTex[320 * 240 * 2]; /*TODO*/
@@ -67,7 +77,6 @@ char* TextureBuffer;
 char JJSTextureTable[]={0,1,2,3,4,0,1,2,3,4,5,6,7,8,9,10,16,17,18,19,20,11,20,12,13,21,14,15,16,17,18,19};
 char JJSTextureMenuTable[]={0,1,2,3,4,0,1,2,10,4,5,6,7,8,9,3,16,17,18,19,20,11,20,12,13,21,14,15,16,17,18,19};
 
-float zscale = 1.0 / 65536.0f;//1.0/32768.0f;
 int menuTexturesIn = 0;
 short PageXOff, PageYOff;
 
@@ -144,107 +153,76 @@ typedef struct Vertex
    float tv;
 } Vertex;
 
-#define RGB_MAKE(r, g, b)       ((DWORD) (((r) << 16) | ((g) << 8) | (b)))
+#define GL_COMBINE                        0x8570
+#define GL_COMBINE_RGB                    0x8571
+#define GL_SOURCE0_RGB                    0x8580
+#define GL_SOURCE1_RGB                    0x8581
+#define GL_PREVIOUS                       0x8578
+#define GL_RGB_SCALE                      0x8573
 
-void JJSDrawSprite(SPRT_8* sp, short w, short h)
+#define getTPage(tp, abr, x, y)\
+   (((tp&0x3)<<7)|((abr&0x3)<<5)|((y&0x100)>>4)|((x&0x3ff)>>6))
+
+u_short GetTPage(int tp, int abr, int x, int y)
 {
-   static Vertex vert[4]={0},*v;
-   vert[0].color=vert[1].color=vert[2].color=vert[3].color=RGB_MAKE(255,255,255);
-
-   short tpage;
-   short nu,nv;
-   SPRT_8 s2=*sp;
-
-   nu=s2.u0;
-   nv=s2.v0;
-   if(s2.y0<0)
-   {
-      nv-=s2.y0;
-      h+=s2.y0;
-      s2.y0=0;
-   }
-   else
-   if(s2.y0+h>=240)
-   {
-      if(s2.y0>=240)
-         return;
-      h=240-s2.y0;
-   }
-   tpage=GetThePage(s2.clut,nu,nv);
-   if(tpage==415)
-      tpage=422;
-   if(s2.g0 && tpage == 421)
-   {
-      tpage = 422;
-      nv+=128;
-   }
-
-#if 0
-   if(texpage !=tpage)
-   {
-      sendList();
-      texpage=tpage;
-      ATI3DCIF_ContextSetState (ghRC, C3D_ERS_TMAP_SELECT, &(gTex[texpage].hTX));
-   }
-   if(!SetState(C3D_EPRIM_QUAD,C3D_ESH_FLAT,TRUE,s2.b0==RED_TRANSL?RED_TRANSL:BLACK_NOT_DRAWN,C3D_ETL_NONE))
-      if(numvert>(VBUFSIZE-4))
-         sendList();
-#endif
-   v = vert;
-   v->sx = s2.x0;
-   v->sy = s2.y0;
-   v->sz = 0;
-   v->tu = (nu)/256.0f;
-   v->tv = (nv)/256.0f;
-   v->rhw = 1.0;
-   ++v;
-   v->sx = s2.x0+(float)w;
-   v->sy = s2.y0;
-   v->sz = 0;
-   v->tu = (nu+w)/256.0f;
-   v->tv = (nv)/256.0f;
-   v->rhw = 1.0;
-   ++v;
-   v->sx = s2.x0+(float)w;
-   v->sy = s2.y0+(float)h;
-   v->sz = 0;
-   v->tu = (nu+w)/256.0f;
-   v->tv = (nv+h)/256.0f;
-   v->rhw = 1.0;
-   ++v;
-   v->sx = s2.x0;
-   v->sy = s2.y0+(float)h;
-   v->sz = 0;
-   v->tu = (nu)/256.0f;
-   v->tv = (nv+h)/256.0f;
-   v->rhw = 1.0;
-
-   v = vert;
-   glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, gTex[tpage].Texture);
-
-   glColor3f(1, 1, 1);
-   glBegin(GL_TRIANGLE_FAN);
-      glTexCoord2f(v[0].tu, v[0].tv);
-      glVertex2f(s2.x0,     s2.y0);
-      glTexCoord2f(v[1].tu, v[1].tv);
-      glVertex2f(s2.x0 + w, s2.y0);
-      glTexCoord2f(v[2].tu, v[2].tv);
-      glVertex2f(s2.x0 + w, s2.y0 + h);
-      glTexCoord2f(v[3].tu, v[3].tv);
-      glVertex2f(s2.x0,     s2.y0 + h);
-   glEnd();
+   return(getTPage(tp, abr, x, y));
 }
 
-void JJS_Sprite(SPRT* sp)
+
+int LoadImage4(GRECT* recp, unsigned long* p, CLUT* cluts)
 {
-   JJSDrawSprite((SPRT_8 *)sp,sp->w,sp->h);
+   return(1);
 }
 
-void JJS_Sprite8(SPRT_8* sp)
+int LoadImage8(GRECT* recp, unsigned long* p, CLUT* cluts)
 {
-   JJSDrawSprite(sp,8,8);
+   return(1);
 }
+
+void LoadClut4(GRECT* rect, u_short* clutptr, CLUT* cluts)
+{
+   int loop;
+   u_short* ptr;
+
+   ptr = (u_short*)cluts;
+   for (loop = 0; loop < 16; loop++)
+   {
+      *ptr++ = *clutptr++;
+   }
+}
+
+void LoadClut8(GRECT* rect, u_short* clutptr, CLUT* cluts)
+{
+   int loop;
+   u_short* ptr;
+
+   ptr = (u_short*)cluts;
+   for (loop = 0; loop < 256; loop++)
+   {
+      *ptr++ = *clutptr++;
+   }
+}
+
+void LoadPilotIntoVram(char* filename)
+{
+
+}
+
+
+void setTexFilter()
+{
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   
+   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+   glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+   glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+   glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE);
+   glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 2);
+}
+
 /*TODO
 void SetColor(Vertex *v,char r, char g, char b)
 {
@@ -285,594 +263,9 @@ void SetColor(Vertex *v,char r, char g, char b)
    }
 }
 */
-void JJSDrawPolyF4(POLY_F4* p)
-{
-   dbg_F4++;
-   static Vertex vert[4]={0},*v;
 
-#if 0
-   if(!SetState(C3D_EPRIM_QUAD,C3D_ESH_FLAT,FALSE,p->b0,C3D_ETL_NONE))
-      if(numvert>(VBUFSIZE-4))
-         sendList();
 
-#endif
-   v = vert;
-   v->sx = SCALEIT(p->x0);
-   v->sy = SCALEIT(p->y0);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x1);
-   v->sy = SCALEIT(p->y1);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x3);
-   v->sy = SCALEIT(p->y3);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x2);
-   v->sy = SCALEIT(p->y2);
-   v->sz = 0;
-
-   v = vert;
-   glDisable(GL_TEXTURE_2D);
-   glColor3f(p->r0 / 255.0f, p->g0 / 255.0f, p->b0 / 255.0f);
-   glBegin(GL_TRIANGLE_FAN);
-      glVertex2f(v[0].sx, v[0].sy);
-      glVertex2f(v[1].sx, v[1].sy);
-      glVertex2f(v[2].sx, v[2].sy);
-      glVertex2f(v[3].sx, v[3].sy);
-   glEnd();
-}
-
-void JJSDrawPolyG4(POLY_G4* p)
-{
-   dbg_G4++;
-   static Vertex vert[4]={0},*v;
-
-#if 0
-   if(!SetState(C3D_EPRIM_QUAD,C3D_ESH_FLAT,FALSE,p->b0,C3D_ETL_NONE))
-      if(numvert>(VBUFSIZE-4))
-         sendList();
-#endif
-   v = vert;
-   v->sx = SCALEIT(p->x0);
-   v->sy = SCALEIT(p->y0);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x1);
-   v->sy = SCALEIT(p->y1);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x3);
-   v->sy = SCALEIT(p->y3);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x2);
-   v->sy = SCALEIT(p->y2);
-   v->sz = 0;
-
-   v = vert;
-   glDisable(GL_TEXTURE_2D);
-   glBegin(GL_TRIANGLE_FAN);
-      glColor3f(p->r0 / 255.0f, p->g0 / 255.0f, p->b0 / 255.0f);
-      glVertex2f(v[0].sx, v[0].sy);
-      glColor3f(p->r1 / 255.0f, p->g1 / 255.0f, p->b1 / 255.0f);
-      glVertex2f(v[1].sx, v[1].sy);
-      glColor3f(p->r3 / 255.0f, p->g3 / 255.0f, p->b3 / 255.0f);
-      glVertex2f(v[2].sx, v[2].sy);
-      glColor3f(p->r2 / 255.0f, p->g2 / 255.0f, p->b2 / 255.0f);
-      glVertex2f(v[3].sx, v[3].sy);
-   glEnd();
-}
-
-void setst(Vertex*vv,short u,short v,short page)
-{
-
-   if(menuTexturesIn || page>=400)
-   {
-      vv->tu=(u * (1.0f/256.0f));
-      vv->tv=(v * (1.0f/256.0f));
-   }
-   else
-   {
-      vv->tu=((u-PageXOff) * (1.0f/32.0f));
-      vv->tv=((v-PageYOff) * (1.0f/32.0f));
-   }
-}
-
-void JJSDrawPolyFT4(POLY_FT4* p)
-{
-   dbg_FT4++;
-   static Vertex vert[4]={0},*v;
-   vert[0].color=vert[1].color=vert[2].color=vert[3].color=RGB_MAKE(255,255,255);
-   short temp;
-
-   temp = GetThePage(p->tpage,(p->u0+p->u1+p->u2+p->u3)/4,(p->v0+p->v1+p->v2+p->v3)/4);
-   if(temp==417 || temp==418) // nasty horrible bodge
-   {
-      if(p->u0==0 && p->v0==24)
-      {
-         if(temp==417)
-         {
-            p->u0=0;
-            p->v0=64;
-            p->u1=127;
-            p->v1=64;
-            p->u2=0;
-            p->v2=203;
-            p->u3=127;
-            p->v3=203;
-         }
-         else
-         {
-            p->u0=128;
-            p->v0=64;
-            p->u1=255;
-            p->v1=64;
-            p->u2=128;
-            p->v2=203;
-            p->u3=255;
-            p->v3=203;
-         }
-         temp=420;
-      }
-   }
-#if 0
-   if(texpage != temp)
-   {
-      sendList();
-      texpage=temp;
-      ATI3DCIF_ContextSetState (ghRC, C3D_ERS_TMAP_SELECT, &(gTex[texpage].hTX));
-   }
-   if(!SetState(C3D_EPRIM_QUAD,C3D_ESH_FLAT,TRUE,p->b0,p->g0?C3D_ETL_MODULATE:C3D_ETL_NONE))
-      if(numvert>(VBUFSIZE-4))
-         sendList();
-   if(p->pad4 & 0x4000)
-   {
-      if(!ft&1)
-      {
-         sendList();
-         ATI3DCIF_ContextSetState(ghRC, C3D_ERS_TMAP_FILTER, &eTexFilteron);
-      }
-   }
-#endif
-
-   v = vert;
-
-   if (p->z0 <= 0)
-   {
-      v->rhw = 1.0;
-      v->sz = 0.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z0);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x0);
-   v->sy = SCALEIT(p->y0);
-   setst(v,p->u0,p->v0,temp);
-
-   ++v;
-   if (p->z1 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z1);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x1);
-   v->sy = SCALEIT(p->y1);
-   setst(v,p->u1,p->v1,temp);
-
-   ++v;
-   if (p->z3 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z3);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x3);
-   v->sy = SCALEIT(p->y3);
-   setst(v,p->u3,p->v3,temp);
-
-   ++v;
-   if (p->z2 <= 0)
-   {
-      v->sz =0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z2);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x2);
-   v->sy = SCALEIT(p->y2);
-   setst(v,p->u2,p->v2,temp);
-
-   v = vert;
-   glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, gTex[temp].Texture);
-
-   if (p->g0)
-      glColor3f(p->r0 / 255.0f, p->g0 / 255.0f, p->b0 / 255.0f);
-   else
-      glColor3f(1, 1, 1);
-
-   glBegin(GL_TRIANGLE_FAN);
-      glTexCoord2f(v[0].tu, v[0].tv);
-      glVertex2f(v[0].sx, v[0].sy);
-
-      glTexCoord2f(v[1].tu, v[1].tv);
-      glVertex2f(v[1].sx, v[1].sy);
-      
-      glTexCoord2f(v[2].tu, v[2].tv);
-      glVertex2f(v[2].sx, v[2].sy);
-      
-      glTexCoord2f(v[3].tu, v[3].tv);
-      glVertex2f(v[3].sx, v[3].sy);
-   glEnd();
-}
-
-void JJSDrawPolyF3(POLY_F4* p)
-{
-   dbg_F3++;
-   static Vertex vert[3]={0},*v;
-
-#if 0
-   if(!SetState(C3D_EPRIM_TRI,C3D_ESH_FLAT,FALSE,p->b0,C3D_ETL_NONE))
-      if(numvert>(VBUFSIZE-4))
-         sendList();
-#endif
-   v = vert;
-   v->sx = SCALEIT(p->x0);
-   v->sy = SCALEIT(p->y0);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x1);
-   v->sy = SCALEIT(p->y1);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x2);
-   v->sy = SCALEIT(p->y2);
-   v->sz = 0;
-
-   v = vert;
-   glDisable(GL_TEXTURE_2D);
-   glColor3f(p->r0 / 255.0f, p->g0 / 255.0f, p->b0 / 255.0f);
-   glBegin(GL_TRIANGLES);
-      glVertex2f(v[0].sx, v[0].sy);
-      glVertex2f(v[1].sx, v[1].sy);
-      glVertex2f(v[2].sx, v[2].sy);
-   glEnd();
-}
-
-void JJSDrawPolyG3(POLY_G3* p)
-{
-   dbg_G3++;
-   static Vertex vert[3]={0},*v;
-
-#if 0
-   if(!SetState(C3D_EPRIM_TRI,C3D_ESH_FLAT,FALSE,p->b0,C3D_ETL_NONE))
-      if(numvert>(VBUFSIZE-4))
-         sendList();
-#endif
-   v = vert;
-   v->sx = SCALEIT(p->x0);
-   v->sy = SCALEIT(p->y0);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x1);
-   v->sy = SCALEIT(p->y1);
-   v->sz = 0;
-   ++v;
-   v->sx = SCALEIT(p->x2);
-   v->sy = SCALEIT(p->y2);
-   v->sz = 0;
-
-   v = vert;
-   glDisable(GL_TEXTURE_2D);
-   glBegin(GL_TRIANGLES);
-      glColor3f(p->r0 / 255.0f, p->g0 / 255.0f, p->b0 / 255.0f);
-      glVertex2f(v[0].sx, v[0].sy);
-      glColor3f(p->r1 / 255.0f, p->g1 / 255.0f, p->b1 / 255.0f);
-      glVertex2f(v[1].sx, v[1].sy);
-      glColor3f(p->r2 / 255.0f, p->g2 / 255.0f, p->b2 / 255.0f);
-      glVertex2f(v[2].sx, v[2].sy);
-   glEnd();
-}
-
-void JJSDrawPolyFT3(POLY_FT3* p)
-{
-   dbg_FT3++;
-   static Vertex vert[3]={0},*v;
-   vert[0].color=vert[1].color=vert[2].color=RGB_MAKE(255,255,255);
-   short temp;
-
-   temp=GetThePage(p->tpage,(p->u0+p->u1+p->u2)/3,(p->v0+p->v1+p->v2)/3);
-
-#if 0
-   if(texpage!=temp)
-   {
-      sendList();
-      texpage=temp;
-      ATI3DCIF_ContextSetState (ghRC, C3D_ERS_TMAP_SELECT, &(gTex[texpage].hTX));
-   }
-   if(!SetState(C3D_EPRIM_TRI,C3D_ESH_FLAT,TRUE,p->b0,p->g0?C3D_ETL_MODULATE:C3D_ETL_NONE))
-      if(numvert>(VBUFSIZE-4))
-         sendList();
-#endif
-   v = vert;
-   if (p->z0 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z0);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x0);
-   v->sy = SCALEIT(p->y0);
-   setst(v,p->u0,p->v0,temp);
-
-   ++v;
-   if (p->z1 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z1);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x1);
-   v->sy = SCALEIT(p->y1);
-   setst(v,p->u1,p->v1,temp);
-
-   ++v;
-   if (p->z2 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z2);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x2);
-   v->sy = SCALEIT(p->y2);
-   setst(v,p->u2,p->v2,temp);
-
-   v = vert;
-   glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, gTex[temp].Texture);
-
-   if (p->g0)
-      glColor3f(p->r0 / 255.0f, p->g0 / 255.0f, p->b0 / 255.0f);
-   else
-      glColor3f(1, 1, 1);
-   glBegin(GL_TRIANGLES);
-      glTexCoord2f(v[0].tu, v[0].tv);
-      glVertex2f(v[0].sx, v[0].sy);
-      glTexCoord2f(v[1].tu, v[1].tv);
-      glVertex2f(v[1].sx, v[1].sy);
-      glTexCoord2f(v[2].tu, v[2].tv);
-      glVertex2f(v[2].sx, v[2].sy);
-   glEnd();
-}
-
-void JJSDrawPolyGT3(POLY_GT3 * p)
-{
-   dbg_GT3++;
-   static   Vertex vert[3]={0},*v;
-   vert[0].color=vert[1].color=vert[2].color=RGB_MAKE(255,255,255);
-   short temp;
-
-   temp=GetThePage(p->tpage,(p->u0+p->u1+p->u2)/3,(p->v0+p->v1+p->v2)/3);
-
-#if 0
-   if(texpage!=temp)
-   {
-      sendList();
-      texpage=temp;
-      ATI3DCIF_ContextSetState (ghRC, C3D_ERS_TMAP_SELECT, &(gTex[texpage].hTX));
-   }
-   if(!SetState(C3D_EPRIM_TRI,C3D_ESH_FLAT,TRUE,p->b0,p->g0?C3D_ETL_MODULATE:C3D_ETL_NONE))
-   {
-      if(numvert>(VBUFSIZE-4))
-         sendList();
-   }
-#endif
-   v = vert;
-   v->sz = SCALEZ(p->z0);
-   if (p->z0 <= 0)
-   {
-      v->sz =0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z0);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x0);
-   v->sy = SCALEIT(p->y0);
-   setst(v,p->u0,p->v0,temp);
-
-   ++v;
-   if (p->z1 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z1);
-      v->rhw = 1.0f / v->sz;
-
-   }
-   v->sx = SCALEIT(p->x1);
-   v->sy = SCALEIT(p->y1);
-   setst(v,p->u1,p->v1,temp);
-
-   ++v;
-   if (p->z2 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z2);
-      v->rhw = 1.0f / v->sz;
-
-   }
-   v->sx = SCALEIT(p->x2);
-   v->sy = SCALEIT(p->y2);
-   setst(v,p->u2,p->v2,temp);
-
-   v = vert;
-   glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, gTex[temp].Texture);
-
-   glColor3f(1, 1, 1);
-   glBegin(GL_TRIANGLES);
-      glColor3f(p->r0 / 255.0f, p->g0 / 255.0f, p->b0 / 255.0f);
-      glTexCoord2f(v[0].tu, v[0].tv);
-      glVertex2f(v[0].sx, v[0].sy);
-      
-      glColor3f(p->r1 / 255.0f, p->g1 / 255.0f, p->b1 / 255.0f);
-      glTexCoord2f(v[1].tu, v[1].tv);
-      glVertex2f(v[1].sx, v[1].sy);
-
-      glColor3f(p->r2 / 255.0f, p->g2 / 255.0f, p->b2 / 255.0f);
-      glTexCoord2f(v[2].tu, v[2].tv);
-      glVertex2f(v[2].sx, v[2].sy);
-   glEnd();
-}
-
-void JJSDrawPolyGT4(POLY_GT4* p)
-{
-   dbg_GT4++;
-   static   Vertex vert[4]={0},*v;
-   vert[0].color=vert[1].color=vert[2].color=vert[3].color=RGB_MAKE(255,255,255);
-   short temp;
-
-   temp=GetThePage(p->tpage,(p->u0+p->u1+p->u2)/3,(p->v0+p->v1+p->v2)/3);
-
-#if 0
-   if(texpage!=temp)
-   {
-      sendList();
-      texpage=temp;
-      ATI3DCIF_ContextSetState (ghRC, C3D_ERS_TMAP_SELECT, &(gTex[texpage].hTX));
-   }
-   if(!SetState(C3D_EPRIM_TRI,C3D_ESH_FLAT,TRUE,p->b0,p->g0?C3D_ETL_MODULATE:C3D_ETL_NONE))
-   {
-      if(numvert>(VBUFSIZE-4))
-         sendList();
-   }
-#endif
-   v = vert;
-   v->sz = SCALEZ(p->z0);
-   if (p->z0 <= 0)
-   {
-      v->sz =0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z0);
-      v->rhw = 1.0f / v->sz;
-   }
-   v->sx = SCALEIT(p->x0);
-   v->sy = SCALEIT(p->y0);
-   setst(v,p->u0,p->v0,temp);
-
-   ++v;
-   if (p->z1 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z1);
-      v->rhw = 1.0f / v->sz;
-
-   }
-   v->sx = SCALEIT(p->x1);
-   v->sy = SCALEIT(p->y1);
-   setst(v,p->u1,p->v1,temp);
-
-   ++v;
-   if (p->z3 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z3);
-      v->rhw = 1.0f / v->sz;
-
-   }
-   v->sx = SCALEIT(p->x3);
-   v->sy = SCALEIT(p->y3);
-   setst(v,p->u3,p->v3,temp);
-
-   ++v;
-   if (p->z2 <= 0)
-   {
-      v->sz = 0.0;
-      v->rhw =1.0;
-   }
-   else
-   {
-      v->sz = SCALEZ(p->z2);
-      v->rhw = 1.0f / v->sz;
-
-   }
-   v->sx = SCALEIT(p->x2);
-   v->sy = SCALEIT(p->y2);
-   setst(v,p->u2,p->v2,temp);
-
-   glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, gTex[temp].Texture);
-
-   v = vert;
-   glBegin(GL_TRIANGLE_FAN);
-      glColor3f(p->r0 / 255.0f, p->g0 / 255.0f, p->b0 / 255.0f);
-      glTexCoord2f(v[0].tu, v[0].tv);
-      glVertex2f(v[0].sx, v[0].sy);
-
-      glColor3f(p->r1 / 255.0f, p->g1 / 255.0f, p->b1 / 255.0f);
-      glTexCoord2f(v[1].tu, v[1].tv);
-      glVertex2f(v[1].sx, v[1].sy);
-
-      glColor3f(p->r3 / 255.0f, p->g3 / 255.0f, p->b3 / 255.0f);
-      glTexCoord2f(v[2].tu, v[2].tv);
-      glVertex2f(v[2].sx, v[2].sy);
-
-      glColor3f(p->r2 / 255.0f, p->g2 / 255.0f, p->b2 / 255.0f);
-      glTexCoord2f(v[3].tu, v[3].tv);
-      glVertex2f(v[3].sx, v[3].sy);
-   glEnd();
-}
-
-BOOL UnloadTexture(TEXTURE* pTex)
+BOOL UnloadTexture(TextureGL* pTex)
 {
    if (pTex->Texture == 0)
       return FALSE;
@@ -909,7 +302,6 @@ void ChopUp(char *to, void *from , int which)
       p1+=512;
       to+=64;
    }
-
 }
 
 /*
@@ -959,8 +351,7 @@ BOOL SJRLoadTextureBMPmenu(const char* lpszTexFilename)
       glGenTextures(1, &gTex[i].Texture);
       glBindTexture(GL_TEXTURE_2D, gTex[i].Texture);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 256, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ptr);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      setTexFilter();
 
       ptr += texsize * 4;
    }
@@ -1000,13 +391,18 @@ BOOL SJRLoadTextureBMP(const char* lpszTexFilename)
    }
 
    {
-      WORD *tp,temp;
+      WORD *tp, temp;
+      int r, g, b;
 
       tp=(WORD *)TextureBuffer;
       for(i=0;i<TEXTURESJR/2;++i)
       {
-         temp=*tp;
-         *tp++=(temp&0x1f)|((temp&0x7fe0)<<1);
+         temp = *tp << 1;
+         // black -> transparent
+         if (temp != 0) {
+            temp |= 1;
+         }
+         *tp++ = temp;
       }
    }
 
@@ -1030,11 +426,8 @@ BOOL SJRLoadTextureBMP(const char* lpszTexFilename)
       size = (i < 320) ? track : other;
       glGenTextures(1, &gTex[i].Texture);
       glBindTexture(GL_TEXTURE_2D, gTex[i].Texture);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, data);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, data);
+      setTexFilter();
 
       if (i > 320 || ((i & 63) == 63))
          ptr += texsize*4;
@@ -1074,14 +467,9 @@ int JJSLoadSprites(void)
          tp = (short*)tempTex;
          for(i = 0; i < 256 * 256; i++)
          {
-            temp = *tp;
-            //temp = (temp >> 8) | (temp << 8);
-            if ((temp & 0xFFFE) == 0)
-            {
-               temp = 0;
-            }
-            else
-            {
+            temp = *tp << 1;
+            // black -> transparent
+            if (temp != 0) {
                temp |= 1;
             }
             *tp++ = temp;
@@ -1091,10 +479,7 @@ int JJSLoadSprites(void)
       glGenTextures(1, &gTex[420 + sp].Texture);
       glBindTexture(GL_TEXTURE_2D, gTex[420 + sp].Texture);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempTex);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      setTexFilter();
    }
 
    return TRUE;
@@ -1126,11 +511,11 @@ TimData* JJSLoad16BitTexture(char* filename, char location)
    texsize = 320 * 240 * sizeof (WORD);
    bufsize = texsize;
 
-   timData = (TimData*)DAlloc((DynamicHeap*)heap, sizeof(TimData));
+   /*TODO 16-bit load*/
+   //timData = (TimData*)DAlloc((DynamicHeap*)heap, sizeof(TimData));
+   //JJSReadTIM(filename, tempTex, timData);
 
-   JJSReadTIM(filename, tempTex, timData);
-
-   return timData;
+   return NULL;// timData;
 }
 
 void renderBegin(void)
@@ -1202,22 +587,23 @@ static void restoreTextures(void)
    }
    if(globalPilot[0])
       LoadPilotIntoVram(globalPilot) ;
-   Swap();
-   Swap();
 }
 
-void setupScreens(void)
+void SetGeomOffset(long ofx, long ofy)
 {
-   JJSLoadSprites();
+   xOffset = ofx;
+   yOffset = ofy;
 }
 
-void changeScreen(void)
+void SetSkeletonTransform(Skeleton* skeleton)
 {
-   WinWidth = 320;
-   WinHeight = 240;
-   setupScreens();
-   restoreTextures();
+   MATRIX* matrix;
+   matrix = GetSkeletonMatrix(skeleton);
+
+//   SetTransMatrix(matrix);
+//   SetRotMatrix(matrix);
 }
+
 
 void renderInit()
 {
@@ -1245,9 +631,7 @@ void renderInit()
    glEnable(GL_CULL_FACE);
    glCullFace(GL_FRONT);
 
-   //glEnable(GL_DEPTH_TEST);
    glDisable(GL_DEPTH_TEST);
-   glDepthMask(GL_TRUE);
 
    glEnable(GL_ALPHA_TEST);
    glAlphaFunc(GL_GREATER, 0.0f);
@@ -1255,6 +639,7 @@ void renderInit()
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glOrtho(0, 320, 240, 0, 0, 1);
+
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 
@@ -1262,7 +647,7 @@ void renderInit()
    WinWidth = 320;
    WinHeight = 240;
 
-   setupScreens();
+   JJSLoadSprites();
 
    TextureBuffer = (char*)malloc(TEXTURESJR);
 }
@@ -1278,11 +663,6 @@ void renderSwap()
 {
    Sleep(1);
    SwapBuffers(hDC);
-
-   char buf[256];
-   //   sprintf(buf, "%d = G3:%d G4:%d F3:%d F4:%d GT3:%d GT4:%d FT3:%d FT4:%d\n", (dbg_G3 + dbg_G4 + dbg_F3 + dbg_F4 + dbg_GT3 + dbg_GT4 + dbg_FT3 + dbg_FT4), dbg_G3, dbg_G4, dbg_F3, dbg_F4, dbg_GT3, dbg_GT4, dbg_FT3, dbg_FT4);
-   //   OutputDebugString(buf);
-   dbg_G3 = dbg_G4 = dbg_F3 = dbg_F4 = dbg_GT3 = dbg_GT4 = dbg_FT3 = dbg_FT4 = 0;
 }
 
 void renderResize(int width, int height)
@@ -1408,3 +788,474 @@ BOOL SetState(C3D_EPRIM Quad, C3D_ESHADE Shade, BOOL BTexEn, BOOL Trans, C3D_ETL
    return(change);
 }
 #endif
+
+void setTexture(int tpage)
+{
+   if (tpage >= 0)
+   {
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, gTex[tpage].Texture);
+   }
+   else
+   {
+      glDisable(GL_TEXTURE_2D);
+   }
+}
+
+#define i32    (1.0f / 32.0f)
+#define i256   (1.0f / 256.0f)
+#define i4096  (1.0f / 4096.0f)
+#define IDEG   (360.0f / 4096.0f)
+
+extern short DRTEXT_RED;
+
+void renderQuad(const Quad* q)
+{
+   float u0 = q->u0 * i256;
+   float v0 = q->v0 * i256;
+   float u1 = q->u1 * i256;
+   float v1 = q->v1 * i256;
+   short x0 = q->x;
+   short y0 = q->y;
+   short x1 = q->x + q->w;
+   short y1 = q->y + q->h;
+
+   short tpage = GetThePage(q->page, q->u0, q->v0);
+
+   // TODO WTF?
+   if (tpage == 415)
+      tpage = 422;
+
+   if ((q->clut == TextureTable[DRTEXT_RED]->cba) && tpage == 421)
+   {
+      tpage = 422;
+      v0 += 0.5f;
+      v1 += 0.5f;
+   }
+
+   setTexture(tpage);
+
+   glColor3ub(128, 128, 128);
+   glBegin(GL_TRIANGLE_FAN);
+      glTexCoord2f(u0, v0); glVertex2s(x0, y0);
+      glTexCoord2f(u1, v0); glVertex2s(x1, y0);
+      glTexCoord2f(u1, v1); glVertex2s(x1, y1);
+      glTexCoord2f(u0, v1); glVertex2s(x0, y1);
+   glEnd();
+}
+
+void prepareTrack()
+{
+
+}
+
+void renderPrepare()
+{
+   prepareTrack();
+}
+
+void setMatrix(Skeleton* skeleton, int x, int y, int z)
+{
+   float m[4][4];
+   const MATRIX* matrix = GetSkeletonMatrix(skeleton);
+
+   m[0][0] = matrix->m[0][0] * i4096;
+   m[0][1] = matrix->m[1][0] * i4096;
+   m[0][2] = matrix->m[2][0] * i4096;
+   m[0][3] = 0.0f;
+
+   m[1][0] = matrix->m[0][1] * i4096;
+   m[1][1] = matrix->m[1][1] * i4096;
+   m[1][2] = matrix->m[2][1] * i4096;
+   m[1][3] = 0.0f;
+
+   m[2][0] = matrix->m[0][2] * i4096;
+   m[2][1] = matrix->m[1][2] * i4096;
+   m[2][2] = matrix->m[2][2] * i4096;
+   m[2][3] = 0.0f;
+
+   m[3][0] = x;
+   m[3][1] = y;
+   m[3][2] = z;
+   m[3][3] = 1.0f;
+
+   glLoadMatrixf((GLfloat*)&m);
+}
+
+void renderTrack()
+{
+   extern TrackData* track;
+   extern TexTemplate* ctrltexTemplate;
+
+   const VECTOR* vertices = track->vertices;
+   const Face* face = track->faces;
+   int i, j;
+   int cx, cy, cz;
+   int dir;
+
+   cx = ctrlcamera.camPos->absolute.t[0];// - ctrlcamera.camPos->absolute.t[0] / 8;
+   cy = ctrlcamera.camPos->absolute.t[1];// - ctrlcamera.camPos->absolute.t[1] / 8;
+   cz = ctrlcamera.camPos->absolute.t[2];// - ctrlcamera.camPos->absolute.t[2] / 8;
+   
+   setMatrix(ctrlcamera.camPos->super, cx, cy, cz);
+
+   for (j = 0; j < track->sectionCount; j++)
+   {
+      const TrackSection* section = track->sections + j;
+
+      for (i = section->faceStart; i < section->faceStart + section->faceCount; i++, face++)
+      {
+         const Texture* tex = TextureTable[ctrltexTemplate[face->texture].tex1[0]];
+
+         short tpage = GetThePage(tex->tsb, (tex->u0 + tex->u1 + tex->u2 + tex->u3) / 4, (tex->v0 + tex->v1 + tex->v2 + tex->v3) / 4);
+         setTexture(tpage);
+
+         glColor3ub(face->red, face->green, face->blue);
+
+         glBegin(GL_QUADS);
+         if (face->flags & FLIP_TEXTURE)
+         {
+            glTexCoord2f((tex->u2 - PageXOff) * i32, (tex->v2 - PageYOff) * i32); glVertex3iv((GLint*)(vertices + face->vertex[3]));
+            glTexCoord2f((tex->u3 - PageXOff) * i32, (tex->v3 - PageYOff) * i32); glVertex3iv((GLint*)(vertices + face->vertex[2]));
+            glTexCoord2f((tex->u1 - PageXOff) * i32, (tex->v1 - PageYOff) * i32); glVertex3iv((GLint*)(vertices + face->vertex[1]));
+            glTexCoord2f((tex->u0 - PageXOff) * i32, (tex->v0 - PageYOff) * i32); glVertex3iv((GLint*)(vertices + face->vertex[0]));
+         }
+         else
+         {
+            glTexCoord2f((tex->u3 - PageXOff) * i32, (tex->v3 - PageYOff) * i32); glVertex3iv((GLint*)(vertices + face->vertex[3]));
+            glTexCoord2f((tex->u2 - PageXOff) * i32, (tex->v2 - PageYOff) * i32); glVertex3iv((GLint*)(vertices + face->vertex[2]));
+            glTexCoord2f((tex->u0 - PageXOff) * i32, (tex->v0 - PageYOff) * i32); glVertex3iv((GLint*)(vertices + face->vertex[1]));
+            glTexCoord2f((tex->u1 - PageXOff) * i32, (tex->v1 - PageYOff) * i32); glVertex3iv((GLint*)(vertices + face->vertex[0]));
+         }
+         glEnd();
+      }
+   }
+}
+
+void renderObject(const Object* object, int roll)
+{
+   const MATRIX* matrix;
+   Poly poly;
+   const SVECTOR* vertices;
+   short tpage;
+   int i;
+   int cx, cy, cz;
+   const CVECTOR* c;
+
+   const CVECTOR colorWhite3[3] = {
+      {255, 255, 255, 0},
+      {255, 255, 255, 0},
+      {255, 255, 255, 0}
+   };
+
+   matrix = GetSkeletonMatrix(object->skeleton);
+
+   cx = matrix->t[0];
+   cy = matrix->t[1];
+   cz = matrix->t[2];
+   /*
+   if (ctrlcamera.camPos)
+   {
+      cx -= ctrlcamera.camPos->absolute.t[0] / 8;
+      cy -= ctrlcamera.camPos->absolute.t[1] / 8;
+      cz -= ctrlcamera.camPos->absolute.t[2] / 8;
+   }
+   */
+   setMatrix(object->skeleton, cx, cy, cz);
+
+   vertices = object->vertices;
+   poly.prim = object->primitives;
+
+   for (i = 0; i < object->primitiveCount; i++)
+   {
+      switch (poly.prim->type)
+      {
+         case TypeF3: {
+            const F3* f = poly.f3;
+
+            setTexture(-1);
+
+            glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+            glBegin(GL_TRIANGLES);
+               glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+               glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+               glVertex3sv((GLshort*)(vertices + f->coords[2]));
+            glEnd();
+
+            poly.f3++;
+            break;
+         }
+
+         case TypeFT3: {
+            const FT3* f = poly.ft3;
+
+            tpage = GetThePage(f->tsb, (f->u0 + f->u1 + f->u2) / 3, (f->v0 + f->v1 + f->v2) / 3);
+            setTexture(tpage);
+
+            if (f->flag & ShipEngine) {
+               glEnable(GL_BLEND);
+               glBlendFunc(GL_ONE, GL_ONE);
+               glColor3ub(255, 255, 255);
+            }
+            else
+            {
+               glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+            }
+
+            glBegin(GL_TRIANGLES);
+               glTexCoord2f(f->u0 * i256, f->v0 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+               glTexCoord2f(f->u1 * i256, f->v1 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+               glTexCoord2f(f->u2 * i256, f->v2 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[2]));
+            glEnd();
+
+            if (f->flag & ShipEngine)
+            {
+               glDisable(GL_BLEND);
+            }
+
+            poly.ft3++;
+            break;
+         }
+
+         case TypeF4: {
+            const F4* f = poly.f4;
+
+            setTexture(-1);
+
+            glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+            glBegin(GL_QUADS);
+               glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+               glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+               glVertex3sv((GLshort*)(vertices + f->coords[3]));
+
+               glVertex3sv((GLshort*)(vertices + f->coords[2]));
+            glEnd();
+
+            poly.f4++;
+            break;
+         }
+
+         case TypeFT4: {
+            const FT4* f = poly.ft4;
+
+            tpage = GetThePage(f->tsb, (f->u0 + f->u1 + f->u2 + f->u3) / 4, (f->v0 + f->v1 + f->v2 + f->v3) / 4);
+            setTexture(tpage);
+
+            glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+            glBegin(GL_QUADS);
+               glTexCoord2f(f->u0 * i256, f->v0 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+               glTexCoord2f(f->u1 * i256, f->v1 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+               glTexCoord2f(f->u3 * i256, f->v3 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[3]));
+
+               glTexCoord2f(f->u2 * i256, f->v2 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[2]));
+            glEnd();
+
+            poly.ft4++;
+            break;
+         }
+
+         case TypeG3: {
+            const G3* f = poly.g3;
+
+            setTexture(-1);
+
+            glBegin(GL_TRIANGLES);
+               glColor3ub(f->colour[0].r, f->colour[0].g, f->colour[0].b);
+               glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+               glColor3ub(f->colour[1].r, f->colour[1].g, f->colour[1].b);
+               glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+               glColor3ub(f->colour[2].r, f->colour[2].g, f->colour[2].b);
+               glVertex3sv((GLshort*)(vertices + f->coords[2]));
+            glEnd();
+
+            poly.g3++;
+            break;
+         }
+
+         case TypeGT3: {
+            const GT3* f = poly.gt3;
+            c = f->colour;
+
+            tpage = GetThePage(f->tsb, (f->u0 + f->u1 + f->u2) / 3, (f->v0 + f->v1 + f->v2) / 3);
+            setTexture(tpage);
+
+            if (f->flag & ShipEngine)
+            {
+               // use additive blending for jet
+               glEnable(GL_BLEND);
+               glBlendFunc(GL_ONE, GL_ONE);
+               c = &colorWhite3;
+            }
+
+            glBegin(GL_TRIANGLES);
+               glColor3ubv((GLubyte*)(c + 0));
+               glTexCoord2f(f->u0 * i256, f->v0 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+               glColor3ubv((GLubyte*)(c + 1));
+               glTexCoord2f(f->u1 * i256, f->v1 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+               glColor3ubv((GLubyte*)(c + 2));
+               glTexCoord2f(f->u2 * i256, f->v2 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[2]));
+            glEnd();
+            
+            if (f->flag & ShipEngine)
+            {
+               glDisable(GL_BLEND);
+            }
+
+            poly.gt3++;
+            break;
+         }
+
+         case TypeG4: {
+            const G4* f = poly.g4;
+
+            setTexture(-1);
+
+            glBegin(GL_QUADS);
+               glColor3ub(f->colour[0].r, f->colour[0].g, f->colour[0].b);
+               glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+               glColor3ub(f->colour[1].r, f->colour[1].g, f->colour[1].b);
+               glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+               glColor3ub(f->colour[3].r, f->colour[3].g, f->colour[3].b);
+               glVertex3sv((GLshort*)(vertices + f->coords[3]));
+
+               glColor3ub(f->colour[2].r, f->colour[2].g, f->colour[2].b);
+               glVertex3sv((GLshort*)(vertices + f->coords[2]));
+            glEnd();
+
+            poly.g4++;
+            break;
+         }
+
+         case TypeGT4: {
+            const GT4* f = poly.gt4;
+
+            tpage = GetThePage(f->tsb, (f->u0 + f->u1 + f->u2 + f->u3) / 4, (f->v0 + f->v1 + f->v2 + f->v3) / 4);
+            setTexture(tpage);
+
+            glBegin(GL_QUADS);
+               glColor3ub(f->colour[0].r, f->colour[0].g, f->colour[0].b);
+               glTexCoord2f(f->u0 * i256, f->v0 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+               glColor3ub(f->colour[1].r, f->colour[1].g, f->colour[1].b);
+               glTexCoord2f(f->u1 * i256, f->v1 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+               glColor3ub(f->colour[3].r, f->colour[3].g, f->colour[3].b);
+               glTexCoord2f(f->u3* i256, f->v3* i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[3]));
+
+               glColor3ub(f->colour[2].r, f->colour[2].g, f->colour[2].b);
+               glTexCoord2f(f->u2 * i256, f->v2 * i256);
+               glVertex3sv((GLshort*)(vertices + f->coords[2]));
+            glEnd();
+
+            poly.gt4++;
+            break;
+         }
+
+         case TypeBSPR: {
+            const SPR* f = poly.spr;
+            const SVECTOR* v = vertices + f->coord;
+            const Texture* t = TextureTable[f->texture];
+            int w = f->width >> 1;
+            int h = f->height;
+            int sx, sz;
+
+            sx = rcos(-ctrlcamera.hdg) * w >> 12;
+            sz = rsin(-ctrlcamera.hdg) * w >> 12;
+
+            tpage = GetThePage(t->tsb, (t->u0 + t->u1 + t->u2 + t->u3) / 4, (t->v0 + t->v1 + t->v2 + t->v3) / 4);
+            setTexture(tpage);
+
+            glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+            //glColor3ub(255, 255, 255);
+            glBegin(GL_QUADS);
+               glTexCoord2f(t->u0 * i256, t->v0 * i256);
+               glVertex3s(v->vx - sx, v->vy - h, v->vz - sz);
+
+               glTexCoord2f(t->u1 * i256, t->v1 * i256);
+               glVertex3s(v->vx + sx, v->vy - h, v->vz + sz);
+
+               glTexCoord2f(t->u3 * i256, t->v3 * i256);
+               glVertex3s(v->vx + sx, v->vy, v->vz + sz);
+
+               glTexCoord2f(t->u2 * i256, t->v2 * i256);
+               glVertex3s(v->vx - sx, v->vy, v->vz - sz);
+            glEnd();
+
+            poly.spr++;
+            break;
+         }
+
+         default:
+            break;
+      }
+   }
+
+   glPopMatrix();
+}
+
+void renderSky(const Object* object)
+{
+   glDisable(GL_DEPTH_TEST);
+   renderObject(object, 0);
+   glEnable(GL_DEPTH_TEST);
+}
+
+int in3D = 0;
+
+void renderBegin3D()
+{
+   in3D++;
+
+   glEnable(GL_DEPTH_TEST);
+
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glTranslatef((xOffset - 160) / 160.0f, -(yOffset - 120) / 120.f, 0);
+   gluPerspective(75.0f, (float)gWidth / (float)gHeight, (float)64, (float)(64 * 1024));
+   glScalef(1, -1, -1);
+
+   glMatrixMode(GL_MODELVIEW);
+}
+
+void renderEnd3D()
+{
+   in3D--;
+   if (in3D > 0)
+      return;
+
+   glDisable(GL_DEPTH_TEST);
+
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(0, 320, 240, 0, 0, 1);
+
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+}

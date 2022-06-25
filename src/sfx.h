@@ -11,6 +11,8 @@
 #ifndef _SFX_H_INCLUDED_
 #define _SFX_H_INCLUDED_
 
+#include <standard.h>
+
 /*
  * Card Types
  */
@@ -56,7 +58,6 @@ uint16 SfxInitReverb(uint16 wDelay);
 void SfxReverbOn(void);
 void SfxReverbOff(void);
 void SfxSetReverbDepth(uint8 bDepth);
-void SfxUnInitReverb(void);
 
 uint16 SfxSetMaxEffects(uint16 wNum);
 
@@ -73,10 +74,5 @@ void SfxStopAll();
 void SfxEffectVol(int16 wPlayId, uint8 bVolume);
 void SfxEffectPitch(int16 wPlayId, uint16 wPitch);
 void SfxEffectPan(int16 wPlayId, uint16 bPan);
-
-void SfxOn(void);
-void SfxOff(void);
-void SfxDoSfx(void);
-void SfxUnInit(uint8 bFlag);
 
 #endif /* _SFX_H_INCLUDED_ */

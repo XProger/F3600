@@ -19,7 +19,6 @@
 #include "sound.h"
 #include "global.h"
 #include "utils.h"
-#include "libgte.h"
 #include "collide.h"
 #include "skeleton.h"
 
@@ -503,35 +502,16 @@ int SetTrackAttributes(TrackSection *section,
       weaponGrid[noWeaponGrids].count = 0;
       weaponGrid[noWeaponGrids].attr = 0;
       weaponGrid[noWeaponGrids].attr |= WEAPON_GRID_LEFT;
+      weaponGrid[noWeaponGrids].cycleCount = randy();
       noWeaponGrids++;
    } else if(facePtr->flags & SPEED_UP)
    {
       facePtr->red = 0;
-      /*TODO TRACK SPEEDUP
-      facePtr->red = BluePal;
-      */
-      facePtr->green = BLUE_SPEEDUP;
-      facePtr->blue = 0;
+      facePtr->green = 0;
+      facePtr->blue = 255;
    }
 
-/*TODO
-#define TINT 1
-#if TINT
-   else if ((facePtr->flags & TRACK_BASE) &&  (trackNo == 7))
-   {
-      facePtr->red = DepthFadeTble[(256*(WHITE4_TRANSL-1))+facePtr->red];
-   }
-#endif
-*/
    facePtr++;
-/*TODO
-#if TINT
-   if ((facePtr->flags & TRACK_BASE) && (trackNo == 7))
-   {
-      facePtr->red = DepthFadeTble[(256*(WHITE4_TRANSL-1))+facePtr->red];
-   }
-#endif
-*/
 
    if(facePtr->flags & WEAPON_GRID_RIGHT)
    {
@@ -550,11 +530,8 @@ int SetTrackAttributes(TrackSection *section,
    else if(facePtr->flags & SPEED_UP)
    {
       facePtr->red = 0;
-      /*TODO track speedup
-      facePtr->red = BluePal;
-      */
-      facePtr->green = BLUE_SPEEDUP;
-      facePtr->blue = 0;
+      facePtr->green = 0;
+      facePtr->blue = 255;
    }
 
 

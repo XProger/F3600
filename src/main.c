@@ -1,5 +1,3 @@
-//#include <libspu.h>
-#include "wipesrc\psx26\include\kernel.h"
 #include "standard.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,27 +23,15 @@
 #include "hiscores.h"
 #include "hud.h"
 #include "global.h"
-#include "ajs.h"
-#include "drawot.h"
 #include "decl.h"
-#include "libgte.h"
 #include "sfx.h"
 #include "ayrace.h"
 #include "card.h"
 #include "utils.h"
+#include "error.h"
 
 extern short trackNum; //SJR
 extern int menuTexturesIn;
-
-short    drawenv_tpage = 5;      // PCwipeout
-short    BG_Colour = 0;  // PCwipeout
-
-extern TimData *JJSLoad16BitTexture(char *filename, char location);
-
-
-/*
- * for 2 meg mode we need this in the obj file:: 2mbyte.obj
- */
 
 char      copyRight[/*24*/] = "copyright_Psygnosis_1995";
 
@@ -54,30 +40,11 @@ char      trackdir[21];
 
 extern char     andybodge;
 
-long      DrawDistance = HIGH_DISTANCE;
-TimData  *titleScreen;
-
-void reloadStartScr(void)
-{
-   int i;
-   titleScreen = JJSLoad16BitTexture("wipeout\\textures\\wiptitle.tim", VRAM);
-   inmenu = 1;
-   for (i = 0; i < 2; i++)
-   {
-      ClearOTagR(OT[CurrentScreen], OT_SIZE);
-      Swap();
-   }
-   inmenu = 1;
-   for (i = 0; i < 2; i++)
-   {
-      CentreText("PRESS ENTER", text_data(0, 200, 8), RedText);
-      Swap();
-   }
-}
-
+Texture*  titleScreen;
 
 extern int TOut;
 
+void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, int clut, int page);
 
 void oldmain(void)
 {
@@ -91,40 +58,11 @@ void oldmain(void)
    static int      firstTime = 1;
 
 
-   heap = (DynamicHeap *) malloc(HEAP_SIZE * 1024);
-   if (heap == NULL)
-   {
-      printf("Not Enough Memory Available (1)\n");
-      exit(-1);
-   }
-   InitDynamicMem(heap, HEAP_SIZE * 1024);
-
-   CreateSineTable();
-
-   Set_Device(0);   // PCwipeout
-
-   InitSystem();
-
-   InitController();
-
-   InitialiseAmbientColour();
-   InitialiseColourMatrix();
-   InitialiseLightMatrix();
-
-   InitSonyDisplay();
-
    InitGameDisplay();
-   titleScreen = JJSLoad16BitTexture("wipeout\\textures\\wiptitle.tim", SCREEN);
+ 
+   titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim", 0);
    inmenu = 1;
-   for (i = 0; i < 2; i++)
-   {
-      ClearOTagR(OT[CurrentScreen], OT_SIZE);
-      Swap();
-   }
-   inmenu = 1;
-   for (i = 0; i < 2; i++)
-      Swap();
-
+ 
    InitSpuSound();
 
 
@@ -135,8 +73,6 @@ void oldmain(void)
 
    TextureTableCount = 0;
    InitText();
-
-   srand(0);
 
    InitGameData(&gameData);
 
@@ -162,17 +98,12 @@ void oldmain(void)
    trackNum = 16; //SJR
    if ((gameData.gameType != CHAMPIONSHIP) || (mode == ATTRACT))
    {
-      titleScreen = JJSLoad16BitTexture("wipeout\\textures\\wiptitle.tim", VRAM);
       inmenu = 1;
       for (i = 0; i < 2; i++)
       {
-         ClearOTagR(OT[CurrentScreen], OT_SIZE);
-         Swap();
-      }
-      inmenu = 1;
-      for (i = 0; i < 2; i++)
-      {
-         CentreText("PRESS ENTER", text_data(0, 200, 8), RedText);
+         /*TODO title screen*/
+         //AddGlyph(0, 0, 320, 240, titleScreen->u0, titleScreen->v0, titleScreen->cba);
+         CentreText("PRESS START", text_data(0, 200, 8), RedText);
          Swap();
       }
 
@@ -183,9 +114,6 @@ void oldmain(void)
          opad = pad;
          pad = gPad;
          xpad = (pad ^ opad) & pad;
-
-         // ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
-         textPrim = CurrentScreen * 300;
 
          titleTimeout++;
 
@@ -215,12 +143,6 @@ void oldmain(void)
       }
    }
 
-   for (i = 0; i < 2; i++)
-   {
-      ClearOTagR(OT[CurrentScreen], OT_SIZE);
-      Swap();
-   }
-
    gameType = SINGLE;
 
    gameData.Lives = 3;
@@ -239,15 +161,8 @@ void oldmain(void)
 
    while (1)
    {
-      for (i = 0; i < 2; i++)
-      {
-         ClearOTagR(OT[CurrentScreen], OT_SIZE);
-         Swap();
-      }
-
       if ((gameData.gameType != CHAMPIONSHIP) && (mode != ATTRACT))
       {
-         SetDrawDistance(HIGH_DISTANCE);
          MenuControl(&(gameData), &mode, timeout);
       }
 
@@ -260,8 +175,6 @@ void oldmain(void)
          firstTime = 0;
          andybodge = 1;
       }
-
-      SetDrawDistance(DrawDistance);
 
       if (mode == ATTRACT)
       {
@@ -309,7 +222,9 @@ void oldmain(void)
       {
          trackNo = gameData.actTrackNum;
       }
-      CdControlB(CdlStop, 0, 0);
+
+      /*TODO audio*/
+      //CdControlB(CdlStop, 0, 0);
 
 
       /* load screen stuff */
@@ -325,21 +240,15 @@ void oldmain(void)
       }
       strcat(loadPath, loadNo);
       strcat(loadPath, ".tim");
-      ClearOTagR(OT[CurrentScreen], OT_SIZE);
       JJSLoad16BitTexture(loadPath, SCREEN);
       inmenu = 0;
       for (i = 0; i < 2; i++)
       {
-         ClearOTagR(OT[CurrentScreen], OT_SIZE);
          Swap();
       }
       inmenu = 1;
       for (i = 0; i < 2; i++)
          Swap();
-
-      /*
-       * VsyncStart( loadPath );
-       */
 
       menuTexturesIn = 0;
       trackNum = gameData.trackNum; //for restoring - SJR
@@ -435,8 +344,6 @@ void oldmain(void)
       // inmenu=1;
       mode = INTERACTIVE;
 
-      InitDynamicMem(heap, HEAP_SIZE * 1024); /* The left over bit in
-                      * the middle */
       TextureTableCount = 0;
       InitText();
    }

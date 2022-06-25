@@ -27,16 +27,13 @@
 #include "cone.h"
 #include "ttf.h"
 #include "hud.h"
-#include "trackasm.h"
 #include "dynam.h"
 #include "utils.h"
-#include "libgte.h"
-#include "andyscn.h"
 #include "init.h"
 #include "utils.h"
 
 
-extern TrackCamera      ctrlcamera;
+extern TrackCamera ctrlcamera;
 
 short startLinePos[16] =   {  27,      /* NULL        */
                         27,      /* V - TerrorMax  */
@@ -144,15 +141,15 @@ void DrawShips(ShipData *shipIndex, Object** shipShapes, int camShip, TrackCamer
             if(raceType == HEAD_TO_HEAD)
             {
                if((i == serialShip) || (i == ownShip))
-                  DrawObjectAsm( obj, ctrlcamera.camPos, 0, 1);
+                  renderObject( obj, 0 );
             }
             else if(raceType == TIME_TRIAL)
             {
                if((i == ownShip))
-                  DrawObjectAsm( obj, ctrlcamera.camPos, 0, 1);
+                  renderObject( obj, 0 );
             }
             else
-               DrawObjectAsm( obj, ctrlcamera.camPos, 0, 1);
+               renderObject( obj, 0 );
             }
       }
       else
@@ -161,8 +158,6 @@ void DrawShips(ShipData *shipIndex, Object** shipShapes, int camShip, TrackCamer
       }
    }
 }
-
-
 
 void loadShipData(TrackSection* section, ShipData *shipIndex, Object** shipShapes, Skeleton* camPos)
 {
@@ -331,7 +326,6 @@ void initShipData(TrackSection* section, ShipData *shipIndex,ConfigData *gameDat
 #endif
 
    crossedLine = 0;
-   crossedLineSerial = 0;
    if (gameType == SINGLE)
    {
       if(((gameData->gameType == CHAMPIONSHIP) && (gameData->trackNum == 1))   ||
@@ -560,21 +554,13 @@ void initShipData(TrackSection* section, ShipData *shipIndex,ConfigData *gameDat
 
             if(gameData->Class == 0)
             {
-               if(slowCraft == 1)
-                  shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1] >> 1;
-               else
-                  shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1];
-
+               shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1];
                shipIndex[i].remoteThrustMag = RThrustMagBeg[position-1];
                shipIndex[i].fightBack =       fightBackBeg[position-1];
             }
             else
             {
-               if(slowCraft == 1)
-                  shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1] >> 1;
-               else
-                  shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1];
-
+               shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1];
                shipIndex[i].remoteThrustMag = RThrustMagPro[position-1];
                shipIndex[i].fightBack =       fightBackPro[position-1];
             }
@@ -611,21 +597,13 @@ void initShipData(TrackSection* section, ShipData *shipIndex,ConfigData *gameDat
 
             if(gameData->Class == 0)
             {
-               if(slowCraft == 1)
-                  shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1] >> 1;
-               else
-                  shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1];
-
+               shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1];
                shipIndex[i].remoteThrustMag = RThrustMagBeg[position-1];
                shipIndex[i].fightBack =       fightBackBeg[position-1];
             }
             else
             {
-               if(slowCraft == 1)
-                  shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1] >> 1;
-               else
-                  shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1];
-
+               shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1];
                shipIndex[i].remoteThrustMag = RThrustMagPro[position-1];
                shipIndex[i].fightBack =       fightBackPro[position-1];
             }
@@ -661,20 +639,13 @@ void initShipData(TrackSection* section, ShipData *shipIndex,ConfigData *gameDat
             shipIndex[i].position = position;
             if(gameData->Class == 0)
             {
-               if(slowCraft == 1)
-                  shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1] >> 1;
-               else
-                  shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1];
+               shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position-1];
                shipIndex[i].remoteThrustMag = RThrustMagBeg[position-1];
                shipIndex[i].fightBack =       fightBackBeg[position-1];
             }
             else
             {
-               if(slowCraft == 1)
-                  shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1] >> 1;
-               else
-                  shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1];
-
+               shipIndex[i].remoteMaxThrust = RMaxThrustPro[position-1];
                shipIndex[i].remoteThrustMag = RThrustMagPro[position-1];
                shipIndex[i].fightBack =       fightBackPro[position-1];
             }

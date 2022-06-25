@@ -32,27 +32,22 @@ TexTemplate* LoadTtfFile( char *file, short *count, short libraryTextures )
    length = FileLength( file );
    if ( length <= 0 )
    {
-      sprintf( errorString, "Ttf.c:LoadTtfFile: Ttf file %s not found\n", file );
-      Error( errorString, Fatal );
+      Error("Ttf.c:LoadTtfFile: Ttf file %s not found\n", file);
    }
 
-   ttfFile = DAlloc( heap, length + 32 );
+   ttfFile = malloc( length + 32 );
 
    if ( !ttfFile )
    {
    /* Memory Allocation Failure! */
-
-      sprintf( "Ttf.c:LoadTtfFile: Failed to allocate memory for file %s\n", file );
-      Error( errorString, Fatal );
+      Error("Ttf.c:LoadTtfFile: Failed to allocate memory for file %s\n", file);
    }
 
    if ( LoadFile( file, ttfFile ) != length )
    {
    /* File Error! */
-
-      sprintf( errorString, "Ttf.c:LoadTtfFile: Failed to load file %s\n", file );
-      DFree( heap, ttfFile );
-      Error( errorString, Fatal );
+      free( ttfFile );
+      Error("Ttf.c:LoadTtfFile: Failed to load file %s\n", file);
    }
 
    tex = ( short* ) ttfFile;

@@ -21,8 +21,6 @@
 #include "draw.h"
 #include "global.h"
 #include "ttf.h"
-#include "trackasm.h"
-#include "asmtrk.h"
 #include "effects.h"
 #include "scene.h"
 #include "dynam.h"
@@ -137,7 +135,7 @@ void CheckVersion( void )
    {
       if ( section->version != TrackVersion )
       {
-         Error( "Convert track with track10", Fatal );
+         Error( "Convert track with track10" );
       }
       section += 1;
    }
@@ -197,24 +195,20 @@ void InitVertices( char *file )
    length = FileLength( file );
    if ( length <= 0 )
    {
-      sprintf( errorString, "Track.c:InitVertices: file %s not found\n", file );
-      Error( errorString, Fatal );
+      Error("Track.c:InitVertices: file %s not found\n", file);
    }
 
-   track->vertices = ( VECTOR* )DAlloc( heap, length + 32 );
+   track->vertices = ( VECTOR* )malloc( length + 32 );
    if( !track->vertices )
    {
-      Error( "Track.c:InitVertices: Failed to allocate memory for track vertices", Fatal );
+      Error( "Track.c:InitVertices: Failed to allocate memory for track vertices" );
    }
 
    if ( LoadFile( file, (Ptr)track->vertices ) != length )
    {
-      sprintf( errorString, "Track.c:InitVertices(): Failed to load file %s\n", file );
-      Error( errorString, Fatal );
+      Error("Track.c:InitVertices(): Failed to load file %s\n", file);
    }
-#if 0
-   printf( "VERTICES = %d\n", length / sizeof( VECTOR ) );
-#endif
+
    track->vertexCount = length / sizeof( VECTOR );
 
    IntelVertex( );
@@ -230,24 +224,19 @@ void InitFaces( char *file )
    length = FileLength( file );
    if ( length <= 0 )
    {
-      sprintf( errorString, "Track.c:InitFaces: file %s not found\n", file );
-      Error( errorString, Fatal );
+      Error("Track.c:InitFaces: file %s not found\n", file);
    }
 
-   track->faces = ( Face* )DAlloc( heap, length + 32 );
+   track->faces = ( Face* )malloc( length + 32 );
    if( !track->faces )
    {
-      Error( "Track.c:InitFaces: Failed to allocate memory for track faces", Fatal );
+      Error("Track.c:InitFaces: Failed to allocate memory for track faces");
    }
 
    if ( LoadFile( file, (Ptr)track->faces ) != length )
    {
-      sprintf( errorString, "Track.c:InitFaces(): Failed to load file %s\n", file );
-      Error( errorString, Fatal );
+      Error("Track.c:InitFaces(): Failed to load file %s\n", file);
    }
-#if 0
-   printf( "FACES = %d\n", length / sizeof( Face ) );
-#endif
    track->faceCount = length / sizeof( Face );
 
    IntelFace( );
@@ -264,24 +253,19 @@ void InitSections( char *file )
    length = FileLength( file );
    if ( length <= 0 )
    {
-      sprintf( errorString, "Track.c:InitSections: file %s not found\n", file );
-      Error( errorString, Fatal );
+      Error("Track.c:InitSections: file %s not found\n", file);
    }
 
-   track->sections = ( TrackSection* )DAlloc( heap, length + 32 );
+   track->sections = ( TrackSection* )malloc( length + 32 );
    if( !track->sections )
    {
-      Error( "Track.c:InitSections: Failed to allocate memory for track sections", Fatal );
+      Error("Track.c:InitSections: Failed to allocate memory for track sections");
    }
 
    if ( LoadFile( file, (Ptr)track->sections ) != length )
    {
-      sprintf( errorString, "Track.c:InitSections(): Failed to load file %s\n", file );
-      Error( errorString, Fatal );
+      Error("Track.c:InitSections(): Failed to load file %s\n", file);
    }
-#if 0
-   printf("SECTIONS = %d\n", length / sizeof( TrackSection ) );
-#endif
    track->sectionCount = length / sizeof(TrackSection);
 
 
@@ -313,29 +297,24 @@ void InitViewList( char *file )
    length = FileLength( file );
    if ( length <= 0 )
    {
-      sprintf( errorString, "Track.c:InitViewList: file %s not found\n", file );
-      Error( errorString, Fatal );
+      Error("Track.c:InitViewList: file %s not found\n", file);
    }
 
-   track->viewList = ( short* )DAlloc( heap, length + 32 );
+   track->viewList = ( short* )malloc( length + 32 );
    if( !track->viewList )
    {
-      Error( "Track.c:InitViewList: Failed to allocate memory for view list", Fatal );
+      Error("Track.c:InitViewList: Failed to allocate memory for view list");
    }
 
    if ( LoadFile( file, (Ptr)track->viewList ) != length )
    {
-      sprintf( errorString, "Track.c:InitViewList(): Failed to load file %s\n", file );
-      Error( errorString, Fatal );
+      Error("Track.c:InitViewList(): Failed to load file %s\n", file);
    }
-
-
 
    for ( i=0; i<length / 2; i++ )
    {
       IntelShort( &track->viewList[ i ] );
    }
-
 
    section = track->sections;
    total = 0;
@@ -367,13 +346,10 @@ void InitViewList( char *file )
       printf( "\n" );
       printf( "total  %d\n", total );
       printf( "length %d\n", length );
-      Error( "track.c::InitViewList():problem with view list", Fatal );
+      Error( "track.c::InitViewList():problem with view list" );
    }
 
 }
-
-
-
 
 
 TrackSection* NextIndexSection( TrackSection* section )
@@ -401,253 +377,3 @@ TrackSection* PrevIndexSection( TrackSection* section )
 
    return( section );
 }
-
-void DrawNewTrack( TrackCamera *camera, AutoMeshData *autoMesh )
-{
-   long           beforeVcount;
-   short          i, j;
-   short          loCount = 0;
-   short          medCount = 0;
-   short          hiCount = 0;
-   short          dir;
-   short          drawTrack;
-
-   short          index;
-   TrackSection   *trackPiece;
-
-   long           before;
-
-   static ushort  pad;
-   ushort         opad, xpad;
-   static short   cracks = 1;
-
-   autoMesh->triCount = 0;
-   autoMesh->quadCount = 0;
-   autoMesh->attemptedAutos = 0;
-
-   AsmNextFrame( );
-
-   dir = TrackDirection(camera);
-
-   if ( dir == ShipForwards )
-   {
-      for ( i=0; i<camera->section->northViewCount[ 2 ]; i+=2 )
-      {
-         AsmTransformTrackLo  // PCwipeout
-         (
-            track->sections + camera->section->northViewSection[ 2 ][ i ],
-            camera->camPos,
-            camera->section->northViewSection[ 2 ][ i + 1 ],
-         dir
-         );
-         loCount += camera->section->northViewSection[ 2 ][ i + 1 ];
-      }
-
-      for ( i=0; i<camera->section->northViewCount[ 1 ]; i+=2 )
-      {
-         AsmTransformTrackMed       // PCwipeout
-         (
-            track->sections + camera->section->northViewSection[ 1 ][ i ],
-            camera->camPos,
-            camera->section->northViewSection[ 1 ][ i + 1 ],
-         dir
-         );
-         medCount += camera->section->northViewSection[ 1 ][ i + 1 ];
-      }
-
-      for ( i=0; i<camera->section->northViewCount[ 0 ]; i+=2 )
-      {
-         AsmTransformTrackHi // PCwipeout
-         (
-            track->sections + camera->section->northViewSection[ 0 ][ i ],
-            camera->camPos,
-            autoMesh,
-            camera->section->northViewSection[ 0 ][ i + 1 ],
-         dir
-         );
-
-         hiCount += camera->section->northViewSection[ 0 ][ i + 1 ];
-      }
-
-   }
-
-   else if ( dir == ShipBackwards )
-   {
-      for ( i=0; i<camera->section->southViewCount[ 2 ]; i+=2 )
-      {
-         AsmTransformTrackLo  // PCwipeout
-         (
-            track->sections + camera->section->southViewSection[ 2 ][ i ],
-            camera->camPos,
-            camera->section->southViewSection[ 2 ][ i + 1 ],
-         dir
-         );
-         loCount += camera->section->southViewSection[ 2 ][ i + 1 ];
-      }
-
-      for ( i=0; i<camera->section->southViewCount[ 1 ]; i+=2 )
-      {
-        AsmTransformTrackMed // PCwipeout
-         (
-            track->sections + camera->section->southViewSection[ 1 ][ i ],
-            camera->camPos,
-            camera->section->southViewSection[ 1 ][ i + 1 ],
-         dir
-         );
-         medCount += camera->section->southViewSection[ 1 ][ i + 1 ];
-      }
-
-      for ( i=0; i<camera->section->southViewCount[ 0 ]; i+=2 )
-      {
-        AsmTransformTrackHi // PCwipeout
-         (
-            track->sections + camera->section->southViewSection[ 0 ][ i ],
-            camera->camPos,
-            autoMesh,
-            camera->section->southViewSection[ 0 ][ i + 1 ],
-         dir
-         );
-         hiCount += camera->section->southViewSection[ 0 ][ i + 1 ];
-      }
-
-   }
-   else if ( dir == ShipRight )
-   {
-      for ( i=0; i<camera->section->westViewCount[ 2 ]; i+=2 )
-      {
-
-         AsmTransformTrackLo  // PCwipeout
-         (
-            track->sections + camera->section->westViewSection[ 2 ][ i ],
-            camera->camPos,
-            camera->section->westViewSection[ 2 ][ i + 1 ],
-         dir
-         );
-         loCount += camera->section->westViewSection[ 2 ][ i + 1 ];
-      }
-
-      for ( i=0; i<camera->section->westViewCount[ 1 ]; i+=2 )
-      {
-         AsmTransformTrackMed // PCwipeout
-         (
-            track->sections + camera->section->westViewSection[ 1 ][ i ],
-            camera->camPos,
-            camera->section->westViewSection[ 1 ][ i + 1 ],
-         dir
-         );
-
-         medCount += camera->section->westViewSection[ 1 ][ i + 1 ];
-      }
-
-      for ( i=0; i<camera->section->westViewCount[ 0 ]; i+=2 )
-      {
-        AsmTransformTrackHi // PCwipeout
-         (
-            track->sections + camera->section->westViewSection[ 0 ][ i ],
-            camera->camPos,
-            autoMesh,
-            camera->section->westViewSection[ 0 ][ i + 1 ],
-         dir
-         );
-
-
-         hiCount += camera->section->westViewSection[ 0 ][ i + 1 ];
-      }
-   }
-   else if ( dir == ShipLeft )
-   {
-       for ( i=0; i<camera->section->eastViewCount[ 2 ]; i+=2 )
-      {
-
-        AsmTransformTrackLo // PCwipeout
-         (
-            track->sections + camera->section->eastViewSection[ 2 ][ i ],
-            camera->camPos,
-            camera->section->eastViewSection[ 2 ][ i + 1 ],
-         dir
-         );
-
-         loCount += camera->section->eastViewSection[ 2 ][ i + 1 ];
-      }
-
-      for ( i=0; i<camera->section->eastViewCount[ 1 ]; i+=2 )
-      {
-        AsmTransformTrackMed // PCwipeout
-         (
-            track->sections + camera->section->eastViewSection[ 1 ][ i ],
-            camera->camPos,
-            camera->section->eastViewSection[ 1 ][ i + 1 ],
-         dir
-         );
-
-         medCount += camera->section->eastViewSection[ 1 ][ i + 1 ];
-      }
-
-      for ( i=0; i<camera->section->eastViewCount[ 0 ]; i+=2 )
-      {
-         AsmTransformTrackHi // PCwipeout
-         (
-            track->sections + camera->section->eastViewSection[ 0 ][ i ],
-            camera->camPos,
-            autoMesh,
-            camera->section->eastViewSection[ 0 ][ i + 1 ],
-         dir
-        );
-         hiCount += camera->section->eastViewSection[ 0 ][ i + 1 ];
-      }
-   }
-}
-
-
-
-void DrawAllTrack( TrackCamera *camera, AutoMeshData *autoMesh )
-{
-   short          i, j;
-   short          loCount = 0;
-   short          medCount = 0;
-   short          hiCount = 0;
-
-   autoMesh->triCount = 0;
-   autoMesh->quadCount = 0;
-   autoMesh->attemptedAutos = 0;
-   AsmNextFrame( );
-
-   for ( i=0; i<camera->section->allViewCount[ 2 ]; i+=2 )
-   {
-      AsmTransformTrackLo
-      (
-         track->sections + camera->section->allViewSection[ 2 ][ i ],
-         camera->camPos,
-         camera->section->allViewSection[ 2 ][ i + 1 ],
-       0
-      );
-
-     loCount += camera->section->allViewSection[ 2 ][ i + 1 ];
-   }
-
-   for ( i=0; i<camera->section->allViewCount[ 1 ]; i+=2 )
-   {
-      AsmTransformTrackMed
-      (
-         track->sections + camera->section->allViewSection[ 1 ][ i ],
-         camera->camPos,
-         camera->section->allViewSection[ 1 ][ i + 1 ],
-       0
-      );
-     medCount += camera->section->allViewSection[ 1 ][ i + 1 ];
-   }
-
-   for ( i=0; i<camera->section->allViewCount[ 0 ]; i+=2 )
-   {
-      AsmTransformTrackHi
-      (
-         track->sections + camera->section->allViewSection[ 0 ][ i ],
-         camera->camPos,
-         autoMesh,
-         camera->section->allViewSection[ 0 ][ i + 1 ],
-       0
-      );
-     hiCount += camera->section->allViewSection[ 0 ][ i + 1 ];
-   }
-}
-

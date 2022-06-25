@@ -32,9 +32,9 @@ typedef struct SVector
 /* Face flags */
 #define  TRACK_BASE        1
 #define  WEAPON_GRID_LEFT  2
-#define  FlipTexture       4
+#define  FLIP_TEXTURE      4
 #define  WEAPON_GRID_RIGHT 8
-#define  Start_Grid        16
+#define  START_GRID        16
 #define  SPEED_UP          32
 
 typedef struct Face
@@ -138,17 +138,6 @@ typedef struct TrackCamera
 
 #define  MaxAutos       256
 
-typedef struct AutoMeshData
-{
-   PolyFT4                 quad[ MaxAutos ][ 2 ];
-   PolyFT3                 tri[ MaxAutos ][ 2 ];
-   short                   quadCount;              /* no. of automeshed quads added */
-   short                   triCount;               /* no. of automeshed tris added */
-   short                   attemptedAutos;         /* num of times automesh is called */
-   short                   colourMeshed;           /* colours on/off */
-   short                   autoMeshedOn;           /* automesh on/off */
-} AutoMeshData;
-
 void IntelVertex( void );
 void IntelFace( void );
 void IntelSection( void );
@@ -165,7 +154,3 @@ void InitSections( char *file );
 
 TrackSection* NextIndexSection( TrackSection* section );
 TrackSection* PrevIndexSection( TrackSection* section );
-
-void DrawNewTrack( TrackCamera *camera, AutoMeshData *autoMesh );
-void DrawAllTrack( TrackCamera *camera, AutoMeshData *autoMesh );
-

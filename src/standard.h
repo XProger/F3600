@@ -1,14 +1,37 @@
 
 /* (C) Psygnosis 1994. By Jason Carl Denton
 */
+#ifndef _STANDARD_H_INCLUDED_
+#define _STANDARD_H_INCLUDED_
 
-#include "wipesrc\psx26\include\sys\types.h"
-#include "wipesrc\psx26\include\libgte.h"
-#include "wipesrc\psx26\include\libgpu.h"
-#include "wipesrc\psx26\include\libsn.h"
-#include "wipesrc\psx26\include\libetc.h"
-#include "wipesrc\psx26\include\libcd.h"
-#include "wipesrc\psx26\include\libspu.h"
+typedef	unsigned char	u_char;
+typedef	unsigned short	u_short;
+typedef	unsigned int	u_int;
+typedef	unsigned long	u_long;
+typedef	unsigned short	ushort;  /* sys III compat */
+
+typedef struct {
+   short m[3][3]; /* 3x3 rotation matrix */
+   long  t[3];  /* transfer vector */
+} MATRIX;
+
+typedef struct {  /* long word type 3D vector */
+   long  vx, vy;
+   long  vz, pad;
+} VECTOR;
+
+typedef struct {  /* short word type 3D vector */
+   short	vx, vy;
+   short	vz, pad;
+} SVECTOR;
+
+typedef struct {  /* color type vector */
+   u_char r, g, b, cd;
+} CVECTOR;
+
+typedef struct {  /* 2D short vector */
+   short vx, vy;
+} DVECTOR;
 
 
 #define  SLAVE       1
@@ -21,9 +44,16 @@
 #define  QUIT     0x33
 #define  NULLDATA 0x34
 
-typedef unsigned char uchar;
-typedef unsigned long ulong;
-typedef unsigned int uint;
+typedef unsigned char      uchar;
+typedef unsigned long      ulong;
+typedef unsigned int       uint;
+
+typedef signed char        int8;
+typedef unsigned char      uint8;
+typedef short int          int16;
+typedef unsigned short int uint16;
+typedef int                int32;
+typedef unsigned int       uint32;
 
 typedef char* Ptr;
 
@@ -66,15 +96,27 @@ void  changeScreen(void);
 void  setRenderBegin(void);
 void  setRenderEnd(void);
 int   ProcessMessages(void);
-void  JJSDrawPolyF3(POLY_F4* p);
-void  JJSDrawPolyFT3(POLY_FT3* p);
-void  JJSDrawPolyG3(POLY_G3* p);
-void  JJSDrawPolyGT3(POLY_GT3* p);
-void  JJSDrawPolyGT4(POLY_GT4* p);
-void  JJSDrawPolyF4(POLY_F4* p);
-void  JJSDrawPolyFT4(POLY_FT4* p);
-void  JJSDrawPolyG4(POLY_G4* p);
 
 unsigned short GetKeyNoBlock();
 
 void osJoyVibrate(int index, int L, int R);
+
+typedef struct GRECT {
+   int x, y, w, h;
+} GRECT;
+
+typedef struct _clut
+{
+   unsigned short  red:5;
+   unsigned short  green:5;
+   unsigned short  blue:5;
+   unsigned short  trans:1;
+} CLUT;
+
+
+#define ShipForwards    1
+#define ShipBackwards   2
+#define ShipRight       4
+#define ShipLeft        8
+
+#endif

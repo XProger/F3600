@@ -23,7 +23,6 @@
 #include "card.h"
 #include "sound.h"
 #include "global.h"
-#include "ajs.h"
 #include "decl.h"
 #include "init.h"
 #include "scene.h"
@@ -74,247 +73,12 @@ int   modelHdg = 0 ;
 int   zoomInOut = 0 ;
 int   downUp = 0 ;
 Skeleton    *root ;
-/*TODO input mapping
-unsigned short Keycons[10];
-unsigned short NewOriginalKeyCodes[16]={0};
-unsigned short OriginalKeyCodes[16] =
-{
-   _Z_KEY,              // FrontLeftBottom   // left airbreak
-   _X_KEY,              // FrontRightBottom  // right airbreak
-   _F1_KEY,             // FrontRightTop     // Draw distance
-   _ESC_KEY,            // FrontLeftTop     
-   _TAB_KEY,            // Triangle          // change view
-   _LEFT_ALT_KEY,       // Circle            // shoot weapon
-   _LEFT_CTRL_KEY,      // Cross             // accelerate
-   _F2_KEY,             // Square            // Screen size
-   _ENTER_KEY,          // Select            // editor
-   _F3_KEY,             // Unused            // Resolution
-   _F4_KEY,             // Unused            // Sky
-   _P_KEY,              // Start             // pause
-   _UP_KEY,             // Up                // up
-   _RIGHT_KEY,          // Right             // right
-   _DOWN_KEY,           // Down              // down
-   _LEFT_KEY            // Left              // left
-};
-*/
 
-//POLY_FT4     buttons[18][2] ;
-SPRT     buttons[18][2] ;     // DLS
-Texture     *buttonTex[18] ;
-DR_MODE     drmode[18][2];          // DLS
-DR_MODE     drmode2[18][2];            // DLS
+Texture     *buttonTex[18];
 
 TimData *JJSLoad16BitTexture(char *filename, char location);
 extern char *GetCdTrackName(int no);
 char CheckKey(unsigned short code);
-
-
-char  *ScanCodes[89] =
-{
-   "        ",    // 0
-   "ESC     ",    // 1
-   "1       ",    // 2
-   "2       ",    // 3
-   "3       ",    // 4
-   "4       ",    // 5
-   "5       ",    // 6
-   "6       ",    // 7
-   "7       ",    // 8
-   "8       ",    // 9
-   "9       ",    // 10
-   "0       ",    // 11
-   "MINUS   ",    // 12
-   "EQUALS  ",    // 13
-   "BACKSPCE",    // 14
-   "TAB     ",    // 15
-   "Q       ",    // 16
-   "W       ",    // 17
-   "E       ",    // 18
-   "R       ",    // 19
-   "T       ",    // 20
-   "Y       ",    // 21
-   "U       ",    // 22
-   "I       ",    // 23
-   "O       ",    // 24
-   "P       ",    // 25
-   "L BRCKET",    // 26
-   "R BRCKET",    // 27
-   "ENTER   ",    // 28
-   "LFT CTRL",    // 29
-   "A       ",    // 30
-   "S       ",    // 31
-   "D       ",    // 32
-   "F       ",    // 33
-   "G       ",    // 34
-   "H       ",    // 35
-   "J       ",    // 36
-   "K       ",    // 37
-   "L       ",    // 38
-   "SEMICOLN",    // 39
-   "QUOTE   ",    // 40
-   "GRAVE   ",    // 41
-   "L SHIFT ",    // 42
-   "BACKSLSH",    // 43
-   "Z       ",    // 44
-   "X       ",    // 45
-   "C       ",    // 46
-   "V       ",    // 47
-   "B       ",    // 48
-   "N       ",    // 49
-   "M       ",    // 50
-   "COMMA   ",    // 51
-   "PERIOD  ",    // 52
-   "SLASH   ",    // 53
-   "R SHIFT ",    // 54
-   "ASTERISK",    // 55
-   "LEFT ALT",    // 56
-   "SPACE   ",    // 57
-   "CAPSLOCK",    // 58
-   "F1      ",    // 59
-   "F2      ",    // 60
-   "F3      ",    // 61
-   "F4      ",    // 62
-   "F5      ",    // 63
-   "F6      ",    // 64
-   "F7      ",    // 65
-   "F8      ",    // 66
-   "F9      ",    // 67
-   "F10     ",    // 68
-   "NUM LOCK",    // 69
-   "SCR LOCK",    // 70
-   "HOME    ",    // 71
-   "UP      ",    // 72
-   "PAGE UP ",    // 73
-   "XXXXXXXX",    // 74
-   "LEFT    ",    // 75
-   "KEYPAD 5",    // 76
-   "RIGHT   ",    // 77
-   "XXXXXXXX",    // 78
-   "END     ",    // 79
-   "DOWN    ",    // 80
-   "PAGE DN ",    // 81
-   "INSERT  ",    // 82
-   "DELETE  ",    // 83
-   "XXXXXXXX",    // 84
-   "XXXXXXXX",    // 85
-   "XXXXXXXX",    // 86
-   "F11     ",    // 87
-   "F12     "     // 88
-};
-
-char  ScanToAscii[110] =
-{
-   0,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   0,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   0,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   0,
-   1,
-   1,
-   32,            // SPACE
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   0,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   48,            // 0
-   49,            // 1
-   50,            // 2
-   51,            // 3
-   52,            // 4
-   53,            // 5
-   54,            // 6
-   55,            // 7
-   56,            // 8
-   57,            // 9
-   1,
-   1,
-   0,
-   1,
-   1,
-   1,
-   1,
-   65,            // A
-   66,            // B
-   67,            // C
-   68,            // D
-   69,            // E
-   70,            // F
-   71,            // G
-   72,            // H
-   73,            // I
-   74,            // J
-   75,            // K
-   76,            // L
-   77,            // M
-   78,            // N
-   79,            // O
-   80,            // P
-   81,            // Q
-   82,            // R
-   83,            // S
-   84,            // T
-   85,            // U
-   86,            // V
-   87,            // W
-   88,            // X
-   89,            // Y
-   90,            // Z
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   0,
-   1,
-   1,
-   1,
-   1,
-   1,
-   1,
-   43          // +
-};
-
-
 
 #define  NONE        0
 #define  LEFT        1
@@ -370,8 +134,6 @@ void reloadScr(void)
 
 void MenuControl (ConfigData *gameData, int *mode, int timeout)
 {
-
-   BlkFill*       clear[ 2 ];
    Menus          menuSystem[MAX_MENUS] ;
    int            currMenu= -2 ;
    int            currOption = 0 ;
@@ -405,8 +167,7 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
    char           loadGames [MAX_GAMES][9] ;
    char           loadFlag = 1 ;
    Texture        *copyrightSymbol ;
-   Texture        *trackTex [7] ;
-   POLY_FT4       trackPrims[2] ;
+   Texture        *trackTex [7];
    int            buttonPressed = 0 ;
    char           trackList[15] = {2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15} ;
    long           length;
@@ -509,28 +270,16 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
 
    selectData.menuSystem = &(menuSystem[0]) ;
 
-   clear[ 0 ] = BlockFill( 0, 0, 320, 240, 0x00, 0x00, 0x00 );
-   clear[ 1 ] = BlockFill( 0, 240, 320, 240, 0x00, 0x00, 0x00 );
+   /*TODO show copyright*/
+   renderClear();
 
-   ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
-
-   AddPrim( OT[ CurrentScreen ] + ( OT_SIZE - 1 ), ( ulong* ) clear[ CurrentScreen ] ); // PCwipeout
    UpdateNotes(NOT_PAUSED);
-   Swap () ;
+   Swap();
 
    currMenu = -2;
 
    menuScreen = JJSLoad16BitTexture ("wipeout\\textures\\wipeout1.tim", VRAM) ;
-   inmenu=0;
-   for( i = 0; i < 2; i++)
-   {
-      ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
-      Swap( );
-   }
    inmenu=1;
-
-   for( i = 0; i < 2; i++)
-      Swap( );
 
    andyTimeout=0;
    while (1)
@@ -548,9 +297,8 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
 
       UpdateNotes(NOT_PAUSED);
 
-      textPrim = CurrentScreen * 300 ;
-
-      ClearOTagR( OT[ CurrentScreen ], OT_SIZE );
+      /*TODO title screen backgound*/
+      renderClear();
 
       oldMenu = currMenu ;
       oldOption = currOption ;
@@ -580,6 +328,7 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
       if (menuSystem[currMenu].updateCount != 0 && menuSystem[currMenu].errorFlag == 0)
          menuSystem[currMenu].updateCount-- ;
 
+      /*TODO menu bg*/
       //    ShowMenuBackground (&(menuPrim[0]), &(menu1Prim[0]), menuScreen) ; // PCwipeout
 
       if (currMenu == -2)
@@ -591,7 +340,7 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
             CallMenuSelector (&(menuSystem[0]), &currMenu, &currOption, shipShapes, gameData, &musicPrims, &musicTex, &selectData, &(loadGames[0])) ;
 
          if (currMenu == TRACK_MENU)
-            DisplayWinLose (trackTex[currOption], &(trackPrims[0]), 96, 50, 74, MENU) ;
+            DisplayPicture(trackTex[currOption], 96, 50, 128, 74);
 
          if (((currMenu == SAVE_MENU) || (currMenu == LOAD_MENU)) && (selectData.formatCard == 1))
          {
@@ -713,21 +462,19 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
 
       if (currMenu == -1)
       {
-         DrawSync(0);
-         InitDynamicMem(heap, HEAP_SIZE*1024);     /* The left over bit in the middle */
          InitGameDisplay  ( ) ;
          gameData->exitMenu = 0 ;
          gameData->exit2Menu = 0 ;
 
          for(i = 0; i < 10; i++)
          {
-            //          VSync(0);
-            c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   /* Master volume (left) */
-            c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   /* Master volume (right) */
+            /*TODO audio*/
+            //c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   /* Master volume (left) */
+            //c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   /* Master volume (right) */
             UpdateNotes(NOT_PAUSED);
          }
 
-         CdControlB(CdlStop, 0, 0);
+         //CdControlB(CdlStop, 0, 0);
          return;
       }
    }
@@ -1656,6 +1403,17 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
          (*currOption) = 0 ;
    }
 
+   if (menuSystem[(*currMenu)].displayObject != 0)
+   {
+      if (*currMenu == PILOT_MENU)
+         (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, (gameData->team * 2) + *currOption, &swapDelay);
+      else
+         if (*currMenu == TEAM_MENU)
+            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption, &swapDelay);
+         else
+            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption, &swapDelay);
+   }
+
    if (menuSystem[(*currMenu)].numOptions != 0)
    {
 
@@ -1740,6 +1498,7 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
          textX = menuSystem[(*currMenu)].menuOptions[(*currOption)].textX ;
          textY = menuSystem[(*currMenu)].menuOptions[(*currOption)].textY ;
 
+         /*TODO options
          menuPointer = (Texture *)TextureTable [DRTEXT_8+1] ;
 
          SetPolyFT4(&(musicPrims->pointer));
@@ -1759,26 +1518,13 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
 
          setTPage(&(musicPrims->pointer),0,0,menuPointer->textureX,menuPointer->textureY);
          musicPrims->pointer.clut = menuPointer->cba;
-
+         */
    }
    else
    {
       if (menuSystem[(*currMenu)].displayMenu != 0)
          (menuSystem[(*currMenu)].displayMenu) (musicPrims, musicTex, selectData, &(loadGames[0]), gameData) ;
    }
-
-
-   if (menuSystem[(*currMenu)].displayObject != 0)
-   {
-      if (*currMenu == PILOT_MENU)
-         (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, (gameData->team * 2) + *currOption, &swapDelay) ;
-      else
-         if (*currMenu == TEAM_MENU)
-            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption , &swapDelay) ;
-         else
-            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption, &swapDelay) ;
-   }
-
 
    if (GetMenuKey(M_SELECT))
    {
@@ -1915,7 +1661,6 @@ void InitMenuSystem (Menus *menuSystem)
 
    /* Menu details */
 
-   /* menuSystem[1].displayObject = DrawAudio ;*/
    menuSystem[1].displayObject = 0 ;
    menuSystem[1].displayMenu = 0 ;
    menuSystem[1].prevMenu = PILOT_MENU ;
@@ -1949,15 +1694,6 @@ void InitMenuSystem (Menus *menuSystem)
    /******************/
    /***** Menu 4 *****/
    /******************/
-
-   /* Option details */
-
-   /* Menu details */
-
-   //menuSystem[3].numOptions = 0 ;
-   //menuSystem[3].displayObject = DrawAudio ;
-   //menuSystem[3].displayMenu = MusicVSfx ;
-   //menuSystem[3].prevMenu = OPTION_MENU ;
 
 
    /******************/
@@ -2405,8 +2141,9 @@ void InitMenuSystem (Menus *menuSystem)
 }
 
 
-
-void ShowMenuBackground (POLY_FT4 *menuPrim, POLY_FT4 *menu1Prim, TimData *timSize)
+/*TODO menu gb*/
+#if 0
+void ShowMenuBackground(POLY_FT4 *menuPrim, POLY_FT4 *menu1Prim, TimData *timSize)
 {
    // THIS IS BODGED SO THAT WE GET A SINGLE PIXEL WHERE STEVE CLIPS THEM 'CAUSE I COULDN'T FIX IT (CRAP HUH)
    char  tpageOffset = 32 ;
@@ -2437,6 +2174,7 @@ void ShowMenuBackground (POLY_FT4 *menuPrim, POLY_FT4 *menu1Prim, TimData *timSi
    menu1Prim[CurrentScreen].b0=BLACK_NOT_DRAWN;
    AddPrim(OT[CurrentScreen] + 4095, (ulong *) &(menu1Prim[CurrentScreen]));
 }
+#endif
 
 
 void LoadTexModel (Object** modelShapes, char *fileName)
@@ -2507,19 +2245,6 @@ void DrawMainMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay
    //hdg += 40;
    //}//SJR-msdos
 
-}
-
-void DrawAudio (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
-{
-   static hdg = 0;
-
-   //if ((*swapDelay) == 0)
-   //{
-   //SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[4]->skeleton),50,0,  500) ;
-   //SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[4]->skeleton),hdg,  0, 0);
-      //TransformStaticObjectHole(menuSystem[(*currMenu)].menuModel[4], NULL);
-   //}//SJR
-   hdg += 40;
 }
 
 void DrawTeams (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
@@ -2714,7 +2439,8 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
       DisplayButtons ( 30, 210, PSELECT) ;
       DisplayButtons ( 240, 210, PBACK) ;
    }
-
+   /*TODO audio settings*/
+#if 0
    /* Slider overlay knob */
    SetPolyFT4(&(musicPrims->sliderPrim));
    musicPrims->sliderPrim.r0=230; // PCwipeout
@@ -2758,7 +2484,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
    musicPrims->slidePrim.clut = musicTex->slideTex->cba;
 
    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(musicPrims->slidePrim) );
-
+#endif
    AddText (GetCdTrackName(gameData->oldCdTrack-1), text_data (130, 175, 8), RedText) ;
 
    if (selectData->optionNo == 0)
@@ -2774,8 +2500,10 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
             PlayNote(SHIELDS,0,-1);
             ShieldOn = 1;
          }
+         /*TODO audio
          chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
          chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
+         */
          gameData->oldSliderPos -- ;
          if (gameData->oldSliderPos < 0)
             gameData->oldSliderPos = 0 ;
@@ -2792,8 +2520,9 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
             PlayNote(SHIELDS,0,-1);
             ShieldOn = 1;
          }
-         chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
-         chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
+         /*TODO audio*/
+         //chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
+         //chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
          gameData->oldSliderPos ++ ;
          if (gameData->oldSliderPos > sliderRange)
             gameData->oldSliderPos = sliderRange ;
@@ -2811,14 +2540,18 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
             KillNote(SHIELDS);
             ShieldOn = 0;
          }
+         /*TODO audio
          chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0;
          chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0;
+         */
       }
 
       globalvol = 218 - gameData->oldSliderPos;
       CdSetVol(gameData->oldSliderPos);
-      c_attr.cd.volume.left  = 150 * gameData->oldSliderPos;   /* Master volume (left) */
-      c_attr.cd.volume.right  = 150 * gameData->oldSliderPos;  /* Master volume (right) */
+      /*TODO audio
+      c_attr.cd.volume.left  = 150 * gameData->oldSliderPos;   // Master volume (left)
+      c_attr.cd.volume.right  = 150 * gameData->oldSliderPos;  // Master volume (right)
+      */
    }
    else
    {
@@ -2848,7 +2581,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
             gameData->oldCdTrack = endtrack ;
 
 
-
+         /*TODO audio
          CdControlB(CdlStop, 0, 0);
 
          if(gameData->oldCdTrack != 1)
@@ -2862,6 +2595,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
             CurrTrkNo = (randy() % (endtrack - 1)) + 2;
             CdControlB(CdlPlay, 0, 0);
          }
+         */
       }
 
       if (xpad & IN_RIGHT)
@@ -2877,7 +2611,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
          if (gameData->oldCdTrack > endtrack)
             gameData->oldCdTrack = 1 ;
 
-
+         /*TODO audio
          CdControlB(CdlStop, 0, 0);
 
          if(gameData->oldCdTrack != 1)
@@ -2891,7 +2625,7 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
             CurrTrkNo = (randy() % (endtrack - 1)) + 2;
             CdControlB(CdlPlay, 0, 0);
          }
-
+         */
       }
    }
    else
@@ -2921,7 +2655,7 @@ void EnterLoadGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
 
    CentreText ("LOAD GAME FROM DISK", text_data (70, 20, 8), RedText) ;
    AddText ("ENTER NAME OF FILE", text_data (65, 60, 8), WhiteText) ;
-
+/*TODO wtf text input?
    if(TextEntry)
    {
       KeyCode = GetKeyNoBlock();
@@ -2957,7 +2691,7 @@ void EnterLoadGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
          TextPos = 0;
       }
    }
-
+*/
    AddText (LoadFilename, text_data (40, 80, 16), WhiteText) ;
 }
 
@@ -2973,7 +2707,7 @@ void EnterSaveGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
 
    CentreText ("SAVE GAME TO DISK", text_data (70, 20, 8), RedText) ;
    AddText ("ENTER NAME OF FILE", text_data (65, 60, 8), WhiteText) ;
-
+/*TODO wtf text input
    if(TextEntry)
    {
       KeyCode = GetKeyNoBlock();
@@ -3009,6 +2743,7 @@ void EnterSaveGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    }
 
    AddText (SaveFilename, text_data (40, 80, 16), WhiteText) ;
+*/
 }
 
 
@@ -3329,7 +3064,7 @@ void InitGameData (ConfigData *gameData)
    gameData->slaveWins = 0 ;
    gameData->prevLap = 0 ;
    gameData->gotoMenu = 0 ;
-   gameData->normpadPreset = 1 ;
+   gameData->normpadPreset = 0 ;
    gameData->cardPresent = 0 ;
    gameData->currSliderPos = 150 ;
    gameData->showBonusTrack = 0 ;
@@ -3514,16 +3249,17 @@ void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData
       {
          DisplayButtons ( 17, 153, LBRAKE) ; /* Left */
          DisplayButtons ( 237, 153, RBRAKE) ; /* Right */
-
+         /*TODO show controls*/
+#if 0
          switch (gameData->oldPadPreset)
          {
          case 0:  CentreText ("PRESET A", text_data (1,210, 8), RedText) ;
 
-            DrawLine (204, 63, 245, 39, musicPrims->lines, 0) ; /* Triangle */
-            DrawLine (216, 76, 251, 68, musicPrims->lines, 1) ; /* Circle */
-            DrawLine (204, 87, 230, 97, musicPrims->lines, 3) ; /* Cross */
-            DrawLine (210, 153, 252, 153, musicPrims->lines, 6) ; /* Right Top */
-            DrawLine (130, 167, 81, 163, musicPrims->lines, 4) ; /* Left Top */
+            DrawLine (204, 63, 245, 39, 0) ; /* Triangle */
+            DrawLine (216, 76, 251, 68, 1) ; /* Circle */
+            DrawLine (204, 87, 230, 97, 3) ; /* Cross */
+            DrawLine (210, 153, 252, 153, 6) ; /* Right Top */
+            DrawLine (130, 167, 81, 163, 4) ; /* Left Top */
 
             DisplayButtons ( 248, 39, VIEW) ; /* Triangle */
             DisplayButtons ( 254, 68, PADFIRE) ;  /* Circle */
@@ -3533,11 +3269,11 @@ void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData
 
          case 1:  CentreText ("PRESET B", text_data (1,210, 8), RedText) ;
 
-            DrawLine (204, 63, 245, 39, musicPrims->lines, 0) ; /* Triangle */
-            DrawLine (204, 87, 230, 97, musicPrims->lines, 3) ; /* Cross */
-            DrawLine (192, 75, 132, 113, musicPrims->lines, 2) ; /* Square */
-            DrawLine (210, 153, 252, 153, musicPrims->lines, 6) ; /* Right Top */
-            DrawLine (130, 167, 81, 163, musicPrims->lines, 4) ; /* Left Top */
+            DrawLine (204, 63, 245, 39, 0) ; /* Triangle */
+            DrawLine (204, 87, 230, 97, 3) ; /* Cross */
+            DrawLine (192, 75, 132, 113, 2) ; /* Square */
+            DrawLine (210, 153, 252, 153, 6) ; /* Right Top */
+            DrawLine (130, 167, 81, 163, 4) ; /* Left Top */
 
             DisplayButtons ( 132, 117, PADFIRE) ; /* Square */
             DisplayButtons ( 234, 97, THRUST) ; /* Cross */
@@ -3547,11 +3283,11 @@ void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData
 
          case 2:  CentreText ("PRESET C", text_data (1,210, 8), RedText) ;
 
-            DrawLine (204, 87, 230, 97, musicPrims->lines, 3) ; /* Cross */
-            DrawLine (210, 153, 252, 153, musicPrims->lines, 6) ; /* Right Top */
-            DrawLine (130, 167, 81, 163, musicPrims->lines, 4) ; /* Left Top */
-            DrawLine (130, 183, 81, 185, musicPrims->lines, 5) ; /* Left Bottom */
-            DrawLine (214, 168, 252, 185, musicPrims->lines, 7) ; /* Right Bottom */
+            DrawLine (204, 87, 230, 97, 3) ; /* Cross */
+            DrawLine (210, 153, 252, 153, 6) ; /* Right Top */
+            DrawLine (130, 167, 81, 163, 4) ; /* Left Top */
+            DrawLine (130, 183, 81, 185, 5) ; /* Left Bottom */
+            DrawLine (214, 168, 252, 185, 7) ; /* Right Bottom */
 
             DisplayButtons ( 234, 97, THRUST) ; /* Cross */
             DisplayButtons ( 22, 185, VIEW) ;  /* Circle */
@@ -3560,11 +3296,11 @@ void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData
 
          case 3:  CentreText ("PRESET D", text_data (1,210, 8), RedText) ;
 
-            DrawLine (216, 76, 251, 68, musicPrims->lines, 1) ; /* Circle */
-            DrawLine (192, 75, 132, 113, musicPrims->lines, 2) ; /* Square */
-            DrawLine (204, 87, 230, 97, musicPrims->lines, 3) ; /* Cross */
-            DrawLine (210, 153, 252, 153, musicPrims->lines, 6) ; /* Right Top */
-            DrawLine (130, 167, 81, 163, musicPrims->lines, 4) ; /* Left Top */
+            DrawLine (216, 76, 251, 68, 1) ; /* Circle */
+            DrawLine (192, 75, 132, 113, 2) ; /* Square */
+            DrawLine (204, 87, 230, 97, 3) ; /* Cross */
+            DrawLine (210, 153, 252, 153, 6) ; /* Right Top */
+            DrawLine (130, 167, 81, 163, 4) ; /* Left Top */
 
             DisplayButtons ( 254, 68, VIEW) ;  /* Circle */
             DisplayButtons ( 132, 117, THRUST) ; /* Square */
@@ -3574,11 +3310,11 @@ void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData
 
          case 4:  CentreText ("PRESET E", text_data (1,210, 8), RedText) ;
 
-            DrawLine (216, 76, 251, 68, musicPrims->lines, 1) ; /* Circle */
-            DrawLine (204, 63, 245, 39, musicPrims->lines, 0) ; /* Triangle */
-            DrawLine (204, 87, 230, 97, musicPrims->lines, 3) ; /* Cross */
-            DrawLine (126, 183, 81, 163, musicPrims->lines, 5) ; /* Left Bottom */
-            DrawLine (214, 168, 252, 153, musicPrims->lines, 7) ; /* Right Bottom */
+            DrawLine (216, 76, 251, 68, 1) ; /* Circle */
+            DrawLine (204, 63, 245, 39, 0) ; /* Triangle */
+            DrawLine (204, 87, 230, 97, 3) ; /* Cross */
+            DrawLine (126, 183, 81, 163, 5) ; /* Left Bottom */
+            DrawLine (214, 168, 252, 153, 7) ; /* Right Bottom */
 
             DisplayButtons ( 248, 39, VIEW) ; /* Triangle */
             DisplayButtons ( 254, 68, PADFIRE) ;  /* Circle */
@@ -3626,6 +3362,7 @@ void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData
 
             break ;
          }
+#endif
       }
    }
    else
@@ -4011,7 +3748,6 @@ void CheckSaveType (SelectionData *selectData, char loadGames[][9], ConfigData *
    }
 }
 
-
 void InitButtons (char *fileName)
 {
    TIMlist        *timPtr;
@@ -4035,10 +3771,12 @@ void InitButtons (char *fileName)
    }
 }
 
-
-
 void DisplayButtons (int x, int y, int buttType)
 {
+   const Texture* tex = buttonTex[buttType];
+   AddGlyph(x, y, (tex->textureW * 4) - 1, tex->textureH, tex->u0, tex->v0, tex->cba);
+
+/*
    GRECT  tw;
 
    SetDrawMode(&(drmode[buttType][CurrentScreen]), 0, 0, FONT_TPAGE, &tw);
@@ -4053,22 +3791,21 @@ void DisplayButtons (int x, int y, int buttType)
    buttons[buttType][CurrentScreen].x0 = x;
    buttons[buttType][CurrentScreen].y0 = y;
 
-   buttons[buttType][CurrentScreen].w = (buttonTex[buttType]->textureW * 4) - 1;
-   buttons[buttType][CurrentScreen].h = buttonTex[buttType]->textureH;
+   buttons[buttType][CurrentScreen].w = ;
+   buttons[buttType][CurrentScreen].h = ;
 
-   buttons[buttType][CurrentScreen].u0 = buttonTex[buttType]->u0;
-   buttons[buttType][CurrentScreen].v0 = buttonTex[buttType]->v0;
+   buttons[buttType][CurrentScreen].u0 = ;
+   buttons[buttType][CurrentScreen].v0 = ;
 
       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(buttons[buttType][CurrentScreen]) );
 
       SetDrawMode(&drmode2[buttType][CurrentScreen], 0, 0, 27, &tw);
-      AddPrim(OT[CurrentScreen], (ulong *)&drmode2[buttType][CurrentScreen]);
+      AddPrim(OT[CurrentScreen], (ulong *)&drmode2[buttType][CurrentScreen]);*/
 }
 
-
-
-void DrawLine (int x, int y, int x1, int y1, POLY_F4 *line, int lineNum)
+void DrawLine (int x, int y, int x1, int y1, int lineNum)
 {
+   /*TODO draw line
    SetPolyF4(&(line[lineNum]));
    line[lineNum].r0=230 ;
    line[lineNum].g0=0 ;
@@ -4078,9 +3815,8 @@ void DrawLine (int x, int y, int x1, int y1, POLY_F4 *line, int lineNum)
       x1, y1, x1+2,y1+2 ) ;
 
    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(line[lineNum]) );
+   */
 }
-
-
 
 void JJSReadTIM(char *filename , char *location, TimData *tim)
 {
@@ -4195,31 +3931,11 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    if (GetMenuKey(M_LEFT))
    {
       PlayNote(MENU_SELECT, 1, 20);
-      switch(listpos)
-      {
-      case 0:
-         if (DrawDistance==HIGH_DISTANCE)
-            DrawDistance=LOW_DISTANCE;
-         else if (DrawDistance==MEDIUM_DISTANCE)
-            DrawDistance=HIGH_DISTANCE;
-         else if (DrawDistance==LOW_DISTANCE)
-            DrawDistance=MEDIUM_DISTANCE;
-         break;
-      }
    }
 
    if (GetMenuKey(M_RIGHT))
    {
       PlayNote(MENU_SELECT, 1, 20);
-      switch(listpos)
-      {
-      case 0:  if (DrawDistance==HIGH_DISTANCE) DrawDistance=MEDIUM_DISTANCE;
-         else
-            if (DrawDistance==MEDIUM_DISTANCE) DrawDistance=LOW_DISTANCE;
-            else
-               if (DrawDistance==LOW_DISTANCE) DrawDistance=HIGH_DISTANCE;
-               break;
-      }
    }
 
    switch(listpos)
@@ -4265,15 +3981,7 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
       break;
    }
 
-
-   if (DrawDistance==HIGH_DISTANCE) strcpy(DrawStr,"FAR");
-   if (DrawDistance==MEDIUM_DISTANCE) strcpy(DrawStr,"MEDIUM");
-   if (DrawDistance==LOW_DISTANCE) strcpy(DrawStr,"NEAR");
-
    strcpy(ResStr, "320X240");
-
-   if (Sky) strcpy(SkyStr,"ON");
-   if (!Sky) strcpy(SkyStr,"OFF");
 
    AddText (DrawStr, text_data (x+180, y, 8), RedText);
    AddText (ResStr, text_data (x+180, y+l, 8), RedText) ;

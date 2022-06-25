@@ -18,7 +18,6 @@
 #include "camera.h"
 #include "sound.h"
 #include "global.h"
-#include "libgte.h"
 #include "utils.h"
 
 

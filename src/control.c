@@ -20,7 +20,6 @@
 #include "sound.h"
 #include "global.h"
 #include "utils.h"
-#include "libgte.h"
 #include "search.h"
 #include "effects.h"
 #include "collide.h"
@@ -64,15 +63,6 @@ void UpdateShips(ShipData *shipIndex, WeaponShape *weaponShapes, Object** shipSh
    }
 }
 
-/**********************************************************************/
-/***          Initialise Controller and determine type              ***/
-/**********************************************************************/
-int InitController()
-{
-   return NORMALPAD;
-}
-
-
 /**************************************************************************/
 /****                                                                  ****/
 /****                         START ROUTINES                           ****/
@@ -86,12 +76,14 @@ void GeneralStartProcs(ShipData *playerShip)
    if(playerShip->updateCount == START_TIME)
    {
       PlayNote(REMOTE, 0, -1);       /*** Reserve channel for remote craft ***/
-      chanTable[vagTable[REMOTE].channelID].s_attr.volume.left = 0;
-      chanTable[vagTable[REMOTE].channelID].s_attr.volume.right = 0;
+      /*TODO audio*/
+      //chanTable[vagTable[REMOTE].channelID].s_attr.volume.left = 0;
+      //chanTable[vagTable[REMOTE].channelID].s_attr.volume.right = 0;
 
       PlayNote(REMOTE2, 0, -1);      /*** Reserve channel for remote craft ***/
-      chanTable[vagTable[REMOTE2].channelID].s_attr.volume.left = 0;
-      chanTable[vagTable[REMOTE2].channelID].s_attr.volume.right = 0;
+      /*TODO audio*/
+      //chanTable[vagTable[REMOTE2].channelID].s_attr.volume.left = 0;
+      //chanTable[vagTable[REMOTE2].channelID].s_attr.volume.right = 0;
    }
 
    if(playerShip->updateCount == START_TIME)

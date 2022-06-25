@@ -25,7 +25,6 @@
 #include "global.h"
 #include "error.h"
 #include "radscn.h"
-#include "ajs.h"
 #include "lzss.h"
 
 int skyPos[15] = {-820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0};
@@ -49,24 +48,12 @@ short InitScene(Object** prm, short *prmCount, Skeleton* camPos, ConfigData *gam
    skyTimPtr = LoadCompressedTextureSequence( trackPath );
    LoadCmpFiles( skyTimPtr );
 
-   for ( i=0; i<MaxUnique; i++ )
-   {
-      for ( j=0; j<MaxObjects; j++ )
-      {
-         sharedPrims[ i ][ j ] = NULL;
-      }
-   }
-
    getPath(trackPath, gameData->actTrackNum, "\\scene.prm");
 
 /*
    objectTable = LoadPrm( trackPath , sceneTextures );
 */
    prm[ (*prmCount)++ ] = LoadPrm( trackPath , sceneTextures );
-
-#if 0
-   printf( "Heap free after scene load: %d\n", heap->free );
-#endif
 
    for ( i=0; i<*prmCount; i++ )
    {
@@ -92,15 +79,8 @@ short InitScene(Object** prm, short *prmCount, Skeleton* camPos, ConfigData *gam
       0,
       skyPos[trackNo-1],
       0);
-#if 0
-   printf( "Heap free after sky load: %d\n", heap->free );
-#endif
 
    SceneRadiusCheck( prm[0] );
-
-#if 0
-   printf( "Heap free after Scene Radius Check: %d\n", heap->free );
-#endif
 
    return(sky);
 }
@@ -133,13 +113,10 @@ void LoadCmpFiles( TIMlist *timPtr )
 
       if ( TextureTableCount >= TextureTableMax )
       {
-         printf( "Wtl.c:LoadWtlFiles(): TextureTable is full\n" );
+         Error( "Wtl.c:LoadWtlFiles(): TextureTable is full\n" );
       }
    }
-   DFree( heap, (char *)( timPtr->memBase ) );
-#if 0
-   printf( "Heap free after tex all free: %d\n", heap->free );
-#endif
+   free(timPtr->memBase);
 }
 
 
@@ -149,7 +126,7 @@ Texture* NewLoadTexture( long timPtr, short translucent )
    TimClut4*   tc4;
    TimClut8*   tc8;
    Texture*    texture;
-   GRECT        rect;
+   GRECT       rect;
    CLUT        cluts[256];       // PCwipeout
 
    int         x,y;
@@ -163,7 +140,7 @@ Texture* NewLoadTexture( long timPtr, short translucent )
    if ( ClutType( tim ) == Clut4Bit )
    {
       tc4 = ( TimClut4* )( tim );
-      texture = ( Texture* )DAlloc( heap, sizeof( Texture ) );
+      texture = ( Texture* )malloc( sizeof( Texture ) );
 
       texture->type = CLUT4;
 
@@ -223,28 +200,26 @@ Texture* NewLoadTexture( long timPtr, short translucent )
       rect.y = tc4->clutY;
       rect.w = tc4->clutW;
       rect.h = tc4->clutH;
-      LoadClut4( &rect, ( ushort* )( &tc4->clut ) , cluts);  // PCwipeout
+      //LoadClut4( &rect, ( ushort* )( &tc4->clut ) , cluts);  // PCwipeout
       //      LoadImage( &rect, ( ulong* )( &tc4->clut ) );
-      DrawSync( 0 );
 
       rect.x = tc4->textureX;
       rect.y = tc4->textureY;
       rect.w = tc4->textureW;
       rect.h = tc4->textureH;
-      LoadImage4( &rect, ( ulong* )( tc4+1 ), cluts );  // PCwipeout
+      //LoadImage4( &rect, ( ulong* )( tc4+1 ), cluts );  // PCwipeout
       //      LoadImage( &rect, ( ulong* )( tc4+1 ) );
-      DrawSync( 0 );
    }
    else if ( ClutType( tim ) == Clut8Bit )
    {
       tc8 = ( TimClut8* )( tim );
-      texture = ( Texture* )DAlloc( heap, sizeof( Texture ) );
+      texture = ( Texture* )malloc( sizeof( Texture ) );
 
       texture->type = CLUT8;
 
       if ( ( !tc8->textureX ) && ( !tc8->textureY ) )
       {
-         Error( "tim.c:LoadTexture(): Cannot auto place 8 bit textures", Fatal );
+         Error("tim.c:LoadTexture(): Cannot auto place 8 bit textures");
       }
 
       texture->clutX = tc8->clutX;
@@ -278,7 +253,6 @@ Texture* NewLoadTexture( long timPtr, short translucent )
       rect.h = tc8->clutH;
       LoadClut8( &rect, ( ushort* )( &tc8->clut ),cluts );
       //      LoadImage( &rect, ( ulong* )( &tc8->clut ) );
-      DrawSync( 0 );
 
       rect.x = tc8->textureX;
       rect.y = tc8->textureY;
@@ -286,7 +260,6 @@ Texture* NewLoadTexture( long timPtr, short translucent )
       rect.h = tc8->textureH;
       LoadImage8( &rect, ( ulong* )( tc8+1 ),cluts );
       //      LoadImage( &rect, ( ulong* )( tc8+1 ) );
-      DrawSync( 0 );
    }
    else
    {
@@ -303,33 +276,21 @@ TIMlist *LoadCompressedTextureSequence( char *fileName )
    static TIMlist timList;
    long  timSize, timTotalSize;
 
-// GsClearVcount();
-
-// printf("\nLoading: %s \n", fileName);
-
-#if 0
-   printf( "Heap free before tex load: %d\n", heap->free );
-#endif
-
    fileSize = FileLength( fileName );
    if ( fileSize <= 0 )
    {
-      sprintf( errorString, "Tim decompress: file %s not found\n", fileName );
-      Error( errorString, Fatal );
+      Error("Tim decompress: file %s not found\n", fileName);
    }
 
-   fileBuffer = ( char* )DAlloc( heap, fileSize + 32 );
-#if 0
-   printf( "Heap free after compress load: %d\n", heap->free );
-#endif
+   fileBuffer = ( char* )malloc( fileSize + 32 );
+
    if( !fileBuffer )
    {
-      Error( "Decompress Load: Failed to allocate memory for track vertices", Fatal );
+      Error("Decompress Load: Failed to allocate memory for track vertices");
    }
    if ( LoadFile( fileName, (char *)fileBuffer ) != fileSize )
    {
-      sprintf( errorString, "Decompress(): Failed to load file %s\n", fileName );
-      Error( errorString, Fatal );
+      Error("Decompress(): Failed to load file %s\n", fileName);
    }
 
    numTex = *(long *)fileBuffer;
@@ -345,11 +306,7 @@ TIMlist *LoadCompressedTextureSequence( char *fileName )
       timTotalSize += timSize;
    }
 
-   timList.memBase = (char *)DAlloc( heap, timTotalSize );
-
-#if 0
-   printf( "Heap free after temp tex alloc: %d\n", heap->free );
-#endif
+   timList.memBase = (char *)malloc( timTotalSize );
 
    for ( texNum = 0 ; texNum < numTex ; texNum++ )
    {
@@ -361,7 +318,7 @@ TIMlist *LoadCompressedTextureSequence( char *fileName )
 // GsClearVcount();
    ExpandData( (uchar *)fileBuffer + 4 + numTex*4, (uchar *)timList.memBase );
 
-   DFree( heap, fileBuffer );       /* free compressed file memory */
+   free( fileBuffer );       /* free compressed file memory */
 
    return( &timList );
 

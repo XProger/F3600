@@ -27,10 +27,8 @@
 #include "global.h"
 #include "cone.h"
 #include "race.h"
-#include "trackasm.h"
 #include "spline.h"
 #include "search.h"
-#include "libgte.h"
 #include "error.h"
 #include "collide.h"
 #include "utils.h"
@@ -1235,7 +1233,7 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
 
 
          default:
-            Error( "spline.c::UpdateCameraExtroAttract():Reached default in firestar", Fatal );
+            Error( "spline.c::UpdateCameraExtroAttract():Reached default in firestar" );
             break;
 
       }
@@ -1678,7 +1676,7 @@ void UpdateCameraExtroAttract(TrackCamera *camera, ShipData *camShip, RescueData
             break;
 
          default:
-            Error( "spline.c::UpdateCameraExtroAttract():Reached default in silverstream", Fatal );
+            Error( "spline.c::UpdateCameraExtroAttract():Reached default in silverstream" );
             break;
       }
 

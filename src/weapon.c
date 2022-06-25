@@ -26,18 +26,14 @@
 #include "global.h"
 #include "effects.h"
 #include "options.h"
-#include "trackasm.h"
-#include "ajs.h"
-#include "libgte.h"
 #include "init.h"
 #include "collide.h"
-#include "ajs.h"
 #include "utils.h"
 
 extern long          ctrlNeedTargetIcon;
 extern int           ctrlnearShip;
-short             Shielded = 0;
-extern TrackCamera      ctrlcamera;
+short                Shielded = 0;
+extern TrackCamera   ctrlcamera;
 
 void DrawInternalShield(void);
 
@@ -264,9 +260,10 @@ void FireWeapon(ShipData *playerShip, WeaponData *weaponIndex, int shipNo, char 
             if(shipNo == ownShip)
             {
                PlayNote(TURBO_SOUND, 1, 100);
-               chanTable[vagTable[TURBO_SOUND].channelID].s_attr.pitch = 0x0400;
-               chanTable[vagTable[TURBO_SOUND].channelID].s_attr.volume.left = 0x3fff;
-               chanTable[vagTable[TURBO_SOUND].channelID].s_attr.volume.right = 0x3fff;
+               /*TODO audio*/
+               //chanTable[vagTable[TURBO_SOUND].channelID].s_attr.pitch = 0x0400;
+               //chanTable[vagTable[TURBO_SOUND].channelID].s_attr.volume.left = 0x3fff;
+               //chanTable[vagTable[TURBO_SOUND].channelID].s_attr.volume.right = 0x3fff;
             }
             return;
 
@@ -276,7 +273,7 @@ void FireWeapon(ShipData *playerShip, WeaponData *weaponIndex, int shipNo, char 
 }
 
 
-void MissileLock(ShipData *playerShip, ShipData *shipIndex, Object** shipShapes, POLY_FT4 *target)
+void MissileLock(ShipData *playerShip, ShipData *shipIndex, Object** shipShapes)
 {
    int                  i;
    int                  distance, shortestDistance;
@@ -385,8 +382,9 @@ void MissileLock(ShipData *playerShip, ShipData *shipIndex, Object** shipShapes,
    else playerShip->targetShip = 0xFF;
 }
 
-void DrawTargetIcon(ShipData *playerShip, ShipData *shipIndex, Object** shipShapes, POLY_FT4 *target)
+void DrawTargetIcon(ShipData *playerShip, ShipData *shipIndex, Object** shipShapes)
 {
+   /*TODO weapon target icon
    SVECTOR              *vertex;
    DVECTOR              sxy;
    long                 p, flag;
@@ -425,9 +423,10 @@ void DrawTargetIcon(ShipData *playerShip, ShipData *shipIndex, Object** shipShap
       target->pad7 = 0;
       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(target[CurrentScreen]) );
    }
+   */
 }
 
-void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weaponIndex, POLY_FT4 *target )
+void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weaponIndex)
 {
    int         i, j, k;
    Object*     obj;
@@ -450,7 +449,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[ROCKET_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\rock.prm", weaponTextures );
    for(i = 1; i < MINE_OFFSET; i++)
    {
-      start = DAlloc( heap, length + 32 );
+      start = malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[ROCKET_OFFSET].shapePtr, length);
@@ -467,7 +466,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[MINE_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\mine.prm", weaponTextures );
    for(i = MINE_OFFSET+1; i < MISSILE_OFFSET; i++)
    {
-      start = DAlloc( heap, length + 32 );
+      start = malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[MINE_OFFSET].shapePtr, length);
@@ -485,7 +484,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[MISSILE_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\miss.prm", weaponTextures );
    for(i = MISSILE_OFFSET+1; i < SHIELD_OFFSET; i++)
    {
-      start = DAlloc( heap, length + 32 );
+      start = malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[MISSILE_OFFSET].shapePtr, length);
@@ -502,7 +501,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[SHIELD_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\shld.prm", weaponTextures );
    for(i = SHIELD_OFFSET+1; i < SHIELD_OFFSET+NO_OF_SHIELDS; i++)
    {
-      start = DAlloc( heap, length + 32 );
+      start = malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[SHIELD_OFFSET].shapePtr, length);
@@ -519,7 +518,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[EBOLT_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\ebolt.prm", weaponTextures );
    for(i = EBOLT_OFFSET+1; i < EBOLT_OFFSET+NO_OF_EBOLTS; i++)
    {
-      start = DAlloc( heap, length + 32 );
+      start = malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[EBOLT_OFFSET].shapePtr, length);
@@ -622,16 +621,8 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
       weaponIndex[i].type = NO_WEAPON;
    }
 
-   for(i = 0; i < 64*3; i++)
-   {
-      for(j = 0; j < 2; j++)
-      {
-         SetDrawMode(&(shieldParams[i][j]), 1, 1, FONT_TPAGE, 0);  //PCWipeout
-      }
-   }
-
    targetTexture = LoadTexture ( "wipeout\\textures\\target2.tim", 1 ) ;
-
+   /*TODO target texture
    for(i = 0; i < 2; i++)
    {
       SetPolyFT4(&(target[i]));
@@ -650,7 +641,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
       SetSemiTrans((P_TAG *)&(target[i]), 1);
 
       target[i].clut = targetTexture->cba;
-   }
+   }*/
 }
 
 
@@ -764,8 +755,9 @@ void UpdateRocket(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* we
             else
             {
                PlayNote(EXPLOSION_1, 0, 40);
-               chanTable[vagTable[EXPLOSION_1].channelID].s_attr.volume.left = 0x3fff;
-               chanTable[vagTable[EXPLOSION_1].channelID].s_attr.volume.right = 0x3fff;
+               /*TODO audio*/
+               //chanTable[vagTable[EXPLOSION_1].channelID].s_attr.volume.left = 0x3fff;
+               //chanTable[vagTable[EXPLOSION_1].channelID].s_attr.volume.right = 0x3fff;
             }
             return;
          }
@@ -1770,7 +1762,8 @@ void InitShield(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData *weap
          if(weapon->fireShip == ownShip)
          {
             PlayNote(SHIELDS, 0, -1);
-            chanTable[vagTable[SHIELDS].channelID].s_attr.pitch = 0x0800;
+            /*TODO audio*/
+            //chanTable[vagTable[SHIELDS].channelID].s_attr.pitch = 0x0800;
          }
          weapon->updateWeapon = UpdateShield;
          weapon->availible = 1;  //AJY
@@ -1917,16 +1910,17 @@ void UpdateShield(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* we
    }
 
 }
-POLY_F4  shieldPoly;
 
 void DrawInternalShield(void)
 {
    if (!DrawnShieldBefore)
    {
+      /*TODO internal shield
       setXY4(&shieldPoly,0,0,320,0,0,240,320,240);
          setRGB0(&shieldPoly,0,0,WHITE2_TRANSL);
       setPolyF4(&shieldPoly);
       AddPrim(OT[CurrentScreen] + 1,(u_long *)&shieldPoly); //Plus 1 to prevent hud from being affected
+      */
    }
    DrawnShieldBefore = 1;
 }
@@ -2005,23 +1999,23 @@ void CycleWeaponGrids(ShipData *shipIndex, WeaponGrid *weaponGrid, int noWeaponG
 
       if((weaponGrid[i].count >= 0) && ((shipIndex[ownShip].combatAttr & SPECIALED) == 0))
       {
-         tempColour.vx = (rsin(weaponGrid[i].cycleCount)>>5) + 128;
-         tempColour.vy = (rcos(weaponGrid[i].cycleCount)>>5) + 128;
-         tempColour.vz = (rsin(-weaponGrid[i].cycleCount)>>5) + 128;
+         int r = (rsin(weaponGrid[i].cycleCount)>>5) + 128;
+         int g = (rcos(weaponGrid[i].cycleCount)>>5) + 128;
+         int b = (rsin(-weaponGrid[i].cycleCount)>>5) + 128;
 
-         if(tempColour.vx > 255) tempColour.vx = 255;
-         if(tempColour.vy > 255) tempColour.vy = 255;
-         if(tempColour.vz > 255) tempColour.vz = 255;
+         if(r > 255) r = 255;
+         if(g > 255) g = 255;
+         if(b > 255) b = 255;
 
-            weaponGrid[i].colour.r = 230; // PCwipeout
-            weaponGrid[i].colour.g = colourCount;
-            weaponGrid[i].colour.b = 0;
+         weaponGrid[i].colour.r = r;
+         weaponGrid[i].colour.g = g;
+         weaponGrid[i].colour.b = b;
       }
       else
       {
-            weaponGrid[i].colour.r = 230; // PCwipeout
-            weaponGrid[i].colour.g = 0;
-            weaponGrid[i].colour.b = 0;
+         weaponGrid[i].colour.r = 128;
+         weaponGrid[i].colour.g = 128;
+         weaponGrid[i].colour.b = 128;
       }
 
       if(weaponGrid[i].count < 0)
@@ -2045,14 +2039,6 @@ void CycleWeaponGrids(ShipData *shipIndex, WeaponGrid *weaponGrid, int noWeaponG
       }
    }
 }
-
-
-
-
-#define     ClipFlag    ( ( CrtClipped | ZLarge | ZNegative | ZSmall ) >> 12 )
-extern DVECTOR     StaticScreen[  ];
-extern ushort      StaticDepth[  ];
-extern ushort      StaticFlags[  ];
 
 void GetFireVector(VECTOR *result, VECTOR target, Face *facePtr, VECTOR shipPos)
 {
