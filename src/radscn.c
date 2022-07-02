@@ -1,8 +1,5 @@
 
 #include "standard.h"
-#include <stdlib.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -20,7 +17,7 @@
 #include "sound.h"
 #include "global.h"
 #include "error.h"
-
+#include "utils.h"
 
 
 /* reduce this later !!! */

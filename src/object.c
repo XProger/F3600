@@ -4,9 +4,6 @@
  */
 
 #include "standard.h"
-#include <stdio.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "skeleton.h"
@@ -62,23 +59,34 @@ void Swap()
    renderSwap();
 }
 
-void TransformStaticObject(Object* object, Skeleton* camera)
+void TransformStaticObject(Object* object)
 {
    renderBegin3D();
-   renderObject(object, 0);
+   renderObject(object);
    renderEnd3D();
 }
 
 void TransformStaticMenuObject(Object* object)
 {
    renderBegin3D();
-   renderObject(object, 0);
+   renderObject(object);
    renderEnd3D();
 }
 
 void TransformStaticObjectBodge(Object * object)
 {
    renderBegin3D();
-   renderObject(object, 0);
+   renderTransparent(1);
+   renderObject(object);
+   renderTransparent(0);
    renderEnd3D();
+}
+
+void SetSkeletonTransform(Skeleton* skeleton)
+{
+   MATRIX* matrix;
+   matrix = GetSkeletonMatrix(skeleton);
+
+   //   SetTransMatrix(matrix);
+   //   SetRotMatrix(matrix);
 }

@@ -1,6 +1,4 @@
 #include "standard.h"
-#include <string.h>
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -19,9 +17,6 @@
 #include "sound.h"
 #include "global.h"
 #include "sfx.h"
-
-#define _SIZE_T_DEFINED_
-#include <stdio.h>
 
 //#define SAVEDIR       "wipeout\\"
 #define  FILE_EXTENSION ".wsf"

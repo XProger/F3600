@@ -1,7 +1,4 @@
 #include "standard.h"
-#include <stdlib.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -68,65 +65,65 @@ short   textY;
 
 
 
-char c1[48]       =  "AWESOME";
-char c2[48]       =  " ";
-char c3[48]       =  "YOU HAVE BEATEN";
-char c4[48]       =  " ";
-char c5[48]       =  "WIPEOUT";
-char c6[48]       =  " ";
-char c7[48]       =  "YOU ARE A TRULY";
-char c8[48]       =  " ";
-char c9[48]       =  "AMAZING PILOT";
-char c10[48]      =  " ";
-char c11[48]      =  " ";
-char c12[48]      =  " ";
-char c13[48]      =  "CONGRATULATIONS";
-char c14[48]      =  " ";
-char c15[48]      =  " ";
-char c16[48]      =  " ";
-char c17[48]      =  " ";
-char c18[48]      =  "A BIG THANKS";
-char c19[48]      =  " ";
-char c20[48]      =  "FROM ALL OF US ON THE TEAM";
-char c21[48]      =  " ";
-char c22[48]      =  "LOOK OUT FOR";
-char c23[48]      =  " ";
-char c24[48]      =  "WIPEOUT II";
-char c25[48]      =  " ";
-char c26[48]      =  "COMING SOON";
+const char c1[]       =  "AWESOME";
+const char c2[]       =  " ";
+const char c3[]       =  "YOU HAVE BEATEN";
+const char c4[]       =  " ";
+const char c5[]       =  "WIPEOUT";
+const char c6[]       =  " ";
+const char c7[]       =  "YOU ARE A TRULY";
+const char c8[]       =  " ";
+const char c9[]       =  "AMAZING PILOT";
+const char c10[]      =  " ";
+const char c11[]      =  " ";
+const char c12[]      =  " ";
+const char c13[]      =  "CONGRATULATIONS";
+const char c14[]      =  " ";
+const char c15[]      =  " ";
+const char c16[]      =  " ";
+const char c17[]      =  " ";
+const char c18[]      =  "A BIG THANKS";
+const char c19[]      =  " ";
+const char c20[]      =  "FROM ALL OF US ON THE TEAM";
+const char c21[]      =  " ";
+const char c22[]      =  "LOOK OUT FOR";
+const char c23[]      =  " ";
+const char c24[]      =  "WIPEOUT II";
+const char c25[]      =  " ";
+const char c26[]      =  "COMING SOON";
 
 
 
-char i1[48]       =  "CONGRATULATIONS";
-char i2[48]       =  " ";
-char i3[48]       =  "RAPIER CLASS";
-char i4[48]       =  " ";
-char i5[48]       =  "COMPETENCE ACHIEVED";
-char i6[48]       =  " ";
-char i7[48]       =  "YOU NOW HAVE ACCESS TO THE";
-char i8[48]       =  " ";
-char i9[48]       =  "FULL VENOM AND RAPIER";
-char i10[48]      =  " ";
-char i11[48]      =  "CHAMPIONSHIPS WITH THE ";
-char i12[48]      =  " ";
-char i13[48]      =  "NEWLY CONSTRUCTED CIRCUIT";
-char i14[48]      =  " ";
-char i15[48]      =  "FIRESTAR";
-char i16[48]      =  " ";
-char i17[48]      =  "WE RECOMMEND YOU";
-char i18[48]      =  " ";
-char i19[48]      =  "SAVE";
-char i20[48]      =  " ";
-char i21[48]      =  "YOUR CURRENT GAME";
-char i22[48]      =  " ";
-char i23[48]      =  "GOOD LUCK";
+const char i1[]       =  "CONGRATULATIONS";
+const char i2[]       =  " ";
+const char i3[]       =  "RAPIER CLASS";
+const char i4[]       =  " ";
+const char i5[]       =  "COMPETENCE ACHIEVED";
+const char i6[]       =  " ";
+const char i7[]       =  "YOU NOW HAVE ACCESS TO THE";
+const char i8[]       =  " ";
+const char i9[]       =  "FULL VENOM AND RAPIER";
+const char i10[]      =  " ";
+const char i11[]      =  "CHAMPIONSHIPS WITH THE ";
+const char i12[]      =  " ";
+const char i13[]      =  "NEWLY CONSTRUCTED CIRCUIT";
+const char i14[]      =  " ";
+const char i15[]      =  "FIRESTAR";
+const char i16[]      =  " ";
+const char i17[]      =  "WE RECOMMEND YOU";
+const char i18[]      =  " ";
+const char i19[]      =  "SAVE";
+const char i20[]      =  " ";
+const char i21[]      =  "YOUR CURRENT GAME";
+const char i22[]      =  " ";
+const char i23[]      =  "GOOD LUCK";
 
 
 
 
 typedef struct name
 {
-   char        *words;
+   const char* words;
    short       colour;
    short       size;
 }Congrats;

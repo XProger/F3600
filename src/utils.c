@@ -1,6 +1,4 @@
-#include <math.h>
 #include "standard.h"
-
 #include "utils.h"
 
 /*int abs(int a)
@@ -10,8 +8,8 @@ a = -a;
 return  a;
 } */
 
-short arccos_tab[4096] = {
-   8191 ,
+const short arccos_tab[4096] =
+    { 8191 ,
       8190 ,
       8189 ,
       8188 ,

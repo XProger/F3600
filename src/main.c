@@ -1,9 +1,4 @@
 #include "standard.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -29,11 +24,10 @@
 #include "card.h"
 #include "utils.h"
 #include "error.h"
+#include "render.h"
 
 extern short trackNum; //SJR
 extern int menuTexturesIn;
-
-char      copyRight[/*24*/] = "copyright_Psygnosis_1995";
 
 char      inmenu = 0, Reallyinmenu = 0;
 char      trackdir[21];
@@ -51,7 +45,6 @@ void oldmain(void)
    int        i;
    ConfigData      gameData;
    int        mode, timeout;
-   int        toggle = 0;
    char      loadPath[48];
    char      loadNo[2];
    int        titleTimeout;
@@ -107,7 +100,10 @@ void oldmain(void)
          Swap();
       }
 
-      toggle = 0;
+      if (firstTime == 1)
+         TOut = 30;
+      else
+         TOut = 5;
 
       while (1)
       {
@@ -116,11 +112,6 @@ void oldmain(void)
          xpad = (pad ^ opad) & pad;
 
          titleTimeout++;
-
-         if (firstTime == 1)
-            TOut = 30;
-         else
-            TOut = 5;
 
          if (titleTimeout > 1)
          {
@@ -138,8 +129,6 @@ void oldmain(void)
          }
 
          Swap();
-
-         toggle++;
       }
    }
 
@@ -339,6 +328,8 @@ void oldmain(void)
 
       inmenu = 0;
       Reallyinmenu = 0;
+
+      renderPrepare();
 
       race(&gameData, mode, timeout);
       // inmenu=1;

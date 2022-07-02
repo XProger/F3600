@@ -106,9 +106,6 @@ extern short         extroLevel;
 #define  AMBER_LIGHT_FADE 26
 #define  GREEN_LIGHT_FADE 27
 
-#define  CYCLE_START    40
-#define  CYCLE_END      80
-
 extern   char  inmenu;
 extern   char  Reallyinmenu;
 

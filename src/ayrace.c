@@ -1,8 +1,6 @@
 #define TIME_CONSTANT   33
-#include <stdio.h>      // PCwipeout
-#include "standard.h"
 
-#include "malloc.h"
+#include "standard.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -31,6 +29,7 @@
 #include "spline.h"
 #include "racectrl.h"
 #include "credits.h"
+#include "render.h"
 
 #define START_EXTRO 0
 #define UPDATE_EXTRO 1
@@ -128,7 +127,7 @@ void race( ConfigData *gameData, int mode, int timeout )
 
    CDRestartNeeded = 0;
    CDloopCheck = 0;
-   start_time = end_time = osGetTimeMS();
+   start_time = end_time = osGetSystemTimeMS();
    racectrl();
    racectrl();
    racectrl();
@@ -137,7 +136,7 @@ void race( ConfigData *gameData, int mode, int timeout )
 
    while(1)    //GAME LOOP
    {
-      start_time = (osGetTimeMS() - ctrl_remainder);
+      start_time = (osGetSystemTimeMS() - ctrl_remainder);
       for (timeloop = 0; timeloop < ctrl_frame; timeloop++)
       {
          racectrl();
@@ -226,7 +225,7 @@ void race( ConfigData *gameData, int mode, int timeout )
          ctrlrescueDroid.roll );
 
       ctrlshipShapes[RESCUE_DROID]->skeleton->update = 1;
-      TransformStaticObject( ctrlshipShapes[RESCUE_DROID], ctrlcamera.camPos);
+      TransformStaticObject( ctrlshipShapes[RESCUE_DROID] );
 
       //WEAPONS
       DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
@@ -330,7 +329,7 @@ void race( ConfigData *gameData, int mode, int timeout )
       Swap( );
       //do
       //{
-      end_time = osGetTimeMS();
+      end_time = osGetSystemTimeMS();
       //}
       //while((end_time - start_time) <=TIME_CONSTANT);  //never faster than 30fps
       duration = end_time - start_time;

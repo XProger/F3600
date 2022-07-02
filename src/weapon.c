@@ -1,7 +1,4 @@
 #include "standard.h"
-#include <string.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -73,9 +70,9 @@ void DrawWeapons(ShipData *shipIndex,WeaponShape* weaponShapes, WeaponData *weap
          }
 
          if (weapon->type == SHIELD)
-            TransformStaticObjectBodge( weaponShapes[weapon->currentWeapon].shapePtr, ctrlcamera.camPos);
+            TransformStaticObjectBodge( weaponShapes[weapon->currentWeapon].shapePtr );
          else
-            TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr, ctrlcamera.camPos);
+            TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr );
       }
    }
 }
@@ -449,7 +446,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[ROCKET_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\rock.prm", weaponTextures );
    for(i = 1; i < MINE_OFFSET; i++)
    {
-      start = malloc( length + 32 );
+      start = (char*)malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[ROCKET_OFFSET].shapePtr, length);
@@ -466,7 +463,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[MINE_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\mine.prm", weaponTextures );
    for(i = MINE_OFFSET+1; i < MISSILE_OFFSET; i++)
    {
-      start = malloc( length + 32 );
+      start = (char*)malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[MINE_OFFSET].shapePtr, length);
@@ -484,7 +481,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[MISSILE_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\miss.prm", weaponTextures );
    for(i = MISSILE_OFFSET+1; i < SHIELD_OFFSET; i++)
    {
-      start = malloc( length + 32 );
+      start = (char*)malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[MISSILE_OFFSET].shapePtr, length);
@@ -501,7 +498,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[SHIELD_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\shld.prm", weaponTextures );
    for(i = SHIELD_OFFSET+1; i < SHIELD_OFFSET+NO_OF_SHIELDS; i++)
    {
-      start = malloc( length + 32 );
+      start = (char*)malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[SHIELD_OFFSET].shapePtr, length);
@@ -518,7 +515,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weapon
    weaponShapes[EBOLT_OFFSET].shapePtr = LoadPrm( "wipeout\\common\\ebolt.prm", weaponTextures );
    for(i = EBOLT_OFFSET+1; i < EBOLT_OFFSET+NO_OF_EBOLTS; i++)
    {
-      start = malloc( length + 32 );
+      start = (char*)malloc( length + 32 );
       prm.ptr = start;
       weaponShapes[i].shapePtr = prm.object;
       memcpy(start, weaponShapes[EBOLT_OFFSET].shapePtr, length);
@@ -704,7 +701,7 @@ void UpdateRocket(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* we
    weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
 
 #if FRI
-   TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr, cameraPtr->camPos);
+   TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr );
 #endif
 
    /***********************************************************/
@@ -897,7 +894,7 @@ void UpdateMissile(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* w
 
 #if FRI
 
-   TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr, cameraPtr->camPos);
+   TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr );
 
 #endif
 
@@ -1103,7 +1100,7 @@ void UpdateMine(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData *weap
    weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
 #if 0
 
-   TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr, cameraPtr->camPos);
+   TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr );
 #endif
 
    /***********************************************************/
@@ -1322,7 +1319,7 @@ void UpdateElecBolt(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* 
       weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
 #if 0
 
-      TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr, cameraPtr->camPos);
+      TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr );
 #endif
 
       /***********************************************************/
@@ -1631,7 +1628,7 @@ void UpdateRevCon(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* we
       weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
 #if 0
 
-      TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr, cameraPtr->camPos);
+      TransformStaticObject( weaponShapes[weapon->currentWeapon].shapePtr );
 #endif
 
       /***********************************************************/
@@ -1865,13 +1862,15 @@ void UpdateShield(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* we
             if(col1 > 255) col1 = 255;
             if(col2 > 255) col2 = 255;
 
-            poly.g3->colour[ 0 ].r = (char)col0;
-            poly.g3->colour[ 1 ].r = (char)col1;
-            poly.g3->colour[ 2 ].r = (char)col2;
-            poly.g3->colour[ 0 ].g = 0;
-            poly.g3->colour[ 1 ].g = 0;
-            poly.g3->colour[ 2 ].g = 0;
-            poly.g3->colour[ 0 ].b = WHITE3_TRANSL; // PCwipeout
+            poly.g3->colour[ 0 ].r = (char)(col0 >> 1);
+            poly.g3->colour[ 1 ].r = (char)(col1 >> 1);
+            poly.g3->colour[ 2 ].r = (char)(col2 >> 1);
+            poly.g3->colour[ 0 ].g = 64;
+            poly.g3->colour[ 1 ].g = 64;
+            poly.g3->colour[ 2 ].g = 64;
+            poly.g3->colour[ 0 ].b = 128;
+            poly.g3->colour[ 1 ].b = 128;
+            poly.g3->colour[ 2 ].b = 128;
 
             poly.g3 += 1;
             break ;
@@ -1890,15 +1889,18 @@ void UpdateShield(ShipData *shipIndex, WeaponShape* weaponShapes, WeaponData* we
             if(col2 > 255) col2 = 255;
             if(col3 > 255) col2 = 255;
 
-            poly.g4->colour[ 0 ].r = (char)col0;
-            poly.g4->colour[ 1 ].r = (char)col1;
-            poly.g4->colour[ 2 ].r = (char)col2;
-            poly.g4->colour[ 3 ].r = (char)col3;
-            poly.g4->colour[ 0 ].g = 0;
-            poly.g4->colour[ 1 ].g = 0;
-            poly.g4->colour[ 2 ].g = 0;
-            poly.g4->colour[ 3 ].g = 0;
-            poly.g4->colour[ 0 ].b = WHITE3_TRANSL; // PCwipeout
+            poly.g4->colour[ 0 ].r = (char)(col0 >> 1);
+            poly.g4->colour[ 1 ].r = (char)(col1 >> 1);
+            poly.g4->colour[ 2 ].r = (char)(col2 >> 1);
+            poly.g4->colour[ 3 ].r = (char)(col3 >> 1);
+            poly.g4->colour[ 0 ].g = 64;
+            poly.g4->colour[ 1 ].g = 64;
+            poly.g4->colour[ 2 ].g = 64;
+            poly.g4->colour[ 3 ].g = 64;
+            poly.g4->colour[ 0 ].b = 128;
+            poly.g4->colour[ 1 ].b = 128;
+            poly.g4->colour[ 2 ].b = 128;
+            poly.g4->colour[ 3 ].b = 128;
 
             poly.g4 += 1;
             break ;
@@ -1930,10 +1932,7 @@ void CycleWeaponGrids(ShipData *shipIndex, WeaponGrid *weaponGrid, int noWeaponG
    int         i, j;
    Face        *facePtr;
    SVECTOR     tempColour;
-   static      char  colourCount=CYCLE_START;
 
-   colourCount++;
-   if (colourCount==CYCLE_END)   colourCount=CYCLE_START;
    for(i = 0; i < noWeaponGrids; i++)
    {
       facePtr = track->faces + weaponGrid[i].section->faceStart ;

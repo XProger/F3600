@@ -1,7 +1,4 @@
 #include "standard.h"
-#include <string.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -32,16 +29,16 @@ extern char globalPilot[];
 const short speedo_x = 179;
 const short speedo_y = 195;
 
-ushort Text16[] =    {25, 24, 17, 24, 24, 17, 25, 18, 7, 17,
+const ushort Text16[] =    {25, 24, 17, 24, 24, 17, 25, 18, 7, 17,
                   117, 117, 128, 117, 124, 124, 126, 124, 118, 117,
                   217, 217, 229, 224, 217, 218, 224, 210, 218, 217, 218,
                   318, 318, 318, 322, 325, 307, 307} ;
 
-ushort Text12[] =    {19, 19, 14, 19, 19, 13, 19, 14, 6, 13, 14, 14,
+const ushort Text12[] =    {19, 19, 14, 19, 19, 13, 19, 14, 6, 13, 14, 14,
             122, 114, 119, 118, 120, 119, 115, 114, 113, 113, 122,
             219, 213, 214, 219, 208, 215, 213, 214, 215, 214, 215, 218, 219, 205, 205} ;
 
-ushort Text8[] =  {13, 13, 10, 13, 13, 9, 13, 10, 4, 9, 10, 10, 16, 10, 13, 13, 14,
+const ushort Text8[] =  {13, 13, 10, 13, 13, 9, 13, 10, 4, 9, 10, 10, 16, 10, 13, 13, 14,
       113, 110, 109, 109, 109, 116, 114, 109, 110, 113, 106, 111, 110, 110, 111, 110, 110, 112, 114, 104, 104} ;
 
 extern   HiScores scoreTable[] ;
@@ -437,7 +434,7 @@ void SetCharTextures (char size)
    short i, j ;
    short vramY, vramX ;
    short searchLett, vramRow ;
-   ushort *charSet ;
+   const ushort *charSet;
 
    switch (size)
    {

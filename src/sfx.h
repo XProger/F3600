@@ -11,7 +11,7 @@
 #ifndef _SFX_H_INCLUDED_
 #define _SFX_H_INCLUDED_
 
-#include <standard.h>
+#include "standard.h"
 
 /*
  * Card Types

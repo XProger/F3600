@@ -1,6 +1,4 @@
 #include "standard.h"
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -24,15 +22,9 @@
 #include "hiscores.h"
 #include "hud.h"
 #include "utils.h"
+#include "render.h"
 
-extern TrackCamera      ctrlcamera;
-
-
-
-char TrackDirection
-(
-   TrackCamera*      camera
-   )
+char TrackDirection(TrackCamera* camera)
 {
    SVECTOR        reference;
    long           angle;
@@ -66,11 +58,7 @@ char TrackDirection
    }
 }
 
-void DrawLandscape
-(
-   ShipData       *playerShip,
-   TrackCamera    *camera
-   )
+void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
 {
    short          i;
    VECTOR         result;
@@ -81,15 +69,18 @@ void DrawLandscape
 
    section = camera->section;
 
+   Object* obj;// = objectTable[0];
+
    if ( section->objectCount > 0 )
    {
       for ( i=0; i<section->objectCount; i++ )
+//      while (obj)
       {
-         objectTable[ section->objects[ i ] ]->skeleton->update = 1;
+         obj = objectTable[section->objects[i]];
 
-         SetSkeletonTransform( objectTable[ section->objects[ i ] ]->skeleton );
-
-         extent = objectTable[ section->objects[ i ] ]->extent;
+         obj->skeleton->update = 1;
+         SetSkeletonTransform( obj->skeleton );
+         extent = obj->extent;
 
          centre.vx = 0;
          centre.vy = 0;
@@ -105,7 +96,7 @@ void DrawLandscape
          result.vy = ( result.vy * 160 ) / result.vz;
 
          extent = ( extent * 160 ) / result.vz;
-
+         /*TODO visibility*/
          if
             (
             ( result.vx >= -( extent + 160 ) ) &&
@@ -114,15 +105,10 @@ void DrawLandscape
             ( result.vy <=  ( extent + 120 ) )
             )
          {
-            if ( playerShip->attr & VIEW_IN )
-            {
-               renderObject( objectTable[ section->objects[ i ] ], playerShip->roll );
-            }
-            else
-            {
-               renderObject( objectTable[ section->objects[ i ] ], 0 );
-            }
+            renderObject(obj);
          }
+
+         //obj = obj->next;
 
       }
    }

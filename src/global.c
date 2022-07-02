@@ -1,5 +1,4 @@
 #include "standard.h"
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -16,8 +15,6 @@
 #include "scene.h"
 #include "sound.h"
 #include "global.h"
-
-int            copyright_Psygnosis_1995 = 1;
 
 int            ownShip;
 int            serialShip;

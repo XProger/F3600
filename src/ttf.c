@@ -2,11 +2,7 @@
 /* (C) Psygnosis 1994. By Jason Carl Denton & Rob Smith
 */
 
-
 #include "standard.h"
-#include <stdio.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -35,7 +31,7 @@ TexTemplate* LoadTtfFile( char *file, short *count, short libraryTextures )
       Error("Ttf.c:LoadTtfFile: Ttf file %s not found\n", file);
    }
 
-   ttfFile = malloc( length + 32 );
+   ttfFile = (char*)malloc( length + 32 );
 
    if ( !ttfFile )
    {

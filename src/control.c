@@ -1,8 +1,4 @@
 #include "standard.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"

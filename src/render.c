@@ -1,11 +1,8 @@
-#define STRICT
-#include <stdio.h>
 #include <windows.h>
 #include <gl/GL.h>
 #include <gl/glu.h>
 
 #include "standard.h"
-#include "malloc.h"
 #include "decl.h"
 #include "object.h"
 #include "skeleton.h"
@@ -13,6 +10,7 @@
 #include "tim.h"
 #include "ttf.h"
 #include "render.h"
+#include "utils.h"
 
 extern Texture* TextureTable[];
 
@@ -29,6 +27,7 @@ long xOffset;
 long yOffset;
 
 int gWidth, gHeight;
+int gFrameIndex;
 
 #ifndef GL_UNSIGNED_SHORT_5_6_5
    #define GL_UNSIGNED_SHORT_5_6_5 0x8363
@@ -68,7 +67,6 @@ typedef struct {
 } TextureGL;
 
 TextureGL gTex[500]={0};
-char lastfile[256];
 
 char tempTex[320 * 240 * 2]; /*TODO*/
 char* TextureBuffer;
@@ -215,7 +213,7 @@ void setTexFilter()
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-   
+
    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
@@ -316,19 +314,15 @@ BOOL SJRLoadTextureBMPmenu(const char* lpszTexFilename)
 
    texsize = 32768;//128*128 * sizeof (C3D_UINT16)
 
-   if (strcmp(lastfile, lpszTexFilename))
+   fp = fopen(lpszTexFilename, "rb");
+   if (!fp)
    {
-      fp = fopen(lpszTexFilename, "rb");
-      if (!fp)
-      {
-         //ASSERT(FALSE);
-         return FALSE;
-      }
-
-      fread((void*)TextureBuffer, TEXTURESJR, 1, fp);
-      fclose(fp);
-      strcpy(lastfile, lpszTexFilename);
+      //ASSERT(FALSE);
+      return FALSE;
    }
+
+   fread((void*)TextureBuffer, TEXTURESJR, 1, fp);
+   fclose(fp);
 
    { /*TODO WTF?*/
       WORD* tp, temp;
@@ -336,8 +330,12 @@ BOOL SJRLoadTextureBMPmenu(const char* lpszTexFilename)
       tp = (WORD*)TextureBuffer;
       for (i = 0; i < TEXTURESJR / 2; ++i)
       {
-         temp = *tp;
-         *tp++ = (temp & 0x1f) | ((temp & 0x7fe0) << 1);
+         temp = *tp << 1;
+         // black -> transparent
+         if (temp != 0) {
+            temp |= 1;
+         }
+         *tp++ = temp;
       }
    }
 
@@ -376,19 +374,15 @@ BOOL SJRLoadTextureBMP(const char* lpszTexFilename)
 
    texsize = 32768;//128*128 * sizeof (C3D_UINT16)
 
-   if (strcmp(lastfile, lpszTexFilename))
+   fp = fopen(lpszTexFilename, "rb");
+   if (!fp)
    {
-      fp = fopen(lpszTexFilename, "rb");
-      if (!fp)
-      {
-         //ASSERT(FALSE);
-         return FALSE;
-      }
-
-      fread((void *)TextureBuffer, TEXTURESJR, 1, fp);
-      fclose(fp);
-      strcpy(lastfile, lpszTexFilename);
+      //ASSERT(FALSE);
+      return FALSE;
    }
+
+   fread((void *)TextureBuffer, TEXTURESJR, 1, fp);
+   fclose(fp);
 
    {
       WORD *tp, temp;
@@ -529,81 +523,11 @@ void renderEnd(void)
 
 }
 
-static void restoreTextures(void)
-{
-   switch (trackNum)
-   {
-   case 0:
-      //erm...not got anywhere yet...
-      break;
-   case 1:
-      SJRNewTexture("wipeout\\newgraph\\venom\\altima\\altima.sjr");
-      break;
-   case 2:
-      SJRNewTexture("wipeout\\newgraph\\venom\\karbonis\\karbonis.sjr");
-      break;
-   case 3:
-      SJRNewTexture("wipeout\\newgraph\\venom\\terramax\\terramax.sjr");
-      break;
-   case 4:
-      SJRNewTexture("wipeout\\newgraph\\venom\\korodera\\korodera.sjr");
-      break;
-   case 5:
-      SJRNewTexture("wipeout\\newgraph\\venom\\arridos\\arridos.sjr");
-      break;
-   case 6:
-      SJRNewTexture("wipeout\\newgraph\\venom\\silver\\silver.sjr");
-      break;
-   case 7:
-      SJRNewTexture("wipeout\\newgraph\\venom\\firestar\\firestar.sjr");
-      break;
-   case 8:
-      SJRNewTexture("wipeout\\newgraph\\rapier\\altima\\altima.sjr");
-      break;
-   case 9:
-      SJRNewTexture("wipeout\\newgraph\\rapier\\karbonis\\karbonis.sjr");
-      break;
-   case 10:
-      SJRNewTexture("wipeout\\newgraph\\rapier\\terramax\\terramax.sjr");
-      break;
-   case 11:
-      SJRNewTexture("wipeout\\newgraph\\rapier\\korodera\\korodera.sjr");
-      break;
-   case 12:
-      SJRNewTexture("wipeout\\newgraph\\rapier\\arridos\\arridos.sjr");
-      break;
-   case 13:
-      SJRNewTexture("wipeout\\newgraph\\rapier\\silver\\silver.sjr");
-      break;
-   case 14:
-      SJRNewTexture("wipeout\\newgraph\\rapier\\firestar\\firestar.sjr");
-      break;
-   case 15:
-      SJRNewTexture ("wipeout\\newgraph\\menu\\menus.sjr");
-      reloadScr();
-      break;
-   default:
-      break;
-   }
-   if(globalPilot[0])
-      LoadPilotIntoVram(globalPilot) ;
-}
-
 void SetGeomOffset(long ofx, long ofy)
 {
    xOffset = ofx;
    yOffset = ofy;
 }
-
-void SetSkeletonTransform(Skeleton* skeleton)
-{
-   MATRIX* matrix;
-   matrix = GetSkeletonMatrix(skeleton);
-
-//   SetTransMatrix(matrix);
-//   SetRotMatrix(matrix);
-}
-
 
 void renderInit()
 {
@@ -636,6 +560,9 @@ void renderInit()
    glEnable(GL_ALPHA_TEST);
    glAlphaFunc(GL_GREATER, 0.0f);
 
+   // use additive blending
+   glBlendFunc(GL_ONE, GL_ONE);
+
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glOrtho(0, 320, 240, 0, 0, 1);
@@ -663,6 +590,7 @@ void renderSwap()
 {
    Sleep(1);
    SwapBuffers(hDC);
+   gFrameIndex = osGetSystemTimeMS() * 3 / 50;
 }
 
 void renderResize(int width, int height)
@@ -891,7 +819,6 @@ void renderTrack()
    const Face* face = track->faces;
    int i, j;
    int cx, cy, cz;
-   int dir;
 
    cx = ctrlcamera.camPos->absolute.t[0];// - ctrlcamera.camPos->absolute.t[0] / 8;
    cy = ctrlcamera.camPos->absolute.t[1];// - ctrlcamera.camPos->absolute.t[1] / 8;
@@ -932,7 +859,7 @@ void renderTrack()
    }
 }
 
-void renderObject(const Object* object, int roll)
+void renderObject(const Object* object)
 {
    const MATRIX* matrix;
    Poly poly;
@@ -942,7 +869,7 @@ void renderObject(const Object* object, int roll)
    int cx, cy, cz;
    const CVECTOR* c;
 
-   const CVECTOR colorWhite3[3] = {
+   const CVECTOR colorWhite3[] = {
       {255, 255, 255, 0},
       {255, 255, 255, 0},
       {255, 255, 255, 0}
@@ -995,8 +922,7 @@ void renderObject(const Object* object, int roll)
             setTexture(tpage);
 
             if (f->flag & ShipEngine) {
-               glEnable(GL_BLEND);
-               glBlendFunc(GL_ONE, GL_ONE);
+               renderTransparent(1);
                glColor3ub(255, 255, 255);
             }
             else
@@ -1017,7 +943,7 @@ void renderObject(const Object* object, int roll)
 
             if (f->flag & ShipEngine)
             {
-               glDisable(GL_BLEND);
+               renderTransparent(0);
             }
 
             poly.ft3++;
@@ -1098,10 +1024,8 @@ void renderObject(const Object* object, int roll)
 
             if (f->flag & ShipEngine)
             {
-               // use additive blending for jet
-               glEnable(GL_BLEND);
-               glBlendFunc(GL_ONE, GL_ONE);
-               c = &colorWhite3;
+               renderTransparent(1);
+               c = &colorWhite3[0];
             }
 
             glBegin(GL_TRIANGLES);
@@ -1120,7 +1044,7 @@ void renderObject(const Object* object, int roll)
             
             if (f->flag & ShipEngine)
             {
-               glDisable(GL_BLEND);
+               renderTransparent(0);
             }
 
             poly.gt3++;
@@ -1223,7 +1147,7 @@ void renderObject(const Object* object, int roll)
 void renderSky(const Object* object)
 {
    glDisable(GL_DEPTH_TEST);
-   renderObject(object, 0);
+   renderObject(object);
    glEnable(GL_DEPTH_TEST);
 }
 
@@ -1258,4 +1182,13 @@ void renderEnd3D()
 
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
+}
+
+void renderTransparent(int enable)
+{
+    if (enable) {
+        glEnable(GL_BLEND);
+    } else {
+        glDisable(GL_BLEND);
+    }
 }

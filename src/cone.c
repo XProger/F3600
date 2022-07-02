@@ -1,7 +1,4 @@
 #include "standard.h"
-#include <stdio.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -235,7 +232,7 @@ void UpdateCone ( Cone *cone )
       /* get the z displacement related to speed or thrust */
          disp = cone->ship[ i ]->thrust_mag >> 4;
          disp += cone->ship[ i ]->speed >> 8;
-
+         disp += 31;
       }
       else
       {

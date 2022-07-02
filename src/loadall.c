@@ -10,9 +10,6 @@
 * Includes
 *************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "file.h"
 #include "standard.h"
 
@@ -24,8 +21,6 @@
 #define  DEBUG 4
 #define  DONT_CHECK_SIZE   8
 #define  ALLOCATE_MEM      16
-
-char  *Path = "alltext\\";    //AJY for relative paths
 
 /******************************************
 * LoadALL() Reads All Textures For Ridgie

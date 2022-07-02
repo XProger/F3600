@@ -1,8 +1,4 @@
 #include "standard.h"
-#include <stdio.h>
-#include <string.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -27,7 +23,7 @@
 #include "radscn.h"
 #include "lzss.h"
 
-int skyPos[15] = {-820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0};
+const int skyPos[15] = {-820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0};
 
 short InitScene(Object** prm, short *prmCount, Skeleton* camPos, ConfigData *gameData)
 {

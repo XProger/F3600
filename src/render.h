@@ -1,3 +1,6 @@
+#ifndef _RENDER_H_INCLUDED_
+#define _RENDER_H_INCLUDED_
+
 typedef struct Quad
 {
    signed short   x, y;
@@ -11,6 +14,8 @@ typedef struct Quad
    unsigned short page;
 } Quad;
 
+extern int gFrameIndex;
+
 void renderInit();
 void renderFree();
 void renderSwap();
@@ -23,7 +28,10 @@ void renderQuad(const Quad* spr);
 
 void renderPrepare();
 void renderTrack();
-void renderObject(const Object* object, int roll);
+void renderObject(const Object* object);
 void renderSky(const Object* object);
 void renderBegin3D();
 void renderEnd3D();
+void renderTransparent(int enable);
+
+#endif

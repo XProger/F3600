@@ -1,20 +1,7 @@
-#define STRICT
 #include <windows.h>
-#include <time.h>
-#include <stdio.h>
-
 #include <mmsystem.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <io.h>
-#include <math.h>
 #include "sfx.h"
 #include "decl.h"
-#include "malloc.h"
 #include "standard.h"
 #include "object.h"
 #include "render.h"
@@ -42,7 +29,7 @@ void timerInit()
    QueryPerformanceCounter(&gTimerStart);
 }
 
-long osGetTimeMS()
+long osGetSystemTimeMS()
 {
    LARGE_INTEGER count;
    QueryPerformanceCounter(&count);
@@ -117,7 +104,7 @@ void joyRumble(int index)
    if (!(joy->vL + joy->vR + joy->oL + joy->oR))
       return;
 
-   if (osGetTimeMS() < joy->time)
+   if (osGetSystemTimeMS() < joy->time)
       return;
 
    XINPUT_VIBRATION vibration;
@@ -131,7 +118,7 @@ void joyRumble(int index)
    joy->vR -= JOY_RUMBLE_FADE;
    if (joy->vL < 0) joy->vL = 0;
    if (joy->vR < 0) joy->vR = 0;
-   joy->time = osGetTimeMS() + JOY_MIN_UPDATE_FX_TIME;
+   joy->time = osGetSystemTimeMS() + JOY_MIN_UPDATE_FX_TIME;
 }
 
 void inputInit() {

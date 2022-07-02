@@ -2,11 +2,7 @@
 /* (C) Psygnosis 1994. By Jason Carl Denton
 */
 
-
 #include "standard.h"
-#include <stdio.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -19,8 +15,7 @@
 #include "camera.h"
 #include "sound.h"
 #include "global.h"
-
-
+#include "utils.h"
 
 Skeleton* NewSkeleton( )
 {

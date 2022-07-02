@@ -809,4 +809,5 @@ void InitMenuDisplay( int geomOffset );
 void InitGeom( void );
 void TransformStaticMenuObject(Object* object);
 void TransformStaticObjectBodge(Object* object);
-void TransformStaticObject(Object* object, Skeleton* camera);
+void TransformStaticObject(Object* object);
+void SetSkeletonTransform(Skeleton* skeleton);

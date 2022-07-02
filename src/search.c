@@ -1,6 +1,4 @@
 #include "standard.h"
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -14,6 +12,7 @@
 #include "camera.h"
 #include "sound.h"
 #include "global.h"
+#include "utils.h"
 
 int SectionSearch(ShipData *playerShip)
 {

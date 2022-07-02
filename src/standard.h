@@ -4,6 +4,11 @@
 #ifndef _STANDARD_H_INCLUDED_
 #define _STANDARD_H_INCLUDED_
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+
 typedef	unsigned char	u_char;
 typedef	unsigned short	u_short;
 typedef	unsigned int	u_int;
@@ -89,8 +94,6 @@ typedef struct {
 } bm;
 
 
-void  osQuit(void);
-
 int   JJSLoadSprites(void);
 void  changeScreen(void);
 void  setRenderBegin(void);
@@ -99,7 +102,9 @@ int   ProcessMessages(void);
 
 unsigned short GetKeyNoBlock();
 
+void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
+long osGetSystemTimeMS();
 
 typedef struct GRECT {
    int x, y, w, h;

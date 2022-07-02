@@ -1,10 +1,4 @@
 #include "standard.h"
-
-//#include <sys/types.h>
-//#include <sys/stat.h>
-#include <fcntl.h>
-#include <io.h>
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -26,13 +20,10 @@
 #include "decl.h"
 #include "init.h"
 #include "scene.h"
+#include "render.h"
 #include "utils.h"
 
 
-#define _SIZE_T_DEFINED_            // PCwipeout
-#include <stdio.h>         // PCwipeout
-#include <stdlib.h>     // PCwipeout
-#include <string.h>
 
 extern short trackNum; //SJR
 
@@ -65,14 +56,13 @@ int  TOut;
 extern TexChar CharSet16[] ;
 extern HiScores scoreTable[] ;
 
-extern int short shipShapeOrder[];
-int short pilotShapeOrder [8] = {0, 4, 6, 7, 2, 5, 1, 3} ;
-int short teamShapeOrder [4] = {2, 3, 1, 0} ;         // jed
+extern const short shipShapeOrder[];
+const short pilotShapeOrder [8] = {0, 4, 6, 7, 2, 5, 1, 3} ;
+const short teamShapeOrder [4] = {2, 3, 1, 0} ;         // jed
 ChampionShip   winTable [NO_OF_SHIPS] ;
 int   modelHdg = 0 ;
 int   zoomInOut = 0 ;
 int   downUp = 0 ;
-Skeleton    *root ;
 
 Texture     *buttonTex[18];
 
@@ -116,14 +106,14 @@ char  LoadFilename[MAXSTRING];
 char  SaveFilename[MAXSTRING];
 char  DaveSave[250];
 
-void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
-void DrawControllerEdit (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
+void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo);
+void DrawControllerEdit (Menus *menuSystem, int *currMenu, int shapeNo);
 void EnterLoadGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData);
 void KeyConfig0(void);
 void KeyConfig(void);
-void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
-void DisplayPadMenu1 (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
-void DisplayPadMenu2 (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay);
+void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo);
+void DisplayPadMenu1 (Menus *menuSystem, int *currMenu, int shapeNo);
+void DisplayPadMenu2 (Menus *menuSystem, int *currMenu, int shapeNo);
 void ResetKeys(void);
 
 
@@ -426,22 +416,6 @@ void MenuControl (ConfigData *gameData, int *mode, int timeout)
 
          if (currMenu == -1)
             gameData->exitMenu = 1 ;
-         if (currMenu == CLASS_MENU || currMenu == TEAM_MENU
-            || currMenu == PILOT_MENU
-            || currMenu == SERIAL_RACE_TYPE_MENU || currMenu == TRACK_MENU
-            || currMenu == START_TWO_PLAYER_MENU || currMenu == -1)
-         {
-            //          if (gameType == MASTER)
-            //             MenuMaster (gameData, &currMenu) ;
-            //          else
-            //             CaptainBirdsEye (gameData, &currMenu) ;
-         }
-
-         //       if (gameData->exit2Menu)
-         //          {
-         //          fn_track("other machine asked to exit")
-         //          currMenu = -1 ;
-         //          }
       }
 
       /********************************************/
@@ -1383,7 +1357,6 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
    int      textX, textY ;
    int      startOption = 0, menuOffset = 0, dispOption = 0 ;
    Texture  *menuPointer ;
-   static int  swapDelay =  0, toggleDisplay = 0 ;
 
    if (GetMenuKey(M_UP))
    {
@@ -1406,12 +1379,12 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
    if (menuSystem[(*currMenu)].displayObject != 0)
    {
       if (*currMenu == PILOT_MENU)
-         (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, (gameData->team * 2) + *currOption, &swapDelay);
+         (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, (gameData->team * 2) + *currOption);
       else
          if (*currMenu == TEAM_MENU)
-            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption, &swapDelay);
+            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption);
          else
-            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption, &swapDelay);
+            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption);
    }
 
    if (menuSystem[(*currMenu)].numOptions != 0)
@@ -1483,7 +1456,7 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
             if (i == (*currOption))
             {
                CentreText (menuSystem[(*currMenu)].menuOptions[i].optionText, text_data (menuSystem[(*currMenu)].menuOptions[i].textX,
-                  menuSystem[(*currMenu)].menuOptions[i].textY + (offSet*menuOffset), 8), RedText) ;
+                  menuSystem[(*currMenu)].menuOptions[i].textY + (offSet*menuOffset), 8), ((gFrameIndex & 3) < 2) ? RedText : WhiteText) ;
             }
             else
             {
@@ -1577,8 +1550,6 @@ void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object
          InitMenuDisplay ( 90 ) ;
       }
    }
-
-   toggleDisplay ++ ;
 }
 
 
@@ -2215,163 +2186,118 @@ void LoadTexModel (Object** modelShapes, char *fileName)
 }
 
 
-void DrawMainMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DrawMainMenu (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static int heading = 0, hdg = 0 ;
+   int hdg = gFrameIndex * 20;
+   int heading = gFrameIndex * 5;
+
    andybodge=1;
 
    if (shapeNo == 0)
-      DrawTeamShips (0, 0, MODELSIZE, &heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]) ;
+      DrawTeamShips (0, 0, MODELSIZE, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]) ;
 
    // if (shapeNo == 1)
    // {
-   //    DrawTeamShips (-450, 0, 1100, &heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[3]]) ;
-   //    DrawTeamShips (450, 0, 1100, &heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[1]]) ;
+   //    DrawTeamShips (-450, 0, 1100, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[3]]) ;
+   //    DrawTeamShips (450, 0, 1100, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[1]]) ;
    // }
 
    if (shapeNo == 1)
    {
       SetSkeletonPosition(menuSystem[(*currMenu)].menu2Model[3]->skeleton, 0, 0, MODELSIZE) ;    /*1800*/
       SetSkeletonDirectionHPR(menuSystem[(*currMenu)].menu2Model[3]->skeleton,hdg,0,0);
-      TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[3], NULL);
-      hdg += 40;
+      TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[3]);
    }
 
    //if (shapeNo ==2)
    //{
    //SetSkeletonPosition(menuSystem[(*currMenu)].menu2Model[1]->skeleton,  0, 0, MODELSIZE) ;    /*1800*/
    //SetSkeletonDirectionHPR(menuSystem[(*currMenu)].menu2Model[1]->skeleton,hdg,0,0);
-   //TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[1], NULL);
+   //TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[1]);
    //hdg += 40;
    //}//SJR-msdos
 
 }
 
-void DrawTeams (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DrawTeams (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0 ;
-   static heading = 0 ;
+   int hdg = gFrameIndex * 20;
+   int heading = gFrameIndex * 10;
 
    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]->skeleton),0,0,9000) ;
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]->skeleton), hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]], NULL);
+   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]->skeleton),hdg,0,0);
+   TransformStaticObject(menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]);
 
-   hdg += 40;
-
-   DrawTeamShips (-900, 800, 1500, &heading, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo*2]]) ;
-   DrawTeamShips (900, 800, 1500, &heading, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo*2+1]]) ;
+   DrawTeamShips (-900, 800, 1500, heading, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo*2]]) ;
+   DrawTeamShips (900, 800, 1500, heading, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo*2+1]]) ;
 }
 
-void DrawTeamShips (int x, int y, int size, int *heading, Object *shipModel)
+void DrawTeamShips (int x, int y, int size, int heading, Object *shipModel)
 {
    SetSkeletonPosition(shipModel->skeleton,x,y, size) ;
-   SetSkeletonDirectionHPR(shipModel->skeleton, *heading,0,0);
+   SetSkeletonDirectionHPR(shipModel->skeleton,-heading,0,0);
 
-   TransformStaticMenuObject(shipModel, NULL);
-
-   *heading -= 10;
+   TransformStaticMenuObject(shipModel);
 }
 
-void DrawPilot (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DrawPilot (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0, shdg = 0 ;
+   int hdg = gFrameIndex * 20;
+   int shdg = gFrameIndex * 5;
 
    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]->skeleton), 0, -400, 11000) ;
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]->skeleton),hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]], NULL);
+   TransformStaticObject(menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]);
 
-   DrawTeamShips (0, 700, 1300, &shdg, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo]]) ;
-
-   hdg += 40;
+   DrawTeamShips (0, 700, 1300, shdg, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo]]) ;
 }
 
-void DrawPlayPad (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DrawPlayPad (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0, shdg = 0 ;
-   static pitch = 0, roll = 0, zoom = 0, x = 0, y = 0 ;
-
    InitMenuDisplay (120) ;
 
    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, -1140,6220+zoomInOut);
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),(modelHdg),0, 0);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[0], NULL);
+   TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 2260+downUp,6670) ;
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton),250, -3440,10);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[1], NULL);
-
-   if (pad & IN_UP)        pitch += 10 ;
-   if (pad & IN_DOWN)      pitch -= 10 ;
-   if (pad & IN_LEFT)      hdg -= 10 ;
-   if (pad & IN_RIGHT)     hdg += 10 ;
-   if (pad & IN_X)         roll -= 10 ;
-   if (pad & IN_B)         roll += 10 ;
-   if (pad & IN_LB)        zoom += 10 ;
-   if (pad & IN_RB)        zoom -= 10 ;
-   if (pad & IN_LT)        x -= 10 ;
-   if (pad & IN_RT)        x += 10 ;
-   if (pad & IN_START)     y += 10 ;
-   if (pad & IN_SELECT)    y -= 10 ;
+   TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
 }
 
-void DrawNegCon(Menus* menuSystem, int* currMenu, int shapeNo, int* swapDelay)
+void DrawNegCon(Menus* menuSystem, int* currMenu, int shapeNo)
 {
 }
 
-void NegConButtonDisplay (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void NegConButtonDisplay (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0, shdg = 0 ;
-
-   Object*  a;
-   Object*  b;
-
-   a = menuSystem[(*currMenu)].menuModel[0];
-   b = menuSystem[(*currMenu)].menuModel[1];
-
-   SetSkeletonPosition(root,0,100,900+zoomInOut) ;
-   SetSkeletonDirectionHPR(root, 1024+modelHdg, 0, 0);
-
-   SetSkeletonPosition( a->skeleton, 0, 0, -8 );
-   SetSkeletonPosition( b->skeleton, 0, 0, 8 );
-
-   SetSkeletonDirection( a->skeleton, 0, 0, 0);
-   SetSkeletonDirection( b->skeleton, 0, 0, 0);
-
-   a->skeleton->update = 1 ;
-   b->skeleton->update = 1 ;
-
-   TransformStaticObject(a, NULL);
-   TransformStaticObject(b, NULL);
 }
 
-void DrawShip(Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
+void DrawShip(Menus *menuSystem, int *currMenu, int shipNo)
 {
-   static hdg = 0;
+   int hdg = gFrameIndex * 5;
 
    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]->skeleton),0, 0, MODELSIZE) ;
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]->skeleton),hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]], NULL);
-   hdg += 10;
+   TransformStaticObject(menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]);
 }
 
-void DrawClass (Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
+void DrawClass (Menus *menuSystem, int *currMenu, int shipNo)
 {
-   static hdg = 0;
+   int hdg = gFrameIndex * 20;
 
    if (shipNo==0)
    {
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),   0, 0,500);
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),hdg,0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
    }
 
    if (shipNo==1)
    {
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),   0, -25,500);
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton),hdg,0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
    }
-
-   hdg += 40;
 }
 
 void InitSelectData (SelectionData *selectData)
@@ -3459,9 +3385,9 @@ void SetNormPadPresets (ConfigData *gameData)
 }
 
 
-void DrawGames (Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
+void DrawGames (Menus *menuSystem, int *currMenu, int shipNo)
 {
-   static hdg = 0;
+   int hdg = gFrameIndex * 20;
 
    InitMenuDisplay (90) ;
 
@@ -3473,7 +3399,7 @@ void DrawGames (Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
 
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, -50,600) ;   /*1800*/
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),hdg, 0, 0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
    }
 
    if (shipNo == 1)
@@ -3482,7 +3408,7 @@ void DrawGames (Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
 
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, -50,600) ;   /*1800*/
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),hdg, 0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
    }
 
 
@@ -3492,17 +3418,16 @@ void DrawGames (Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
 
       SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[2]->skeleton),0,-50,600) ;   /*1800*/
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[2]->skeleton), hdg, 0,0);
-      TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[2], NULL);
+      TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[2]);
    }
-
-   hdg += 40;
 }
 
 
 
-void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
+void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo)
 {
-   static hdg = 0, heading = 0;
+   int hdg = gFrameIndex * 20;
+   int heading = gFrameIndex * 5;
 
    andybodge=1;   // pc wipeout - horrid but i don't care !!! (used in detail & controller configs)
 
@@ -3515,7 +3440,7 @@ void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDela
       inmenu = 1;
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 0, 400) ;    /*1800*/
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg,0, 0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
    }
 
    if (shipNo == 1)
@@ -3526,7 +3451,7 @@ void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDela
       inmenu = 1;
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, 0, 400) ;    /*1800*/
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton), hdg,0, 0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
    }
 
    if (shipNo == 2)
@@ -3539,13 +3464,13 @@ void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDela
       switch(controller)
       {
       case _KEYBOARD:
-         DisplayPadMenu1(menuSystem,currMenu,shipNo,swapDelay);
+         DisplayPadMenu1(menuSystem,currMenu,shipNo);
          break;
       case _MOUSE1:
-         DisplayPadMenu(menuSystem,currMenu,shipNo,swapDelay);
+         DisplayPadMenu(menuSystem,currMenu,shipNo);
          break;
       case _JOYSTICK1:
-         DisplayPadMenu2(menuSystem,currMenu,shipNo,swapDelay);
+         DisplayPadMenu2(menuSystem,currMenu,shipNo);
          break;
       }
       */
@@ -3557,10 +3482,10 @@ void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDela
 
       Reallyinmenu = 1;
       inmenu = 0;
-      DrawTeamShips (0, 0, MODELSIZE, &heading, menuSystem[DETAILS_MENU].menuModel[shipShapeOrder[0]]) ;
+      DrawTeamShips (0, 0, MODELSIZE, heading, menuSystem[DETAILS_MENU].menuModel[shipShapeOrder[0]]) ;
       //    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 600) ;    /*1800*/
       //    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton), hdg,0, 0);
-      //    TransformStaticObject(menuSystem[(*currMenu)].menuModel[2], NULL);
+      //    TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
    }
 
    //silly me - I thought shipNo meant it was drawing ships...
@@ -3573,7 +3498,7 @@ void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDela
    inmenu = 1;
    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[3]->skeleton),0, 0, 600) ;    //1800
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[3]->skeleton),  hdg,0,0);
-      TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[3], NULL);
+      TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[3]);
 }*/
 
    //now i'tll not draw the headphones and draw the stopwatch instead.
@@ -3584,16 +3509,14 @@ void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo, int *swapDela
       inmenu = 1;
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 600) ;    /*1800*/
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),  hdg,0,0);
-      TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[2], NULL);
+      TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[2]);
    }
-
-   hdg += 40;
 }
 
 
-void DrawHiScoreMenu (Menus *menuSystem, int *currMenu, int shipNo, int *swapDelay)
+void DrawHiScoreMenu (Menus *menuSystem, int *currMenu, int shipNo)
 {
-   static hdg = 0;
+   int hdg = gFrameIndex * 20;
 
    InitMenuDisplay (90) ;
 
@@ -3601,79 +3524,44 @@ void DrawHiScoreMenu (Menus *menuSystem, int *currMenu, int shipNo, int *swapDel
    {
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0,0,600) ;   /*1800*/
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),hdg, 0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
    }
-   hdg += 40;
 }
 
-void DisplayPadMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DisplayPadMenu (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0, shdg = 0 ;
+   int hdg = gFrameIndex * 20;
    // jed
    SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[0]->skeleton),0,0, 6500) ;
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[0]->skeleton), hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menu2Model[0], NULL);
-   hdg += 40;
+   TransformStaticObject(menuSystem[(*currMenu)].menu2Model[0]);
 }
 
-void DisplayPadMenu1 (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DisplayPadMenu1 (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0, shdg = 0 ;
+   int hdg = gFrameIndex * 20;
    // jed
-
    SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[1]->skeleton),0,-5,   4500) ;
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[1]->skeleton), hdg,0,0);
-   TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[1], NULL);
-   hdg += 20;
+   TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[1]);
 }
 
-void DisplayPadMenu2 (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DisplayPadMenu2 (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0, shdg = 0 ;
+   int hdg = gFrameIndex * 20;
    // jed
-
    SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[2]->skeleton),0,0, 4500) ;
    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[2]->skeleton), hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menu2Model[2], NULL);
-   hdg += 40;
+   TransformStaticObject(menuSystem[(*currMenu)].menu2Model[2]);
 }
 
-void DisplayNegConMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DisplayNegConMenu (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0, shdg = 0 ;
-
-   Object*  a;
-   Object*  b;
-
-   InitMenuDisplay ( 90 ) ;
-
-
-   a = menuSystem[(*currMenu)].menu2Model[0];
-   b = menuSystem[(*currMenu)].menu2Model[1];
-
-   SetSkeletonPosition(root,0,-100, 1500) ;
-   SetSkeletonDirectionHPR(root, hdg,0,0);
-
-   SetSkeletonPosition( a->skeleton, 0, 0, -8 );    /*8*/
-   SetSkeletonPosition( b->skeleton, 0, 0, 8 ); /*-8*/
-
-   SetSkeletonDirection( a->skeleton, 0, 0, 0 );
-   SetSkeletonDirection( b->skeleton, 0, 0, 0 );
-
-   a->skeleton->update = 1 ;
-   b->skeleton->update = 1 ;
-
-   TransformStaticObject(a, NULL);
-   TransformStaticObject(b, NULL);
-
-   hdg += 40;
 }
 
 
 void ConfirmFormat (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
 {
-   static int  toggle = 0 ;
-
    DisplayButtons ( 30, 210, PSELECT) ;
    DisplayButtons ( 240, 210, PBACK) ;
 
@@ -3701,7 +3589,6 @@ void ConfirmFormat (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
       //else
       //AddText ("NO", text_data (210, 120, 16), WhiteText) ;
    }
-   toggle ++ ;
 }
 
 void InitChampionship ()
@@ -3846,9 +3733,6 @@ void JJSReadTIM(char *filename , char *location, TimData *tim)
 
 void QuitYesNo(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
 {
-   static int toggle = 0;
-   static char flag = 0;
-
    if (andybodge)
    {
       selectData->confirm = 1;
@@ -3882,14 +3766,11 @@ void QuitYesNo(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *s
       //AddText ("YES", text_data (80, 120, 16), WhiteText) ;
       AddText ("NO", text_data (210, 120, 16), WhiteText) ;
    }
-
-   toggle ++ ;
 }
 
 
 void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
 {
-   static int toggle = 0;
    static char listpos = 0;
    char  x=50, y=140, l=12;
    char  DrawStr[8];
@@ -3989,15 +3870,12 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    AddText (SkyStr, text_data (x+180, y+(l*3), 8), RedText) ;
    AddText (TexStr, text_data (x+180, y+(l*2), 8), RedText) ;
    //    AddText (PCStr, text_data (x+180, y+(l*3), 8), RedText) ;
-
-   toggle++;
 }
 
 
 
 void ControllerOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
 {
-   static int toggle = 0;
    char  controllerstring[20];
    char  configstring[20];
    char colour1;
@@ -4021,7 +3899,6 @@ void ControllerOptions(MusicPrims *musicPrims, SlideTextures *musicTex, Selectio
    {
       if (orig_controller != _JOYSTICK1)
       {
-         toggle ++ ;
          if (changecontroller)
             changecontroller=0;
          else
@@ -4093,9 +3970,6 @@ void ControllerOptions(MusicPrims *musicPrims, SlideTextures *musicTex, Selectio
 
 void ControllerEdit(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
 {
-   static int toggle = 0;
-   static char flag = 0;
-
    DisplayButtons ( 30, 210, PSELECT) ;
    DisplayButtons ( 240, 210, PBACK) ;
 
@@ -4109,17 +3983,12 @@ void ControllerEdit(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
    {
       KeyConfig();
    }
-
-   toggle ++ ;
 }
 
 
 
-void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0 ;
-
-
    InitMenuDisplay (110);
 /*TODO input draw menu
    switch(orig_controller)
@@ -4129,7 +3998,7 @@ void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swa
       etc_Joystick1Switch = _DEVICE_OFF; //jjs quick and dirty
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 0, 3500) ;
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg,0, 0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
       hdg += 20;
       break;
 
@@ -4137,7 +4006,7 @@ void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swa
    case _MOUSE1:
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, 0, 4500) ;
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),  hdg,75,25);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
       hdg += 40;
       break;
 
@@ -4145,7 +4014,7 @@ void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo, int *swa
    case _JOYSTICK1:
       SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 3500) ;
       SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),  hdg,-50,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2], NULL);
+      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
       hdg += 40;
       break;
    }
@@ -4522,19 +4391,16 @@ void KeyConfig(void)
 */
 }
 
-void DrawControllerEdit (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DrawControllerEdit (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static hdg = 0 ;
-
    InitMenuDisplay (80);
 }
 
-void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo, int *swapDelay)
+void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo)
 {
-   static int heading = 0, hdg = 0 ;
+   int heading = gFrameIndex * 5;
 
-
-   DrawTeamShips (0, 0, MODELSIZE, &heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]) ;
+   DrawTeamShips (0, 0, MODELSIZE, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]) ;
 }
 
 char CheckKey(unsigned short code)

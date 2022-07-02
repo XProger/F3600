@@ -1,13 +1,4 @@
-#define _SIZE_T_DEFINED_
-#include <stdio.h>
-#include <string.h>
-//#include <libspu.h>
-//#include <libsnd.h>
-
-
 #include "standard.h"
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"

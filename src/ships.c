@@ -3,9 +3,6 @@
 /************************************************************/
 
 #include "standard.h"
-#include <string.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -31,11 +28,12 @@
 #include "utils.h"
 #include "init.h"
 #include "utils.h"
-
+#include "render.h"
 
 extern TrackCamera ctrlcamera;
 
-short startLinePos[16] =   {  27,      /* NULL        */
+const short startLinePos[16] =   
+                     {  27,      /* NULL        */
                         27,      /* V - TerrorMax  */
                         27,      /* V - Altima VII    */
                         27,      /* R - Altima VII    */
@@ -52,7 +50,8 @@ short startLinePos[16] =   {  27,      /* NULL        */
                         27,      /* R - FireStar   */
                         27};  /* NULL        */
 
-short behindSpeed[16]  = {    100,  /* NULL        */
+const short behindSpeed[16]  = 
+                   {    100,  /* NULL        */
                         350,  /* V - TerrorMax  */
                         300,  /* V - Altima VII    */
                         500,  /* R - Altima VII    */
@@ -73,7 +72,7 @@ short behindSpeed[16]  = {    100,  /* NULL        */
                         500,  /* R - FireStar   */
                         200}; /* NULL        */
 
-short shipShapeOrder[8] = {7, 3, 5, 6, 1, 4, 0, 2};
+const short shipShapeOrder[8] = {7, 3, 5, 6, 1, 4, 0, 2};
 
 short championOrder[8];
 short raceOrder[8];
@@ -141,15 +140,15 @@ void DrawShips(ShipData *shipIndex, Object** shipShapes, int camShip, TrackCamer
             if(raceType == HEAD_TO_HEAD)
             {
                if((i == serialShip) || (i == ownShip))
-                  renderObject( obj, 0 );
+                  renderObject( obj );
             }
             else if(raceType == TIME_TRIAL)
             {
                if((i == ownShip))
-                  renderObject( obj, 0 );
+                  renderObject( obj );
             }
             else
-               renderObject( obj, 0 );
+               renderObject( obj );
             }
       }
       else

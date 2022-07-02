@@ -3,11 +3,7 @@
 */
 
 #include "standard.h"
-#include <string.h>
-
-#include "malloc.h"
 #include "tim.h"
-#include <stdio.h>
 #include "object.h"
 #include "file.h"
 #include "track.h"
@@ -31,26 +27,25 @@ long FileLength( char* name )
 
    cleanname = (char *)strchr(name,':');
    if (cleanname != NULL)
-      {
+   {
       cleanname++;
-      }
+   }
    else
-      {
+   {
       cleanname = name;
-      }
-
+   }
 
    fd = fopen( cleanname, "rb" );
    if ( fd == NULL )
    {
-      return( NULL );
+      return 0;
    }
 
 /* Seek to end of file to get length */
 
-      fseek(fd,0,SEEK_END);
+   fseek(fd,0,SEEK_END);
    length = ftell( fd);
-    rewind(fd);
+   rewind(fd);
 
 /* Close file */
 

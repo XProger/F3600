@@ -1,8 +1,4 @@
 #include "standard.h"
-#include <stdlib.h>
-#include <string.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "file.h"
@@ -909,6 +905,7 @@ void InitWeaponSprtIcons(Texture** weaponIconTextures)
 
 void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip)
 {
+   return;
    int icon = playerShip->weaponType;
 
    if (icon != NO_WEAPON)
@@ -943,8 +940,6 @@ void ShakeScreen()
 
    osJoyVibrate(0, shakeCount, shakeCount);
 }
-
-extern short arccos_tab[];
 
 GT4               *abPtr[80];
 short             *abCoords[80];

@@ -1,3 +1,6 @@
+#ifndef _UTILS_H_INCLUDED_
+#define _UTILS_H_INCLUDED_
+
 int sar(int a,int n);
 int GetMagnitude(VECTOR vec1);
 void MinusVector(VECTOR v1, VECTOR v2, VECTOR *result);
@@ -14,3 +17,5 @@ long SquareRoot0(long a);
 
 void RotTrans(SVECTOR* v0, VECTOR* v1, long* flag);
 void MulMatrix0(MATRIX* m0, MATRIX* m1, MATRIX* ret);
+
+#endif

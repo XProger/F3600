@@ -2,11 +2,7 @@
 /* (C) Psygnosis 1994, 1995. By Jason Carl Denton & Rob Smith
 */
 
-
 #include "standard.h"
-#include <stdio.h>
-
-#include "malloc.h"
 #include "tim.h"
 #include "object.h"
 #include "skeleton.h"
