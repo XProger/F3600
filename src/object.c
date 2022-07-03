@@ -47,12 +47,6 @@ void InitMenuDisplay(int geomOffset) { SetGeomOffset(160, geomOffset); }
 
 void InitGameDisplay(void) { SetGeomOffset(160, 120); }
 
-void Swap()
-{
-    ProcessMessages();
-    renderSwap();
-}
-
 void TransformStaticObject(Object* object)
 {
     renderBegin3D();

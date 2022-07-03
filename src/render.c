@@ -27,7 +27,6 @@ long xOffset;
 long yOffset;
 
 int gWidth, gHeight;
-int gFrameIndex;
 
 #ifndef GL_UNSIGNED_SHORT_5_6_5
     #define GL_UNSIGNED_SHORT_5_6_5 0x8363
@@ -562,9 +561,7 @@ void renderFree()
 
 void renderSwap()
 {
-    Sleep(1);
     SwapBuffers(hDC);
-    gFrameIndex = osGetSystemTimeMS() * 3 / 50;
 }
 
 void renderResize(int width, int height)

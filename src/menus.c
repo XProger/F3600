@@ -24,6 +24,7 @@
 #include "utils.h"
 
 extern short trackNum; // SJR
+extern long ctrlGameLoop;
 
 #define PALETTE 1
 #define PICTURE 2
@@ -104,6 +105,36 @@ char LoadFilename[MAXSTRING];
 char SaveFilename[MAXSTRING];
 char DaveSave[250];
 
+int gCurrMenu;
+int gCurrOption;
+
+extern long ctrlfirsttime;
+
+Menus menuSystem[MAX_MENUS];
+Object* shipShapes[NO_OF_SHIPS];
+Object* audioShapes[3];
+Object* pilotShapes[8];
+Object* teamShapes[4];
+
+Object* clsShapes[3];
+Object* gameShapes[4];
+Object* optShapes[7];
+Object* padShapes[3];
+Object* negShapes[3];
+Object** classShapes = clsShapes;
+Object** gameTypeShapes = gameShapes;
+Object** optionShapes = optShapes;
+Object** joypadShapes = padShapes;
+Object** negconShapes = negShapes;
+SelectionData selectData;
+
+Texture* trackTex[7];
+SlideTextures musicTex;
+MusicPrims musicPrims;
+char loadGames[MAX_GAMES][9];
+
+const char trackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
+
 void DrawControllerMenu(Menus* menuSystem, int* currMenu, int shapeNo);
 void DrawControllerEdit(Menus* menuSystem, int* currMenu, int shapeNo);
 void EnterLoadGame(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData);
@@ -116,46 +147,9 @@ void ResetKeys(void);
 
 void reloadScr(void) { menuScreen = JJSLoad16BitTexture("wipeout\\textures\\wipeout1.tim", VRAM); }
 
-void MenuControl(ConfigData* gameData, int* mode, int timeout)
+void menuInit()
 {
-    Menus menuSystem[MAX_MENUS];
-    int currMenu = -2;
-    int currOption = 0;
-    int oldMenu = 0;
-    int oldOption = 0;
-    static char firstTime = 1;
-    int i;
-    Object* shipShapes[NO_OF_SHIPS];
-    Object* audioShapes[3];
-    Object* pilotShapes[8];
-    Object* teamShapes[4];
-
-    Object* clsShapes[3];
-    Object** classShapes = clsShapes;
-
-    Object* gameShapes[4];
-    Object** gameTypeShapes = gameShapes;
-
-    Object* optShapes[7];
-    Object** optionShapes = optShapes;
-
-    Object* padShapes[3];
-    Object** joypadShapes = padShapes;
-
-    Object* negShapes[3];
-    Object** negconShapes = negShapes;
-
-    SlideTextures musicTex;
-    MusicPrims musicPrims;
-    static SelectionData selectData;
-    char loadGames[MAX_GAMES][9];
-    char loadFlag = 1;
-    Texture* copyrightSymbol;
-    Texture* trackTex[7];
-    int buttonPressed = 0;
-    char trackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
     long length;
-    int frame_cnt = 0;
     int x = 0, y = 0;
 
     menuTexturesIn = 1;
@@ -233,215 +227,184 @@ void MenuControl(ConfigData* gameData, int* mode, int timeout)
     InitMusicVSfx(&musicTex);
     InitButtons("buttons");
 
-    if (firstTime)
+    if (ctrlfirsttime)
         InitSelectData(&selectData);
 
     selectData.fadeHeight = 0;
     selectData.select = 0;
     selectData.combatInit = 0;
     selectData.combatComplete = 0;
-
-    if (gameData->defaultMenu != -2)
-        loadFlag = 0;
-
-    currMenu = gameData->defaultMenu;
-
     menuSystem[1].numOptions = NumTracks;
-
-    copyrightSymbol = LoadTexture("wipeout\\textures\\copyrigt.tim", 1);
 
     InitMenuSystem(&(menuSystem[0]));
 
     selectData.menuSystem = &(menuSystem[0]);
 
     /*TODO show copyright*/
-    renderClear();
-
     UpdateNotes(NOT_PAUSED);
-    Swap();
-
-    currMenu = -2;
 
     menuScreen = JJSLoad16BitTexture("wipeout\\textures\\wipeout1.tim", VRAM);
-    inmenu = 1;
 
     andyTimeout = 0;
-    while (1)
+
+    gCurrMenu = 0;
+    gCurrOption = 0;
+}
+
+void menuLoop(ConfigData* gameData)
+{
+    int i;
+
+    UpdateNotes(NOT_PAUSED);
+
+    /*TODO title screen backgound*/
+    renderClear();
+
     {
-        opad = pad;
-        pad = gPad;
-        andyTimeout++;
+        if ((gCurrMenu == NEGCON_MENU) || (gCurrMenu == TWIST_MENU))
+            gCurrMenu = PADCONFIG_MENU;
 
-        if (andyTimeout >= TOut * 30)
+        menuSystem[OPTION_MENU].menu2Model = joypadShapes;
+        menuSystem[17].menuModel = joypadShapes;
+        menuSystem[PADCONFIG_MENU].displayMenu = MenuPlayPad;
+        menuSystem[PADCONFIG_MENU].displayObject = DrawPlayPad;
+        menuSystem[PADCONFIG_MENU].prevMenu = OPTION_MENU;
+    }
+
+    if (gCurrMenu != -2)
+    {
+        MenuErrors(&gCurrMenu, &(menuSystem[0]));
+        if (menuSystem[gCurrMenu].errorFlag != 0)
         {
-            andybodge = 2;
-            break;
-        }
-        xpad = (pad ^ opad) & pad;
-
-        UpdateNotes(NOT_PAUSED);
-
-        /*TODO title screen backgound*/
-        renderClear();
-
-        oldMenu = currMenu;
-        oldOption = currOption;
-
-        {
-            if ((currMenu == NEGCON_MENU) || (currMenu == TWIST_MENU))
-                currMenu = PADCONFIG_MENU;
-
-            menuSystem[OPTION_MENU].menu2Model = joypadShapes;
-            menuSystem[17].menuModel = joypadShapes;
-            menuSystem[PADCONFIG_MENU].displayMenu = MenuPlayPad;
-            menuSystem[PADCONFIG_MENU].displayObject = DrawPlayPad;
-            menuSystem[PADCONFIG_MENU].prevMenu = OPTION_MENU;
-        }
-
-        if (currMenu != -2)
-        {
-            MenuErrors(&currMenu, &(menuSystem[0]));
-            if (menuSystem[currMenu].errorFlag != 0)
-            {
-                selectData.fadeHeight = 0;
-                selectData.select = 0;
-            }
-        }
-
-        if (menuSystem[currMenu].updateCount != 0 && menuSystem[currMenu].errorFlag == 0)
-            menuSystem[currMenu].updateCount--;
-
-        /*TODO menu bg*/
-        //    ShowMenuBackground (&(menuPrim[0]), &(menu1Prim[0]), menuScreen) ; // PCwipeout
-
-        if (currMenu == -2)
-            currMenu = 0;
-
-        if (menuSystem[currMenu].errorFlag == 0)
-        {
-            if (currMenu >= 0)
-                CallMenuSelector(&(menuSystem[0]), &currMenu, &currOption, shipShapes, gameData, &musicPrims, &musicTex, &selectData, &(loadGames[0]));
-
-            if (currMenu == TRACK_MENU)
-                DisplayPicture(trackTex[currOption], 96, 50, 128, 74);
-
-            if (((currMenu == SAVE_MENU) || (currMenu == LOAD_MENU)) && (selectData.formatCard == 1))
-            {
-                currMenu = FORMAT_CONFIRM;
-                currOption = 0;
-            }
-
-            if (selectData.select)
-            {
-                if (currMenu == MAIN_MENU && currOption == 0)
-                {
-                    // CHEAT ACTIVATION BITS - need to be changed for PCwipeout
-                    /*TODO cheats*/
-
-                    if ((pad & IN_LEFT) && (pad & IN_A))
-                    {
-                        gameData->RapierClass = 1;
-                    }
-
-                    if ((pad & IN_RIGHT) && (pad & IN_Y))
-                    {
-                        totalTracks = 14;
-                        NumTracks = 7;
-                        gameData->showBonusTrack = 1;
-                    }
-                }
-
-                if (menuSystem[currMenu].updateCount == 0)
-                    CallMenuActivator(gameData, &currMenu, &currOption, &(menuSystem[0]), &selectData, &(loadGames[0]));
-            }
-
-            if (davebodge == 2 || davebodge == 3 || davebodge == 4)
-                CallMenuActivator(gameData, &currMenu, &currOption, &(menuSystem[0]), &selectData, &(loadGames[0]));
-        }
-
-        if (currMenu == TRACK_MENU)
-        {
-            if (gameData->Class == 0)
-                CentreText("VENOM CLASS", text_data(20, 40, 8), RedText);
-            else
-                CentreText("RAPIER CLASS", text_data(20, 40, 8), RedText);
-        }
-
-        if (currMenu == CLASS_MENU && currOption == 1 && (!gameData->RapierClass))
-            CentreText("NOT AVAILABLE", text_data(20, 190, 12), RedText);
-
-        /*** Serial link up within menu structure ***/
-
-        if (gameType == SINGLE)
-        {
-            if (selectData.combatComplete == 32)
-            {
-                currMenu = MAIN_MENU;
-                currOption = 0;
-                selectData.combatInit = 0;
-                selectData.combatComplete = 0;
-            }
-        }
-
-        if (gameType == MASTER || gameType == SLAVE)
-        {
-            if (selectData.combatComplete == 32)
-            {
-                currMenu = TRACK_MENU;
-                currOption = 0;
-                selectData.combatInit = 0;
-                selectData.combatComplete = 0;
-
-                if (gameType == SINGLE)
-                    currMenu = MAIN_MENU;
-                else if (gameType == MASTER || gameType == SLAVE)
-                {
-                    if (gameType == MASTER)
-                        currMenu = CLASS_MENU;
-
-                    if (gameType == SLAVE)
-                    {
-                        currMenu = TEAM_MENU;
-                        menuSystem[TEAM_MENU].prevMenu = TEAM_MENU;
-                    }
-                }
-            }
-
-            if (currMenu == -1)
-                gameData->exitMenu = 1;
-        }
-
-        /********************************************/
-
-        Swap();
-
-        firstTime = 0;
-
-        if (menuSystem[currMenu].updateCount == 0 && menuSystem[currMenu].errorFlag == 0 && selectData.select == 1)
-        {
+            selectData.fadeHeight = 0;
             selectData.select = 0;
-            menuSystem[currMenu].updateCount = 0;
+        }
+    }
+
+    if (menuSystem[gCurrMenu].updateCount != 0 && menuSystem[gCurrMenu].errorFlag == 0)
+        menuSystem[gCurrMenu].updateCount--;
+
+    /*TODO menu bg*/
+    //    ShowMenuBackground (&(menuPrim[0]), &(menu1Prim[0]), menuScreen) ; // PCwipeout
+
+    if (menuSystem[gCurrMenu].errorFlag == 0)
+    {
+        if (gCurrMenu >= 0)
+            CallMenuSelector(&(menuSystem[0]), &gCurrMenu, &gCurrOption, shipShapes, gameData, &musicPrims, &musicTex, &selectData, &(loadGames[0]));
+
+        if (gCurrMenu == TRACK_MENU)
+            DisplayPicture(trackTex[gCurrOption], 96, 50, 128, 74);
+
+        if (((gCurrMenu == SAVE_MENU) || (gCurrMenu == LOAD_MENU)) && (selectData.formatCard == 1))
+        {
+            gCurrMenu = FORMAT_CONFIRM;
+            gCurrOption = 0;
         }
 
-        selectData.trackNum = gameData->trackNum;
-
-        if (currMenu == -1)
+        if (selectData.select)
         {
-            InitGameDisplay();
-            gameData->exitMenu = 0;
-            gameData->exit2Menu = 0;
-
-            for (i = 0; i < 10; i++)
+            if (gCurrMenu == MAIN_MENU && gCurrOption == 0)
             {
-                /*TODO audio*/
-                // c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   /* Master volume (left) */
-                // c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   /* Master volume (right) */
-                UpdateNotes(NOT_PAUSED);
+                // CHEAT ACTIVATION BITS - need to be changed for PCwipeout
+                /*TODO cheats*/
+
+                if ((pad & IN_LEFT) && (pad & IN_A))
+                {
+                    gameData->RapierClass = 1;
+                }
+
+                if ((pad & IN_RIGHT) && (pad & IN_Y))
+                {
+                    totalTracks = 14;
+                    NumTracks = 7;
+                    gameData->showBonusTrack = 1;
+                }
             }
 
-            // CdControlB(CdlStop, 0, 0);
-            return;
+            if (menuSystem[gCurrMenu].updateCount == 0)
+                CallMenuActivator(gameData, &gCurrMenu, &gCurrOption, &(menuSystem[0]), &selectData, &(loadGames[0]));
         }
+
+        if (davebodge == 2 || davebodge == 3 || davebodge == 4)
+            CallMenuActivator(gameData, &gCurrMenu, &gCurrOption, &(menuSystem[0]), &selectData, &(loadGames[0]));
+    }
+
+    if (gCurrMenu == TRACK_MENU)
+    {
+        if (gameData->Class == 0)
+            CentreText("VENOM CLASS", text_data(20, 40, 8), RedText);
+        else
+            CentreText("RAPIER CLASS", text_data(20, 40, 8), RedText);
+    }
+
+    if (gCurrMenu == CLASS_MENU && gCurrOption == 1 && (!gameData->RapierClass))
+        CentreText("NOT AVAILABLE", text_data(20, 190, 12), RedText);
+
+    /*** Serial link up within menu structure ***/
+
+    if (gameType == SINGLE)
+    {
+        if (selectData.combatComplete == 32)
+        {
+            gCurrMenu = MAIN_MENU;
+            gCurrOption = 0;
+            selectData.combatInit = 0;
+            selectData.combatComplete = 0;
+        }
+    }
+
+    if (gameType == MASTER || gameType == SLAVE)
+    {
+        if (selectData.combatComplete == 32)
+        {
+            gCurrMenu = TRACK_MENU;
+            gCurrOption = 0;
+            selectData.combatInit = 0;
+            selectData.combatComplete = 0;
+
+            if (gameType == SINGLE)
+                gCurrMenu = MAIN_MENU;
+            else if (gameType == MASTER || gameType == SLAVE)
+            {
+                if (gameType == MASTER)
+                    gCurrMenu = CLASS_MENU;
+
+                if (gameType == SLAVE)
+                {
+                    gCurrMenu = TEAM_MENU;
+                    menuSystem[TEAM_MENU].prevMenu = TEAM_MENU;
+                }
+            }
+        }
+
+        if (gCurrMenu == -1)
+            gameData->exitMenu = 1;
+    }
+
+    /********************************************/
+
+    selectData.trackNum = gameData->trackNum;
+
+    if (gCurrMenu == -1)
+    {
+        ctrlGameLoop = GAME_LOOP_RACE_INIT;
+
+        for (i = 0; i < 10; i++)
+        {
+            /*TODO audio*/
+            // c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   /* Master volume (left) */
+            // c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   /* Master volume (right) */
+            UpdateNotes(NOT_PAUSED);
+        }
+        // CdControlB(CdlStop, 0, 0);
+
+        return;
+    }
+
+    if (menuSystem[gCurrMenu].updateCount == 0 && menuSystem[gCurrMenu].errorFlag == 0 && selectData.select == 1)
+    {
+        selectData.select = 0;
+        menuSystem[gCurrMenu].updateCount = 0;
     }
 }
 
@@ -454,7 +417,6 @@ void CallMenuActivator(ConfigData* gameData, int* currMenu, int* currOption, Men
     short i;
     long cardStatus, slotStatus;
     long cnt = 0;
-    char trackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
     FILE* fd;
 
     /******************/
@@ -1273,9 +1235,6 @@ void CallMenuActivator(ConfigData* gameData, int* currMenu, int* currOption, Men
         //    *currMenu = MAIN_MENU ;
         *currMenu = OPTION_MENU;
         *currOption = 0;
-
-        Reallyinmenu = 0;
-        inmenu = 1;
     }
 
     /*******************/
@@ -1510,9 +1469,6 @@ void CallMenuSelector(Menus* menuSystem, int* currMenu, int* currOption, Object*
             *currOption = 0;
 
             SetUpPilots(gameData->team, menuSystem);
-
-            inmenu = 1;
-            Reallyinmenu = 0;
 
             strcpy(LoadFilename, "         ");
             LoadFilename[0] = 101;
@@ -3349,9 +3305,6 @@ void DrawOptionMenus(Menus* menuSystem, int* currMenu, int shipNo)
 
     if (shipNo == 0)
     {
-        // jed
-        Reallyinmenu = 0;
-        inmenu = 1;
         SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton), 0, 0, 400); /*1800*/
         SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg, 0, 0);
         TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
@@ -3359,10 +3312,6 @@ void DrawOptionMenus(Menus* menuSystem, int* currMenu, int shipNo)
 
     if (shipNo == 1)
     {
-        // jed
-
-        Reallyinmenu = 0;
-        inmenu = 1;
         SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton), 0, 0, 400); /*1800*/
         SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton), hdg, 0, 0);
         TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
@@ -3370,10 +3319,6 @@ void DrawOptionMenus(Menus* menuSystem, int* currMenu, int shipNo)
 
     if (shipNo == 2)
     {
-        // jed
-
-        Reallyinmenu = 0;
-        inmenu = 1;
         /*TODO input menu
         switch(controller)
         {
@@ -3392,10 +3337,6 @@ void DrawOptionMenus(Menus* menuSystem, int* currMenu, int shipNo)
 
     if (shipNo == 3) // Graphics Detail
     {
-        // jed
-
-        Reallyinmenu = 1;
-        inmenu = 0;
         DrawTeamShips(0, 0, MODELSIZE, heading, menuSystem[DETAILS_MENU].menuModel[shipShapeOrder[0]]);
         //    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 600) ;    /*1800*/
         //    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton), hdg,0, 0);
@@ -3418,9 +3359,6 @@ void DrawOptionMenus(Menus* menuSystem, int* currMenu, int shipNo)
     // now i'tll not draw the headphones and draw the stopwatch instead.
     if (shipNo == 4)
     {
-        // jed
-        Reallyinmenu = 0;
-        inmenu = 1;
         SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton), 0, 0, 600); /*1800*/
         SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton), hdg, 0, 0);
         TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[2]);
@@ -3691,8 +3629,6 @@ void GraphicOptions(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionDa
     if (andybodge)
     {
         andybodge = 0;
-        inmenu = 0;
-        Reallyinmenu = 1;
     }
 
     CentreText("GRAPHIC DETAIL OPTIONS", text_data(1, 21, 8), RedText);

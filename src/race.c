@@ -23,15 +23,16 @@
 #include "options.h"
 #include "global.h"
 #include "cone.h"
-#include "race.h"
 #include "spline.h"
 #include "credits.h"
 #include "init.h"
 #include "collide.h"
+#include "race.h"
+#include "render.h"
 
-#define START_EXTRO 0
-#define UPDATE_EXTRO 1
-#define DONE_EXTRO 2
+#define START_EXTRO     0
+#define UPDATE_EXTRO    1
+#define DONE_EXTRO      2
 
 #define PrmMax 64
 #define AJSDELAY 60 * 30 // arbitrary number - linked to frame rate ? HOPE SO !
@@ -49,15 +50,10 @@ int ajscount = 0; // oh shit another global flag
 TrackData ctrltrackStart;
 TexTemplate* ctrltexTemplate;
 Object* ctrlprm[PrmMax];
-Object* ctrlobj;
 short ctrllibraryTextures;
 short ctrlprmCount;
-long ctrl_i, ctrl_j, ctrl_k;
 short ctrlnumLib;
 Cone ctrlcone;
-long ctrlbefore;
-short ctrlcount;
-short ctrlweapCount;
 TrackSection* ctrlnextSection;
 
 /**************************************************/
@@ -93,9 +89,6 @@ Shadow* ctrlShadow;
 Object* ctrllostad[20]; /* It wouldn`t suprise me ! */
 int ctrlstadCount;
 short ctrlsectCount;
-short ctrlcheck;
-short ctrljcheck;
-short ctrlji;
 TrackSection* ctrljsection;
 short ctrlbuttonPressed;
 Object* ctrlredLight;
@@ -125,9 +118,10 @@ Texture* ctrlwinLose[2];
 int ctrlquitTwoPlayer;
 char ctrlshowGameOver;
 
-ConfigData* ctrlgameData;
-long ctrlmode;
-long ctrltimeout;
+extern long ctrlmode;
+extern long ctrltimeout;
+extern long ctrlGameLoop;
+extern ConfigData ctrlConfigData;
 
 /*          Andy Y's additions*/
 long ctrlNeedEndText;
@@ -151,337 +145,514 @@ long ctrlCDPaused;
 long ctrlfirsttime;
 extern long CDRestartNeeded;
 
-extern long ctrl_init;
-extern long ctrl_says_quit;
+long ctrl_says_quit;
+long CDRestartNeeded;
+long CDloopCheck;
+unsigned long ctrlFramesCount;
 
-char winLoseIn;
+extern short trackNum; // SJR
+extern int menuTexturesIn;
 
-void setWinLose(void) { winLoseIn = 1; }
-
-void raceinit(void)
+void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex, WeaponShape* weaponShapes, Effect* effects, RescueData* rescueDroid, Object** shipShapes)
 {
-    ConfigData* gameData;
-    CVECTOR colvector;
+    int i;
 
-    gameData = ctrlgameData;
-    if (ctrl_init == 0)
+    JJSLoadSprites();
+    KillNotes();
+    StopNotes();
+    initShipData(track->sections, shipIndex, gameData);
+    InitRescueDroid(rescueDroid, shipShapes, &(shipIndex[ownShip]));
+    cameraPtr->section = shipIndex[ownShip].nearTrkSect;
+    ResetStartBoom();
+    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
-        ctrl_says_quit = 0;
-        ctrlprmCount = 0;
-        ctrlnumLib = 0;
-        ctrlCDPaused = 0;
-        ctrlnoWeaponGrids = 0;
-        ctrlchoice = -1;
-        ctrlcdTrack = 1;
-        ctrlcheck = 1;
-        ctrljcheck = 1;
-        ctrlbuttonPressed = 0;
-        ctrlstadCount = 0;
-        ctrlplayCredits = 0;
-        ctrldoneExtro = START_EXTRO;
-        ctrlgameOverTime = 0;
-        ctrlcdPause = 0;
-        ctrlframe_cnt = 1;
-        ctrltoggleDisplay = 0;
-        ctrlshowMenu = 1;
-        ctrlconfirm = 0;
-        ctrllConfirm = 0;
-        ctrlmachinePaused = SINGLE;
-        ctrlactivated = 0;
-        ctrlchoiceData = -1;
-        ctrlquitFlag = 0;
-        ctrlquitTwoPlayer = 0;
-        ctrlshowGameOver = 0;
-        ctrlfirsttime = 1;
-        finishedExtro = 0;
-
-        /**********************************************************/
-        /***                 Initialise Camera                  ***/
-        /**********************************************************/
-
-        ctrlcamera.camPos = NewSkeleton();
-        SetSkeletonPosition(ctrlcamera.camPos, 0, 0, 0);
-        SetSkeletonDirection(ctrlcamera.camPos, 0, 0, 0);
-        ctrlcamDir = NewSkeleton();
-        SetSkeletonPosition(ctrlcamDir, 0, 0, 0);
-        SetSkeletonDirection(ctrlcamDir, 0, 0, 0);
-        ctrlcamera.camPos->super = ctrlcamDir;
-
-        cameraPtr = &ctrlcamera;
-
-        track = &ctrltrackStart;
-
-        /**********************************************************/
-        /***                 Initialise Track                   ***/
-        /**********************************************************/
-        //   printf( "Initialise Track\n" );
-        getPath(trackPath, gameData->actTrackNum, "\\track.trv");
-        InitVertices(trackPath);
-        getPath(trackPath, gameData->actTrackNum, "\\track.trf");
-        InitFaces(trackPath);
-        getPath(trackPath, gameData->actTrackNum, "\\track.trs");
-        InitSections(trackPath);
-        getPath(trackPath, gameData->actTrackNum, "\\track.vew");
-        InitViewList(trackPath);
-
-        extroLevel = 0;
-
-        /* firestar */
-        if (gameData->actTrackNum == 14)
-        {
-            //      printf ( "loading firestar extro\n" );
-            extroLevel = 14;
-
-            camSpline[0] = LoadPrm("wipeout\\common\\cam1s.prm", 0);
-            camSpline[0]->skeleton->super = ctrlcamera.camPos;
-
-            shipSpline[0] = LoadPrm("wipeout\\common\\shp1s.prm", 0);
-            shipSpline[0]->skeleton->super = ctrlcamera.camPos;
-
-            camSpline[1] = LoadPrm("wipeout\\common\\cam2s.prm", 0);
-            camSpline[1]->skeleton->super = ctrlcamera.camPos;
-
-            shipSpline[1] = LoadPrm("wipeout\\common\\shp2s.prm", 0);
-            shipSpline[1]->skeleton->super = ctrlcamera.camPos;
-
-            camSpline[2] = LoadPrm("wipeout\\common\\cam3s.prm", 0);
-            camSpline[2]->skeleton->super = ctrlcamera.camPos;
-
-            shipSpline[2] = LoadPrm("wipeout\\common\\shp3s.prm", 0);
-            shipSpline[2]->skeleton->super = ctrlcamera.camPos;
-
-            camSpline[3] = LoadPrm("wipeout\\common\\cam4s.prm", 0);
-            camSpline[3]->skeleton->super = ctrlcamera.camPos;
-
-            shipSpline[3] = LoadPrm("wipeout\\common\\shp4s.prm", 0);
-            shipSpline[3]->skeleton->super = ctrlcamera.camPos;
-        }
-
-        /* silverstream */
-        if (gameData->actTrackNum == 13)
-        {
-            //      printf ( "loading silverstream extro\n" );
-            extroLevel = 13;
-
-            camSpline[4] = LoadPrm("wipeout\\common\\cam5s.prm", 0);
-            camSpline[4]->skeleton->super = ctrlcamera.camPos;
-
-            shipSpline[4] = LoadPrm("wipeout\\common\\shp5s.prm", 0);
-            shipSpline[4]->skeleton->super = ctrlcamera.camPos;
-
-            camSpline[5] = LoadPrm("wipeout\\common\\cam6s.prm", 0);
-            camSpline[5]->skeleton->super = ctrlcamera.camPos;
-
-            shipSpline[5] = LoadPrm("wipeout\\common\\shp6s.prm", 0);
-            shipSpline[5]->skeleton->super = ctrlcamera.camPos;
-
-            camSpline[6] = LoadPrm("wipeout\\common\\cam7s.prm", 0);
-            camSpline[6]->skeleton->super = ctrlcamera.camPos;
-
-            shipSpline[6] = LoadPrm("wipeout\\common\\shp7s.prm", 0);
-            shipSpline[6]->skeleton->super = ctrlcamera.camPos;
-        }
-
-        //   printf( "Initialise track library Textures\n" );
-        ctrllibraryTextures = TextureTableCount;
-        getPath(trackPath, gameData->actTrackNum, "\\library.cmp");
-        ctrltimPtr = LoadCompressedTextureSequence(trackPath);
-        LoadCmpFiles(ctrltimPtr);
-
-        //   printf( "Initialise track library Texture templates\n" );
-        getPath(trackPath, gameData->actTrackNum, "\\library.ttf");
-        ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
-
-        ctrlsection = track->sections;
-
-        ctrl_i = 0;
-        NoOfMainSections = 0;
-
-        /*** Reserve memory for weapons functions ***/
-        ctrlweaponGrid = (WeaponGrid*)malloc((sizeof(WeaponGrid) * 64) + 32);
-        ctrlweaponShapes = (WeaponShape*)malloc((sizeof(WeaponShape) * NO_OF_WEAPONS) + 32);
-        ctrlweaponIndex = (WeaponData*)malloc((sizeof(WeaponData) * NO_ACTIVE_WEAPONS) + 32);
-
-        while (ctrlcheck)
-        {
-            ctrlnoWeaponGrids = SetTrackAttributes(ctrlsection, ctrl_i, ctrlweaponGrid, ctrlnoWeaponGrids);
-            ctrlsection->secNo = ctrl_i;
-            if (ctrlsection->junction.index != -1)
-            {
-                ctrljsection = ctrlsection;
-                ctrlji = ctrl_i;
-                ctrlsection = ctrlsection->junction.ptr;
-                while (ctrljcheck)
-                {
-                    ctrl_i++;
-                    ctrlnoWeaponGrids = SetTrackAttributes(ctrlsection, ctrl_i, ctrlweaponGrid, ctrlnoWeaponGrids);
-                    ctrlsection->secNo = ctrl_i;
-                    ctrlsection = ctrlsection->nextSection.ptr;
-                    if (ctrlsection->junction.index != -1)
-                        ctrljcheck = 0;
-                }
-                ctrljcheck = 1;
-                ctrlsection = ctrljsection;
-                ctrl_i = ctrlji;
-            }
-            ctrl_i++;
-            NoOfMainSections++;
-            ctrlsection = ctrlsection->nextSection.ptr;
-            if (ctrlsection == track->sections)
-                ctrlcheck = 0;
-        }
-
-        InitSpeedo(&ctrlspeedo);
-        InitText();
-
-        ctrlshipIndex = (ShipData*)malloc(((sizeof(ShipData) + 32) * (NO_OF_SHIPS)));
-        loadShipData(track->sections, ctrlshipIndex, ctrlshipShapes, ctrlcamera.camPos);
-        ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
-
-        InitStartBoom(ctrlprm, ctrlprmCount);
-
-        // ctrlstadCount = InitCrowdSound(ctrlprm, ctrlprmCount, ctrllostad, ctrlstadCount);
-
-        if ((trackNo == 8) || (trackNo == 11))
-        {
-            InitRedLight(ctrlprm, ctrlprmCount, &ctrlredLight);
-            InitDonkey(ctrlprm, ctrlprmCount, ctrldonkey);
-        }
-        else if ((trackNo == 1) /* || (trackNo == 6)*/)
-        {
-            InitRedLight(ctrlprm, ctrlprmCount, &ctrlredLight);
-        }
-
-        InitCamera(&ctrlcamera, track->sections);
-
-        ctrlShadow = InitShadow(ctrlcamera.camPos, ctrleffectTextures);
-
-        if (trackNo == 13)
-            InitAuroraBorialis(ctrlprm[ctrlsky]);
-
-        InitWeaponSprtIcons(ctrlweaponIconTextures);
-        //   printf("after wicons\n");
-        switch (gameData->shipNum)
-        {
-            case 0:
-                InitScreenTex(ctrlwinLose, "dekka");
-                break;
-
-            case 1:
-                InitScreenTex(ctrlwinLose, "chang");
-                break;
-
-            case 2:
-                InitScreenTex(ctrlwinLose, "arial");
-                break;
-
-            case 3:
-                InitScreenTex(ctrlwinLose, "anast");
-                break;
-
-            case 4:
-                InitScreenTex(ctrlwinLose, "solar");
-                break;
-
-            case 5:
-                InitScreenTex(ctrlwinLose, "arian");
-                break;
-
-            case 6:
-                InitScreenTex(ctrlwinLose, "sophi");
-                break;
-
-            case 7:
-                InitScreenTex(ctrlwinLose, "paul");
-                break;
-        }
-        //   printf("after win lose\n");
-
-        initShipData(track->sections, ctrlshipIndex, gameData);
-        InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
-
-        initWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
-
-        ctrleffects = (Effect*)malloc((sizeof(Effect) * NO_OF_EFFECTS) + 32);
-        InitEffects(ctrleffects, ctrlcamera.camPos, ctrleffectTextures);
-
-        CameraUpdate = UpdateCameraRaceStart;
-
-        /* Initialize hi-score and game */
-
-        InitHiScoreData(&ctrlhiScoreData);
-
-        gameData->defaultMenu = -2;
-        gameData->Lives = 3;
-        gameData->Position = 8;
-        gameData->EndOfGame = 0;
-        gameData->gameOverCount = 0;
-
-        ctrlhiScoreData.confirm = 2;
-        ctrlhiScoreData.lConfirm = 0;
-
-        for (ctrl_i = 0; ctrl_i < 8; ctrl_i++)
-        {
-            ctrlcone.object[ctrl_i] = ctrlshipShapes[ctrlshipIndex[ctrl_i].highResTableIndex];
-            ctrlcone.ship[ctrl_i] = &ctrlshipIndex[ctrl_i];
-        }
-
-        InitCone(&ctrlcone);
-
-        if (ctrlmode == ATTRACT)
-        {
-            ctrlshipIndex[ownShip].update = UpdatePlayerShipNormStart;
-            ctrlshipIndex[ownShip].updateCount = START_TIME;
-            ctrlshipIndex[ownShip].remoteMaxThrust = 3160;
-            ctrlshipIndex[ownShip].remoteThrustMag = 32;
-            ctrlshipIndex[ownShip].speed = 3160;
-            ctrlshipIndex[ownShip].attr &= ~VIEW_IN;
-            ctrlshipIndex[ownShip].attr &= ~RACING;
-            CameraUpdate = UpdateCameraAttractMode;
-
-            if ((rand() % 3) == 0)
-            {
-                ctrlplayCredits = 1;
-                attractDelay = 75 * FR30; // PCWipeout
-            }
-            else
-            {
-                attractDelay = 60 * FR30; // was 30*30 but this was too short I think
-            }
-            //          if(ctrlplayCredits == 1)
-        }
-
-        ctrlnextSection = ctrlcamera.section;
-
-        ctrlshipIndex[ownShip].haveFired = NON_ACTIVE;
-
-        if (gameType != SINGLE)
-            ctrlshipIndex[serialShip].haveFired = NON_ACTIVE;
-
-        SetNormPadPresets(gameData);
-
-        if (gameData->actTrackNum == 13)
-        {
-            InitIceCongratulations();
-        }
-
-        if (gameData->actTrackNum == 14)
-        {
-            InitFireCongratulations();
-        }
-
-        inmenu = 0;
+        weaponIndex[i].count = 0;
+        weaponIndex[i].type = NO_WEAPON;
     }
+    for (i = 0; i < NO_OF_WEAPONS; i++)
+    {
+        weaponShapes[i].used = 0;
+    }
+    for (i = 0; i < NO_OF_EFFECTS; i++)
+    {
+        effects[i].count = 0;
+    }
+
+    /*TODO audio*/
+    // r_attr.depth.left = 2000;
+    // r_attr.depth.right = 2000;
+
+    CameraUpdate = UpdateCameraRaceStart;
+    CDRestartNeeded = 1;
 }
 
-void racectrl(void)
+void QuitGame()
 {
-    ConfigData* gameData;
-    int mode, timeout;
+    int i;
 
-    gameData = ctrlgameData;
-    mode = ctrlmode;
-    timeout = ctrltimeout;
+    /*TODO audio
+    for(i = 0; i < 10; i++)
+    {
+       c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   // Master volume (left)
+       c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   // Master volume (right)
+       UpdateNotes(NOT_PAUSED);
+    }
+
+    r_attr.depth.left = 2000;
+    r_attr.depth.right = 2000;
+    */
+    KillNotes();
+}
+
+void showLoadingScreen()
+{
+    char loadPath[48];
+    char loadNo[2];
+
+    /* load screen stuff */
+    strcpy(loadPath, "wipeout\\textures\\load");
+
+    if (ctrlConfigData.actTrackNum <= 9)
+    {
+        sprintf(loadNo, "%d", ctrlConfigData.actTrackNum);
+    }
+    else
+    {
+        sprintf(loadNo, "%2d", ctrlConfigData.actTrackNum);
+    }
+    strcat(loadPath, loadNo);
+    strcat(loadPath, ".tim");
+
+    JJSLoad16BitTexture(loadPath, SCREEN);
+}
+
+void raceInit(ConfigData* gameData)
+{
+    CVECTOR colvector;
+    int i, j;
+    int ctrlcheck;
+    int ctrljcheck;
+
+    InitGameDisplay();
+
+    if (ctrlmode != ATTRACT) // not demo mode
+    {
+        trackNo = gameData->actTrackNum;
+    }
+
+    /*TODO audio*/
+    // CdControlB(CdlStop, 0, 0);
+
+    showLoadingScreen();
+
+    menuTexturesIn = 0;
+    trackNum = gameData->trackNum; // for restoring - SJR
+    switch (gameData->trackNum)
+    {
+        case 1:
+            SJRNewTexture("wipeout\\newgraph\\venom\\altima\\altima.sjr");
+            strcpy(trackdir, "venom\\altima\\");
+            break;
+        case 2:
+            SJRNewTexture("wipeout\\newgraph\\venom\\karbonis\\karbonis.sjr");
+            strcpy(trackdir, "venom\\karbonis\\");
+            break;
+        case 3:
+            SJRNewTexture("wipeout\\newgraph\\venom\\terramax\\terramax.sjr");
+            strcpy(trackdir, "venom\\terramax\\");
+            break;
+        case 4:
+            SJRNewTexture("wipeout\\newgraph\\venom\\korodera\\korodera.sjr");
+            strcpy(trackdir, "venom\\korodera\\");
+            break;
+        case 5:
+            SJRNewTexture("wipeout\\newgraph\\venom\\arridos\\arridos.sjr");
+            strcpy(trackdir, "venom\\arridos\\");
+            break;
+        case 6:
+            SJRNewTexture("wipeout\\newgraph\\venom\\silver\\silver.sjr");
+            strcpy(trackdir, "venom\\silver\\");
+            break;
+        case 7:
+            SJRNewTexture("wipeout\\newgraph\\venom\\firestar\\firestar.sjr");
+            strcpy(trackdir, "venom\\firestar\\");
+            break;
+        case 8:
+            SJRNewTexture("wipeout\\newgraph\\rapier\\altima\\altima.sjr");
+            strcpy(trackdir, "rapier\\altima\\");
+            break;
+        case 9:
+            SJRNewTexture("wipeout\\newgraph\\rapier\\karbonis\\karbonis.sjr");
+            strcpy(trackdir, "rapier\\karbonis\\");
+            break;
+        case 10:
+            SJRNewTexture("wipeout\\newgraph\\rapier\\terramax\\terramax.sjr");
+            strcpy(trackdir, "rapier\\terramax\\");
+            break;
+        case 11:
+            SJRNewTexture("wipeout\\newgraph\\rapier\\korodera\\korodera.sjr");
+            strcpy(trackdir, "rapier\\korodera\\");
+            break;
+        case 12:
+            SJRNewTexture("wipeout\\newgraph\\rapier\\arridos\\arridos.sjr");
+            strcpy(trackdir, "rapier\\arridos\\");
+            break;
+        case 13:
+            SJRNewTexture("wipeout\\newgraph\\rapier\\silver\\silver.sjr");
+            strcpy(trackdir, "rapier\\silver\\");
+            break;
+        case 14:
+            SJRNewTexture("wipeout\\newgraph\\rapier\\firestar\\firestar.sjr");
+            strcpy(trackdir, "rapier\\firestar\\");
+            break;
+        default:
+            printf("what track ?\n");
+            exit(0);
+            break;
+    }
+
+    textureX = 320;
+    textureY = 0;
+
+    clutX = 320;
+    clutY = 256;
+
+    TextureTableCount = 0;
+
+    attractDelay = 0;
+
+    tempLapTimes[0] = 0;
+    tempLapTimes[1] = 0;
+    tempLapTimes[2] = 0;
+    tempLapTimes[3] = 0;
+    tempLapTimes[4] = 0;
+
+    gameData->newLapRecord = 0;
+
+    StopNotes();
+
+    ctrl_says_quit = 0;
+    ctrlprmCount = 0;
+    ctrlnumLib = 0;
+    ctrlCDPaused = 0;
+    ctrlnoWeaponGrids = 0;
+    ctrlchoice = -1;
+    ctrlcdTrack = 1;
+    ctrlcheck = 1;
+    ctrljcheck = 1;
+    ctrlbuttonPressed = 0;
+    ctrlstadCount = 0;
+    ctrlplayCredits = 0;
+    ctrldoneExtro = START_EXTRO;
+    ctrlgameOverTime = 0;
+    ctrlcdPause = 0;
+    ctrlframe_cnt = 1;
+    ctrltoggleDisplay = 0;
+    ctrlshowMenu = 1;
+    ctrlconfirm = 0;
+    ctrllConfirm = 0;
+    ctrlmachinePaused = SINGLE;
+    ctrlactivated = 0;
+    ctrlchoiceData = -1;
+    ctrlquitFlag = 0;
+    ctrlquitTwoPlayer = 0;
+    ctrlshowGameOver = 0;
+    ctrlfirsttime = 1;
+    finishedExtro = 0;
+
+    /**********************************************************/
+    /***                 Initialise Camera                  ***/
+    /**********************************************************/
+
+    ctrlcamera.camPos = NewSkeleton();
+    SetSkeletonPosition(ctrlcamera.camPos, 0, 0, 0);
+    SetSkeletonDirection(ctrlcamera.camPos, 0, 0, 0);
+    ctrlcamDir = NewSkeleton();
+    SetSkeletonPosition(ctrlcamDir, 0, 0, 0);
+    SetSkeletonDirection(ctrlcamDir, 0, 0, 0);
+    ctrlcamera.camPos->super = ctrlcamDir;
+
+    cameraPtr = &ctrlcamera;
+
+    track = &ctrltrackStart;
+
+    /**********************************************************/
+    /***                 Initialise Track                   ***/
+    /**********************************************************/
+    //   printf( "Initialise Track\n" );
+    getPath(trackPath, gameData->actTrackNum, "\\track.trv");
+    InitVertices(trackPath);
+    getPath(trackPath, gameData->actTrackNum, "\\track.trf");
+    InitFaces(trackPath);
+    getPath(trackPath, gameData->actTrackNum, "\\track.trs");
+    InitSections(trackPath);
+    getPath(trackPath, gameData->actTrackNum, "\\track.vew");
+    InitViewList(trackPath);
+
+    extroLevel = 0;
+
+    /* firestar */
+    if (gameData->actTrackNum == 14)
+    {
+        //      printf ( "loading firestar extro\n" );
+        extroLevel = 14;
+
+        camSpline[0] = LoadPrm("wipeout\\common\\cam1s.prm", 0);
+        camSpline[0]->skeleton->super = ctrlcamera.camPos;
+
+        shipSpline[0] = LoadPrm("wipeout\\common\\shp1s.prm", 0);
+        shipSpline[0]->skeleton->super = ctrlcamera.camPos;
+
+        camSpline[1] = LoadPrm("wipeout\\common\\cam2s.prm", 0);
+        camSpline[1]->skeleton->super = ctrlcamera.camPos;
+
+        shipSpline[1] = LoadPrm("wipeout\\common\\shp2s.prm", 0);
+        shipSpline[1]->skeleton->super = ctrlcamera.camPos;
+
+        camSpline[2] = LoadPrm("wipeout\\common\\cam3s.prm", 0);
+        camSpline[2]->skeleton->super = ctrlcamera.camPos;
+
+        shipSpline[2] = LoadPrm("wipeout\\common\\shp3s.prm", 0);
+        shipSpline[2]->skeleton->super = ctrlcamera.camPos;
+
+        camSpline[3] = LoadPrm("wipeout\\common\\cam4s.prm", 0);
+        camSpline[3]->skeleton->super = ctrlcamera.camPos;
+
+        shipSpline[3] = LoadPrm("wipeout\\common\\shp4s.prm", 0);
+        shipSpline[3]->skeleton->super = ctrlcamera.camPos;
+    }
+
+    /* silverstream */
+    if (gameData->actTrackNum == 13)
+    {
+        //      printf ( "loading silverstream extro\n" );
+        extroLevel = 13;
+
+        camSpline[4] = LoadPrm("wipeout\\common\\cam5s.prm", 0);
+        camSpline[4]->skeleton->super = ctrlcamera.camPos;
+
+        shipSpline[4] = LoadPrm("wipeout\\common\\shp5s.prm", 0);
+        shipSpline[4]->skeleton->super = ctrlcamera.camPos;
+
+        camSpline[5] = LoadPrm("wipeout\\common\\cam6s.prm", 0);
+        camSpline[5]->skeleton->super = ctrlcamera.camPos;
+
+        shipSpline[5] = LoadPrm("wipeout\\common\\shp6s.prm", 0);
+        shipSpline[5]->skeleton->super = ctrlcamera.camPos;
+
+        camSpline[6] = LoadPrm("wipeout\\common\\cam7s.prm", 0);
+        camSpline[6]->skeleton->super = ctrlcamera.camPos;
+
+        shipSpline[6] = LoadPrm("wipeout\\common\\shp7s.prm", 0);
+        shipSpline[6]->skeleton->super = ctrlcamera.camPos;
+    }
+
+    //   printf( "Initialise track library Textures\n" );
+    ctrllibraryTextures = TextureTableCount;
+    getPath(trackPath, gameData->actTrackNum, "\\library.cmp");
+    ctrltimPtr = LoadCompressedTextureSequence(trackPath);
+    LoadCmpFiles(ctrltimPtr);
+
+    //   printf( "Initialise track library Texture templates\n" );
+    getPath(trackPath, gameData->actTrackNum, "\\library.ttf");
+    ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
+
+    ctrlsection = track->sections;
+
+    i = 0;
+    NoOfMainSections = 0;
+
+    /*** Reserve memory for weapons functions ***/
+    ctrlweaponGrid = (WeaponGrid*)malloc((sizeof(WeaponGrid) * 64) + 32);
+    ctrlweaponShapes = (WeaponShape*)malloc((sizeof(WeaponShape) * NO_OF_WEAPONS) + 32);
+    ctrlweaponIndex = (WeaponData*)malloc((sizeof(WeaponData) * NO_ACTIVE_WEAPONS) + 32);
+
+    while (ctrlcheck)
+    {
+        ctrlnoWeaponGrids = SetTrackAttributes(ctrlsection, i, ctrlweaponGrid, ctrlnoWeaponGrids);
+        ctrlsection->secNo = i;
+        if (ctrlsection->junction.index != -1)
+        {
+            ctrljsection = ctrlsection;
+            j = i;
+            ctrlsection = ctrlsection->junction.ptr;
+            while (ctrljcheck)
+            {
+                i++;
+                ctrlnoWeaponGrids = SetTrackAttributes(ctrlsection, i, ctrlweaponGrid, ctrlnoWeaponGrids);
+                ctrlsection->secNo = i;
+                ctrlsection = ctrlsection->nextSection.ptr;
+                if (ctrlsection->junction.index != -1)
+                    ctrljcheck = 0;
+            }
+            ctrljcheck = 1;
+            ctrlsection = ctrljsection;
+            i = j;
+        }
+        i++;
+        NoOfMainSections++;
+        ctrlsection = ctrlsection->nextSection.ptr;
+        if (ctrlsection == track->sections)
+            ctrlcheck = 0;
+    }
+
+    InitSpeedo(&ctrlspeedo);
+    InitText();
+
+    ctrlshipIndex = (ShipData*)malloc(((sizeof(ShipData) + 32) * (NO_OF_SHIPS)));
+    loadShipData(track->sections, ctrlshipIndex, ctrlshipShapes, ctrlcamera.camPos);
+    ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
+
+    InitStartBoom(ctrlprm, ctrlprmCount);
+
+    // ctrlstadCount = InitCrowdSound(ctrlprm, ctrlprmCount, ctrllostad, ctrlstadCount);
+
+    if ((trackNo == 8) || (trackNo == 11))
+    {
+        InitRedLight(ctrlprm, ctrlprmCount, &ctrlredLight);
+        InitDonkey(ctrlprm, ctrlprmCount, ctrldonkey);
+    }
+    else if ((trackNo == 1) /* || (trackNo == 6)*/)
+    {
+        InitRedLight(ctrlprm, ctrlprmCount, &ctrlredLight);
+    }
+
+    InitCamera(&ctrlcamera, track->sections);
+
+    ctrlShadow = InitShadow(ctrlcamera.camPos, ctrleffectTextures);
+
+    if (trackNo == 13)
+        InitAuroraBorialis(ctrlprm[ctrlsky]);
+
+    InitWeaponSprtIcons(ctrlweaponIconTextures);
+    //   printf("after wicons\n");
+    switch (gameData->shipNum)
+    {
+        case 0:
+            InitScreenTex(ctrlwinLose, "dekka");
+            break;
+
+        case 1:
+            InitScreenTex(ctrlwinLose, "chang");
+            break;
+
+        case 2:
+            InitScreenTex(ctrlwinLose, "arial");
+            break;
+
+        case 3:
+            InitScreenTex(ctrlwinLose, "anast");
+            break;
+
+        case 4:
+            InitScreenTex(ctrlwinLose, "solar");
+            break;
+
+        case 5:
+            InitScreenTex(ctrlwinLose, "arian");
+            break;
+
+        case 6:
+            InitScreenTex(ctrlwinLose, "sophi");
+            break;
+
+        case 7:
+            InitScreenTex(ctrlwinLose, "paul");
+            break;
+    }
+    //   printf("after win lose\n");
+
+    initShipData(track->sections, ctrlshipIndex, gameData);
+    InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
+
+    initWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
+
+    ctrleffects = (Effect*)malloc((sizeof(Effect) * NO_OF_EFFECTS) + 32);
+    InitEffects(ctrleffects, ctrlcamera.camPos, ctrleffectTextures);
+
+    CameraUpdate = UpdateCameraRaceStart;
+
+    /* Initialize hi-score and game */
+
+    InitHiScoreData(&ctrlhiScoreData);
+
+    gameData->defaultMenu = -2;
+    gameData->Lives = 3;
+    gameData->Position = 8;
+    gameData->EndOfGame = 0;
+    gameData->gameOverCount = 0;
+
+    ctrlhiScoreData.confirm = 2;
+    ctrlhiScoreData.lConfirm = 0;
+
+    for (i = 0; i < 8; i++)
+    {
+        ctrlcone.object[i] = ctrlshipShapes[ctrlshipIndex[i].highResTableIndex];
+        ctrlcone.ship[i] = &ctrlshipIndex[i];
+    }
+
+    InitCone(&ctrlcone);
+
+    if (ctrlmode == ATTRACT)
+    {
+        ctrlshipIndex[ownShip].update = UpdatePlayerShipNormStart;
+        ctrlshipIndex[ownShip].updateCount = START_TIME;
+        ctrlshipIndex[ownShip].remoteMaxThrust = 3160;
+        ctrlshipIndex[ownShip].remoteThrustMag = 32;
+        ctrlshipIndex[ownShip].speed = 3160;
+        ctrlshipIndex[ownShip].attr &= ~VIEW_IN;
+        ctrlshipIndex[ownShip].attr &= ~RACING;
+        CameraUpdate = UpdateCameraAttractMode;
+
+        if ((rand() % 3) == 0)
+        {
+            ctrlplayCredits = 1;
+            attractDelay = 75 * FR30; // PCWipeout
+        }
+        else
+        {
+            attractDelay = 60 * FR30; // was 30*30 but this was too short I think
+        }
+        //          if(ctrlplayCredits == 1)
+    }
+
+    ctrlnextSection = ctrlcamera.section;
+
+    ctrlshipIndex[ownShip].haveFired = NON_ACTIVE;
+
+    if (gameType != SINGLE)
+        ctrlshipIndex[serialShip].haveFired = NON_ACTIVE;
+
+    SetNormPadPresets(gameData);
+
+    if (gameData->actTrackNum == 13)
+    {
+        InitIceCongratulations();
+    }
+
+    if (gameData->actTrackNum == 14)
+    {
+        InitFireCongratulations();
+    }
+
+    UpdateEffects(ctrleffects);
+
+    /*TODO audio*/
+    // CdControlB(CdlStop, 0, 0);
+
+    UpdateNotes(NOT_PAUSED);
+
+    CDRestartNeeded = 0;
+    CDloopCheck = 0;
+    raceCtrl(gameData);
+    raceCtrl(gameData);
+    raceCtrl(gameData);
+    ctrlFramesCount = 1;
+}
+
+void raceCtrl(ConfigData* gameData)
+{
+    int i;
 
     // Reset all of my little Drawing markers
     ctrlNeedEndText = 0;
@@ -499,13 +670,6 @@ void racectrl(void)
     ctrlNeedInGameConfirm = 0;
     ctrlNeedInSingleGameConfirm = 0;
     ctrlNeedTargetIcon = 0;
-
-    opad = pad;
-    //    archive_pad = pad;
-    pad = gPad;
-    //    archive_xpad = xpad;          //preserve xpad from the drawing side
-    xpad = (pad ^ opad) & pad; // xpad is difference between this frames
-    // pad and the last frames pad.
 
     //    AJSVSync(2);
     if (ctrlfirsttime)
@@ -1181,11 +1345,11 @@ void racectrl(void)
                                         {
                                             //                                       printf( "init extro\n" );
                                             CameraUpdate = UpdateCameraExtroAttract;
-                                            for (ctrl_i = 0; ctrl_i < NO_OF_SHIPS; ctrl_i++)
+                                            for (i = 0; i < NO_OF_SHIPS; i++)
                                             {
-                                                ctrlshipIndex[ctrl_i].remoteMaxThrust = 3160;
-                                                ctrlshipIndex[ctrl_i].remoteThrustMag = 32;
-                                                ctrlshipIndex[ctrl_i].speed = 3160;
+                                                ctrlshipIndex[i].remoteMaxThrust = 3160;
+                                                ctrlshipIndex[i].remoteThrustMag = 32;
+                                                ctrlshipIndex[i].speed = 3160;
                                             }
                                             ctrldoneExtro = UPDATE_EXTRO;
                                         }
@@ -1378,5 +1542,248 @@ void racectrl(void)
     //    copy_glob_to_spare(xpad);
     //    xpad = archive_xpad; //bodge to restore the xpad of the current drawing frame
     //    pad = archive_pad;   //bodge to restore the xpad of the current drawing frame
-    ctrl_init = 1; // OK to start the drawing now, once we've been around once.
 } /*end of race*/
+
+
+void raceLoop(ConfigData* gameData)
+{
+    int i, count;
+    
+    ctrlFramesCount += gFrameIndex - gLastFrameIndex;
+    count = ctrlFramesCount >> 1; // 60 -> 30 Hz
+    ctrlFramesCount -= count << 1;
+
+    for (i = 0; i < count; i++)
+    {
+        raceCtrl(gameData);
+    }
+
+    DrawnShieldBefore = 0; // Reset the shield prim.
+
+    if (ctrl_says_quit)
+    {
+#if CD_AUDIO
+        /*TODO audio*/
+        // CdControlB(CdlStop, 0, 0);
+#endif
+        ctrlmode = INTERACTIVE;
+
+        TextureTableCount = 0;
+        InitText();
+        ctrlGameLoop = GAME_LOOP_MENU_INIT;
+        return;
+    }
+
+    if (CDRestartNeeded)
+    {
+        CDRestart();
+        CDRestartNeeded = 0;
+        ctrlCDPaused = 0;
+    }
+
+    // if (CDloopCheck++ > 20)
+    //    {
+    //    CDLoopCheck();
+    //    CDloopCheck = 0;
+    //    }
+#if CD_AUDIO
+    switch (ctrlCDPaused)
+    {
+        case 0:
+            break;
+        case 1:
+            CdPause();
+            break;
+        case 2:
+            CdPlay();
+            ctrlCDPaused = 0;
+            break;
+    }
+#endif
+
+    renderClear();
+
+    // if(trackNo == 13)
+    //    AuroraBorialis(ctrlprm[ctrlsky]);
+    if ((trackNo == 8) || (trackNo == 11))
+    {
+        ColourRedLight(ctrlredLight);
+        MoveDonkey(ctrldonkey);
+    }
+    else if ((trackNo == 1) /* || (trackNo == 6)*/)
+    {
+        ColourRedLight(ctrlredLight);
+    }
+    // ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
+
+    renderBegin3D();
+
+    // The Sky
+    ctrlprm[ctrlsky]->skeleton->update = 1;
+    renderSky(ctrlprm[ctrlsky]);
+
+    // LANDSCAPE
+    DrawLandscape(&(ctrlshipIndex[ownShip]), &ctrlcamera);
+
+    // TRACK
+    renderTrack();
+
+    // SHIPS
+    DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip, ctrlcamera);
+
+    // SHADOW
+    if (ctrlshipIndex[ownShip].attr & RACING) /* TODO enable for cinematics? */
+        DrawShadow(ctrlshipShapes, ctrlshipIndex, ctrlShadow);
+
+    // DROID
+    SetSkeletonPosition(ctrlshipShapes[RESCUE_DROID]->skeleton, ctrlrescueDroid.pos.vx, ctrlrescueDroid.pos.vy, ctrlrescueDroid.pos.vz);
+
+    SetSkeletonDirectionHPR(ctrlshipShapes[RESCUE_DROID]->skeleton, ctrlrescueDroid.hdg, ctrlrescueDroid.pitch, ctrlrescueDroid.roll);
+
+    ctrlshipShapes[RESCUE_DROID]->skeleton->update = 1;
+    TransformStaticObject(ctrlshipShapes[RESCUE_DROID]);
+
+    // WEAPONS
+    DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
+    if (ctrlNeedTargetIcon == 1)
+        DrawTargetIcon(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
+
+    // Effects
+    AddEffects(ctrleffects, ctrlweaponIndex, ctrleffectTextures, ctrlshipIndex);
+    DrawEffects(ctrleffects);
+
+    renderEnd3D();
+
+    if (ctrlmode == ATTRACT)
+    {
+        if (ctrlplayCredits == 1)
+            ShowCredits(attractDelay);
+    }
+
+    // All game overs
+    if ((ctrlshowGameOver == 1) || (gameData->showGameOver == 1) || (gameData->lostGame == 1))
+        CentreText("GAME OVER", text_data(60, 112, 16), RedText);
+
+    // Text at end.
+    if (ctrlNeedEndText)
+    {
+        switch (ctrlNeedEndTextVar)
+        {
+            case 1:
+                CentreText("CONGRATULATIONS", text_data(15, 20, 8), RedText);
+                break;
+            case 2:
+                CentreText("BAD LUCK", text_data(15, 20, 8), RedText);
+                break;
+            case 3:
+                CentreText("FAILED TO QUALIFY", text_data(15, 20, 8), RedText);
+                break;
+            default:
+                CentreText("LOST THE VARIABLE", text_data(15, 20, 8), RedText);
+                break;
+        }
+    }
+    // Pictures at end
+    if (ctrlNeedWinLose)
+    {
+        DisplayPicture(ctrlwinLose[ctrlNeedWinLoseVar], 180, 50, 128, 140);
+    }
+    // High score bollox
+    if (ctrlNeedRaceInfo)
+        DisplayRaceInfo(gameData, &ctrlhiScoreData);
+    if (ctrlNeedNewHighScores)
+        NewHighScoreDraw(gameData, &ctrlhiScoreData);
+    if (ctrlNeedRacePoints)
+        DisplayRacePoints();
+    if (ctrlNeedChampTable)
+        DisplayChampTable();
+    if (ctrlNeedAllVenomComplete)
+        DisplayAllVenomComplete();
+    if (ctrlNeedVenomComplete)
+        DisplayVenomComplete();
+    if (ctrlNeedContinueGameConfirm)
+        ContinueGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm), &ctrltoggleDisplay);
+    if (ctrlNeedInSingleGameConfirm)
+        RestartGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm), &ctrltoggleDisplay);
+    if (ctrlNeedInGameReset)
+        InGameReset(ctrlchoice, &ctrltoggleDisplay, ctrlmachinePaused, gameData, &ctrlcdPause);
+    if (ctrlNeedInGameConfirm)
+        InGameConfirm(&ctrlconfirm, ctrlchoice, xpad, &ctrllConfirm, &ctrltoggleDisplay);
+    /*TODO deselect screen?
+    if (ctrlNeedDeSelectScreen)
+        DeSelectScreen (ctrlselectBox, ctrlselectTrans) ;
+        */
+    if (startIceText)
+    {
+        ShowIceCongratulations();
+    }
+    if (startFireText)
+    {
+        ShowFireCongratulations();
+    }
+
+    // Semi trans bit.
+    /*TODO back poly (end race?)
+    if (ctrlNeedBackPoly)
+        BackPoly (&(ctrlbackFrame[0]), &(ctrlbackFrameTrans[0]), 180, 50, 128, 140) ;
+        */
+
+    // HUD display
+    if (ctrlshipIndex[ownShip].attr & RACING)
+    {
+        //if (gameData->gameType == CHAMPIONSHIP)
+        //    DisplayLives(gameData);
+
+        DrawWeaponSprtIcons(ctrlweaponIconTextures, &(ctrlshipIndex[ownShip]));
+        DrawHud(ctrlshipIndex, &ctrlspeedo, ctrlchoice, gameData);
+    }
+}
+
+void raceDemo(ConfigData* gameData)
+{
+    ctrlmode = ATTRACT;
+    gameType = SINGLE;
+    ownShip = randy() % 8;
+    serialShip = -1;
+
+    switch (randy() % 6)
+    {
+        case 0:
+            trackNo = 2; // Altima
+            ctrlConfigData.actTrackNum = 2;
+            ctrlConfigData.trackNum = 1;
+            break;
+
+        case 1:
+            trackNo = 4; // karbonis
+            ctrlConfigData.actTrackNum = 4;
+            ctrlConfigData.trackNum = 2;
+            break;
+
+        case 2:
+            trackNo = 1; // terramax
+            ctrlConfigData.actTrackNum = 1;
+            ctrlConfigData.trackNum = 3;
+            break;
+
+        case 3:
+            trackNo = 12; // korodera
+            ctrlConfigData.actTrackNum = 12;
+            ctrlConfigData.trackNum = 4;
+            break;
+
+        case 4:
+            trackNo = 8; // arridos
+            ctrlConfigData.actTrackNum = 8;
+            ctrlConfigData.trackNum = 5;
+            break;
+
+        case 5:
+            trackNo = 9; // silver
+            ctrlConfigData.actTrackNum = 9;
+            ctrlConfigData.trackNum = 6;
+            break;
+    }
+
+    ctrlGameLoop = GAME_LOOP_RACE_INIT;
+}

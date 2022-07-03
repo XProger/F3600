@@ -252,55 +252,51 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
     /***********************************************************************************/
     /**                     Ship ATTRIBUTES                                        *****/
     /***********************************************************************************/
-    /******   TEAM 1 -     Acc          ***                                        *****/
-    /******                Top Speed    ****                                       *****/
+    /******   TEAM 1 -   Acc            ***                                        *****/
+    /******              Top Speed      ****                                       *****/
     /******              Armour         *****                                      *****/
     /******              Turn Rate      **                                         *****/
     /***********************************************************************************/
-    /******   TEAM 2 -     Acc          *****                                      *****/
-    /******                Top Speed    **                                         *****/
+    /******   TEAM 2 -   Acc            *****                                      *****/
+    /******              Top Speed      **                                         *****/
     /******              Armour         ***                                        *****/
     /******              Turn Rate      ****                                       *****/
     /***********************************************************************************/
-    /******   TEAM 3 -     Acc          **                                         *****/
-    /******                Top Speed    *****                                      *****/
+    /******   TEAM 3 -   Acc            **                                         *****/
+    /******              Top Speed      *****                                      *****/
     /******              Armour         ****                                       *****/
     /******              Turn Rate      ***                                        *****/
     /***********************************************************************************/
-    /******   TEAM 4 -     Acc          ****                                       *****/
-    /******                Top Speed    ***                                        *****/
+    /******   TEAM 4 -   Acc            ****                                       *****/
+    /******              Top Speed      ***                                        *****/
     /******              Armour         **                                         *****/
     /******              Turn Rate      *****                                      *****/
     /***********************************************************************************/
 
-    /****                                  Team Specific                        ****/
-    /**** Ship No                 0     1     2     3     4     5     6     7   ****/
+    /****                                  Team Specific                                     ****/
+    /**** Ship No               0       1       2       3       4       5       6       7    ****/
+    short massBeg[8]        = { 150,    150,    150,    150,    150,    150,    150,    150     };
+    short maxThrustBeg[8]   = { 790,    790,    850,    850,    850,    850,    790,    790     };
+    short resistanceBeg[8]  = { 140,    140,    134,    134,    140,    140,    134,    134     };
+    short headingIncBeg[8]  = { 160,    160,    140,    140,    120,    120,    180,    180     };
+    short maxHeadingBeg[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
+    short skidBeg[8]        = { 12,     12,     20,     20,     24,     24,     12,     12      };
+    short massPro[8]        = { 150,    150,    150,    150,    150,    150,    150,    150     };
+    short maxThrustPro[8]   = { 1200,   1200,   1400,   1400,   1400,   1400,   1200,   1200    };
+    short resistancePro[8]  = { 140,    140,    140,    140,    130,    130,    130,    130     };
+    short headingIncPro[8]  = { 160,    160,    120,    120,    140,    140,    180,    180     };
+    short maxHeadingPro[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
+    short skidPro[8]        = { 10,     10,     14,     14,     16,     16,     8,      8       };
 
-    short massBeg[8] = { 150, 150, 150, 150, 150, 150, 150, 150 };
+    /****                      Remote Control Specific                               ****/
+    /**** Ship No               0       1       2       3       4       5       6    ****/
+    short RMaxThrustBeg[7]  = { 2550,   2600,   2630,   2660,   2700,   2720,   2750    };
+    short RThrustMagBeg[7]  = { 44,     45,     45,     46,     47,     48,     49      };
+    short fightBackBeg[7]   = { 1,      1,      1,      1,      1,      1,      1       };
 
-    short maxThrustBeg[8] = { 790, 790, 850, 850, 850, 850, 790, 790 };
-    short resistanceBeg[8] = { 140, 140, 134, 134, 140, 140, 134, 134 };
-    short headingIncBeg[8] = { 160, 160, 140, 140, 120, 120, 180, 180 };
-    short maxHeadingBeg[8] = { 2560, 2560, 1920, 1920, 1920, 1920, 2560, 2560 };
-    short skidBeg[8] = { 12, 12, 20, 20, 24, 24, 12, 12 };
-
-    short massPro[8] = { 150, 150, 150, 150, 150, 150, 150, 150 };
-    short maxThrustPro[8] = { 1200, 1200, 1400, 1400, 1400, 1400, 1200, 1200 };
-    short resistancePro[8] = { 140, 140, 140, 140, 130, 130, 130, 130 };
-    short headingIncPro[8] = { 160, 160, 120, 120, 140, 140, 180, 180 };
-    short maxHeadingPro[8] = { 2560, 2560, 1920, 1920, 1920, 1920, 2560, 2560 };
-    short skidPro[8] = { 10, 10, 14, 14, 16, 16, 8, 8 };
-
-    /****                      Remote Control Specific                    ****/
-    /**** Ship No           0     1     2     3     4     5     6         ****/
-
-    short RMaxThrustBeg[7] = { 2550, 2600, 2630, 2660, 2700, 2720, 2750 };
-    short RThrustMagBeg[7] = { 44, 45, 45, 46, 47, 48, 49 };
-    short fightBackBeg[7] = { 1, 1, 1, 1, 1, 1, 1 };
-
-    short RMaxThrustPro[7] = { 3750, 3780, 3800, 3850, 3900, 3950, 4000 };
-    short RThrustMagPro[7] = { 50, 53, 55, 57, 60, 62, 65 };
-    short fightBackPro[7] = { 1, 1, 1, 1, 1, 1, 1 };
+    short RMaxThrustPro[7]  = { 3750,   3780,   3800,   3850,   3900,   3950,   4000    };
+    short RThrustMagPro[7]  = { 50,     53,     55,     57,     60,     62,     65      };
+    short fightBackPro[7]   = { 1,      1,      1,      1,      1,      1,      1       };
 
 #if 0 /************* Disable Rapier Class *************/
    gameData->Class = 0;
@@ -338,7 +334,6 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
             raceOrder[0] = ownShip;
             shipOrder[ownShip] = 0;
         }
-
         else if (gameData->gameType == CHAMPIONSHIP)
         {
             raceOrder[7] = championOrder[7];
@@ -404,10 +399,6 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
             shipOrder[serialShip] = 0;
         }
     }
-    // for(i = 0; i < NO_OF_SHIPS; i++)
-    // {
-    //    printf("SHIP NO = %d\n", raceOrder[i]);
-    // }
 
     if (gameType == SINGLE)
     {
@@ -420,6 +411,7 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
     {
         section = section->nextSection.ptr;
     }
+
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
         startSection[i] = section;
@@ -427,6 +419,7 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         if ((i % 2) == 0)
             section = section->nextSection.ptr;
     }
+
     if (gameType == SLAVE)
     {
         startSection[1] = startSection[1]->prevSection.ptr;

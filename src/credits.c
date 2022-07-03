@@ -23,7 +23,6 @@
 #include "options.h"
 #include "global.h"
 #include "cone.h"
-#include "race.h"
 
 const char Mds[]        = "MANAGING DIRECTORS";
 const char DirDev[]     = "DIRECTOR OF DEVELOPMENT";

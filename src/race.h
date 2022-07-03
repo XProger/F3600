@@ -1,3 +1,4 @@
-void race(ConfigData* gameData, int mode, int timeout);
-void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex, WeaponShape* weaponShapes, Effect* effects, RescueData* rescueDroid, Object** shipShapes);
-void QuitGame();
+void raceInit(ConfigData* gameData);
+void raceCtrl(ConfigData* gameData);
+void raceLoop(ConfigData* gameData);
+void raceDemo(ConfigData* gameData);

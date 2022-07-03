@@ -23,7 +23,6 @@
 #include "hiscores.h"
 #include "hud.h"
 #include "cone.h"
-#include "race.h"
 #include "error.h"
 
 #define TrackVersion 8

@@ -62,10 +62,10 @@ char SaveCardFile(char* saveName, int cardNum, ConfigData* gameData, short slide
 }
 
 void GetHeader(char* header) { }
-
+    /*TODO save
 char WriteFile(char* header, char* fileName, ConfigData* gameData, short sliderVol)
 {
-    /*TODO save
+
        FILE  *fd;
        int      temp;
        unsigned char  saveBuffer[256] ;
@@ -135,10 +135,10 @@ char WriteFile(char* header, char* fileName, ConfigData* gameData, short sliderV
           fclose(fd);
           return (1) ;
        }
-    */
+
     return 0;
 }
-
+    */
 void LoadCardFiles(SelectionData* selectData, char loadGames[][9], int cardNum)
 {
 #ifdef PCwipeout

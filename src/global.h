@@ -105,9 +105,6 @@ extern short extroLevel;
 #define AMBER_LIGHT_FADE 26
 #define GREEN_LIGHT_FADE 27
 
-extern char inmenu;
-extern char Reallyinmenu;
-
 #define frameRate30 30
 #define FR30    (frameRate30)
 #define FR60    (frameRate30 * 2)

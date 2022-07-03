@@ -5,7 +5,6 @@
 
 char SaveCardFile(char*, int, ConfigData*, short);
 void GetHeader(char*);
-char WriteFile(char*, char*, ConfigData*, short);
 void LoadCardFiles(SelectionData*, char[][9], int);
 char LoadCardData(char*, int, ConfigData*, SelectionData*);
 long GetCardInfo(int);

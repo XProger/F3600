@@ -15,6 +15,7 @@ typedef struct Quad
 } Quad;
 
 extern int gFrameIndex;
+extern int gLastFrameIndex;
 
 void renderInit();
 void renderFree();

@@ -503,58 +503,6 @@ typedef struct InfiniteLight
 #define ShipEngine 0x0002
 #define Translucent 0x0004
 
-#if Lib
-
-/* Library Primitive Structures
- */
-
-typedef struct LibF3
-{
-    CVECTOR colour;
-} LibF3;
-
-typedef struct LibFT3
-{
-    CVECTOR colour;
-} LibFT3;
-
-typedef struct LibF4
-{
-    CVECTOR colour;
-} LibF4;
-
-typedef struct LibFT4
-{
-    CVECTOR colour;
-} LibFT4;
-
-typedef struct LibG3
-{
-    CVECTOR colour[3];
-} LibG3;
-
-typedef struct LibGT3
-{
-    CVECTOR colour[3];
-} LibGT3;
-
-typedef struct LibG4
-{
-    CVECTOR colour[4];
-} LibG4;
-
-typedef struct LibGT4
-{
-    CVECTOR colour[4];
-} LibGT4;
-
-typedef struct LibSPR
-{
-    CVECTOR colour;
-} LibSPR;
-
-#endif
-
 typedef union Poly
 {
     char* ptr;
@@ -633,31 +581,6 @@ typedef union StdPoly
 #define TypePointLight 22
 #define TypeSpotLight 23
 
-#if Lib
-
-typedef union LibraryPrimitive
-{
-    char* ptr;
-    LibF3* f3;
-    LibFT3* ft3;
-    LibF4* f4;
-    LibFT4* ft4;
-    LibG3* g3;
-    LibGT3* gt3;
-    LibG4* g4;
-    LibGT4* gt4;
-    LibSPR* spr;
-} LibraryPrimitive;
-
-typedef struct LibraryObject
-{
-    short index;
-    short primitiveCount;
-    LibraryPrimitive primitives;
-} LibraryObject;
-
-#endif
-
 /* Main Object Structure
 
    NOTE : Two copies of each primitive are required for double buffering.
@@ -676,12 +599,7 @@ typedef struct Object
     short primitiveCount; /* Number of Primitives */
     Primitive* primitives; /* Pointer to Z Sort Primitives */
 
-#if Lib
-    LibraryObject* libraryObject;
-#else
     long pad;
-#endif
-
     long bspTree_unused;
 
     Skeleton* skeleton; /* Pointer to Local Coordinates */
@@ -702,10 +620,6 @@ typedef union Prm
     Skeleton* skeleton;
     SVECTOR* svector;
     Primitive* primitive;
-
-#if Lib
-    LibraryObject* libObj;
-#endif
 
     F3* f3;
     FT3* ft3;
@@ -729,41 +643,23 @@ typedef union Prm
     LSGT3* lsgt3;
     LSG4* lsg4;
     LSGT4* lsgt4;
-
-#if Lib
-
-    LibF3* libf3;
-    LibFT3* libft3;
-    LibF4* libf4;
-    LibFT4* libft4;
-    LibG3* libg3;
-    LibGT3* libgt3;
-    LibG4* libg4;
-    LibGT4* libgt4;
-    LibSPR* libspr;
-
-#endif
-
 } Prm;
 
 extern ulong* ObjectTable[];
 
-#define CrtClipped 0x80000000
-#define XLarge 0x01000000
-#define YLarge 0x00800000
-#define ZLarge 0x00400000
-#define ZNegative 0x00040000
-#define ZSmall 0x00020000
-#define XClipped 0x00004000
-#define YClipped 0x00002000
-#define OutFog 0x00001000
-
-void Swap();
+#define CrtClipped  0x80000000
+#define XLarge      0x01000000
+#define YLarge      0x00800000
+#define ZLarge      0x00400000
+#define ZNegative   0x00040000
+#define ZSmall      0x00020000
+#define XClipped    0x00004000
+#define YClipped    0x00002000
+#define OutFog      0x00001000
 
 void InitGameDisplay(void);
 void InitMenuDisplay(int geomOffset);
 
-void InitGeom(void);
 void TransformStaticMenuObject(Object* object);
 void TransformStaticObjectBodge(Object* object);
 void TransformStaticObject(Object* object);

@@ -106,24 +106,33 @@ unsigned short GetKeyNoBlock();
 
 void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
-long osGetSystemTimeMS();
 
-typedef struct GRECT
+typedef struct
 {
     int x, y, w, h;
 } GRECT;
 
-typedef struct _clut
+typedef struct
 {
-    unsigned short red : 5;
+    unsigned short red   : 5;
     unsigned short green : 5;
-    unsigned short blue : 5;
+    unsigned short blue  : 5;
     unsigned short trans : 1;
 } CLUT;
 
-#define ShipForwards 1
-#define ShipBackwards 2
-#define ShipRight 4
-#define ShipLeft 8
+#define ShipForwards    1
+#define ShipBackwards   2
+#define ShipRight       4
+#define ShipLeft        8
+
+enum GameLoop
+{
+    GAME_LOOP_TITLE_INIT,
+    GAME_LOOP_TITLE,
+    GAME_LOOP_MENU_INIT,
+    GAME_LOOP_MENU,
+    GAME_LOOP_RACE_INIT,
+    GAME_LOOP_RACE
+};
 
 #endif

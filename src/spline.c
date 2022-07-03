@@ -23,7 +23,6 @@
 #include "options.h"
 #include "global.h"
 #include "cone.h"
-#include "race.h"
 #include "spline.h"
 #include "search.h"
 #include "error.h"

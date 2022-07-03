@@ -29,7 +29,6 @@
 
 extern long ctrlNeedTargetIcon;
 extern int ctrlnearShip;
-short Shielded = 0;
 extern TrackCamera ctrlcamera;
 
 void DrawInternalShield(void);
@@ -62,7 +61,6 @@ void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
             if ((shipIndex[weapon->fireShip].attr & SHIELDED) && (shipIndex[weapon->fireShip].attr & VIEW_IN))
             {
                 DrawInternalShield();
-                Shielded = 1;
                 continue;
             }
 
@@ -1740,7 +1738,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         if (weapon->fireShip == ownShip)
         {
             KillNote(SHIELDS);
-            Shielded = 0;
         }
 
         shipIndex[weapon->fireShip].attr &= ~SHIELDED;
@@ -1761,9 +1758,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
         poly.prim = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
         primitiveCount = weaponShapes[weapon->currentWeapon].shapePtr->primitiveCount;
-
-        if (weapon->fireShip == ownShip)
-            Shielded = 0;
 
         for (k = 0; k < primitiveCount; k++)
         {

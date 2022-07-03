@@ -10,51 +10,52 @@
 #define MAX_CD_TRACKS 11
 #define MAX_GAMES 15
 
-#define CARD_FULL 101
-#define DUP_NAME 102
-#define LOAD_ERROR 103
-#define SAVE_ERROR 104
-#define RENAME_ERROR 105
-#define NO_CARD 106
-#define NO_FILES 107
-#define NO_FORMAT 108
-#define FORMAT_ERROR 109
+#define CARD_FULL       101
+#define DUP_NAME        102
+#define LOAD_ERROR      103
+#define SAVE_ERROR      104
+#define RENAME_ERROR    105
+#define NO_CARD         106
+#define NO_FILES        107
+#define NO_FORMAT       108
+#define FORMAT_ERROR    109
 
-#define FORMATTED 0
-#define UNFORMATTED 1
+#define FORMATTED       0
+#define UNFORMATTED     1
 #define NORMPAD_PRESETS 8
-#define NEGCON_PRESETS 5
-#define NORM 1
-#define OVERWRITE 2
-#define RENAME 3
+#define NEGCON_PRESETS  5
+#define NORM            1
+#define OVERWRITE       2
+#define RENAME          3
+
 /* BUTTON TYPE */
-#define PSELECT 0
-#define PSTART 1
-#define PBACK 2
-#define PCHANGE 3
-#define PFORMAT 4
-#define NSELECT 5
-#define NSTART 6
-#define NBACK 7
-#define NCHANGE 8
-#define NFORMAT 9
-#define THRUST 10
-#define PADFIRE 11
-#define VIEW 12
-#define LBRAKE 13
-#define RBRAKE 14
-#define ARROWL 15
-#define ARROWR 16
-#define DOTT 17
+#define PSELECT     0
+#define PSTART      1
+#define PBACK       2
+#define PCHANGE     3
+#define PFORMAT     4
+#define NSELECT     5
+#define NSTART      6
+#define NBACK       7
+#define NCHANGE     8
+#define NFORMAT     9
+#define THRUST      10
+#define PADFIRE     11
+#define VIEW        12
+#define LBRAKE      13
+#define RBRAKE      14
+#define ARROWL      15
+#define ARROWR      16
+#define DOTT        17
 
 /******************/
 /***** Menu 1 *****/
 /******************/
-#define MAIN_MENU 0
-#define SINGLE_GAME 0
-#define MULTI_GAME 1
+#define MAIN_MENU    0
+#define SINGLE_GAME  0
+#define MULTI_GAME   1
 #define GAME_OPTIONS 1
-#define QUIT_TO_DOS 2 // PCwipeout
+#define QUIT_TO_DOS  2 // PCwipeout
 
 /******************/
 /***** Menu 2 *****/
@@ -64,9 +65,9 @@
 /******************/
 /***** Menu 3 *****/
 /******************/
-#define DUAL_GAME_MENU 2
-#define MASTER_PSX 0
-#define SLAVE_PSX 1
+#define DUAL_GAME_MENU  2
+#define MASTER_PSX      0
+#define SLAVE_PSX       1
 
 /******************/
 /***** Menu 4 *****/
@@ -77,10 +78,10 @@
 /***** Menu 5 *****/
 /******************/
 #define OPTION_MENU 4
-#define LOAD_GAME 0
-#define SAVE_GAME 1
-#define CONTROLS 2
-#define DETAILS 3
+#define LOAD_GAME   0
+#define SAVE_GAME   1
+#define CONTROLS    2
+#define DETAILS     3
 //#define      AUDIO_CONFIG      4
 #define HIGH_SCORES 4
 
@@ -92,11 +93,11 @@
 /******************/
 /***** Menu 7 *****/
 /******************/
-#define TEAM_MENU 6
-#define AG_SYSTEMS 0
-#define AURICOM 1
-#define QIREX 2
-#define FEISAR 3
+#define TEAM_MENU   6
+#define AG_SYSTEMS  0
+#define AURICOM     1
+#define QIREX       2
+#define FEISAR      3
 
 /******************/
 /***** Menu 8 *****/
@@ -106,11 +107,11 @@
 /******************/
 /***** Menu 9 *****/
 /******************/
-#define RACE_TYPE_MENU 8
-#define NO_GAME_SET 0
-#define CHAMPIONSHIP 1
-#define TIME_TRIAL 3
-#define SINGLE_RACE 2
+#define RACE_TYPE_MENU  8
+#define NO_GAME_SET     0
+#define CHAMPIONSHIP    1
+#define TIME_TRIAL      3
+#define SINGLE_RACE     2
 
 /*******************/
 /***** Menu 10 *****/
@@ -377,7 +378,8 @@ typedef struct SortTable
     char points;
 } SortTable;
 
-void MenuControl(ConfigData*, int*, int);
+void menuInit();
+void menuLoop(ConfigData*);
 void InitMenuSystem(Menus*);
 TimData* Load16BitTexture(char*, char);
 void CallMenuSelector(Menus*, int*, int*, Object**, ConfigData*, MusicPrims*, SlideTextures*, SelectionData*, char[][9]);
