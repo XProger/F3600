@@ -133,66 +133,66 @@ const char Pizza[]      = "PERFECT PIZZA";
 
 typedef struct Title
 {
-   const char* title;
-   int         noOfNames;
-   const char* name[10];
+    const char* title;
+    int         noOfNames;
+    const char* name[10];
 } Title;
 
 const Title credits[] = {
-   { Mds,         2,    IanH, JohnE },
-   { DirDev,      1,    JohnW },
-   { Prod,        2,    Dom, PCAndyY },
-   { ProdMan,     1,    Sue },
-   { GameD,       6,    Nik, blank, blank, blank, blank, blank },
+    { Mds,         2,    IanH, JohnE },
+    { DirDev,      1,    JohnW },
+    { Prod,        2,    Dom, PCAndyY },
+    { ProdMan,     1,    Sue },
+    { GameD,       6,    Nik, blank, blank, blank, blank, blank },
 
-   { w95,         0 },
-   { pro,         1,    ATIBill },
-   { atidev,      0 },
-   { bsd,         2,    ATISteve, ATIJohn },
-   { PCVersion,   0 },
-   { Prog,        8,    PCAndyY, PCAndyS, PCDaveS, PCMarkK, PCJedA, PCSteveW, PCChrisE, PCSalim },
-   { PCSndProg,   1,    PCAndyC },
-   { PCMovies,    1,    PCMikeA },
-   { PCArtists,   7,    PCJohnD, PCGaryB, blank, blank, blank, blank, blank },
+    { w95,         0 },
+    { pro,         1,    ATIBill },
+    { atidev,      0 },
+    { bsd,         2,    ATISteve, ATIJohn },
+    { PCVersion,   0 },
+    { Prog,        8,    PCAndyY, PCAndyS, PCDaveS, PCMarkK, PCJedA, PCSteveW, PCChrisE, PCSalim },
+    { PCSndProg,   1,    PCAndyC },
+    { PCMovies,    1,    PCMikeA },
+    { PCArtists,   7,    PCJohnD, PCGaryB, blank, blank, blank, blank, blank },
 
-   { Intro,       1,    Lee },
-   { Concept,     1,    Jim },
-   { GDesign,     1,    DR },
-   { Music,       1,    ColdS },
-   { Sound,       1,    TimW },
-   { Manual,      2,    Damon, Nik },
-   { Pack,        2,    DR, Keith },
-   { Sec,         6,    Jen, blank, blank, blank, blank, blank },
+    { Intro,       1,    Lee },
+    { Concept,     1,    Jim },
+    { GDesign,     1,    DR },
+    { Music,       1,    ColdS },
+    { Sound,       1,    TimW },
+    { Manual,      2,    Damon, Nik },
+    { Pack,        2,    DR, Keith },
+    { Sec,         6,    Jen, blank, blank, blank, blank, blank },
 
-   { PSX,         0 },
-   { Prog,        4,    Dave, Rob, Jas, Stu },
-   { Artists,     10,   Nicky, Laura, Lou, Darren, Pol, blank, blank, blank, blank, blank },
+    { PSX,         0 },
+    { Prog,        4,    Dave, Rob, Jas, Stu },
+    { Artists,     10,   Nicky, Laura, Lou, Darren, Pol, blank, blank, blank, blank, blank },
 
-   { QA,          10,   Test0, Test1, Test2, Test3, Test4, Test5, Test6, Test7, Test8, Test9 },
+    { QA,          10,   Test0, Test1, Test2, Test3, Test4, Test5, Test6, Test7, Test8, Test9 },
 
-   { Thanks,      9,    Hack, Soft, SGI, Glen, Jo, All, blank, blank, blank },
+    { Thanks,      9,    Hack, Soft, SGI, Glen, Jo, All, blank, blank, blank },
 
-   { XPORT,       0 },
-   { Prog,        1,    XProger },
+    { XPORT,       0 },
+    { Prog,        1,    XProger },
 };
 
 void ShowCredits(int attractDelay)
 {
-   int i, j;
-   int place;
+    int i, j;
+    int place;
 
-   place = attractDelay - (60 * FR30); // whats set in race.c -400
-   for(i = 0; i < sizeof(credits) / sizeof(credits[0]); i++)
-   {
-      if((place > -10) && (place < 264))
-         CentreText (credits[i].title, text_data (230, place, 8), RedText) ;
-      place += 16;
-      for(j = 0; j < credits[i].noOfNames; j++)
-      {
-         if((place > -10) && (place < 264))
-            CentreText (credits[i].name[j], text_data (230, place, 8), WhiteText) ;
-         place += 12;
-      }
-      place += 16;
-   }
+    place = attractDelay - (60 * FR30); // whats set in race.c -400
+    for (i = 0; i < sizeof(credits) / sizeof(credits[0]); i++)
+    {
+        if ((place > -10) && (place < 264))
+            CentreText(credits[i].title, text_data(230, place, 8), RedText);
+        place += 16;
+        for (j = 0; j < credits[i].noOfNames; j++)
+        {
+            if ((place > -10) && (place < 264))
+                CentreText(credits[i].name[j], text_data(230, place, 8), WhiteText);
+            place += 12;
+        }
+        place += 16;
+    }
 }

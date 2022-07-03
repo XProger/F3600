@@ -1,12 +1,12 @@
 /*********************************************************
-*
-* File: Sfx.h
-*
-* Header file to sfx.c
-*
-**********************************************************
-*
-*********************************************************/
+ *
+ * File: Sfx.h
+ *
+ * Header file to sfx.c
+ *
+ **********************************************************
+ *
+ *********************************************************/
 
 #ifndef _SFX_H_INCLUDED_
 #define _SFX_H_INCLUDED_
@@ -16,19 +16,19 @@
 /*
  * Card Types
  */
-#define NO_CARD                   106
-#define SOUNDBLASTER           1
-#define ULTRASOUND                2
-#define AUTO_DETECT              9
+#define NO_CARD 106
+#define SOUNDBLASTER 1
+#define ULTRASOUND 2
+#define AUTO_DETECT 9
 
 /*
  * Mix Types
  */
-#define MONO      1
-#define STEREO    2
+#define MONO 1
+#define STEREO 2
 #define PHASED 3
-#define QSOUND    4
-#define DOLBY     5
+#define QSOUND 4
+#define DOLBY 5
 
 /*
  * Sample Rates
@@ -39,17 +39,17 @@
 /*
  * Pitch defines
  */
-#define OCTAVE_ABOVE          512
-#define  NORMAL_PITCH            256
-#define  OCTAVE_BELOW            128
+#define OCTAVE_ABOVE 512
+#define NORMAL_PITCH 256
+#define OCTAVE_BELOW 128
 
 /*
  * Flags
  */
-#define ALL_OFF            0
-#define LOOP_ON            1
-#define SURROUND_ON     2
-#define PROLOGIC_ON     4
+#define ALL_OFF 0
+#define LOOP_ON 1
+#define SURROUND_ON 2
+#define PROLOGIC_ON 4
 
 uint16 SfxInit(uint16 wCard, uint16 wMixType, uint16 wSampRate);
 void SfxFree(void);
@@ -61,8 +61,8 @@ void SfxSetReverbDepth(uint8 bDepth);
 
 uint16 SfxSetMaxEffects(uint16 wNum);
 
-uint16 SfxGetFxBank(char *filename);
-int16 SfxOpenFxBank(int16 *pwFirstId);
+uint16 SfxGetFxBank(char* filename);
+int16 SfxOpenFxBank(int16* pwFirstId);
 
 void SfxSetVolume(uint8 bVolume);
 void SfxSetCdVolume(uint8 bVolume);

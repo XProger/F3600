@@ -3,15 +3,15 @@
 
 typedef struct Quad
 {
-   signed short   x, y;
-   
-   unsigned short w, h;
-   
-   unsigned char  u0, v0;
-   unsigned char  u1, v1;
+    signed short x, y;
 
-   unsigned short clut;
-   unsigned short page;
+    unsigned short w, h;
+
+    unsigned char u0, v0;
+    unsigned char u1, v1;
+
+    unsigned short clut;
+    unsigned short page;
 } Quad;
 
 extern int gFrameIndex;

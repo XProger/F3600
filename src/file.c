@@ -1,4 +1,3 @@
-
 /* (C) Psygnosis 1994. By Jason Carl Denton
 */
 
@@ -16,93 +15,91 @@
 #include "global.h"
 #include "error.h"
 
-
-long FileLength( char* name )
+long FileLength(char* name)
 {
-   FILE   *fd;
-   long  length;
+    FILE* fd;
+    long length;
 
-/* Open file */
-   char *cleanname;
+    /* Open file */
+    char* cleanname;
 
-   cleanname = (char *)strchr(name,':');
-   if (cleanname != NULL)
-   {
-      cleanname++;
-   }
-   else
-   {
-      cleanname = name;
-   }
+    cleanname = (char*)strchr(name, ':');
+    if (cleanname != NULL)
+    {
+        cleanname++;
+    }
+    else
+    {
+        cleanname = name;
+    }
 
-   fd = fopen( cleanname, "rb" );
-   if ( fd == NULL )
-   {
-      return 0;
-   }
+    fd = fopen(cleanname, "rb");
+    if (fd == NULL)
+    {
+        return 0;
+    }
 
-/* Seek to end of file to get length */
+    /* Seek to end of file to get length */
 
-   fseek(fd,0,SEEK_END);
-   length = ftell( fd);
-   rewind(fd);
-
-/* Close file */
-
-   fclose( fd );
-
-/* Return file length */
-
-   return( length );
-}
-
-long LoadFile( char* name, char* buffer )
-{
-   FILE *fd;
-   long  length;
-
-/* Open file */
-   char *cleanname;
-
-   cleanname = (char *)strchr(name,':');
-   if (cleanname != NULL)
-      {
-      cleanname++;
-      }
-   else
-      {
-      cleanname = name;
-      }
-
-
-   fd = fopen( cleanname, "rb" );
-   if ( fd == NULL )
-   {
-      printf( "File.c:LoadFile(): Bad file name %s\n", name );
-      return( 0 );
-   }
-
-/* Seek to end of file to get length */
-
-      fseek(fd,0,SEEK_END);
-   length = ftell( fd);
-/* Seek back to the start */
+    fseek(fd, 0, SEEK_END);
+    length = ftell(fd);
     rewind(fd);
 
-/* Read file into buffer */
+    /* Close file */
 
-   if ( fread( buffer, 1, length, fd ) != length )
-   {
-      printf( "File.c:LoadFile(): Failed to load file %s\n", name );
-      fclose( fd );
-      return( 0 );
-   }
+    fclose(fd);
 
-/* Close file */
+    /* Return file length */
 
-   fclose( fd );
+    return (length);
+}
 
-/* Return file length */
+long LoadFile(char* name, char* buffer)
+{
+    FILE* fd;
+    long length;
 
-   return( length );
+    /* Open file */
+    char* cleanname;
+
+    cleanname = (char*)strchr(name, ':');
+    if (cleanname != NULL)
+    {
+        cleanname++;
+    }
+    else
+    {
+        cleanname = name;
+    }
+
+    fd = fopen(cleanname, "rb");
+    if (fd == NULL)
+    {
+        printf("File.c:LoadFile(): Bad file name %s\n", name);
+        return (0);
+    }
+
+    /* Seek to end of file to get length */
+
+    fseek(fd, 0, SEEK_END);
+    length = ftell(fd);
+    /* Seek back to the start */
+    rewind(fd);
+
+    /* Read file into buffer */
+
+    if (fread(buffer, 1, length, fd) != length)
+    {
+        printf("File.c:LoadFile(): Failed to load file %s\n", name);
+        fclose(fd);
+        return (0);
+    }
+
+    /* Close file */
+
+    fclose(fd);
+
+    /* Return file length */
+
+    return (length);
 }

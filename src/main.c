@@ -26,15 +26,15 @@
 #include "error.h"
 #include "render.h"
 
-extern short trackNum; //SJR
+extern short trackNum; // SJR
 extern int menuTexturesIn;
 
-char      inmenu = 0, Reallyinmenu = 0;
-char      trackdir[21];
+char inmenu = 0, Reallyinmenu = 0;
+char trackdir[21];
 
-extern char     andybodge;
+extern char andybodge;
 
-Texture*  titleScreen;
+Texture* titleScreen;
 
 extern int TOut;
 
@@ -42,300 +42,296 @@ void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, int clu
 
 void oldmain(void)
 {
-   int        i;
-   ConfigData      gameData;
-   int        mode, timeout;
-   char      loadPath[48];
-   char      loadNo[2];
-   int        titleTimeout;
-   static int      firstTime = 1;
+    int i;
+    ConfigData gameData;
+    int mode, timeout;
+    char loadPath[48];
+    char loadNo[2];
+    int titleTimeout;
+    static int firstTime = 1;
 
+    InitGameDisplay();
 
-   InitGameDisplay();
- 
-   titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim", 0);
-   inmenu = 1;
- 
-   InitSpuSound();
+    titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim", 0);
+    inmenu = 1;
 
+    InitSpuSound();
 
-   SetCharTextures(8);
-   SetCharTextures(12);
-   SetCharTextures(16);
-   HighScore(0);
+    SetCharTextures(8);
+    SetCharTextures(12);
+    SetCharTextures(16);
+    HighScore(0);
 
-   TextureTableCount = 0;
-   InitText();
+    TextureTableCount = 0;
+    InitText();
 
-   InitGameData(&gameData);
+    InitGameData(&gameData);
 
-/*TODO saves
-   LoadCardData(lfilename, 0, &gameData, (SelectionData *) 0);
-*/
+    /*TODO saves
+       LoadCardData(lfilename, 0, &gameData, (SelectionData *) 0);
+    */
 
-   SfxSetVolume((char) ((0x3fff - (75 * gameData.currSliderPos)) >> 6));
+    SfxSetVolume((char)((0x3fff - (75 * gameData.currSliderPos)) >> 6));
 
-   InitPadSettings();
-   InitChampionship();
+    InitPadSettings();
+    InitChampionship();
 
-   timeout = FR30 * 120;
+    timeout = FR30 * 120;
 
-   mode = ATTRACT;
+    mode = ATTRACT;
 
-   SetCharTextures(8);
-   SetCharTextures(12);
-   SetCharTextures(16);
+    SetCharTextures(8);
+    SetCharTextures(12);
+    SetCharTextures(16);
 
-   titleTimeout = 0;
+    titleTimeout = 0;
 
-   trackNum = 16; //SJR
-   if ((gameData.gameType != CHAMPIONSHIP) || (mode == ATTRACT))
-   {
-      inmenu = 1;
-      for (i = 0; i < 2; i++)
-      {
-         /*TODO title screen*/
-         //AddGlyph(0, 0, 320, 240, titleScreen->u0, titleScreen->v0, titleScreen->cba);
-         CentreText("PRESS START", text_data(0, 200, 8), RedText);
-         Swap();
-      }
+    trackNum = 16; // SJR
+    if ((gameData.gameType != CHAMPIONSHIP) || (mode == ATTRACT))
+    {
+        inmenu = 1;
+        for (i = 0; i < 2; i++)
+        {
+            /*TODO title screen*/
+            // AddGlyph(0, 0, 320, 240, titleScreen->u0, titleScreen->v0, titleScreen->cba);
+            CentreText("PRESS START", text_data(0, 200, 8), RedText);
+            Swap();
+        }
 
-      if (firstTime == 1)
-         TOut = 30;
-      else
-         TOut = 5;
+        if (firstTime == 1)
+            TOut = 30;
+        else
+            TOut = 5;
 
-      while (1)
-      {
-         opad = pad;
-         pad = gPad;
-         xpad = (pad ^ opad) & pad;
+        while (1)
+        {
+            opad = pad;
+            pad = gPad;
+            xpad = (pad ^ opad) & pad;
 
-         titleTimeout++;
+            titleTimeout++;
 
-         if (titleTimeout > 1)
-         {
-            if (GetMenuKey(M_SELECT))
+            if (titleTimeout > 1)
             {
-               PlayNote(MENU_SELECT, 1, 20);
-               for (i = 0; i < 10; i++)
-               {
-                  UpdateNotes(NOT_PAUSED);
-               }
-               mode = INTERACTIVE;
-               firstTime = 1;
-               break;
+                if (GetMenuKey(M_SELECT))
+                {
+                    PlayNote(MENU_SELECT, 1, 20);
+                    for (i = 0; i < 10; i++)
+                    {
+                        UpdateNotes(NOT_PAUSED);
+                    }
+                    mode = INTERACTIVE;
+                    firstTime = 1;
+                    break;
+                }
             }
-         }
 
-         Swap();
-      }
-   }
+            Swap();
+        }
+    }
 
-   gameType = SINGLE;
+    gameType = SINGLE;
 
-   gameData.Lives = 3;
-   gameData.EndOfGame = 0;
-   gameData.continueConfirm = 1;
-   gameData.Position = 8;
+    gameData.Lives = 3;
+    gameData.EndOfGame = 0;
+    gameData.continueConfirm = 1;
+    gameData.Position = 8;
 
-   /*TODO cheats*/
-   /* Enable cheat permanently */
-    //gameData.RapierClass = 1 ;
-    //totalTracks = 14 ;
-    //NumTracks = 7 ;
-    //gameData.showBonusTrack = 1 ; //SJR
+    /*TODO cheats*/
+    /* Enable cheat permanently */
+    // gameData.RapierClass = 1 ;
+    // totalTracks = 14 ;
+    // NumTracks = 7 ;
+    // gameData.showBonusTrack = 1 ; //SJR
 
-   /****************************/
+    /****************************/
 
-   while (1)
-   {
-      if ((gameData.gameType != CHAMPIONSHIP) && (mode != ATTRACT))
-      {
-         MenuControl(&(gameData), &mode, timeout);
-      }
+    while (1)
+    {
+        if ((gameData.gameType != CHAMPIONSHIP) && (mode != ATTRACT))
+        {
+            MenuControl(&(gameData), &mode, timeout);
+        }
 
-      if (andybodge == 2)
-      {
-         mode = ATTRACT;
-         gameType = SINGLE;
-         ownShip = randy() % 8;
-         serialShip = -1;
-         firstTime = 0;
-         andybodge = 1;
-      }
+        if (andybodge == 2)
+        {
+            mode = ATTRACT;
+            gameType = SINGLE;
+            ownShip = randy() % 8;
+            serialShip = -1;
+            firstTime = 0;
+            andybodge = 1;
+        }
 
-      if (mode == ATTRACT)
-      {
-         switch (randy() % 6)
+        if (mode == ATTRACT)
+        {
+            switch (randy() % 6)
             // switch(1)
-         {
-         case 0:
-            trackNo = 2;    // Altima
-            gameData.actTrackNum = 2;
-            gameData.trackNum = 1;
-            break;
+            {
+                case 0:
+                    trackNo = 2; // Altima
+                    gameData.actTrackNum = 2;
+                    gameData.trackNum = 1;
+                    break;
 
-         case 1:
-            trackNo = 4;    // karbonis
-            gameData.actTrackNum = 4;
-            gameData.trackNum = 2;
-            break;
+                case 1:
+                    trackNo = 4; // karbonis
+                    gameData.actTrackNum = 4;
+                    gameData.trackNum = 2;
+                    break;
 
-         case 2:
-            trackNo = 1;    // terramax
-            gameData.actTrackNum = 1;
-            gameData.trackNum = 3;
-            break;
+                case 2:
+                    trackNo = 1; // terramax
+                    gameData.actTrackNum = 1;
+                    gameData.trackNum = 3;
+                    break;
 
-         case 3:
-            trackNo = 12;    // korodera
-            gameData.actTrackNum = 12;
-            gameData.trackNum = 4;
-            break;
+                case 3:
+                    trackNo = 12; // korodera
+                    gameData.actTrackNum = 12;
+                    gameData.trackNum = 4;
+                    break;
 
-         case 4:
-            trackNo = 8;    // arridos
-            gameData.actTrackNum = 8;
-            gameData.trackNum = 5;
-            break;
+                case 4:
+                    trackNo = 8; // arridos
+                    gameData.actTrackNum = 8;
+                    gameData.trackNum = 5;
+                    break;
 
-         case 5:
-            trackNo = 9;    // silver
-            gameData.actTrackNum = 9;
-            gameData.trackNum = 6;
-            break;
-         }
-      }
-      else
-      {
-         trackNo = gameData.actTrackNum;
-      }
+                case 5:
+                    trackNo = 9; // silver
+                    gameData.actTrackNum = 9;
+                    gameData.trackNum = 6;
+                    break;
+            }
+        }
+        else
+        {
+            trackNo = gameData.actTrackNum;
+        }
 
-      /*TODO audio*/
-      //CdControlB(CdlStop, 0, 0);
+        /*TODO audio*/
+        // CdControlB(CdlStop, 0, 0);
 
+        /* load screen stuff */
+        strcpy(loadPath, "wipeout\\textures\\load");
 
-      /* load screen stuff */
-      strcpy(loadPath, "wipeout\\textures\\load");
+        if (gameData.actTrackNum <= 9)
+        {
+            sprintf(loadNo, "%d", gameData.actTrackNum);
+        }
+        else
+        {
+            sprintf(loadNo, "%2d", gameData.actTrackNum);
+        }
+        strcat(loadPath, loadNo);
+        strcat(loadPath, ".tim");
+        JJSLoad16BitTexture(loadPath, SCREEN);
+        inmenu = 0;
+        for (i = 0; i < 2; i++)
+        {
+            Swap();
+        }
+        inmenu = 1;
+        for (i = 0; i < 2; i++)
+            Swap();
 
-      if (gameData.actTrackNum <= 9)
-      {
-         sprintf(loadNo, "%d", gameData.actTrackNum);
-      }
-      else
-      {
-         sprintf(loadNo, "%2d", gameData.actTrackNum);
-      }
-      strcat(loadPath, loadNo);
-      strcat(loadPath, ".tim");
-      JJSLoad16BitTexture(loadPath, SCREEN);
-      inmenu = 0;
-      for (i = 0; i < 2; i++)
-      {
-         Swap();
-      }
-      inmenu = 1;
-      for (i = 0; i < 2; i++)
-         Swap();
+        menuTexturesIn = 0;
+        trackNum = gameData.trackNum; // for restoring - SJR
+        switch (gameData.trackNum)
+        {
+            case 1:
+                SJRNewTexture("wipeout\\newgraph\\venom\\altima\\altima.sjr");
+                strcpy(trackdir, "venom\\altima\\");
+                break;
+            case 2:
+                SJRNewTexture("wipeout\\newgraph\\venom\\karbonis\\karbonis.sjr");
+                strcpy(trackdir, "venom\\karbonis\\");
+                break;
+            case 3:
+                SJRNewTexture("wipeout\\newgraph\\venom\\terramax\\terramax.sjr");
+                strcpy(trackdir, "venom\\terramax\\");
+                break;
+            case 4:
+                SJRNewTexture("wipeout\\newgraph\\venom\\korodera\\korodera.sjr");
+                strcpy(trackdir, "venom\\korodera\\");
+                break;
+            case 5:
+                SJRNewTexture("wipeout\\newgraph\\venom\\arridos\\arridos.sjr");
+                strcpy(trackdir, "venom\\arridos\\");
+                break;
+            case 6:
+                SJRNewTexture("wipeout\\newgraph\\venom\\silver\\silver.sjr");
+                strcpy(trackdir, "venom\\silver\\");
+                break;
+            case 7:
+                SJRNewTexture("wipeout\\newgraph\\venom\\firestar\\firestar.sjr");
+                strcpy(trackdir, "venom\\firestar\\");
+                break;
+            case 8:
+                SJRNewTexture("wipeout\\newgraph\\rapier\\altima\\altima.sjr");
+                strcpy(trackdir, "rapier\\altima\\");
+                break;
+            case 9:
+                SJRNewTexture("wipeout\\newgraph\\rapier\\karbonis\\karbonis.sjr");
+                strcpy(trackdir, "rapier\\karbonis\\");
+                break;
+            case 10:
+                SJRNewTexture("wipeout\\newgraph\\rapier\\terramax\\terramax.sjr");
+                strcpy(trackdir, "rapier\\terramax\\");
+                break;
+            case 11:
+                SJRNewTexture("wipeout\\newgraph\\rapier\\korodera\\korodera.sjr");
+                strcpy(trackdir, "rapier\\korodera\\");
+                break;
+            case 12:
+                SJRNewTexture("wipeout\\newgraph\\rapier\\arridos\\arridos.sjr");
+                strcpy(trackdir, "rapier\\arridos\\");
+                break;
+            case 13:
+                SJRNewTexture("wipeout\\newgraph\\rapier\\silver\\silver.sjr");
+                strcpy(trackdir, "rapier\\silver\\");
+                break;
+            case 14:
+                SJRNewTexture("wipeout\\newgraph\\rapier\\firestar\\firestar.sjr");
+                strcpy(trackdir, "rapier\\firestar\\");
+                break;
+            default:
+                printf("what track ?\n");
+                exit(0);
+                break;
+        }
 
-      menuTexturesIn = 0;
-      trackNum = gameData.trackNum; //for restoring - SJR
-      switch (gameData.trackNum)
-      {
-      case 1:
-         SJRNewTexture("wipeout\\newgraph\\venom\\altima\\altima.sjr");
-         strcpy(trackdir, "venom\\altima\\");
-         break;
-      case 2:
-         SJRNewTexture("wipeout\\newgraph\\venom\\karbonis\\karbonis.sjr");
-         strcpy(trackdir, "venom\\karbonis\\");
-         break;
-      case 3:
-         SJRNewTexture("wipeout\\newgraph\\venom\\terramax\\terramax.sjr");
-         strcpy(trackdir, "venom\\terramax\\");
-         break;
-      case 4:
-         SJRNewTexture("wipeout\\newgraph\\venom\\korodera\\korodera.sjr");
-         strcpy(trackdir, "venom\\korodera\\");
-         break;
-      case 5:
-         SJRNewTexture("wipeout\\newgraph\\venom\\arridos\\arridos.sjr");
-         strcpy(trackdir, "venom\\arridos\\");
-         break;
-      case 6:
-         SJRNewTexture("wipeout\\newgraph\\venom\\silver\\silver.sjr");
-         strcpy(trackdir, "venom\\silver\\");
-         break;
-      case 7:
-         SJRNewTexture("wipeout\\newgraph\\venom\\firestar\\firestar.sjr");
-         strcpy(trackdir, "venom\\firestar\\");
-         break;
-      case 8:
-         SJRNewTexture("wipeout\\newgraph\\rapier\\altima\\altima.sjr");
-         strcpy(trackdir, "rapier\\altima\\");
-         break;
-      case 9:
-         SJRNewTexture("wipeout\\newgraph\\rapier\\karbonis\\karbonis.sjr");
-         strcpy(trackdir, "rapier\\karbonis\\");
-         break;
-      case 10:
-         SJRNewTexture("wipeout\\newgraph\\rapier\\terramax\\terramax.sjr");
-         strcpy(trackdir, "rapier\\terramax\\");
-         break;
-      case 11:
-         SJRNewTexture("wipeout\\newgraph\\rapier\\korodera\\korodera.sjr");
-         strcpy(trackdir, "rapier\\korodera\\");
-         break;
-      case 12:
-         SJRNewTexture("wipeout\\newgraph\\rapier\\arridos\\arridos.sjr");
-         strcpy(trackdir, "rapier\\arridos\\");
-         break;
-      case 13:
-         SJRNewTexture("wipeout\\newgraph\\rapier\\silver\\silver.sjr");
-         strcpy(trackdir, "rapier\\silver\\");
-         break;
-      case 14:
-         SJRNewTexture("wipeout\\newgraph\\rapier\\firestar\\firestar.sjr");
-         strcpy(trackdir, "rapier\\firestar\\");
-         break;
-      default:
-         printf("what track ?\n");
-         exit(0);
-         break;
-      }
+        /* InitializeGame (&packetData, &gameData) ; */
 
-      /* InitializeGame (&packetData, &gameData) ; */
+        textureX = 320;
+        textureY = 0;
 
-      textureX = 320;
-      textureY = 0;
+        clutX = 320;
+        clutY = 256;
 
-      clutX = 320;
-      clutY = 256;
+        TextureTableCount = 0;
 
-      TextureTableCount = 0;
+        attractDelay = 0;
 
-      attractDelay = 0;
+        tempLapTimes[0] = 0;
+        tempLapTimes[1] = 0;
+        tempLapTimes[2] = 0;
+        tempLapTimes[3] = 0;
+        tempLapTimes[4] = 0;
 
-      tempLapTimes[0] = 0;
-      tempLapTimes[1] = 0;
-      tempLapTimes[2] = 0;
-      tempLapTimes[3] = 0;
-      tempLapTimes[4] = 0;
+        gameData.newLapRecord = 0;
 
+        inmenu = 0;
+        Reallyinmenu = 0;
 
-      gameData.newLapRecord = 0;
+        renderPrepare();
 
-      inmenu = 0;
-      Reallyinmenu = 0;
+        race(&gameData, mode, timeout);
+        // inmenu=1;
+        mode = INTERACTIVE;
 
-      renderPrepare();
-
-      race(&gameData, mode, timeout);
-      // inmenu=1;
-      mode = INTERACTIVE;
-
-      TextureTableCount = 0;
-      InitText();
-   }
+        TextureTableCount = 0;
+        InitText();
+    }
 }

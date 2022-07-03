@@ -1,3 +1,3 @@
-long FileLength( char* name );
+long FileLength(char* name);
 
-long LoadFile( char* name, char* buffer );
+long LoadFile(char* name, char* buffer);

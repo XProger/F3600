@@ -11,37 +11,36 @@
 
 typedef struct Effect
 {
-   VECTOR            pos;
-   SVECTOR           vel;
-   short             count;
-   short             type;
-   char              u, v;
-   short             size;
+    VECTOR pos;
+    SVECTOR vel;
+    short count;
+    short type;
+    char u, v;
+    short size;
 } Effect;
 
 typedef struct Shadow
 {
-   /*TODO shadow*/
-   int TODO;
+    /*TODO shadow*/
+    int TODO;
 } Shadow;
 
-
-void InitEffects        (Effect* effects, Skeleton *camPos, Texture** effectTextures);
-void UpdateEffects      (Effect* effects);
-void AddEffects         (Effect* effects, WeaponData *weaponIndex, Texture** effectTextures, ShipData *shipIndex);
-void ColourStartBoom    (int noToLight);
-void ResetStartBoom     ();
-void InitStartBoom      (Object** prm, short prmCount);
-Shadow *InitShadow      (Skeleton *camPos, Texture** effectTextures);
-void DrawShadow         (Object **shipShapes, ShipData *shipIndex, Shadow *shadow);
-void SetShake           (int duration);
-void ShakeScreen        ();
-void InitAuroraBorialis (Object* object);
-void AuroraBorialis     (Object* object);
-void ColourRedLight(Object *redLight);
-void MoveDonkey(Object **donkey);
+void InitEffects(Effect* effects, Skeleton* camPos, Texture** effectTextures);
+void UpdateEffects(Effect* effects);
+void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextures, ShipData* shipIndex);
+void ColourStartBoom(int noToLight);
+void ResetStartBoom();
+void InitStartBoom(Object** prm, short prmCount);
+Shadow* InitShadow(Skeleton* camPos, Texture** effectTextures);
+void DrawShadow(Object** shipShapes, ShipData* shipIndex, Shadow* shadow);
+void SetShake(int duration);
+void ShakeScreen();
+void InitAuroraBorialis(Object* object);
+void AuroraBorialis(Object* object);
+void ColourRedLight(Object* redLight);
+void MoveDonkey(Object** donkey);
 void DrawEffects(Effect* effects);
 void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip);
-void InitRedLight(Object** prm, short prmCount, Object **redLight);
-void InitDonkey(Object** prm, short prmCount, Object **donkey);
+void InitRedLight(Object** prm, short prmCount, Object** redLight);
+void InitDonkey(Object** prm, short prmCount, Object** donkey);
 void InitWeaponSprtIcons(Texture** weaponIconTextures);

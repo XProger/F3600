@@ -17,41 +17,40 @@
 /****** PROGRAME IDENTIFIERS ******/
 
 #define SHIP_2_SHIP     0
-#define ELECTROBOLT  1
+#define ELECTROBOLT     1
 #define ENG_AIR_INTAKE  2
 #define ENG_RUMBLE      3
 #define ENG_THRUST      4
 #define EXPLOSION_1     5
 #define EXPLOSION_2     6
-#define SHIP_2_TRACK 7
+#define SHIP_2_TRACK    7
 #define MENU_MOVE       8
 #define MENU_SELECT     9
-#define MENU_2_MENU  10
+#define MENU_2_MENU     10
 #define MINE_DROP       11
-#define MISS_LAUNCH  12
+#define MISS_LAUNCH     12
 #define REMOTE_ENG      13
-#define POWER_UP     14
-#define SHIELDS      15
-#define START_SIREN  16
-#define TRACTOR_BEAM 17
+#define POWER_UP        14
+#define SHIELDS         15
+#define START_SIREN     16
+#define TRACTOR_BEAM    17
 #define TURBULENCE      18
-#define CROWD        19
-#define SP_MINES     20
+#define CROWD           19
+#define SP_MINES        20
 #define SP_MISSILE      21
 #define SP_ROCKET       22
 #define SP_REVCON       23
-#define SP_SHOCKWAVE 24
+#define SP_SHOCKWAVE    24
 #define SP_SPECIAL      25
-#define SP_3         26
-#define SP_2         27
-#define SP_1         28
-#define SP_GO        29
-
-#define REMOTE          13  /*   31 */ /* REMOTE_ENG */
-#define REMOTE2         13  /* 31 */   /* REMOTE_ENG */
-#define REMOTE3         13  /*   33 */    /* REMOTE_ENG */
-#define TURBO_SOUND     12  /* 34 */   /* MISS_LAUNCH */
-#define CROWD2       19          /* CROWD */
+#define SP_3            26
+#define SP_2            27
+#define SP_1            28
+#define SP_GO           29
+#define REMOTE          13  /* 31 */ /* REMOTE_ENG */
+#define REMOTE2         13  /* 31 */ /* REMOTE_ENG */
+#define REMOTE3         13  /* 33 */ /* REMOTE_ENG */
+#define TURBO_SOUND     12  /* 34 */ /* MISS_LAUNCH */
+#define CROWD2          19  /* CROWD */
 
 
 /****** Max volume settings ******/
@@ -69,55 +68,55 @@
 #define ENG_NOTE_5 55
 #define ENG_NOTE_5a 50
 
-typedef struct  SampRec
- {
-  uint8     SampVol;
-  uint8     SampPan;
-  uint16 SampPitch;
-  uint8     Loop;
-  uint8     Playing;
-  int16     PlayID;
- } SampRec;
+typedef struct SampRec
+{
+    uint8 SampVol;
+    uint8 SampPan;
+    uint16 SampPitch;
+    uint8 Loop;
+    uint8 Playing;
+    int16 PlayID;
+} SampRec;
 
 typedef struct ChanTable
 {
-   int      duration;
-   short       priority;
-   short       vagID;
-   //SpuVoiceAttr s_attr; /*TODO audio*/
+    int duration;
+    short priority;
+    short vagID;
+    // SpuVoiceAttr s_attr; /*TODO audio*/
 } ChanTable;
 
 typedef struct VagTable
 {
-   u_long addr;
-   short channelID;
-} VagTable;               /*   int ?? */
+    u_long addr;
+    short channelID;
+} VagTable; /*   int ?? */
 
 typedef struct _sfx_info
 {
-   char  Volume;
-   char  Pan;
-   short Pitch;
+    char Volume;
+    char Pan;
+    short Pitch;
 
-   short vagNo;
-   short Playing;
+    short vagNo;
+    short Playing;
 
-   short Priority;
-   short Duration;
+    short Priority;
+    short Duration;
 
-   int16 PlayID;
-   int16 pad;
-}SFX_INFO;
+    int16 PlayID;
+    int16 pad;
+} SFX_INFO;
 
-void  InitSpuSound();
-void  UpdateNotes (int paused);
-void  KillNote(int note);
-void  KillNotes();
+void InitSpuSound();
+void UpdateNotes(int paused);
+void KillNote(int note);
+void KillNotes();
 short PlayNote(short, short, short);
-short PlayDirectionalNote(short vagID, short priority, short duration, VECTOR pos );
-void  SetPitch(short VagID, short pitch);
-void  SetVolume(short vagID, short voll, short volr);
-short AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR pos );
-short AdjustRemoteEngineSound(ShipData *shipIndex, Object** shipShapes, TrackCamera *camera );
-void  AdjustEngineSound(ShipData*, TrackCamera*);
-void  StopNotes(void);
+short PlayDirectionalNote(short vagID, short priority, short duration, VECTOR pos);
+void SetPitch(short VagID, short pitch);
+void SetVolume(short vagID, short voll, short volr);
+short AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR pos);
+short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCamera* camera);
+void AdjustEngineSound(ShipData*, TrackCamera*);
+void StopNotes(void);

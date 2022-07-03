@@ -14,14 +14,14 @@
 #define SHIELD_OFFSET   23
 #define EBOLT_OFFSET    26
 
-#define MINE_DURATION      (45*FR10)
-#define ROCKET_DURATION    (20*FR10)
-#define ELEC_DURATION      (14*FR10)
-#define REV_CON_DURATION   (6*FR10)
-#define MISSILE_DURATION   (20*FR10)
-#define SHIELD_DURATION    (20*FR10)
-#define FLARE_DURATION     (20*FR10)
-#define SPECIAL_DURATION   (40*FR10)
+#define MINE_DURATION       (FR10 * 45)
+#define ROCKET_DURATION     (FR10 * 20)
+#define ELEC_DURATION       (FR10 * 14)
+#define REV_CON_DURATION    (FR10 * 6)
+#define MISSILE_DURATION    (FR10 * 20)
+#define SHIELD_DURATION     (FR10 * 20)
+#define FLARE_DURATION      (FR10 * 20)
+#define SPECIAL_DURATION    (FR10 * 40)
 
 #define MINE_RELEASE_RATE  3
 #define WEAPON_DELAY       (FR40)
@@ -53,60 +53,60 @@
 
 typedef struct WeaponShape
 {
-   Object*        shapePtr;
-   short          used;
+    Object* shapePtr;
+    short used;
 } WeaponShape;
 
 typedef struct WeaponData
 {
-   short          count;
-   short          currentWeapon;
-   TrackSection   *nearTrkSect;
-   VECTOR         acc;
-   VECTOR         vel;
-   VECTOR         pos;
-   short          hdg, pitch;
-   signed char    targetShip;
-   char           fireShip;
-   char           type;
-   char           availible;
-   void (*updateWeapon)(ShipData*, WeaponShape*, struct WeaponData*, struct WeaponData*);
+    short count;
+    short currentWeapon;
+    TrackSection* nearTrkSect;
+    VECTOR acc;
+    VECTOR vel;
+    VECTOR pos;
+    short hdg, pitch;
+    signed char targetShip;
+    char fireShip;
+    char type;
+    char availible;
+    void (*updateWeapon)(ShipData*, WeaponShape*, struct WeaponData*, struct WeaponData*);
 } WeaponData;
 
 typedef struct WeaponGrid
 {
-   TrackSection   *section;
-   short          attr;
-   short          cycleCount;
-   int            count;
-   CVECTOR        colour;
+    TrackSection* section;
+    short attr;
+    short cycleCount;
+    int count;
+    CVECTOR colour;
 } WeaponGrid;
 
-void UpdateWeapons   (ShipData *shipIndex,WeaponShape* weaponShapes, WeaponData *weaponIndex );
-void LaunchWeapon    (ShipData *shipIndex, WeaponData *weaponIndex, int shipNo);
-void FireWeapon      (ShipData*, WeaponData*, int, char);
-void MissileLock     (ShipData *playerShip, ShipData *shipIndex, Object** shipShapes);
-void initWeapons     (WeaponShape* weaponShapes, Skeleton* camPos, WeaponData *weaponIndex);
+void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex);
+void LaunchWeapon(ShipData* shipIndex, WeaponData* weaponIndex, int shipNo);
+void FireWeapon(ShipData*, WeaponData*, int, char);
+void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes);
+void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex);
 
-void UpdateRocket    (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void InitRocket      (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void UpdateMissile   (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void InitMissile     (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void UpdateMine      (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void InitMine        (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void InitElecBolt    (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void UpdateElecBolt  (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void InitShield      (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void UpdateShield    (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void InitRevCon      (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void UpdateRevCon    (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
-void InitSpecial     (ShipData *playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void UpdateRocket(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void InitRocket(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void UpdateMissile(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void InitMissile(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void UpdateMine(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void InitMine(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void InitElecBolt(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void UpdateElecBolt(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void InitShield(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void UpdateShield(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void InitRevCon(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void UpdateRevCon(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
+void InitSpecial(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
 
-void Weapon2Mine(WeaponData *weapon, WeaponData *weaponIndex, WeaponShape *weaponShapes);
-void GetFireVector(VECTOR *result, VECTOR target, Face *facePtr, VECTOR shipPos);
-void CycleWeaponGrids(ShipData *shipIndex, WeaponGrid *weaponGrid, int noWeaponGrids);
-void DrawWeapons(ShipData *shipIndex,WeaponShape* weaponShapes, WeaponData *weaponIndex );
-void DrawTargetIcon(ShipData *playerShip, ShipData *shipIndex, Object** shipShapes);
-void SetTargetShip(ShipData *shipIndex, int shipNo);
+void Weapon2Mine(WeaponData* weapon, WeaponData* weaponIndex, WeaponShape* weaponShapes);
+void GetFireVector(VECTOR* result, VECTOR target, Face* facePtr, VECTOR shipPos);
+void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids);
+void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex);
+void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes);
+void SetTargetShip(ShipData* shipIndex, int shipNo);
 int GetNewWeapon(void);
 int GetNewWeaponBodge(void);

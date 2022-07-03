@@ -3,7 +3,7 @@
 #else
 void Error(char* string, short errorLevel)
 {
-   printf("Error: %s (error level %d)\n", string, errorLevel);
-   exit(errorLevel);
+    printf("Error: %s (error level %d)\n", string, errorLevel);
+    exit(errorLevel);
 }
 #endif

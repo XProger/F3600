@@ -1,2 +1,2 @@
-void CalcNewRadius( TrackSection *section, Object* objects );
-void SceneRadiusCheck( Object* objects );
+void CalcNewRadius(TrackSection* section, Object* objects);
+void SceneRadiusCheck(Object* objects);

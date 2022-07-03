@@ -23,2094 +23,2055 @@
 #include "render.h"
 #include "utils.h"
 
+extern short trackNum; // SJR
 
+#define PALETTE 1
+#define PICTURE 2
+#define DEBUG_FLAG 4
+#define DONT_CHECK_SIZE 8
+#define ALLOCATE_MEM 16
 
-extern short trackNum; //SJR
+#define MyLoad16Bit 1 // PCwipeout
 
-#define  PALETTE           1
-#define  PICTURE           2
-#define  DEBUG_FLAG        4
-#define  DONT_CHECK_SIZE   8
-#define  ALLOCATE_MEM      16
+#define LightSourced 1 // Bad primitives if this is off (keep it on, removing dead code anyway);
 
-#define MyLoad16Bit  1  // PCwipeout
-
-#define LightSourced 1  // Bad primitives if this is off (keep it on, removing dead code anyway);
-
-char  andybodge=1;
-char  andybodge2=1;
+char andybodge = 1;
+char andybodge2 = 1;
 extern short endtrack, starttrack;
 extern int menuTexturesIn;
 short globalvol;
 
-TimData  *menuScreen ;
+TimData* menuScreen;
 
-#define FULL      0
-#define HIGH      3
-#define  MEDIUM      2
-#define LOW       1
-#define SMALL     0
+#define FULL 0
+#define HIGH 3
+#define MEDIUM 2
+#define LOW 1
+#define SMALL 0
 
-int  TOut;
+int TOut;
 
-extern TexChar CharSet16[] ;
-extern HiScores scoreTable[] ;
+extern TexChar CharSet16[];
+extern HiScores scoreTable[];
 
 extern const short shipShapeOrder[];
-const short pilotShapeOrder [8] = {0, 4, 6, 7, 2, 5, 1, 3} ;
-const short teamShapeOrder [4] = {2, 3, 1, 0} ;         // jed
-ChampionShip   winTable [NO_OF_SHIPS] ;
-int   modelHdg = 0 ;
-int   zoomInOut = 0 ;
-int   downUp = 0 ;
+const short pilotShapeOrder[8] = { 0, 4, 6, 7, 2, 5, 1, 3 };
+const short teamShapeOrder[4] = { 2, 3, 1, 0 }; // jed
+ChampionShip winTable[NO_OF_SHIPS];
+int modelHdg = 0;
+int zoomInOut = 0;
+int downUp = 0;
 
-Texture     *buttonTex[18];
+Texture* buttonTex[18];
 
-TimData *JJSLoad16BitTexture(char *filename, char location);
-extern char *GetCdTrackName(int no);
+TimData* JJSLoad16BitTexture(char* filename, char location);
+extern char* GetCdTrackName(int no);
 char CheckKey(unsigned short code);
 
-#define  NONE        0
-#define  LEFT        1
-#define  RIGHT       2
-#define  UP          3
-#define  DOWN        4
-#define  BRAKEL      5
-#define  BRAKER      6
-#define  ACCEL       7
-#define  FIRE        8
-#define  VIEW_KEY    9
-#define  PAUSE_KEY   10
+#define NONE 0
+#define LEFT 1
+#define RIGHT 2
+#define UP 3
+#define DOWN 4
+#define BRAKEL 5
+#define BRAKER 6
+#define ACCEL 7
+#define FIRE 8
+#define VIEW_KEY 9
+#define PAUSE_KEY 10
 
-#define  MAXSTRING   10
+#define MAXSTRING 10
 
-#define  TOPLEFT     0
-#define  BOTTOMRIGHT 1
-#define  CENTRE      2
+#define TOPLEFT 0
+#define BOTTOMRIGHT 1
+#define CENTRE 2
 
 //#define SAVEDIR       "wipeout\\"
-#define  FILE_EXTENSION ".wsf"
+#define FILE_EXTENSION ".wsf"
 /*TODO saves
 extern char *SaveDirBase;
 */
 
-char  DelayCounter = 0;
-char  KeyToChange = NONE;
-char  davebodge = 1;
-char  davebodge2 = 0;
-int   andyTimeout=0;
+char DelayCounter = 0;
+char KeyToChange = NONE;
+char davebodge = 1;
+char davebodge2 = 0;
+int andyTimeout = 0;
 
 short TextEntry = 0;
 short TextPos = 0;
-char  LoadFilename[MAXSTRING];
-char  SaveFilename[MAXSTRING];
-char  DaveSave[250];
+char LoadFilename[MAXSTRING];
+char SaveFilename[MAXSTRING];
+char DaveSave[250];
 
-void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo);
-void DrawControllerEdit (Menus *menuSystem, int *currMenu, int shapeNo);
-void EnterLoadGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData);
+void DrawControllerMenu(Menus* menuSystem, int* currMenu, int shapeNo);
+void DrawControllerEdit(Menus* menuSystem, int* currMenu, int shapeNo);
+void EnterLoadGame(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData);
 void KeyConfig0(void);
 void KeyConfig(void);
-void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo);
-void DisplayPadMenu1 (Menus *menuSystem, int *currMenu, int shapeNo);
-void DisplayPadMenu2 (Menus *menuSystem, int *currMenu, int shapeNo);
+void DrawGraphicDetail(Menus* menuSystem, int* currMenu, int shapeNo);
+void DisplayPadMenu1(Menus* menuSystem, int* currMenu, int shapeNo);
+void DisplayPadMenu2(Menus* menuSystem, int* currMenu, int shapeNo);
 void ResetKeys(void);
 
+void reloadScr(void) { menuScreen = JJSLoad16BitTexture("wipeout\\textures\\wipeout1.tim", VRAM); }
 
-void reloadScr(void)
+void MenuControl(ConfigData* gameData, int* mode, int timeout)
 {
-   menuScreen = JJSLoad16BitTexture ("wipeout\\textures\\wipeout1.tim", VRAM) ;
-}
+    Menus menuSystem[MAX_MENUS];
+    int currMenu = -2;
+    int currOption = 0;
+    int oldMenu = 0;
+    int oldOption = 0;
+    static char firstTime = 1;
+    int i;
+    Object* shipShapes[NO_OF_SHIPS];
+    Object* audioShapes[3];
+    Object* pilotShapes[8];
+    Object* teamShapes[4];
 
-void MenuControl (ConfigData *gameData, int *mode, int timeout)
-{
-   Menus          menuSystem[MAX_MENUS] ;
-   int            currMenu= -2 ;
-   int            currOption = 0 ;
-   int            oldMenu= 0 ;
-   int            oldOption = 0 ;
-   static char    firstTime = 1 ;
-   int            i ;
-   Object         *shipShapes[ NO_OF_SHIPS ];
-   Object         *audioShapes[ 3 ];
-   Object         *pilotShapes[ 8 ];
-   Object         *teamShapes[ 4 ];
+    Object* clsShapes[3];
+    Object** classShapes = clsShapes;
 
-   Object         *clsShapes[ 3 ];
-   Object         **classShapes = clsShapes;
+    Object* gameShapes[4];
+    Object** gameTypeShapes = gameShapes;
 
-   Object         *gameShapes[ 4 ];
-   Object         **gameTypeShapes = gameShapes;
+    Object* optShapes[7];
+    Object** optionShapes = optShapes;
 
-   Object         *optShapes[ 7 ];
-   Object         **optionShapes = optShapes;
+    Object* padShapes[3];
+    Object** joypadShapes = padShapes;
 
-   Object         *padShapes[ 3 ];
-   Object         **joypadShapes = padShapes;
+    Object* negShapes[3];
+    Object** negconShapes = negShapes;
 
-   Object         *negShapes[ 3 ];
-   Object         **negconShapes = negShapes;
+    SlideTextures musicTex;
+    MusicPrims musicPrims;
+    static SelectionData selectData;
+    char loadGames[MAX_GAMES][9];
+    char loadFlag = 1;
+    Texture* copyrightSymbol;
+    Texture* trackTex[7];
+    int buttonPressed = 0;
+    char trackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
+    long length;
+    int frame_cnt = 0;
+    int x = 0, y = 0;
 
-   SlideTextures  musicTex ;
-   MusicPrims     musicPrims ;
-   static SelectionData selectData ;
-   char           loadGames [MAX_GAMES][9] ;
-   char           loadFlag = 1 ;
-   Texture        *copyrightSymbol ;
-   Texture        *trackTex [7];
-   int            buttonPressed = 0 ;
-   char           trackList[15] = {2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15} ;
-   long           length;
-   int            frame_cnt = 0 ;
-   int            x = 0, y = 0 ;
+    menuTexturesIn = 1;
+    // JJSNewTexture ("wipeout\\newgraph\\menu\\menus.bmp");
+    SJRNewTexture("wipeout\\newgraph\\menu\\menus.sjr");
+    trackNum = 15; // pretend track for restoring - SJR
 
-   menuTexturesIn = 1;
-   //JJSNewTexture ("wipeout\\newgraph\\menu\\menus.bmp");
-   SJRNewTexture ("wipeout\\newgraph\\menu\\menus.sjr");
-   trackNum = 15;//pretend track for restoring - SJR
+    LoadTexModel(shipShapes, "allsh");
+    LoadTexModel(pilotShapes, "pilot");
+    LoadTexModel(teamShapes, "team"); // jed
+    LoadTexModel(audioShapes, "cdobj"); /*audio = headphones*/
+    LoadTexModel(classShapes, "leeg"); // jed
+    LoadTexModel(joypadShapes, "cntrl"); // jed
+    LoadTexModel(gameTypeShapes, "msdos"); // jed
+    LoadTexModel(optionShapes, "misc"); // jed
 
-   LoadTexModel (shipShapes, "allsh") ;
-   LoadTexModel (pilotShapes, "pilot") ;
-   LoadTexModel (teamShapes, "team") ;          // jed
-   LoadTexModel (audioShapes, "cdobj") ;         /*audio = headphones*/
-   LoadTexModel (classShapes, "leeg") ;         // jed
-   LoadTexModel (joypadShapes, "cntrl") ;       // jed
-   LoadTexModel (gameTypeShapes, "msdos") ;     // jed
-   LoadTexModel (optionShapes, "misc") ;  // jed
+    length = FileLength("wipeout\\common\\pad1.prm");
 
-   length = FileLength( "wipeout\\common\\pad1.prm");
+    // LoadTexModel (shipShapes, "allsh") ;
+    // LoadTexModel (pilotShapes, "pilot") ;
+    // LoadModel (teamShapes, "teams") ;
+    // LoadTexModel (audioShapes, "cdobj") ;         /*audio = headphones*/
+    // LoadModel (classShapes, "class") ;
+    // classShapes += 1;       // if lightsourced
+    // LoadNegConTexModel (negconShapes, "neg2") ;
+    // negconShapes += 1;      // if lightsourced
+    // LoadTexModel (joypadShapes, "pad1") ;
+    // LoadModel (gameTypeShapes, "champ") ;
+    //   gameTypeShapes += 1;  // if lightsourced
 
-   // LoadTexModel (shipShapes, "allsh") ;
-   // LoadTexModel (pilotShapes, "pilot") ;
-   // LoadModel (teamShapes, "teams") ;
-   // LoadTexModel (audioShapes, "cdobj") ;         /*audio = headphones*/
-   // LoadModel (classShapes, "class") ;
-   // classShapes += 1;       // if lightsourced
-   // LoadNegConTexModel (negconShapes, "neg2") ;
-   // negconShapes += 1;      // if lightsourced
-   // LoadTexModel (joypadShapes, "pad1") ;
-   // LoadModel (gameTypeShapes, "champ") ;
-   //   gameTypeShapes += 1;  // if lightsourced
+    // length = FileLength( "wipeout\\common\\pad1.prm");
 
-   // length = FileLength( "wipeout\\common\\pad1.prm");
+    // start = DAlloc( heap, length + 32 );
+    // prm.ptr = start;
+    // joypadShapes[1] = prm.object;
+    // memcpy(start, joypadShapes[0], length);
+    // object = prm.object++;
+    // object->skeleton = prm.skeleton++;
+    // object->vertices = prm.svector;
+    // prm.svector += object->vertexCount;
+    // object->normals = prm.svector;
+    // prm.svector += object->normalCount;
+    // object->primitives = prm.primitive;
+    //
 
-   // start = DAlloc( heap, length + 32 );
-   // prm.ptr = start;
-   // joypadShapes[1] = prm.object;
-   // memcpy(start, joypadShapes[0], length);
-   // object = prm.object++;
-   // object->skeleton = prm.skeleton++;
-   // object->vertices = prm.svector;
-   // prm.svector += object->vertexCount;
-   // object->normals = prm.svector;
-   // prm.svector += object->normalCount;
-   // object->primitives = prm.primitive;
-   //
+    InitTrackTex(trackTex);
 
-   InitTrackTex (trackTex) ;
+    // following inits were in the #if lightsourced section, this is now all we have (PCwipeout)
+    menuSystem[MAIN_MENU].menuModel = shipShapes;
+    menuSystem[MAIN_MENU].menu2Model = gameTypeShapes;
+    menuSystem[TRACK_MENU].menuModel = shipShapes;
+    // menuSystem[ AUDIO_MENU ].menuModel = optionShapes ;
+    menuSystem[OPTION_MENU].menuModel = optionShapes;
+    menuSystem[CLASS_MENU].menuModel = classShapes;
+    menuSystem[TEAM_MENU].menuModel = teamShapes;
+    menuSystem[TEAM_MENU].menu2Model = shipShapes;
+    menuSystem[PILOT_MENU].menuModel = pilotShapes;
+    menuSystem[PILOT_MENU].menu2Model = shipShapes;
+    menuSystem[RACE_TYPE_MENU].menuModel = gameTypeShapes;
+    menuSystem[RACE_TYPE_MENU].menu2Model = optionShapes;
+    menuSystem[SERIAL_RACE_TYPE_MENU].menuModel = shipShapes;
+    menuSystem[NEGCON_MENU].menuModel = negconShapes;
+    menuSystem[NEGCON_MENU].menu2Model = negconShapes;
+    menuSystem[TWIST_MENU].menuModel = negconShapes;
+    menuSystem[TWIST_MENU].menu2Model = negconShapes;
+    menuSystem[BEST_TIMES_MENU].menuModel = optionShapes;
+    menuSystem[CONTROLLER_MENU].menuModel = joypadShapes;
+    menuSystem[CONTROLLER_MENU].menu2Model = joypadShapes;
+    menuSystem[CONTROL_EDIT_MENU].menuModel = joypadShapes;
+    menuSystem[CONTROL_EDIT_MENU].menu2Model = joypadShapes;
+    menuSystem[DETAILS_MENU].menuModel = shipShapes;
 
-   // following inits were in the #if lightsourced section, this is now all we have (PCwipeout)
-   menuSystem[ MAIN_MENU ].menuModel = shipShapes ;
-   menuSystem[ MAIN_MENU ].menu2Model = gameTypeShapes ;
-   menuSystem[ TRACK_MENU ].menuModel = shipShapes ;
-   //menuSystem[ AUDIO_MENU ].menuModel = optionShapes ;
-   menuSystem[ OPTION_MENU ].menuModel = optionShapes ;
-   menuSystem[ CLASS_MENU ].menuModel = classShapes ;
-   menuSystem[ TEAM_MENU ].menuModel = teamShapes ;
-   menuSystem[ TEAM_MENU ].menu2Model = shipShapes ;
-   menuSystem[ PILOT_MENU ].menuModel = pilotShapes ;
-   menuSystem[ PILOT_MENU ].menu2Model = shipShapes ;
-   menuSystem[ RACE_TYPE_MENU ].menuModel = gameTypeShapes ;
-   menuSystem[ RACE_TYPE_MENU ].menu2Model = optionShapes ;
-   menuSystem[ SERIAL_RACE_TYPE_MENU ].menuModel = shipShapes ;
-   menuSystem[ NEGCON_MENU ].menuModel = negconShapes ;
-   menuSystem[ NEGCON_MENU ].menu2Model = negconShapes ;
-   menuSystem[ TWIST_MENU ].menuModel = negconShapes ;
-   menuSystem[ TWIST_MENU ].menu2Model = negconShapes ;
-   menuSystem[ BEST_TIMES_MENU ].menuModel = optionShapes ;
-   menuSystem[ CONTROLLER_MENU ].menuModel = joypadShapes ;
-   menuSystem[ CONTROLLER_MENU ].menu2Model = joypadShapes ;
-   menuSystem[ CONTROL_EDIT_MENU ].menuModel = joypadShapes ;
-   menuSystem[ CONTROL_EDIT_MENU ].menu2Model = joypadShapes ;
-   menuSystem[ DETAILS_MENU ].menuModel = shipShapes ;
+    InitMenuDisplay(90);
+    InitLoadSave(&(loadGames[0]));
+    InitMusicVSfx(&musicTex);
+    InitButtons("buttons");
 
-   InitMenuDisplay ( 90 ) ;
-   InitLoadSave (&(loadGames[0])) ;
-   InitMusicVSfx (&musicTex) ;
-   InitButtons ("buttons") ;
+    if (firstTime)
+        InitSelectData(&selectData);
 
-   if (firstTime)
-      InitSelectData (&selectData) ;
+    selectData.fadeHeight = 0;
+    selectData.select = 0;
+    selectData.combatInit = 0;
+    selectData.combatComplete = 0;
 
-   selectData.fadeHeight = 0 ;
-   selectData.select = 0 ;
-   selectData.combatInit = 0 ;
-   selectData.combatComplete = 0 ;
+    if (gameData->defaultMenu != -2)
+        loadFlag = 0;
 
-   if (gameData->defaultMenu != -2)
-      loadFlag = 0 ;
+    currMenu = gameData->defaultMenu;
 
-   currMenu = gameData->defaultMenu ;
+    menuSystem[1].numOptions = NumTracks;
 
-   menuSystem[1].numOptions = NumTracks ;
+    copyrightSymbol = LoadTexture("wipeout\\textures\\copyrigt.tim", 1);
 
-   copyrightSymbol = LoadTexture ("wipeout\\textures\\copyrigt.tim", 1) ;
+    InitMenuSystem(&(menuSystem[0]));
 
-   InitMenuSystem (&(menuSystem[0])) ;
+    selectData.menuSystem = &(menuSystem[0]);
 
-   selectData.menuSystem = &(menuSystem[0]) ;
+    /*TODO show copyright*/
+    renderClear();
 
-   /*TODO show copyright*/
-   renderClear();
+    UpdateNotes(NOT_PAUSED);
+    Swap();
 
-   UpdateNotes(NOT_PAUSED);
-   Swap();
+    currMenu = -2;
 
-   currMenu = -2;
+    menuScreen = JJSLoad16BitTexture("wipeout\\textures\\wipeout1.tim", VRAM);
+    inmenu = 1;
 
-   menuScreen = JJSLoad16BitTexture ("wipeout\\textures\\wipeout1.tim", VRAM) ;
-   inmenu=1;
+    andyTimeout = 0;
+    while (1)
+    {
+        opad = pad;
+        pad = gPad;
+        andyTimeout++;
 
-   andyTimeout=0;
-   while (1)
-   {
-      opad=pad;
-      pad = gPad;
-      andyTimeout++;
+        if (andyTimeout >= TOut * 30)
+        {
+            andybodge = 2;
+            break;
+        }
+        xpad = (pad ^ opad) & pad;
 
-      if(andyTimeout >= TOut * 30)
-      {
-         andybodge=2;
-         break;
-      }
-      xpad=(pad^opad)&pad;
+        UpdateNotes(NOT_PAUSED);
 
-      UpdateNotes(NOT_PAUSED);
+        /*TODO title screen backgound*/
+        renderClear();
 
-      /*TODO title screen backgound*/
-      renderClear();
+        oldMenu = currMenu;
+        oldOption = currOption;
 
-      oldMenu = currMenu ;
-      oldOption = currOption ;
+        {
+            if ((currMenu == NEGCON_MENU) || (currMenu == TWIST_MENU))
+                currMenu = PADCONFIG_MENU;
 
-      {
-         if ((currMenu == NEGCON_MENU) ||  (currMenu == TWIST_MENU))
-            currMenu = PADCONFIG_MENU ;
+            menuSystem[OPTION_MENU].menu2Model = joypadShapes;
+            menuSystem[17].menuModel = joypadShapes;
+            menuSystem[PADCONFIG_MENU].displayMenu = MenuPlayPad;
+            menuSystem[PADCONFIG_MENU].displayObject = DrawPlayPad;
+            menuSystem[PADCONFIG_MENU].prevMenu = OPTION_MENU;
+        }
 
-         menuSystem[OPTION_MENU].menu2Model = joypadShapes ;
-         menuSystem[17].menuModel = joypadShapes ;
-         menuSystem[PADCONFIG_MENU].displayMenu = MenuPlayPad ;
-         menuSystem[PADCONFIG_MENU].displayObject = DrawPlayPad ;
-         menuSystem[PADCONFIG_MENU].prevMenu = OPTION_MENU ;
-      }
-
-
-      if (currMenu != -2)
-      {
-         MenuErrors (&currMenu, &(menuSystem[0])) ;
-         if (menuSystem[currMenu].errorFlag != 0)
-         {
-            selectData.fadeHeight = 0 ;
-            selectData.select = 0 ;
-         }
-      }
-
-      if (menuSystem[currMenu].updateCount != 0 && menuSystem[currMenu].errorFlag == 0)
-         menuSystem[currMenu].updateCount-- ;
-
-      /*TODO menu bg*/
-      //    ShowMenuBackground (&(menuPrim[0]), &(menu1Prim[0]), menuScreen) ; // PCwipeout
-
-      if (currMenu == -2)
-         currMenu = 0 ;
-
-      if (menuSystem[currMenu].errorFlag == 0)
-      {
-         if (currMenu >= 0)
-            CallMenuSelector (&(menuSystem[0]), &currMenu, &currOption, shipShapes, gameData, &musicPrims, &musicTex, &selectData, &(loadGames[0])) ;
-
-         if (currMenu == TRACK_MENU)
-            DisplayPicture(trackTex[currOption], 96, 50, 128, 74);
-
-         if (((currMenu == SAVE_MENU) || (currMenu == LOAD_MENU)) && (selectData.formatCard == 1))
-         {
-            currMenu    = FORMAT_CONFIRM ;
-            currOption  = 0 ;
-         }
-
-         if (selectData.select)
-         {
-            if (currMenu == MAIN_MENU && currOption == 0)
+        if (currMenu != -2)
+        {
+            MenuErrors(&currMenu, &(menuSystem[0]));
+            if (menuSystem[currMenu].errorFlag != 0)
             {
-               // CHEAT ACTIVATION BITS - need to be changed for PCwipeout
-               /*TODO cheats*/
+                selectData.fadeHeight = 0;
+                selectData.select = 0;
+            }
+        }
 
-               if( (pad & IN_LEFT) && (pad & IN_A))
-               {
-                  gameData->RapierClass = 1 ;
-               }
+        if (menuSystem[currMenu].updateCount != 0 && menuSystem[currMenu].errorFlag == 0)
+            menuSystem[currMenu].updateCount--;
 
-               if( (pad & IN_RIGHT) && (pad & IN_Y))
-               {
-                  totalTracks = 14 ;
-                  NumTracks = 7 ;
-                  gameData->showBonusTrack = 1 ;
-               }
+        /*TODO menu bg*/
+        //    ShowMenuBackground (&(menuPrim[0]), &(menu1Prim[0]), menuScreen) ; // PCwipeout
+
+        if (currMenu == -2)
+            currMenu = 0;
+
+        if (menuSystem[currMenu].errorFlag == 0)
+        {
+            if (currMenu >= 0)
+                CallMenuSelector(&(menuSystem[0]), &currMenu, &currOption, shipShapes, gameData, &musicPrims, &musicTex, &selectData, &(loadGames[0]));
+
+            if (currMenu == TRACK_MENU)
+                DisplayPicture(trackTex[currOption], 96, 50, 128, 74);
+
+            if (((currMenu == SAVE_MENU) || (currMenu == LOAD_MENU)) && (selectData.formatCard == 1))
+            {
+                currMenu = FORMAT_CONFIRM;
+                currOption = 0;
             }
 
-            if (menuSystem[currMenu].updateCount == 0)
-               CallMenuActivator (gameData, &currMenu, &currOption, &(menuSystem[0]), &selectData, &(loadGames[0])) ;
-         }
-
-         if(davebodge == 2 || davebodge == 3 || davebodge == 4)
-            CallMenuActivator (gameData, &currMenu, &currOption, &(menuSystem[0]), &selectData, &(loadGames[0])) ;
-      }
-
-      if (currMenu == TRACK_MENU)
-      {
-         if (gameData->Class == 0)
-            CentreText ("VENOM CLASS",text_data (20, 40, 8),RedText) ;
-         else
-            CentreText ("RAPIER CLASS",text_data (20, 40, 8),RedText) ;
-      }
-
-      if (currMenu == CLASS_MENU && currOption == 1 && (!gameData->RapierClass))
-         CentreText ("NOT AVAILABLE",text_data (20, 190, 12),RedText) ;
-
-      /*** Serial link up within menu structure ***/
-
-      if (gameType == SINGLE)
-      {
-         if (selectData.combatComplete == 32)
-         {
-            currMenu = MAIN_MENU ;
-            currOption = 0 ;
-            selectData.combatInit = 0 ;
-            selectData.combatComplete = 0 ;
-         }
-      }
-
-      if (gameType == MASTER || gameType == SLAVE)
-      {
-         if (selectData.combatComplete == 32)
-         {
-            currMenu = TRACK_MENU ;
-            currOption = 0 ;
-            selectData.combatInit = 0 ;
-            selectData.combatComplete = 0 ;
-
-            if (gameType == SINGLE)
-               currMenu = MAIN_MENU ;
-            else if (gameType == MASTER || gameType == SLAVE)
+            if (selectData.select)
             {
-               if (gameType == MASTER)
-                  currMenu = CLASS_MENU ;
+                if (currMenu == MAIN_MENU && currOption == 0)
+                {
+                    // CHEAT ACTIVATION BITS - need to be changed for PCwipeout
+                    /*TODO cheats*/
 
-               if (gameType == SLAVE)
-               {
-                  currMenu = TEAM_MENU ;
-                  menuSystem[TEAM_MENU].prevMenu = TEAM_MENU ;
-               }
+                    if ((pad & IN_LEFT) && (pad & IN_A))
+                    {
+                        gameData->RapierClass = 1;
+                    }
+
+                    if ((pad & IN_RIGHT) && (pad & IN_Y))
+                    {
+                        totalTracks = 14;
+                        NumTracks = 7;
+                        gameData->showBonusTrack = 1;
+                    }
+                }
+
+                if (menuSystem[currMenu].updateCount == 0)
+                    CallMenuActivator(gameData, &currMenu, &currOption, &(menuSystem[0]), &selectData, &(loadGames[0]));
             }
-         }
 
-         if (currMenu == -1)
-            gameData->exitMenu = 1 ;
-      }
+            if (davebodge == 2 || davebodge == 3 || davebodge == 4)
+                CallMenuActivator(gameData, &currMenu, &currOption, &(menuSystem[0]), &selectData, &(loadGames[0]));
+        }
 
-      /********************************************/
-
-      Swap() ;
-
-      firstTime = 0 ;
-
-      if (menuSystem[currMenu].updateCount == 0 &&
-         menuSystem[currMenu].errorFlag == 0 &&
-         selectData.select == 1)
-      {
-         selectData.select = 0 ;
-         menuSystem[currMenu].updateCount = 0 ;
-      }
-
-      selectData.trackNum = gameData->trackNum ;
-
-      if (currMenu == -1)
-      {
-         InitGameDisplay  ( ) ;
-         gameData->exitMenu = 0 ;
-         gameData->exit2Menu = 0 ;
-
-         for(i = 0; i < 10; i++)
-         {
-            /*TODO audio*/
-            //c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   /* Master volume (left) */
-            //c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   /* Master volume (right) */
-            UpdateNotes(NOT_PAUSED);
-         }
-
-         //CdControlB(CdlStop, 0, 0);
-         return;
-      }
-   }
-}
-
-/*********************************************************************************/
-/*********************************************************************************/
-/*********************************************************************************/
-
-void CallMenuActivator (ConfigData *gameData, int *currMenu, int *currOption, Menus *menuSystem, SelectionData *selectData, char loadGames[][9])
-{
-   short    i;
-   long     cardStatus, slotStatus ;
-   long     cnt = 0 ;
-   char     trackList[15] = {2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15} ;
-   FILE     *fd;
-
-
-   /******************/
-   /***** Menu 1 *****/
-   /******************/
-
-   if (*currMenu == MAIN_MENU)
-   {
-      menuSystem[TEAM_MENU].prevMenu = RACE_TYPE_MENU ;
-      menuSystem[CLASS_MENU].prevMenu = MAIN_MENU ;
-
-      if (*currOption == SINGLE_GAME)
-      {
-         //       CommMultiPlaySelect=_SINGLE_PLAY;
-         gameType = SINGLE ;
-         *currMenu = CLASS_MENU ;
-         *currOption = 0 ;
-         menuSystem[TEAM_MENU].prevMenu = RACE_TYPE_MENU ;
-         menuSystem[CLASS_MENU].prevMenu = MAIN_MENU ;
-      }
-
-      //    if (*currOption == MULTI_GAME)
-      //    {
-      //       *currMenu = MULTI_MENU;
-      //       *currOption = 0;
-      //    }                       // jed
-
-
-      if (*currOption == GAME_OPTIONS)
-      {
-         *currMenu = OPTION_MENU ;
-         *currOption = 0 ;
-      }
-
-      if (*currOption == QUIT_TO_DOS)
-      {
-         *currMenu = QUIT_MENU;
-         *currOption = 0;
-      }
-      return ;
-   }
-
-   /*******************/
-   /***** Menu 28 *****/
-   /*******************/
-
-   if (*currMenu == MULTI_MENU)
-   {
-      if (*currOption == DUAL_GAME)
-      {
-         //       *currMenu = INIT_TWO_PLAYER ;
-         andybodge=1;
-         *currMenu = SERIAL_MENU;
-         *currOption = 0 ;
-
-         //       menuSystem[CLASS_MENU].prevMenu = CLASS_MENU ;
-         //       if (gameType == SLAVE)
-         //          menuSystem[TEAM_MENU].prevMenu = TEAM_MENU ;
-         //
-         //       gameType = SINGLE ;
-         //       gameData->shipNum = 0 ;
-         //       gameData->ship2Num = 1 ;
-         //       selectData->combatInit = 0 ;
-         //       selectData->combatComplete = 0 ;
-         //       InitializeCombatLink () ;
-      }
-
-      if (*currOption == NETWORK_GAME)
-      {
-         andybodge=1;
-         *currMenu = NETWORK_MENU;
-         *currOption = 0;
-      }
-      return ;
-   }
-
-   /*******************/
-   /***** Menu 29 *****/
-   /*******************/
-
-   if (*currMenu == NETWORK_MENU)
-   {
-      if(davebodge == 2)
-      {
-         davebodge = 1;
-         *currMenu = INIT_TWO_PLAYER;
-      }
-      return;
-   }
-
-   /*******************/
-   /***** Menu 30 *****/
-   /*******************/
-
-   if (*currMenu == SERIAL_MENU)
-   {
-      if(davebodge == 2)
-      {
-         davebodge = 1;
-         *currMenu = INIT_TWO_PLAYER;
-      }
-      return;
-   }
-
-
-
-   /******************/
-   /***** Menu 2 *****/
-   /******************/
-
-   if (*currMenu == TRACK_MENU)
-   {
-      if (gameData->Class)
-         gameData->trackNum = (*currOption  + 1) + 7 ;
-      else
-         gameData->trackNum = (*currOption  + 1) ;
-      gameData->actTrackNum = trackList[(gameData->trackNum-1)] ;
-      *currMenu = -1 ;
-      *currOption = 0 ;
-      gameData->newLapRecord = 0 ;
-
-      if (gameType == SINGLE)
-      {
-         ownShip = gameData->shipNum ;
-         serialShip = -1 ;
-      }
-      else
-      {
-         if (gameType == MASTER)
-         {
-            if (gameData->oppMenu == START_TWO_PLAYER_MENU)
-               *currMenu = -1 ;
+        if (currMenu == TRACK_MENU)
+        {
+            if (gameData->Class == 0)
+                CentreText("VENOM CLASS", text_data(20, 40, 8), RedText);
             else
-               *currMenu = START_TWO_PLAYER_MENU ;
+                CentreText("RAPIER CLASS", text_data(20, 40, 8), RedText);
+        }
 
-            ownShip = gameData->shipNum ;
-            serialShip = gameData->ship2Num ;
-         }
+        if (currMenu == CLASS_MENU && currOption == 1 && (!gameData->RapierClass))
+            CentreText("NOT AVAILABLE", text_data(20, 190, 12), RedText);
 
-      }
-      return ;
-   }
+        /*** Serial link up within menu structure ***/
 
-   /******************/
-   /***** Menu 3 *****/
-   /******************/
-
-   if (*currMenu == DUAL_GAME_MENU)
-   {
-      if (*currOption == MASTER_PSX)
-      {
-         gameType = MASTER ;
-         *currMenu = TRACK_MENU ;
-         *currOption = 0 ;
-         menuSystem[1].prevMenu = DUAL_GAME_MENU ;
-      }
-
-      if (*currOption == SLAVE_PSX)
-      {
-         gameType = SLAVE ;
-         *currMenu = TRACK_MENU ;
-         *currOption = 0 ;
-         menuSystem[1].prevMenu = DUAL_GAME_MENU ;
-      }
-      return ;
-   }
-
-
-   /******************/
-   /***** Menu 5 *****/
-   /******************/
-
-   if (*currMenu == OPTION_MENU)
-   {
-      if (*currOption == LOAD_GAME)
-      {
-         selectData->formatConfirm = 0 ;
-         selectData->formatCard = 0 ;
-         selectData->slotRow = 0 ;
-         selectData->slotColumn = 0 ;
-         selectData->slotsFilled = 0 ;
-
-         for (i=0; i < 2; i++)
-         {
-            slotStatus = GetCardInfo (i) ;
-
-            switch (slotStatus)
+        if (gameType == SINGLE)
+        {
+            if (selectData.combatComplete == 32)
             {
-            case 0:  break ;               /* CARD EXISTS */
-            case 1:  break ;               /* ERROR */
-            case 2:  break ;               /* NO CARD */
-            case 3:  ClearEventHW () ;
-               //                      if (i == 0)
-               //                         _card_clear (0) ; // PCwipeout
-               //                      else
-               //                         _card_clear (16) ; // PCwipeout
-               cardStatus = CheckHWCardEvents () ;
-               break ;               /* NEW CARD */
+                currMenu = MAIN_MENU;
+                currOption = 0;
+                selectData.combatInit = 0;
+                selectData.combatComplete = 0;
+            }
+        }
+
+        if (gameType == MASTER || gameType == SLAVE)
+        {
+            if (selectData.combatComplete == 32)
+            {
+                currMenu = TRACK_MENU;
+                currOption = 0;
+                selectData.combatInit = 0;
+                selectData.combatComplete = 0;
+
+                if (gameType == SINGLE)
+                    currMenu = MAIN_MENU;
+                else if (gameType == MASTER || gameType == SLAVE)
+                {
+                    if (gameType == MASTER)
+                        currMenu = CLASS_MENU;
+
+                    if (gameType == SLAVE)
+                    {
+                        currMenu = TEAM_MENU;
+                        menuSystem[TEAM_MENU].prevMenu = TEAM_MENU;
+                    }
+                }
             }
 
-            LoadCard (i) ;
-            cardStatus = CardContentStatus () ;
+            if (currMenu == -1)
+                gameData->exitMenu = 1;
+        }
 
-            switch (cardStatus)
+        /********************************************/
+
+        Swap();
+
+        firstTime = 0;
+
+        if (menuSystem[currMenu].updateCount == 0 && menuSystem[currMenu].errorFlag == 0 && selectData.select == 1)
+        {
+            selectData.select = 0;
+            menuSystem[currMenu].updateCount = 0;
+        }
+
+        selectData.trackNum = gameData->trackNum;
+
+        if (currMenu == -1)
+        {
+            InitGameDisplay();
+            gameData->exitMenu = 0;
+            gameData->exit2Menu = 0;
+
+            for (i = 0; i < 10; i++)
             {
-            case 0:  if (i == 0)
-                     selectData->card1 = FORMATTED ;
-               else
-                  selectData->card2 = FORMATTED ;
-               break ;
-            case 3:  if (i == 0)
-                     selectData->card1 = UNFORMATTED ;
-               else
-                  selectData->card2 = UNFORMATTED ;
-               break ;               /* UNFORMATTED */
-            }
-         }
-         LoadCardFiles (selectData, &(loadGames[0]), selectData->cardNum) ;
-         *currMenu = LOAD_MENU ;
-         *currOption = 0 ;
-      }
-
-      if (*currOption == SAVE_GAME)
-      {
-         selectData->formatCard = 0 ;
-         selectData->formatConfirm = 0 ;
-         selectData->slotRow = 0 ;
-         selectData->slotColumn = 0 ;
-         selectData->slotsFilled = 0 ;
-
-         for (i=0; i < 2; i++)
-         {
-            slotStatus = GetCardInfo (i) ;
-
-            switch (slotStatus)
-            {
-            case 0:  break ;               /* CARD EXISTS */
-            case 1:  break ;               /* ERROR */
-            case 2:  break ;
-            case 3:  ClearEventHW () ;
-               //                      if (i == 0)
-               //                         _card_clear (0) ; // PCwipeout
-               //                      else
-               //                         _card_clear (16) ; // PCwipeout
-               cardStatus = CheckHWCardEvents () ;
-               break ;               /* NEW CARD */
+                /*TODO audio*/
+                // c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   /* Master volume (left) */
+                // c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   /* Master volume (right) */
+                UpdateNotes(NOT_PAUSED);
             }
 
-            LoadCard (i) ;
-            cardStatus = CardContentStatus () ;
+            // CdControlB(CdlStop, 0, 0);
+            return;
+        }
+    }
+}
 
-            switch (cardStatus)
-            {
-            case 0:  if (i == 0)
-                     selectData->card1 = FORMATTED ;
-               else
-                  selectData->card2 = FORMATTED ;
-               break ;               /* FORMATTED */
-            case 1:  break ;               /* ERROR */
-            case 2:
-            case 3:  if (i == 0)
-                     selectData->card1 = UNFORMATTED ;
-               else
-                  selectData->card2 = UNFORMATTED ;
-            }
-         }
+/*********************************************************************************/
+/*********************************************************************************/
+/*********************************************************************************/
 
-         LoadCardFiles (selectData, &(loadGames[0]), selectData->cardNum)  ;
-         *currMenu = ENTER_GAME_NAME;
-         *currOption = 0 ;
-      }
+void CallMenuActivator(ConfigData* gameData, int* currMenu, int* currOption, Menus* menuSystem, SelectionData* selectData, char loadGames[][9])
+{
+    short i;
+    long cardStatus, slotStatus;
+    long cnt = 0;
+    char trackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
+    FILE* fd;
 
-      if (*currOption == CONTROLS)
-      {
-         *currMenu = CONTROLLER_MENU;
-         *currOption = 0;
-      }
+    /******************/
+    /***** Menu 1 *****/
+    /******************/
 
-      if (*currOption == DETAILS)
-      {
-         *currMenu = DETAILS_MENU;
-         *currOption = 0;
-      }
+    if (*currMenu == MAIN_MENU)
+    {
+        menuSystem[TEAM_MENU].prevMenu = RACE_TYPE_MENU;
+        menuSystem[CLASS_MENU].prevMenu = MAIN_MENU;
 
-      /*if (*currOption == AUDIO_CONFIG)
-      {
-      //       PlayNote(SHIELDS, 0, -1);
-      *currMenu = AUDIO_MENU ;
-      *currOption = 0 ;
-      selectData->optionNo = 0 ;
+        if (*currOption == SINGLE_GAME)
+        {
+            //       CommMultiPlaySelect=_SINGLE_PLAY;
+            gameType = SINGLE;
+            *currMenu = CLASS_MENU;
+            *currOption = 0;
+            menuSystem[TEAM_MENU].prevMenu = RACE_TYPE_MENU;
+            menuSystem[CLASS_MENU].prevMenu = MAIN_MENU;
+        }
 
-        InitMenuDisplay ( 180 ) ;
-        gameData->oldSliderPos = gameData->currSliderPos ;
-        gameData->oldCdTrack = gameData->cdTrack ;
-      }*/
-      if (*currOption == HIGH_SCORES)
-      {
-         selectData->hiscoreTrack = 0 ;
-         *currMenu = BEST_TIMES_MENU ;
-         *currOption = 0 ;
-      }
-      return ;
-   }
+        //    if (*currOption == MULTI_GAME)
+        //    {
+        //       *currMenu = MULTI_MENU;
+        //       *currOption = 0;
+        //    }                       // jed
 
-   /******************/
-   /***** Menu 6 *****/
-   /******************/
+        if (*currOption == GAME_OPTIONS)
+        {
+            *currMenu = OPTION_MENU;
+            *currOption = 0;
+        }
 
-   if (*currMenu == CLASS_MENU)
-   {
-      gameData->Class = *currOption ;
-      if (gameData->RapierClass == 0 && *currOption == 1)
-         return ;
-      *currMenu = RACE_TYPE_MENU ;
+        if (*currOption == QUIT_TO_DOS)
+        {
+            *currMenu = QUIT_MENU;
+            *currOption = 0;
+        }
+        return;
+    }
 
-      if (gameType == SINGLE || gameType == SLAVE)
-      {
-         *currMenu = RACE_TYPE_MENU ;
-         menuSystem[CLASS_MENU].prevMenu = MAIN_MENU ;
-      }
-      else
-      {
-         *currMenu = SERIAL_RACE_TYPE_MENU ;
-      }
+    /*******************/
+    /***** Menu 28 *****/
+    /*******************/
 
-      if (*currOption == 0)
-      {
-         gameData->trackNum = 1 ;     /* 1 */
-      }
+    if (*currMenu == MULTI_MENU)
+    {
+        if (*currOption == DUAL_GAME)
+        {
+            //       *currMenu = INIT_TWO_PLAYER ;
+            andybodge = 1;
+            *currMenu = SERIAL_MENU;
+            *currOption = 0;
 
-      if (*currOption == 1)
-      {
-         if (gameData->showBonusTrack == 0)
-            gameData->trackNum = (NumTracks+2) ;/* (NumTracks+2)*/
-         else
-            gameData->trackNum = (NumTracks+1) ;/* (NumTracks+1)*/
+            //       menuSystem[CLASS_MENU].prevMenu = CLASS_MENU ;
+            //       if (gameType == SLAVE)
+            //          menuSystem[TEAM_MENU].prevMenu = TEAM_MENU ;
+            //
+            //       gameType = SINGLE ;
+            //       gameData->shipNum = 0 ;
+            //       gameData->ship2Num = 1 ;
+            //       selectData->combatInit = 0 ;
+            //       selectData->combatComplete = 0 ;
+            //       InitializeCombatLink () ;
+        }
 
-      }
+        if (*currOption == NETWORK_GAME)
+        {
+            andybodge = 1;
+            *currMenu = NETWORK_MENU;
+            *currOption = 0;
+        }
+        return;
+    }
 
-      *currOption = 0 ;
-      return ;
-   }
+    /*******************/
+    /***** Menu 29 *****/
+    /*******************/
 
-   /******************/
-   /***** Menu 7 *****/
-   /******************/
+    if (*currMenu == NETWORK_MENU)
+    {
+        if (davebodge == 2)
+        {
+            davebodge = 1;
+            *currMenu = INIT_TWO_PLAYER;
+        }
+        return;
+    }
 
-   if (*currMenu == TEAM_MENU)
-   {
-      gameData->team = *currOption ;
-      SetUpPilots (gameData->team, menuSystem) ;
-      *currMenu = PILOT_MENU ;
-      *currOption = 0 ;
+    /*******************/
+    /***** Menu 30 *****/
+    /*******************/
 
-      if (gameType == SINGLE)
-      {
-         menuSystem[TEAM_MENU].prevMenu = RACE_TYPE_MENU ;
-      }
-      else
-         if (gameType == SLAVE)
-         {
-            menuSystem[TEAM_MENU].prevMenu = TEAM_MENU ;
-         }
-         else
-         {
-            menuSystem[TEAM_MENU].prevMenu = SERIAL_RACE_TYPE_MENU ;
-         }
+    if (*currMenu == SERIAL_MENU)
+    {
+        if (davebodge == 2)
+        {
+            davebodge = 1;
+            *currMenu = INIT_TWO_PLAYER;
+        }
+        return;
+    }
 
-         return ;
-   }
+    /******************/
+    /***** Menu 2 *****/
+    /******************/
 
-   /******************/
-   /***** Menu 8 *****/
-   /******************/
+    if (*currMenu == TRACK_MENU)
+    {
+        if (gameData->Class)
+            gameData->trackNum = (*currOption + 1) + 7;
+        else
+            gameData->trackNum = (*currOption + 1);
+        gameData->actTrackNum = trackList[(gameData->trackNum - 1)];
+        *currMenu = -1;
+        *currOption = 0;
+        gameData->newLapRecord = 0;
 
-   if (*currMenu == PILOT_MENU)
-   {
-      gameData->shipNum = (gameData->team * 2) + *currOption ;
-      *currOption = 0 ;
-      gameData->newLapRecord = 0 ;
-
-      if (gameType == SINGLE)
-      {
-         *currMenu = TRACK_MENU ;
-         if (gameData->gameType == CHAMPIONSHIP)
-         {
-            *currMenu = -1 ;
-            *currOption = 0 ;
-            ownShip = gameData->shipNum ;
-            serialShip = -1 ;
-         }
-      }
-      else
-         if (gameType == MASTER || gameType == SLAVE)
-         {
+        if (gameType == SINGLE)
+        {
+            ownShip = gameData->shipNum;
+            serialShip = -1;
+        }
+        else
+        {
             if (gameType == MASTER)
-               *currMenu = TRACK_MENU ;
+            {
+                if (gameData->oppMenu == START_TWO_PLAYER_MENU)
+                    *currMenu = -1;
+                else
+                    *currMenu = START_TWO_PLAYER_MENU;
+
+                ownShip = gameData->shipNum;
+                serialShip = gameData->ship2Num;
+            }
+        }
+        return;
+    }
+
+    /******************/
+    /***** Menu 3 *****/
+    /******************/
+
+    if (*currMenu == DUAL_GAME_MENU)
+    {
+        if (*currOption == MASTER_PSX)
+        {
+            gameType = MASTER;
+            *currMenu = TRACK_MENU;
+            *currOption = 0;
+            menuSystem[1].prevMenu = DUAL_GAME_MENU;
+        }
+
+        if (*currOption == SLAVE_PSX)
+        {
+            gameType = SLAVE;
+            *currMenu = TRACK_MENU;
+            *currOption = 0;
+            menuSystem[1].prevMenu = DUAL_GAME_MENU;
+        }
+        return;
+    }
+
+    /******************/
+    /***** Menu 5 *****/
+    /******************/
+
+    if (*currMenu == OPTION_MENU)
+    {
+        if (*currOption == LOAD_GAME)
+        {
+            selectData->formatConfirm = 0;
+            selectData->formatCard = 0;
+            selectData->slotRow = 0;
+            selectData->slotColumn = 0;
+            selectData->slotsFilled = 0;
+
+            for (i = 0; i < 2; i++)
+            {
+                slotStatus = GetCardInfo(i);
+
+                switch (slotStatus)
+                {
+                    case 0:
+                        break; /* CARD EXISTS */
+                    case 1:
+                        break; /* ERROR */
+                    case 2:
+                        break; /* NO CARD */
+                    case 3:
+                        ClearEventHW();
+                        //                      if (i == 0)
+                        //                         _card_clear (0) ; // PCwipeout
+                        //                      else
+                        //                         _card_clear (16) ; // PCwipeout
+                        cardStatus = CheckHWCardEvents();
+                        break; /* NEW CARD */
+                }
+
+                LoadCard(i);
+                cardStatus = CardContentStatus();
+
+                switch (cardStatus)
+                {
+                    case 0:
+                        if (i == 0)
+                            selectData->card1 = FORMATTED;
+                        else
+                            selectData->card2 = FORMATTED;
+                        break;
+                    case 3:
+                        if (i == 0)
+                            selectData->card1 = UNFORMATTED;
+                        else
+                            selectData->card2 = UNFORMATTED;
+                        break; /* UNFORMATTED */
+                }
+            }
+            LoadCardFiles(selectData, &(loadGames[0]), selectData->cardNum);
+            *currMenu = LOAD_MENU;
+            *currOption = 0;
+        }
+
+        if (*currOption == SAVE_GAME)
+        {
+            selectData->formatCard = 0;
+            selectData->formatConfirm = 0;
+            selectData->slotRow = 0;
+            selectData->slotColumn = 0;
+            selectData->slotsFilled = 0;
+
+            for (i = 0; i < 2; i++)
+            {
+                slotStatus = GetCardInfo(i);
+
+                switch (slotStatus)
+                {
+                    case 0:
+                        break; /* CARD EXISTS */
+                    case 1:
+                        break; /* ERROR */
+                    case 2:
+                        break;
+                    case 3:
+                        ClearEventHW();
+                        //                      if (i == 0)
+                        //                         _card_clear (0) ; // PCwipeout
+                        //                      else
+                        //                         _card_clear (16) ; // PCwipeout
+                        cardStatus = CheckHWCardEvents();
+                        break; /* NEW CARD */
+                }
+
+                LoadCard(i);
+                cardStatus = CardContentStatus();
+
+                switch (cardStatus)
+                {
+                    case 0:
+                        if (i == 0)
+                            selectData->card1 = FORMATTED;
+                        else
+                            selectData->card2 = FORMATTED;
+                        break; /* FORMATTED */
+                    case 1:
+                        break; /* ERROR */
+                    case 2:
+                    case 3:
+                        if (i == 0)
+                            selectData->card1 = UNFORMATTED;
+                        else
+                            selectData->card2 = UNFORMATTED;
+                }
+            }
+
+            LoadCardFiles(selectData, &(loadGames[0]), selectData->cardNum);
+            *currMenu = ENTER_GAME_NAME;
+            *currOption = 0;
+        }
+
+        if (*currOption == CONTROLS)
+        {
+            *currMenu = CONTROLLER_MENU;
+            *currOption = 0;
+        }
+
+        if (*currOption == DETAILS)
+        {
+            *currMenu = DETAILS_MENU;
+            *currOption = 0;
+        }
+
+        /*if (*currOption == AUDIO_CONFIG)
+        {
+        //       PlayNote(SHIELDS, 0, -1);
+        *currMenu = AUDIO_MENU ;
+        *currOption = 0 ;
+        selectData->optionNo = 0 ;
+
+          InitMenuDisplay ( 180 ) ;
+          gameData->oldSliderPos = gameData->currSliderPos ;
+          gameData->oldCdTrack = gameData->cdTrack ;
+        }*/
+        if (*currOption == HIGH_SCORES)
+        {
+            selectData->hiscoreTrack = 0;
+            *currMenu = BEST_TIMES_MENU;
+            *currOption = 0;
+        }
+        return;
+    }
+
+    /******************/
+    /***** Menu 6 *****/
+    /******************/
+
+    if (*currMenu == CLASS_MENU)
+    {
+        gameData->Class = *currOption;
+        if (gameData->RapierClass == 0 && *currOption == 1)
+            return;
+        *currMenu = RACE_TYPE_MENU;
+
+        if (gameType == SINGLE || gameType == SLAVE)
+        {
+            *currMenu = RACE_TYPE_MENU;
+            menuSystem[CLASS_MENU].prevMenu = MAIN_MENU;
+        }
+        else
+        {
+            *currMenu = SERIAL_RACE_TYPE_MENU;
+        }
+
+        if (*currOption == 0)
+        {
+            gameData->trackNum = 1; /* 1 */
+        }
+
+        if (*currOption == 1)
+        {
+            if (gameData->showBonusTrack == 0)
+                gameData->trackNum = (NumTracks + 2); /* (NumTracks+2)*/
+            else
+                gameData->trackNum = (NumTracks + 1); /* (NumTracks+1)*/
+        }
+
+        *currOption = 0;
+        return;
+    }
+
+    /******************/
+    /***** Menu 7 *****/
+    /******************/
+
+    if (*currMenu == TEAM_MENU)
+    {
+        gameData->team = *currOption;
+        SetUpPilots(gameData->team, menuSystem);
+        *currMenu = PILOT_MENU;
+        *currOption = 0;
+
+        if (gameType == SINGLE)
+        {
+            menuSystem[TEAM_MENU].prevMenu = RACE_TYPE_MENU;
+        }
+        else if (gameType == SLAVE)
+        {
+            menuSystem[TEAM_MENU].prevMenu = TEAM_MENU;
+        }
+        else
+        {
+            menuSystem[TEAM_MENU].prevMenu = SERIAL_RACE_TYPE_MENU;
+        }
+
+        return;
+    }
+
+    /******************/
+    /***** Menu 8 *****/
+    /******************/
+
+    if (*currMenu == PILOT_MENU)
+    {
+        gameData->shipNum = (gameData->team * 2) + *currOption;
+        *currOption = 0;
+        gameData->newLapRecord = 0;
+
+        if (gameType == SINGLE)
+        {
+            *currMenu = TRACK_MENU;
+            if (gameData->gameType == CHAMPIONSHIP)
+            {
+                *currMenu = -1;
+                *currOption = 0;
+                ownShip = gameData->shipNum;
+                serialShip = -1;
+            }
+        }
+        else if (gameType == MASTER || gameType == SLAVE)
+        {
+            if (gameType == MASTER)
+                *currMenu = TRACK_MENU;
 
             if (gameType == SLAVE)
             {
-               if (gameData->oppMenu == START_TWO_PLAYER_MENU)
+                if (gameData->oppMenu == START_TWO_PLAYER_MENU)
+                {
+                    *currMenu = -1;
+                    ownShip = gameData->shipNum;
+                    serialShip = gameData->ship2Num;
+                }
+                else
+                    *currMenu = START_TWO_PLAYER_MENU;
+            }
+        }
+        return;
+    }
+
+    /******************/
+    /***** Menu 9 *****/
+    /******************/
+
+    if (*currMenu == RACE_TYPE_MENU)
+    {
+        *currMenu = TEAM_MENU;
+        menuSystem[1].prevMenu = PILOT_MENU;
+        menuSystem[TEAM_MENU].prevMenu = RACE_TYPE_MENU;
+
+        gameData->prevLap = 0;
+
+        raceType = 0;
+
+        if (((*currOption) + 1) == CHAMPIONSHIP)
+        {
+            *currOption = 0;
+
+            /***** Initialize Championship Data *****/
+
+            for (i = 0; i < NO_OF_SHIPS; i++)
+            {
+                winTable[i].points = 0;
+                winTable[i].position = 1;
+            }
+
+            InitChampTable();
+
+            /***** Set track to play *****/
+
+            menuSystem[1].numOptions = NumTracks;
+            gameData->actTrackNum = trackList[(gameData->trackNum - 1)];
+            gameData->gameType = CHAMPIONSHIP;
+        }
+
+        if (((*currOption) + 1) == TIME_TRIAL)
+        {
+            *currOption = 0;
+            menuSystem[1].numOptions = NumTracks;
+            gameData->gameType = TIME_TRIAL;
+            raceType = TIME_TRIAL;
+        }
+
+        if ((*currOption + 1) == SINGLE_RACE)
+        {
+            *currOption = 0;
+            menuSystem[1].numOptions = NumTracks;
+            gameData->gameType = SINGLE_RACE;
+        }
+        return;
+    }
+
+    /*******************/
+    /***** Menu 10 *****/
+    /*******************/
+
+    if (*currMenu == LOAD_MENU)
+    {
+        if (TextPos < 1)
+            return;
+
+        LoadFilename[TextPos] = '\0';
+        TextEntry = 0;
+        TextPos = 0;
+
+        if (!LoadCardData(LoadFilename, selectData->cardNum, gameData, selectData))
+        {
+            menuSystem[(*currMenu)].updateCount = 120;
+            menuSystem[(*currMenu)].errorFlag = LOAD_ERROR;
+            return;
+        }
+
+        strcpy(LoadFilename, "         ");
+        LoadFilename[0] = 101;
+
+        *currMenu = MAIN_MENU;
+        *currOption = 0;
+
+        menuSystem[1].numOptions = NumTracks;
+        return;
+    }
+
+    /*******************/
+    /***** Menu 11 *****/
+    /*******************/
+
+    if (*currMenu == SAVE_MENU)
+    {
+        if ((selectData->slotsFilled == 0) && (selectData->numCardFiles == 15))
+            return;
+        *currMenu = ENTER_GAME_NAME;
+        *currOption = 0;
+        selectData->firstTime = 1;
+        return;
+    }
+
+    /*******************/
+    /***** Menu 12 *****/
+    /*******************/
+    if (*currMenu == ENTER_GAME_NAME)
+    {
+        if (TextPos < 1)
+            return;
+
+        /*TODO saves
+              SaveFilename[TextPos] = '\0';
+              TextEntry = 0;
+              TextPos = 0;
+
+              CheckSaveType (selectData, &(loadGames[0]), gameData) ;
+
+              strcpy(DaveSave, SaveDirBase);
+              strcat(DaveSave,"\\");
+              strcat(DaveSave, SaveFilename);
+              strcat(DaveSave, FILE_EXTENSION);
+
+              fd = fopen(DaveSave, "r");
+
+              if(fd == NULL)
+              {
+                 // Save
+                 if (!SaveCardFile (SaveFilename, selectData->cardNum, gameData, gameData->currSliderPos))
+                 {
+                    menuSystem[(*currMenu)].updateCount = 120 ;
+                    menuSystem[(*currMenu)].errorFlag = SAVE_ERROR ;
+                    return ;
+                 }
+
+                 strcpy (loadGames[(selectData->slotRow*2)+selectData->slotColumn], selectData->nameEntered) ;
+                 strcpy(SaveFilename, "         ");
+                 SaveFilename[0] = 101;
+                 *currMenu = OPTION_MENU;
+              }
+              else
+              {
+                 // Confirm overwrite
+                 fclose(fd);
+                 *currMenu = CONFIRM_SAVE ;
+              }
+        */
+        *currOption = 0;
+        return;
+    }
+
+    /*******************/
+    /***** Menu 14 *****/
+    /*******************/
+
+    if (*currMenu == CONFIRM_SAVE)
+    {
+        if ((!selectData->confirm) && (SaveFilename != 0))
+        {
+            // This bit actually does the saving!
+
+            if (!SaveCardFile(SaveFilename, selectData->cardNum, gameData, gameData->currSliderPos))
+            {
+                menuSystem[(*currMenu)].updateCount = 120;
+                menuSystem[(*currMenu)].errorFlag = SAVE_ERROR;
+                return;
+            }
+
+            strcpy(loadGames[(selectData->slotRow * 2) + selectData->slotColumn], selectData->nameEntered);
+        }
+
+        strcpy(SaveFilename, "         ");
+        SaveFilename[0] = 101;
+        *currMenu = OPTION_MENU;
+        *currOption = 0;
+
+        return;
+    }
+
+    /*******************/
+    /***** Menu 15 *****/
+    /*******************/
+
+    if (*currMenu == INIT_TWO_PLAYER)
+    {
+        if (davebodge == 3)
+        {
+            davebodge = 4;
+            //       menuSystem[(*currMenu)].errorFlag = global_mark_error;
+            menuSystem[(*currMenu)].updateCount = 400;
+            gameType = SINGLE;
+            return;
+        }
+
+        //    *currMenu = TRACK_MENU ;
+        *currOption = 0;
+        selectData->combatInit = 0;
+        selectData->combatComplete = 0;
+
+        if (gameType == SINGLE)
+        {
+            *currMenu = MAIN_MENU;
+            davebodge = 1;
+        }
+        else if (gameType == MASTER || gameType == SLAVE)
+        {
+            if (gameType == MASTER)
+            {
+                *currMenu = CLASS_MENU;
+                menuSystem[CLASS_MENU].prevMenu = CLASS_MENU;
+            }
+            if (gameType == SLAVE)
+            {
+                *currMenu = TEAM_MENU;
+                menuSystem[TEAM_MENU].prevMenu = TEAM_MENU;
+            }
+        }
+
+        return;
+    }
+
+    /*******************/
+    /***** Menu 16 *****/
+    /*******************/
+
+    if (*currMenu == SERIAL_RACE_TYPE_MENU)
+    {
+        *currMenu = TEAM_MENU;
+        menuSystem[1].prevMenu = PILOT_MENU;
+        menuSystem[TEAM_MENU].prevMenu = SERIAL_RACE_TYPE_MENU;
+
+        if (*currOption == 0)
+        {
+            gameData->gameType = TWO_PLAYER_RACE;
+            raceType = TWO_PLAYER_RACE;
+        }
+
+        if (*currOption == 1)
+        {
+            raceType = HEAD_TO_HEAD;
+            gameData->gameType = HEAD_TO_HEAD;
+        }
+        *currOption = 0;
+        return;
+    }
+
+    /*******************/
+    /***** Menu 18 *****/
+    /*******************/
+
+    if (*currMenu == PADCONFIG_MENU)
+    {
+        SetNormPadPresets(gameData);
+        gameData->normpadPreset = gameData->oldPadPreset;
+        *currMenu = OPTION_MENU;
+
+        *currOption = 0;
+        return;
+    }
+
+    /*******************/
+    /***** Menu 19 *****/
+    /*******************/
+    /*
+    if (*currMenu == FORMAT_CONFIRM)
+    {
+    if (selectData->formatConfirm == 1)
+    {
+    if (selectData->cardNum == 0)
+    {
+             ret = format ("bu00:") ;
+
+               if (ret == 0)
                {
-                  *currMenu = -1 ;
-                  ownShip = gameData->shipNum ;
-                  serialShip = gameData->ship2Num ;
+               menuSystem[(*currMenu)].updateCount = 120 ;
+               menuSystem[(*currMenu)].errorFlag = FORMAT_ERROR ;
+               *currMenu = selectData->calledMenu ;
+               selectData->formatCard = 0 ;
+               selectData->formatConfirm = 0 ;
+               *currOption = 0 ;
+               return ;
                }
                else
-                  *currMenu = START_TWO_PLAYER_MENU ;
-            }
-         }
-         return ;
-   }
-
-   /******************/
-   /***** Menu 9 *****/
-   /******************/
-
-   if (*currMenu == RACE_TYPE_MENU)
-   {
-      *currMenu = TEAM_MENU ;
-      menuSystem[1].prevMenu = PILOT_MENU ;
-      menuSystem[TEAM_MENU].prevMenu = RACE_TYPE_MENU ;
-
-      gameData->prevLap = 0 ;
-
-      raceType = 0 ;
-
-      if (((*currOption)+1) == CHAMPIONSHIP)
-      {
-         *currOption = 0 ;
-
-         /***** Initialize Championship Data *****/
-
-         for (i=0; i < NO_OF_SHIPS; i++)
-         {
-            winTable[i].points = 0 ;
-            winTable[i].position = 1 ;
-         }
-
-         InitChampTable () ;
-
-         /***** Set track to play *****/
-
-         menuSystem[1].numOptions = NumTracks ;
-         gameData->actTrackNum = trackList[(gameData->trackNum-1)] ;
-         gameData->gameType = CHAMPIONSHIP ;
-      }
-
-      if (((*currOption)+1) == TIME_TRIAL)
-      {
-         *currOption = 0 ;
-         menuSystem[1].numOptions = NumTracks ;
-         gameData->gameType = TIME_TRIAL ;
-         raceType = TIME_TRIAL ;
-      }
-
-      if ((*currOption+1) == SINGLE_RACE)
-      {
-         *currOption = 0 ;
-         menuSystem[1].numOptions = NumTracks ;
-         gameData->gameType = SINGLE_RACE ;
-      }
-      return ;
-   }
-
-
-   /*******************/
-   /***** Menu 10 *****/
-   /*******************/
-
-   if (*currMenu == LOAD_MENU)
-   {
-      if(TextPos < 1)
-         return;
-
-      LoadFilename[TextPos] = '\0';
-      TextEntry = 0;
-      TextPos = 0;
-
-      if (!LoadCardData(LoadFilename, selectData->cardNum, gameData, selectData))
-      {
-         menuSystem[(*currMenu)].updateCount = 120 ;
-         menuSystem[(*currMenu)].errorFlag = LOAD_ERROR ;
-         return ;
-      }
-
-      strcpy(LoadFilename, "         ");
-      LoadFilename[0] = 101;
-
-      *currMenu = MAIN_MENU ;
-      *currOption = 0 ;
-
-      menuSystem[1].numOptions = NumTracks ;
-      return ;
-   }
-
-   /*******************/
-   /***** Menu 11 *****/
-   /*******************/
-
-   if (*currMenu == SAVE_MENU)
-   {
-      if ((selectData->slotsFilled == 0) && (selectData->numCardFiles == 15))
-         return ;
-      *currMenu = ENTER_GAME_NAME ;
-      *currOption = 0 ;
-      selectData->firstTime = 1 ;
-      return ;
-   }
-
-   /*******************/
-   /***** Menu 12 *****/
-   /*******************/
-   if (*currMenu == ENTER_GAME_NAME)
-   {
-      if(TextPos < 1)
-         return;
-
-/*TODO saves
-      SaveFilename[TextPos] = '\0';
-      TextEntry = 0;
-      TextPos = 0;
-
-      CheckSaveType (selectData, &(loadGames[0]), gameData) ;
-
-      strcpy(DaveSave, SaveDirBase);
-      strcat(DaveSave,"\\");
-      strcat(DaveSave, SaveFilename);
-      strcat(DaveSave, FILE_EXTENSION);
-
-      fd = fopen(DaveSave, "r");
-
-      if(fd == NULL)
-      {
-         // Save
-         if (!SaveCardFile (SaveFilename, selectData->cardNum, gameData, gameData->currSliderPos))
-         {
-            menuSystem[(*currMenu)].updateCount = 120 ;
-            menuSystem[(*currMenu)].errorFlag = SAVE_ERROR ;
-            return ;
-         }
-
-         strcpy (loadGames[(selectData->slotRow*2)+selectData->slotColumn], selectData->nameEntered) ;
-         strcpy(SaveFilename, "         ");
-         SaveFilename[0] = 101;
-         *currMenu = OPTION_MENU;
-      }
-      else
-      {
-         // Confirm overwrite
-         fclose(fd);
-         *currMenu = CONFIRM_SAVE ;
-      }
-*/
-      *currOption = 0;
-      return ;
-   }
-
-   /*******************/
-   /***** Menu 14 *****/
-   /*******************/
-
-   if (*currMenu == CONFIRM_SAVE)
-   {
-      if((!selectData->confirm) && (SaveFilename != 0))
-      {
-         // This bit actually does the saving!
-
-         if ( !SaveCardFile (SaveFilename, selectData->cardNum, gameData, gameData->currSliderPos) )
-         {
-            menuSystem[(*currMenu)].updateCount = 120 ;
-            menuSystem[(*currMenu)].errorFlag = SAVE_ERROR ;
-            return ;
-         }
-
-         strcpy (loadGames[(selectData->slotRow*2)+selectData->slotColumn], selectData->nameEntered) ;
-      }
-
-      strcpy(SaveFilename, "         ");
-      SaveFilename[0] = 101;
-      *currMenu = OPTION_MENU ;
-      *currOption = 0 ;
-
-      return ;
-   }
-
-   /*******************/
-   /***** Menu 15 *****/
-   /*******************/
-
-   if (*currMenu == INIT_TWO_PLAYER)
-   {
-      if(davebodge == 3)
-      {
-         davebodge = 4;
-         //       menuSystem[(*currMenu)].errorFlag = global_mark_error;
-         menuSystem[(*currMenu)].updateCount = 400;
-         gameType = SINGLE;
-         return;
-      }
-
-      //    *currMenu = TRACK_MENU ;
-      *currOption = 0 ;
-      selectData->combatInit = 0 ;
-      selectData->combatComplete = 0 ;
-
-      if (gameType == SINGLE)
-      {
-         *currMenu = MAIN_MENU;
-         davebodge = 1;
-      }
-      else if (gameType == MASTER || gameType == SLAVE)
-      {
-         if (gameType == MASTER)
-         {
-            *currMenu = CLASS_MENU ;
-            menuSystem[CLASS_MENU].prevMenu = CLASS_MENU ;
-         }
-         if (gameType == SLAVE)
-         {
-            *currMenu = TEAM_MENU ;
-            menuSystem[TEAM_MENU].prevMenu = TEAM_MENU ;
-         }
-      }
-
-      return;
-   }
-
-   /*******************/
-   /***** Menu 16 *****/
-   /*******************/
-
-   if (*currMenu == SERIAL_RACE_TYPE_MENU)
-   {
-      *currMenu = TEAM_MENU ;
-      menuSystem[1].prevMenu = PILOT_MENU ;
-      menuSystem[TEAM_MENU].prevMenu = SERIAL_RACE_TYPE_MENU ;
-
-      if (*currOption == 0)
-      {
-         gameData->gameType = TWO_PLAYER_RACE ;
-         raceType = TWO_PLAYER_RACE;
-      }
-
-      if (*currOption == 1)
-      {
-         raceType = HEAD_TO_HEAD ;
-         gameData->gameType = HEAD_TO_HEAD ;
-      }
-      *currOption = 0 ;
-      return ;
-   }
-
-
-   /*******************/
-   /***** Menu 18 *****/
-   /*******************/
-
-   if (*currMenu == PADCONFIG_MENU)
-   {
-      SetNormPadPresets (gameData) ;
-      gameData->normpadPreset = gameData->oldPadPreset ;
-      *currMenu = OPTION_MENU ;
-
-      *currOption = 0 ;
-      return ;
-   }
-
-   /*******************/
-   /***** Menu 19 *****/
-   /*******************/
-   /*
-   if (*currMenu == FORMAT_CONFIRM)
-   {
-   if (selectData->formatConfirm == 1)
-   {
-   if (selectData->cardNum == 0)
-   {
-            ret = format ("bu00:") ;
-
-              if (ret == 0)
-              {
-              menuSystem[(*currMenu)].updateCount = 120 ;
-              menuSystem[(*currMenu)].errorFlag = FORMAT_ERROR ;
-              *currMenu = selectData->calledMenu ;
-              selectData->formatCard = 0 ;
-              selectData->formatConfirm = 0 ;
-              *currOption = 0 ;
-              return ;
-              }
-              else
-              {
-              *currMenu = selectData->calledMenu ;
-              selectData->formatCard = 0 ;
-              *currOption = 0 ;
-              selectData->card1 = FORMATTED ;
-              InitLoadSave (&(loadGames[0])) ;
-              selectData->slotRow = 0 ;
-              selectData->slotColumn = 0 ;
-              selectData->slotsFilled = 0 ;
-              }
-              }
-              else
-              {
-              ret = format ("bu10:") ;
-              if (ret == 0)
-              {
-              menuSystem[(*currMenu)].updateCount = 120 ;
-              menuSystem[(*currMenu)].errorFlag = FORMAT_ERROR ;
-              *currMenu = selectData->calledMenu ;
-              selectData->formatCard = 0 ;
-              selectData->formatConfirm = 0 ;
-              *currOption = 0 ;
-              return ;
-              }
-              else
-              {
-              *currMenu = selectData->calledMenu ;
-              selectData->formatCard = 0 ;
-              *currOption = 0 ;
-              selectData->card2 = FORMATTED ;
-              InitLoadSave (&(loadGames[0])) ;
-              selectData->slotRow = 0 ;
-              selectData->slotColumn = 0 ;
-              selectData->slotsFilled = 0 ;
-              }
-              }
-              }
-
+               {
+               *currMenu = selectData->calledMenu ;
                selectData->formatCard = 0 ;
+               *currOption = 0 ;
+               selectData->card1 = FORMATTED ;
+               InitLoadSave (&(loadGames[0])) ;
+               selectData->slotRow = 0 ;
+               selectData->slotColumn = 0 ;
+               selectData->slotsFilled = 0 ;
+               }
+               }
+               else
+               {
+               ret = format ("bu10:") ;
+               if (ret == 0)
+               {
+               menuSystem[(*currMenu)].updateCount = 120 ;
+               menuSystem[(*currMenu)].errorFlag = FORMAT_ERROR ;
+               *currMenu = selectData->calledMenu ;
+               selectData->formatCard = 0 ;
+               selectData->formatConfirm = 0 ;
+               *currOption = 0 ;
+               return ;
+               }
+               else
+               {
+               *currMenu = selectData->calledMenu ;
+               selectData->formatCard = 0 ;
+               *currOption = 0 ;
+               selectData->card2 = FORMATTED ;
+               InitLoadSave (&(loadGames[0])) ;
+               selectData->slotRow = 0 ;
+               selectData->slotColumn = 0 ;
+               selectData->slotsFilled = 0 ;
+               }
+               }
+               }
 
-                 *currMenu = selectData->calledMenu ;
-                 *currOption = 0 ;
+                selectData->formatCard = 0 ;
 
-                  return ;
-                  }
-   */
-   /*******************/
-   /***** Menu 20 *****/
-   /*******************/
+                  *currMenu = selectData->calledMenu ;
+                  *currOption = 0 ;
 
-   if (*currMenu == NEGCON_MENU)
-   {
-      if (*currOption == 0)
-      {
-         *currOption = 0 ;
-         *currMenu = PADCONFIG_MENU ;
-      }
+                   return ;
+                   }
+    */
+    /*******************/
+    /***** Menu 20 *****/
+    /*******************/
 
-      if (*currOption == 1)
-      {
-         *currOption = 0 ;
-         *currMenu = TWIST_MENU ;
-      }
-      return ;
-   }
+    if (*currMenu == NEGCON_MENU)
+    {
+        if (*currOption == 0)
+        {
+            *currOption = 0;
+            *currMenu = PADCONFIG_MENU;
+        }
 
+        if (*currOption == 1)
+        {
+            *currOption = 0;
+            *currMenu = TWIST_MENU;
+        }
+        return;
+    }
 
-   /*******************/
-   /***** Menu 21 *****/
-   /*******************/
+    /*******************/
+    /***** Menu 21 *****/
+    /*******************/
 
-   if (*currMenu == TWIST_MENU)
-   {
-      *currOption = 0 ;
-      *currMenu = NEGCON_MENU ;
-      return ;
-   }
+    if (*currMenu == TWIST_MENU)
+    {
+        *currOption = 0;
+        *currMenu = NEGCON_MENU;
+        return;
+    }
 
+    /*******************/
+    /***** Menu 22 *****/
+    /*******************/
 
-   /*******************/
-   /***** Menu 22 *****/
-   /*******************/
+    if (*currMenu == BEST_TIMES_MENU)
+    {
+        if (*currOption == 0)
+        {
+            selectData->hiscoreTrack = 0;
+            *currMenu = HIGH_SCORES_MENU;
+            *currOption = 0;
+        }
 
-   if (*currMenu == BEST_TIMES_MENU)
-   {
-      if (*currOption == 0)
-      {
-         selectData->hiscoreTrack = 0 ;
-         *currMenu = HIGH_SCORES_MENU ;
-         *currOption = 0 ;
-      }
+        if (*currOption == 1)
+        {
+            selectData->hiscoreTrack = 14;
+            *currMenu = TIME_TRIAL_MENU;
+            *currOption = 0;
+        }
+    }
 
-      if (*currOption == 1)
-      {
-         selectData->hiscoreTrack = 14 ;
-         *currMenu = TIME_TRIAL_MENU ;
-         *currOption = 0 ;
-      }
-   }
+    /*******************/
+    /***** Menu 23 *****/
+    /*******************/
 
+    if (*currMenu == QUIT_MENU)
+    {
+        if (selectData->confirm)
+        {
+            *currMenu = MAIN_MENU;
+            *currOption = 0;
+        }
+        else
+        {
+            osQuit();
+        }
+    }
 
-   /*******************/
-   /***** Menu 23 *****/
-   /*******************/
+    /*******************/
+    /***** Menu 24 *****/
+    /*******************/
 
-   if (*currMenu == QUIT_MENU)
-   {
-      if (selectData->confirm)
-      {
-         *currMenu = MAIN_MENU ;
-         *currOption = 0 ;
-      }
-      else
-      {
-         osQuit();
-      }
-   }
+    if (*currMenu == DETAILS_MENU)
+    {
+        //    *currMenu = MAIN_MENU ;
+        *currMenu = OPTION_MENU;
+        *currOption = 0;
 
-   /*******************/
-   /***** Menu 24 *****/
-   /*******************/
+        Reallyinmenu = 0;
+        inmenu = 1;
+    }
 
-   if (*currMenu == DETAILS_MENU)
-   {
-      //    *currMenu = MAIN_MENU ;
-      *currMenu = OPTION_MENU ;
-      *currOption = 0 ;
+    /*******************/
+    /***** Menu 26 *****/
+    /*******************/
 
-      Reallyinmenu = 0;
-      inmenu = 1;
-   }
+    if (*currMenu == CONTROL_EDIT_MENU)
+    {
+        *currMenu = CONTROLLER_MENU;
+        *currOption = 0;
 
-   /*******************/
-   /***** Menu 26 *****/
-   /*******************/
+        if (davebodge == 2)
+            davebodge = 1;
 
-   if (*currMenu == CONTROL_EDIT_MENU)
-   {
-      *currMenu = CONTROLLER_MENU ;
-      *currOption = 0 ;
+        return;
+    }
 
-      if(davebodge == 2)
-         davebodge = 1;
+    /*******************/
+    /***** Menu 25 *****/
+    /*******************/
 
-      return;
-   }
+    if (*currMenu == CONTROLLER_MENU)
+    {
+        // store new variables
+        *currOption = 0;
+        /*TODO input
+              controller = orig_controller;
+              if (changecontroller)
+              {
+                 // change the controller to new settings
+                 etc_InputDeviceSelect=controller;
+                 if(etc_InputDeviceSelect != _KEYBOARD)
+                    StartPAD();
 
-   /*******************/
-   /***** Menu 25 *****/
-   /*******************/
+                 if((etc_InputDeviceSelect == _JOYSTICK1) && (JoyMinX == 0))
+                 {
+                    if (JJSJoyConfig())
+                    {
+                       etc_Joystick1Switch = _DEVICE_ON;
+                       etc_InputDeviceSelect = _JOYSTICK1;
+                    } else {
+                       etc_Joystick1Switch = _DEVICE_OFF;
+                       etc_InputDeviceSelect = _KEYBOARD;
+                       orig_controller = _KEYBOARD;
+                       StartPAD();
+                    }
 
-   if (*currMenu == CONTROLLER_MENU)
-   {
-      // store new variables
-      *currOption = 0 ;
-/*TODO input
-      controller = orig_controller;
-      if (changecontroller)
-      {
-         // change the controller to new settings
-         etc_InputDeviceSelect=controller;
-         if(etc_InputDeviceSelect != _KEYBOARD)
-            StartPAD();
-
-         if((etc_InputDeviceSelect == _JOYSTICK1) && (JoyMinX == 0))
-         {
-            if (JJSJoyConfig())
-            {
-               etc_Joystick1Switch = _DEVICE_ON;
-               etc_InputDeviceSelect = _JOYSTICK1;
-            } else {
-               etc_Joystick1Switch = _DEVICE_OFF;
-               etc_InputDeviceSelect = _KEYBOARD;
-               orig_controller = _KEYBOARD;
-               StartPAD();
-            }
-
-            *currMenu = OPTION_MENU;
-         } else
-            *currMenu = OPTION_MENU;
-      }
-      else
-      {
-         *currMenu = CONTROL_EDIT_MENU ;
-      }
-*/
-   }
+                    *currMenu = OPTION_MENU;
+                 } else
+                    *currMenu = OPTION_MENU;
+              }
+              else
+              {
+                 *currMenu = CONTROL_EDIT_MENU ;
+              }
+        */
+    }
 }
 
-
-
 /******************************************************************************************/
 /******************************************************************************************/
 /******************************************************************************************/
 
-void CallMenuSelector (Menus *menuSystem, int *currMenu, int *currOption, Object **shipShapes, ConfigData *gameData, MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9])
+void CallMenuSelector(Menus* menuSystem, int* currMenu, int* currOption, Object** shipShapes, ConfigData* gameData, MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9])
 {
-   int      offSet = 12, i ;
-   int      textX, textY ;
-   int      startOption = 0, menuOffset = 0, dispOption = 0 ;
-   Texture  *menuPointer ;
+    int offSet = 12, i;
+    int textX, textY;
+    int startOption = 0, menuOffset = 0, dispOption = 0;
+    Texture* menuPointer;
 
-   if (GetMenuKey(M_UP))
-   {
-      PlayNote(MENU_MOVE, 1, 20);
-      (*currOption) -- ;
-      if ((*currOption) < 0)
-      {
-         (*currOption) = (menuSystem[(*currMenu)].numOptions - 1) ;
-      }
-   }
+    if (GetMenuKey(M_UP))
+    {
+        PlayNote(MENU_MOVE, 1, 20);
+        (*currOption)--;
+        if ((*currOption) < 0)
+        {
+            (*currOption) = (menuSystem[(*currMenu)].numOptions - 1);
+        }
+    }
 
-   if (GetMenuKey(M_DOWN))
-   {
-      PlayNote(MENU_MOVE, 1, 20);
-      (*currOption) ++ ;
-      if ((*currOption) > (menuSystem[(*currMenu)].numOptions - 1))
-         (*currOption) = 0 ;
-   }
+    if (GetMenuKey(M_DOWN))
+    {
+        PlayNote(MENU_MOVE, 1, 20);
+        (*currOption)++;
+        if ((*currOption) > (menuSystem[(*currMenu)].numOptions - 1))
+            (*currOption) = 0;
+    }
 
-   if (menuSystem[(*currMenu)].displayObject != 0)
-   {
-      if (*currMenu == PILOT_MENU)
-         (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, (gameData->team * 2) + *currOption);
-      else
-         if (*currMenu == TEAM_MENU)
-            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption);
-         else
-            (menuSystem[(*currMenu)].displayObject) (menuSystem, currMenu, *currOption);
-   }
+    if (menuSystem[(*currMenu)].displayObject != 0)
+    {
+        if (*currMenu == PILOT_MENU)
+            (menuSystem[(*currMenu)].displayObject)(menuSystem, currMenu, (gameData->team * 2) + *currOption);
+        else if (*currMenu == TEAM_MENU)
+            (menuSystem[(*currMenu)].displayObject)(menuSystem, currMenu, *currOption);
+        else
+            (menuSystem[(*currMenu)].displayObject)(menuSystem, currMenu, *currOption);
+    }
 
-   if (menuSystem[(*currMenu)].numOptions != 0)
-   {
+    if (menuSystem[(*currMenu)].numOptions != 0)
+    {
 
-      if (*currMenu == PILOT_MENU && (gameType == MASTER) && *currMenu == gameData->oppMenu)
-      {
-         gameData->shipNum = *currOption ;
+        if (*currMenu == PILOT_MENU && (gameType == MASTER) && *currMenu == gameData->oppMenu)
+        {
+            gameData->shipNum = *currOption;
 
-         if ((gameData->team == gameData->team2) && (gameData->shipNum == gameData->ship2Num))
-            *currOption = (1 - gameData->ship2Num) ;
-      }
-      else
-         if (*currMenu == PILOT_MENU && (gameType == SLAVE))
-            gameData->shipNum = *currOption ;
+            if ((gameData->team == gameData->team2) && (gameData->shipNum == gameData->ship2Num))
+                *currOption = (1 - gameData->ship2Num);
+        }
+        else if (*currMenu == PILOT_MENU && (gameType == SLAVE))
+            gameData->shipNum = *currOption;
 
-
-         if ((gameType == MASTER || gameType == SLAVE))
-         {
-            if (gameType == SLAVE && (gameData->oppMenu == START_TWO_PLAYER_MENU || gameData->oppMenu == TRACK_MENU)
-               && *currMenu == PILOT_MENU)
+        if ((gameType == MASTER || gameType == SLAVE))
+        {
+            if (gameType == SLAVE && (gameData->oppMenu == START_TWO_PLAYER_MENU || gameData->oppMenu == TRACK_MENU) && *currMenu == PILOT_MENU)
             {
-               if (gameData->team2 == gameData->team)
-               {
-                  *currOption = (1 - (gameData->ship2Num % 2)) ;
-                  gameData->shipNum = *currOption ;
-               }
+                if (gameData->team2 == gameData->team)
+                {
+                    *currOption = (1 - (gameData->ship2Num % 2));
+                    gameData->shipNum = *currOption;
+                }
             }
 
             if (gameType == MASTER && gameData->oppMenu == START_TWO_PLAYER_MENU && *currMenu == PILOT_MENU)
             {
-               if (gameData->team2 == gameData->team)
-               {
-                  *currOption = (1 - (gameData->ship2Num % 2)) ;
-                  gameData->shipNum = *currOption ;
-               }
+                if (gameData->team2 == gameData->team)
+                {
+                    *currOption = (1 - (gameData->ship2Num % 2));
+                    gameData->shipNum = *currOption;
+                }
             }
-         }
+        }
 
-         {
-            if (((gameData->gameType == CHAMPIONSHIP) && (*currMenu == PILOT_MENU)) || (*currMenu == TRACK_MENU) ||
-               (gameType == SLAVE && *currMenu == PILOT_MENU))
+        {
+            if (((gameData->gameType == CHAMPIONSHIP) && (*currMenu == PILOT_MENU)) || (*currMenu == TRACK_MENU) || (gameType == SLAVE && *currMenu == PILOT_MENU))
             {
-               //          DisplayButtons ( 140, 210 , PSTART) ;
-               DisplayButtons ( 30 , 210, PSELECT) ;
-               DisplayButtons ( 240, 210, PBACK) ;
+                //          DisplayButtons ( 140, 210 , PSTART) ;
+                DisplayButtons(30, 210, PSELECT);
+                DisplayButtons(240, 210, PBACK);
             }
             else
             {
-               DisplayButtons ( 30, 210, PSELECT) ;
-               if ((*currMenu != MAIN_MENU) && (!(((gameType == SLAVE) &&  (*currMenu == TEAM_MENU)) ||
-                  ((gameType == MASTER) && (*currMenu == CLASS_MENU)))))
-                  DisplayButtons ( 240, 210, PBACK) ;
+                DisplayButtons(30, 210, PSELECT);
+                if ((*currMenu != MAIN_MENU) && (!(((gameType == SLAVE) && (*currMenu == TEAM_MENU)) || ((gameType == MASTER) && (*currMenu == CLASS_MENU)))))
+                    DisplayButtons(240, 210, PBACK);
             }
-         }
+        }
 
-         startOption = (*currOption / NumTracks) * NumTracks ;
+        startOption = (*currOption / NumTracks) * NumTracks;
 
-         dispOption = menuSystem[(*currMenu)].numOptions - startOption ;
+        dispOption = menuSystem[(*currMenu)].numOptions - startOption;
 
-         if  (dispOption >= NumTracks)
-            dispOption = NumTracks ;
+        if (dispOption >= NumTracks)
+            dispOption = NumTracks;
 
-         CentreText (menuSystem[(*currMenu)].menuTitle, text_data (menuSystem[(*currMenu)].titleX,
-            menuSystem[(*currMenu)].titleY, 8), RedText) ;
+        CentreText(menuSystem[(*currMenu)].menuTitle, text_data(menuSystem[(*currMenu)].titleX, menuSystem[(*currMenu)].titleY, 8), RedText);
 
-         for (i=startOption; i < (startOption + dispOption) ; i++)
-         {
+        for (i = startOption; i < (startOption + dispOption); i++)
+        {
             if (i == (*currOption))
             {
-               CentreText (menuSystem[(*currMenu)].menuOptions[i].optionText, text_data (menuSystem[(*currMenu)].menuOptions[i].textX,
-                  menuSystem[(*currMenu)].menuOptions[i].textY + (offSet*menuOffset), 8), ((gFrameIndex & 3) < 2) ? RedText : WhiteText) ;
+                CentreText(menuSystem[(*currMenu)].menuOptions[i].optionText, text_data(menuSystem[(*currMenu)].menuOptions[i].textX, menuSystem[(*currMenu)].menuOptions[i].textY + (offSet * menuOffset), 8), ((gFrameIndex & 3) < 2) ? RedText : WhiteText);
             }
             else
             {
-               CentreText (menuSystem[(*currMenu)].menuOptions[i].optionText, text_data (menuSystem[(*currMenu)].menuOptions[i].textX,
-                  menuSystem[(*currMenu)].menuOptions[i].textY + (offSet*menuOffset), 8), WhiteText) ;
+                CentreText(menuSystem[(*currMenu)].menuOptions[i].optionText, text_data(menuSystem[(*currMenu)].menuOptions[i].textX, menuSystem[(*currMenu)].menuOptions[i].textY + (offSet * menuOffset), 8), WhiteText);
             }
 
-            menuOffset ++ ;
+            menuOffset++;
+        }
 
-         }
+        textX = menuSystem[(*currMenu)].menuOptions[(*currOption)].textX;
+        textY = menuSystem[(*currMenu)].menuOptions[(*currOption)].textY;
 
-         textX = menuSystem[(*currMenu)].menuOptions[(*currOption)].textX ;
-         textY = menuSystem[(*currMenu)].menuOptions[(*currOption)].textY ;
+        /*TODO options
+        menuPointer = (Texture *)TextureTable [DRTEXT_8+1] ;
 
-         /*TODO options
-         menuPointer = (Texture *)TextureTable [DRTEXT_8+1] ;
+        SetPolyFT4(&(musicPrims->pointer));
+        musicPrims->pointer.r0=230;   // PCwipeout
+        musicPrims->pointer.g0=0;
+        musicPrims->pointer.b0=BLACK_NOT_DRAWN;
 
-         SetPolyFT4(&(musicPrims->pointer));
-         musicPrims->pointer.r0=230;   // PCwipeout
-         musicPrims->pointer.g0=0;
-         musicPrims->pointer.b0=BLACK_NOT_DRAWN;
+        setXY4(&(musicPrims->pointer), textX-29, textY+((*currOption%5)*offSet),
+           textX-5, textY+((*currOption%5)*offSet),
+           textX-29, textY+16+((*currOption%5)*offSet),
+           textX-5, textY+16+((*currOption%5)*offSet));
 
-         setXY4(&(musicPrims->pointer), textX-29, textY+((*currOption%5)*offSet),
-            textX-5, textY+((*currOption%5)*offSet),
-            textX-29, textY+16+((*currOption%5)*offSet),
-            textX-5, textY+16+((*currOption%5)*offSet));
+        setUV4(&(musicPrims->pointer), menuPointer->u0, menuPointer->v0,
+           menuPointer->u1, menuPointer->v1,
+           menuPointer->u2, menuPointer->v2+1,
+           menuPointer->u3, menuPointer->v3+1) ;
 
-         setUV4(&(musicPrims->pointer), menuPointer->u0, menuPointer->v0,
-            menuPointer->u1, menuPointer->v1,
-            menuPointer->u2, menuPointer->v2+1,
-            menuPointer->u3, menuPointer->v3+1) ;
+        setTPage(&(musicPrims->pointer),0,0,menuPointer->textureX,menuPointer->textureY);
+        musicPrims->pointer.clut = menuPointer->cba;
+        */
+    }
+    else
+    {
+        if (menuSystem[(*currMenu)].displayMenu != 0)
+            (menuSystem[(*currMenu)].displayMenu)(musicPrims, musicTex, selectData, &(loadGames[0]), gameData);
+    }
 
-         setTPage(&(musicPrims->pointer),0,0,menuPointer->textureX,menuPointer->textureY);
-         musicPrims->pointer.clut = menuPointer->cba;
-         */
-   }
-   else
-   {
-      if (menuSystem[(*currMenu)].displayMenu != 0)
-         (menuSystem[(*currMenu)].displayMenu) (musicPrims, musicTex, selectData, &(loadGames[0]), gameData) ;
-   }
-
-   if (GetMenuKey(M_SELECT))
-   {
-      if (menuSystem[(*currMenu)].updateCount == 0 && menuSystem[(*currMenu)].errorFlag == 0)
-      {
-         if (!(*currMenu == ENTER_GAME_NAME && (selectData->nameEntered[strlen(selectData->nameEntered)-1] >= 'A' &&
-            selectData->nameEntered[strlen(selectData->nameEntered)-1] <= ('Z'+1))))
-         {
-            selectData->select = 1 ;
-            menuSystem[(*currMenu)].updateCount = 0 ;
-         }
-         PlayNote(MENU_SELECT, 1, 20);
-         InitMenuDisplay ( 90 ) ;
-      }
-   }
-
-   if (GetMenuKey(M_BACK))       // ESCAPE
-   {
-      if (menuSystem[(*currMenu)].prevMenu != -1)
-      {
-         //       if(*currMenu == AUDIO_MENU)
-         //          KillNote(SHIELDS);
-
-         if(*currMenu == CONTROL_EDIT_MENU)// && controller == _KEYBOARD)
-         {
-            // JJS new bit 0606 for exiting menus
+    if (GetMenuKey(M_SELECT))
+    {
+        if (menuSystem[(*currMenu)].updateCount == 0 && menuSystem[(*currMenu)].errorFlag == 0)
+        {
+            if (!(*currMenu == ENTER_GAME_NAME && (selectData->nameEntered[strlen(selectData->nameEntered) - 1] >= 'A' && selectData->nameEntered[strlen(selectData->nameEntered) - 1] <= ('Z' + 1))))
             {
-               ResetKeys();
+                selectData->select = 1;
+                menuSystem[(*currMenu)].updateCount = 0;
             }
-         }
+            PlayNote(MENU_SELECT, 1, 20);
+            InitMenuDisplay(90);
+        }
+    }
 
-         *currMenu = menuSystem[(*currMenu)].prevMenu ;
-         *currOption = 0 ;
+    if (GetMenuKey(M_BACK)) // ESCAPE
+    {
+        if (menuSystem[(*currMenu)].prevMenu != -1)
+        {
+            //       if(*currMenu == AUDIO_MENU)
+            //          KillNote(SHIELDS);
 
-         SetUpPilots (gameData->team, menuSystem) ;
+            if (*currMenu == CONTROL_EDIT_MENU) // && controller == _KEYBOARD)
+            {
+                // JJS new bit 0606 for exiting menus
+                {
+                    ResetKeys();
+                }
+            }
 
-         inmenu = 1;
-         Reallyinmenu = 0;
+            *currMenu = menuSystem[(*currMenu)].prevMenu;
+            *currOption = 0;
 
-         strcpy(LoadFilename, "         ");
-         LoadFilename[0] = 101;
-         strcpy(SaveFilename, "         ");
-         SaveFilename[0] = 101;
-         TextEntry = 0;
-         TextPos = 0;
+            SetUpPilots(gameData->team, menuSystem);
 
-         KeyToChange = NONE;
+            inmenu = 1;
+            Reallyinmenu = 0;
 
-         PlayNote(MENU_SELECT, 1, 20);
-         InitMenuDisplay ( 90 ) ;
-      }
-   }
+            strcpy(LoadFilename, "         ");
+            LoadFilename[0] = 101;
+            strcpy(SaveFilename, "         ");
+            SaveFilename[0] = 101;
+            TextEntry = 0;
+            TextPos = 0;
+
+            KeyToChange = NONE;
+
+            PlayNote(MENU_SELECT, 1, 20);
+            InitMenuDisplay(90);
+        }
+    }
 }
 
-
-void InitMenuSystem (Menus *menuSystem)
+void InitMenuSystem(Menus* menuSystem)
 {
-   char        i ;
+    char i;
 
-   for (i=0; i < MAX_MENUS; i++)
-   {
-      menuSystem[i].updateCount = 0 ;
-      menuSystem[i].errorFlag = 0 ;
-      menuSystem[i].menuTitle[0] = 0 ;
-      menuSystem[i].titleY = 21 ;
-   }
+    for (i = 0; i < MAX_MENUS; i++)
+    {
+        menuSystem[i].updateCount = 0;
+        menuSystem[i].errorFlag = 0;
+        menuSystem[i].menuTitle[0] = 0;
+        menuSystem[i].titleY = 21;
+    }
 
-   /******************/
-   /***** Menu 1 *****/
-   /******************/
+    /******************/
+    /***** Menu 1 *****/
+    /******************/
 
-   /* Menu title details */
+    /* Menu title details */
 
-   menuSystem[0].titleX = 85 ;
-   strcpy (menuSystem[0].menuTitle,"WIPEOUT MAIN MENU") ;
+    menuSystem[0].titleX = 85;
+    strcpy(menuSystem[0].menuTitle, "WIPEOUT MAIN MENU");
 
-   /* Option details */
+    /* Option details */
 
-   menuSystem[0].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[0].menuOptions[0].optionText,"START GAME") ;
+    menuSystem[0].menuOptions[0].textY = 130;
+    strcpy(menuSystem[0].menuOptions[0].optionText, "START GAME");
 
-   // menuSystem[0].menuOptions[1].textY = 130 ;
-   // strcpy (menuSystem[0].menuOptions[1].optionText,"MULTI PLAYER") ;
+    // menuSystem[0].menuOptions[1].textY = 130 ;
+    // strcpy (menuSystem[0].menuOptions[1].optionText,"MULTI PLAYER") ;
 
-   menuSystem[0].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[0].menuOptions[1].optionText,"OPTIONS") ;
+    menuSystem[0].menuOptions[1].textY = 130;
+    strcpy(menuSystem[0].menuOptions[1].optionText, "OPTIONS");
 
-   menuSystem[0].menuOptions[2].textY = 130 ;                  // PCwipeout (ditto)
+    menuSystem[0].menuOptions[2].textY = 130; // PCwipeout (ditto)
 #if 0
    strcpy (menuSystem[0].menuOptions[2].optionText,"QUIT TO WINDOWS") ; // PCwipeout
 #else
-   strcpy (menuSystem[0].menuOptions[2].optionText,"QUIT") ;   // PCwipeout
+    strcpy(menuSystem[0].menuOptions[2].optionText, "QUIT"); // PCwipeout
 #endif
-   /* Menu details */
+    /* Menu details */
 
-   menuSystem[0].numOptions = 3;
-   menuSystem[0].displayObject = DrawMainMenu ;
-   menuSystem[0].displayMenu = 0 ;
-   menuSystem[0].prevMenu = -1 ;
+    menuSystem[0].numOptions = 3;
+    menuSystem[0].displayObject = DrawMainMenu;
+    menuSystem[0].displayMenu = 0;
+    menuSystem[0].prevMenu = -1;
 
-   /******************/
-   /***** Menu 2 *****/
-   /******************/
+    /******************/
+    /***** Menu 2 *****/
+    /******************/
 
-   /* Menu title details */
+    /* Menu title details */
 
-   menuSystem[1].titleX = 75 ;
-   strcpy (menuSystem[1].menuTitle,"SELECT RACING CIRCUIT") ;
+    menuSystem[1].titleX = 75;
+    strcpy(menuSystem[1].menuTitle, "SELECT RACING CIRCUIT");
 
-   /* Option details */
+    /* Option details */
 
-   menuSystem[1].menuOptions[0].textY = 127 ;
-   strcpy (menuSystem[1].menuOptions[0].optionText,"ALTIMA VII") ;
+    menuSystem[1].menuOptions[0].textY = 127;
+    strcpy(menuSystem[1].menuOptions[0].optionText, "ALTIMA VII");
 
-   menuSystem[1].menuOptions[1].textY = 127 ;
-   strcpy (menuSystem[1].menuOptions[1].optionText,"KARBONIS V") ;
+    menuSystem[1].menuOptions[1].textY = 127;
+    strcpy(menuSystem[1].menuOptions[1].optionText, "KARBONIS V");
 
-   menuSystem[1].menuOptions[2].textY = 127 ;
-   strcpy (menuSystem[1].menuOptions[2].optionText,"TERRAMAX") ;
+    menuSystem[1].menuOptions[2].textY = 127;
+    strcpy(menuSystem[1].menuOptions[2].optionText, "TERRAMAX");
 
-   menuSystem[1].menuOptions[3].textY = 127 ;
-   strcpy (menuSystem[1].menuOptions[3].optionText,"KORODERA") ;
+    menuSystem[1].menuOptions[3].textY = 127;
+    strcpy(menuSystem[1].menuOptions[3].optionText, "KORODERA");
 
-   menuSystem[1].menuOptions[4].textY = 127 ;
-   strcpy (menuSystem[1].menuOptions[4].optionText,"ARRIDOS IV") ;
+    menuSystem[1].menuOptions[4].textY = 127;
+    strcpy(menuSystem[1].menuOptions[4].optionText, "ARRIDOS IV");
 
-   menuSystem[1].menuOptions[5].textY = 127 ;
-   strcpy (menuSystem[1].menuOptions[5].optionText,"SILVERSTREAM") ;
+    menuSystem[1].menuOptions[5].textY = 127;
+    strcpy(menuSystem[1].menuOptions[5].optionText, "SILVERSTREAM");
 
-   menuSystem[1].menuOptions[6].textY = 127 ;
-   strcpy (menuSystem[1].menuOptions[6].optionText,"FIRESTAR") ;
+    menuSystem[1].menuOptions[6].textY = 127;
+    strcpy(menuSystem[1].menuOptions[6].optionText, "FIRESTAR");
 
-   /* Menu details */
+    /* Menu details */
 
-   menuSystem[1].displayObject = 0 ;
-   menuSystem[1].displayMenu = 0 ;
-   menuSystem[1].prevMenu = PILOT_MENU ;
+    menuSystem[1].displayObject = 0;
+    menuSystem[1].displayMenu = 0;
+    menuSystem[1].prevMenu = PILOT_MENU;
 
+    /******************/
+    /***** Menu 3 *****/
+    /******************/
 
-   /******************/
-   /***** Menu 3 *****/
-   /******************/
+    /* Menu title details */
 
-   /* Menu title details */
+    menuSystem[2].titleX = 55;
+    strcpy(menuSystem[2].menuTitle, "SELECT TWO PLAYER GAME");
 
-   menuSystem[2].titleX = 55 ;
-   strcpy (menuSystem[2].menuTitle,"SELECT TWO PLAYER GAME") ;
+    /* Option details */
 
-   /* Option details */
+    menuSystem[2].menuOptions[0].textY = 130;
+    strcpy(menuSystem[2].menuOptions[0].optionText, "MASTER");
 
-   menuSystem[2].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[2].menuOptions[0].optionText,"MASTER") ;
+    menuSystem[2].menuOptions[1].textY = 130;
+    strcpy(menuSystem[2].menuOptions[1].optionText, "SLAVE");
 
-   menuSystem[2].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[2].menuOptions[1].optionText,"SLAVE") ;
+    /* Menu details */
 
-   /* Menu details */
+    menuSystem[2].numOptions = 2;
+    menuSystem[2].displayObject = 0;
+    menuSystem[2].displayMenu = 0;
+    menuSystem[2].prevMenu = MAIN_MENU;
 
-   menuSystem[2].numOptions = 2 ;
-   menuSystem[2].displayObject = 0 ;
-   menuSystem[2].displayMenu = 0;
-   menuSystem[2].prevMenu = MAIN_MENU ;
+    /******************/
+    /***** Menu 4 *****/
+    /******************/
 
+    /******************/
+    /***** Menu 5 *****/
+    /******************/
 
-   /******************/
-   /***** Menu 4 *****/
-   /******************/
+    /* Menu title details */
 
+    menuSystem[4].titleX = 60;
+    strcpy(menuSystem[4].menuTitle, "GAME CONFIGURATION");
 
-   /******************/
-   /***** Menu 5 *****/
-   /******************/
+    /* Option details */
 
-   /* Menu title details */
+    menuSystem[4].menuOptions[0].textY = 130;
+    strcpy(menuSystem[4].menuOptions[0].optionText, "LOAD DATA");
 
-   menuSystem[4].titleX = 60 ;
-   strcpy (menuSystem[4].menuTitle,"GAME CONFIGURATION") ;
+    menuSystem[4].menuOptions[1].textY = 130;
+    strcpy(menuSystem[4].menuOptions[1].optionText, "SAVE DATA");
 
+    menuSystem[4].menuOptions[2].textY = 130;
+    strcpy(menuSystem[4].menuOptions[2].optionText, "CONTROLLER CONFIG");
 
-   /* Option details */
+    menuSystem[4].menuOptions[3].textY = 130;
+    strcpy(menuSystem[4].menuOptions[3].optionText, "GRAPHICS DETAIL");
 
-   menuSystem[4].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[4].menuOptions[0].optionText,"LOAD DATA") ;
+    // menuSystem[4].menuOptions[4].textY = 130 ;
+    // strcpy (menuSystem[4].menuOptions[4].optionText,"AUDIO CONFIG") ;
 
-   menuSystem[4].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[4].menuOptions[1].optionText,"SAVE DATA") ;
+    menuSystem[4].menuOptions[4].textY = 130;
+    strcpy(menuSystem[4].menuOptions[4].optionText, "VIEW BEST TIMES");
 
-   menuSystem[4].menuOptions[2].textY = 130 ;
-   strcpy (menuSystem[4].menuOptions[2].optionText,"CONTROLLER CONFIG") ;
+    /* Menu details */
 
-   menuSystem[4].menuOptions[3].textY = 130 ;
-   strcpy (menuSystem[4].menuOptions[3].optionText,"GRAPHICS DETAIL") ;
+    menuSystem[4].numOptions = 5;
+    menuSystem[4].displayObject = DrawOptionMenus;
+    menuSystem[4].displayMenu = 0;
+    menuSystem[4].prevMenu = MAIN_MENU;
 
-   //menuSystem[4].menuOptions[4].textY = 130 ;
-   //strcpy (menuSystem[4].menuOptions[4].optionText,"AUDIO CONFIG") ;
+    /******************/
+    /***** Menu 6 *****/
+    /******************/
 
-   menuSystem[4].menuOptions[4].textY = 130 ;
-   strcpy (menuSystem[4].menuOptions[4].optionText,"VIEW BEST TIMES") ;
+    /* Menu title details */
 
-   /* Menu details */
+    menuSystem[5].titleX = 75;
+    strcpy(menuSystem[5].menuTitle, "SELECT RACING CLASS");
 
-   menuSystem[4].numOptions = 5 ;
-   menuSystem[4].displayObject = DrawOptionMenus ;
-   menuSystem[4].displayMenu = 0 ;
-   menuSystem[4].prevMenu = MAIN_MENU ;
+    /* Option details */
 
+    menuSystem[5].menuOptions[0].textY = 130;
+    strcpy(menuSystem[5].menuOptions[0].optionText, "VENOM CLASS");
 
-   /******************/
-   /***** Menu 6 *****/
-   /******************/
+    menuSystem[5].menuOptions[1].textY = 130;
+    strcpy(menuSystem[5].menuOptions[1].optionText, "RAPIER CLASS");
 
-   /* Menu title details */
+    /* Menu details */
 
-   menuSystem[5].titleX = 75 ;
-   strcpy (menuSystem[5].menuTitle,"SELECT RACING CLASS") ;
+    menuSystem[5].numOptions = 2;
+    menuSystem[5].displayObject = DrawClass;
+    menuSystem[5].displayMenu = 0;
+    menuSystem[5].prevMenu = MAIN_MENU;
 
-   /* Option details */
+    /******************/
+    /***** Menu 7 *****/
+    /******************/
 
-   menuSystem[5].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[5].menuOptions[0].optionText,"VENOM CLASS") ;
+    /* Menu title details */
 
-   menuSystem[5].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[5].menuOptions[1].optionText,"RAPIER CLASS") ;
+    menuSystem[6].titleX = 75;
+    strcpy(menuSystem[6].menuTitle, "SELECT YOUR TEAM");
 
-   /* Menu details */
+    /* Option details */
 
-   menuSystem[5].numOptions = 2 ;
-   menuSystem[5].displayObject = DrawClass ;
-   menuSystem[5].displayMenu = 0 ;
-   menuSystem[5].prevMenu = MAIN_MENU ;
+    menuSystem[6].menuOptions[0].textY = 130;
+    strcpy(menuSystem[6].menuOptions[0].optionText, "AG SYSTEMS");
 
+    menuSystem[6].menuOptions[1].textY = 130;
+    strcpy(menuSystem[6].menuOptions[1].optionText, "AURICOM");
 
-   /******************/
-   /***** Menu 7 *****/
-   /******************/
+    menuSystem[6].menuOptions[2].textY = 130;
+    strcpy(menuSystem[6].menuOptions[2].optionText, "QIREX");
 
-   /* Menu title details */
+    menuSystem[6].menuOptions[3].textY = 130;
+    strcpy(menuSystem[6].menuOptions[3].optionText, "FEISAR");
 
-   menuSystem[6].titleX = 75 ;
-   strcpy (menuSystem[6].menuTitle,"SELECT YOUR TEAM") ;
+    /* Menu details */
 
+    menuSystem[6].numOptions = 4;
+    menuSystem[6].displayObject = DrawTeams;
+    menuSystem[6].displayMenu = 0;
+    menuSystem[6].prevMenu = RACE_TYPE_MENU;
 
-   /* Option details */
+    /******************/
+    /***** Menu 8 *****/
+    /******************/
 
-   menuSystem[6].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[6].menuOptions[0].optionText,"AG SYSTEMS") ;
+    /* Menu title details */
 
-   menuSystem[6].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[6].menuOptions[1].optionText,"AURICOM") ;
+    menuSystem[7].titleX = 75;
+    strcpy(menuSystem[7].menuTitle, "CHOOSE YOUR PILOT");
 
-   menuSystem[6].menuOptions[2].textY = 130 ;
-   strcpy (menuSystem[6].menuOptions[2].optionText,"QIREX") ;
+    /* Option details */
 
-   menuSystem[6].menuOptions[3].textY = 130 ;
-   strcpy (menuSystem[6].menuOptions[3].optionText,"FEISAR") ;
+    menuSystem[7].menuOptions[0].textX = 50;
+    menuSystem[7].menuOptions[0].textY = 130;
 
-   /* Menu details */
+    menuSystem[7].menuOptions[1].textX = 50;
+    menuSystem[7].menuOptions[1].textY = 130;
 
-   menuSystem[6].numOptions = 4 ;
-   menuSystem[6].displayObject = DrawTeams ;
-   menuSystem[6].displayMenu = 0 ;
-   menuSystem[6].prevMenu = RACE_TYPE_MENU ;
+    /* Menu details */
 
-   /******************/
-   /***** Menu 8 *****/
-   /******************/
+    menuSystem[7].numOptions = 2;
+    menuSystem[7].displayObject = DrawPilot;
+    menuSystem[7].displayMenu = 0;
+    menuSystem[7].prevMenu = TEAM_MENU;
 
-   /* Menu title details */
+    /******************/
+    /***** Menu 9 *****/
+    /******************/
 
-   menuSystem[7].titleX = 75 ;
-   strcpy (menuSystem[7].menuTitle,"CHOOSE YOUR PILOT") ;
+    /* Menu title details */
 
-   /* Option details */
+    menuSystem[8].titleX = 75;
+    strcpy(menuSystem[8].menuTitle, "SELECT RACE TYPE");
 
-   menuSystem[7].menuOptions[0].textX = 50 ;
-   menuSystem[7].menuOptions[0].textY = 130 ;
+    /* Option details */
 
-   menuSystem[7].menuOptions[1].textX = 50 ;
-   menuSystem[7].menuOptions[1].textY = 130 ;
+    menuSystem[8].menuOptions[0].textY = 130;
+    strcpy(menuSystem[8].menuOptions[0].optionText, "CHAMPIONSHIP RACE");
 
-   /* Menu details */
+    menuSystem[8].menuOptions[1].textY = 130;
+    strcpy(menuSystem[8].menuOptions[1].optionText, "SINGLE RACE");
 
-   menuSystem[7].numOptions = 2 ;
-   menuSystem[7].displayObject = DrawPilot ;
-   menuSystem[7].displayMenu = 0 ;
-   menuSystem[7].prevMenu = TEAM_MENU ;
+    menuSystem[8].menuOptions[2].textY = 130;
+    strcpy(menuSystem[8].menuOptions[2].optionText, "TIME TRIAL");
 
+    /* Menu details */
 
-   /******************/
-   /***** Menu 9 *****/
-   /******************/
+    menuSystem[8].numOptions = 3;
+    menuSystem[8].displayObject = DrawGames;
+    menuSystem[8].displayMenu = 0;
+    menuSystem[8].prevMenu = CLASS_MENU;
 
-   /* Menu title details */
+    /*******************/
+    /***** Menu 10 *****/
+    /*******************/
 
-   menuSystem[8].titleX = 75 ;
-   strcpy (menuSystem[8].menuTitle,"SELECT RACE TYPE") ;
+    /* Option details */
 
-   /* Option details */
+    /* Menu details */
 
-   menuSystem[8].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[8].menuOptions[0].optionText,"CHAMPIONSHIP RACE") ;
+    menuSystem[9].numOptions = 0;
+    menuSystem[9].displayObject = 0;
+    menuSystem[9].displayMenu = EnterLoadGame;
+    menuSystem[9].prevMenu = OPTION_MENU;
 
-   menuSystem[8].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[8].menuOptions[1].optionText,"SINGLE RACE") ;
+    /*******************/
+    /***** Menu 11 *****/
+    /*******************/
 
-   menuSystem[8].menuOptions[2].textY = 130 ;
-   strcpy (menuSystem[8].menuOptions[2].optionText,"TIME TRIAL") ;
+    /* Option details */
 
-   /* Menu details */
+    /* Menu details */
 
-   menuSystem[8].numOptions = 3 ;
-   menuSystem[8].displayObject = DrawGames ;
-   menuSystem[8].displayMenu = 0 ;
-   menuSystem[8].prevMenu = CLASS_MENU ;
+    menuSystem[10].numOptions = 0;
+    menuSystem[10].displayObject = 0;
+    menuSystem[10].displayMenu = EnterSaveGame; // DLSSave
+    menuSystem[10].prevMenu = OPTION_MENU;
 
-   /*******************/
-   /***** Menu 10 *****/
-   /*******************/
+    /*******************/
+    /***** Menu 12 *****/
+    /*******************/
 
-   /* Option details */
+    /* Option details */
 
-   /* Menu details */
+    /* Menu details */
 
-   menuSystem[9].numOptions = 0 ;
-   menuSystem[9].displayObject = 0 ;
-   menuSystem[9].displayMenu = EnterLoadGame;
-   menuSystem[9].prevMenu = OPTION_MENU ;
+    menuSystem[11].numOptions = 0;
+    menuSystem[11].displayObject = 0;
+    menuSystem[11].displayMenu = EnterSaveGame;
+    menuSystem[11].prevMenu = OPTION_MENU; // DLSSave
 
-   /*******************/
-   /***** Menu 11 *****/
-   /*******************/
+    /*******************/
+    /***** Menu 13 *****/
+    /*******************/
 
-   /* Option details */
+    /* Option details */
 
-   /* Menu details */
+    /* Menu details */
 
-   menuSystem[10].numOptions = 0 ;
-   menuSystem[10].displayObject = 0 ;
-   menuSystem[10].displayMenu = EnterSaveGame ; // DLSSave
-   menuSystem[10].prevMenu = OPTION_MENU ;
+    menuSystem[12].numOptions = 0;
+    menuSystem[12].displayObject = 0;
+    menuSystem[12].displayMenu = ShowHiScores;
+    menuSystem[12].prevMenu = BEST_TIMES_MENU;
 
+    /*******************/
+    /***** Menu 14 *****/
+    /*******************/
 
-   /*******************/
-   /***** Menu 12 *****/
-   /*******************/
+    /* Option details */
 
-   /* Option details */
+    /* Menu details */
 
-   /* Menu details */
+    menuSystem[13].numOptions = 0;
+    menuSystem[13].displayObject = 0;
+    menuSystem[13].displayMenu = ConfirmSaveGame;
+    menuSystem[13].prevMenu = OPTION_MENU;
 
-   menuSystem[11].numOptions = 0 ;
-   menuSystem[11].displayObject = 0 ;
-   menuSystem[11].displayMenu = EnterSaveGame ;
-   menuSystem[11].prevMenu = OPTION_MENU ;         // DLSSave
+    /*******************/
+    /***** Menu 15 *****/
+    /*******************/
 
-   /*******************/
-   /***** Menu 13 *****/
-   /*******************/
+    /* Option details */
 
-   /* Option details */
+    /* Menu details */
 
-   /* Menu details */
+    menuSystem[14].numOptions = 0;
+    menuSystem[14].displayObject = 0;
+    // JJS menuSystem[14].displayMenu = SerialNetworkHandling ;
+    menuSystem[14].prevMenu = MAIN_MENU;
 
-   menuSystem[12].numOptions = 0 ;
-   menuSystem[12].displayObject = 0 ;
-   menuSystem[12].displayMenu = ShowHiScores ;
-   menuSystem[12].prevMenu = BEST_TIMES_MENU ;
+    /******************/
+    /***** Menu 16 *****/
+    /******************/
 
-   /*******************/
-   /***** Menu 14 *****/
-   /*******************/
+    /* Menu title details */
 
-   /* Option details */
+    menuSystem[15].titleX = 75;
+    strcpy(menuSystem[15].menuTitle, "SELECT RACE TYPE");
 
-   /* Menu details */
+    /* Option details */
 
-   menuSystem[13].numOptions = 0 ;
-   menuSystem[13].displayObject = 0 ;
-   menuSystem[13].displayMenu =  ConfirmSaveGame ;
-   menuSystem[13].prevMenu = OPTION_MENU ;
+    menuSystem[15].menuOptions[0].textY = 130;
+    strcpy(menuSystem[15].menuOptions[0].optionText, "MULTI PLAYER RACE");
 
+    menuSystem[15].menuOptions[1].textY = 130;
+    strcpy(menuSystem[15].menuOptions[1].optionText, "HEAD TO HEAD");
 
-   /*******************/
-   /***** Menu 15 *****/
-   /*******************/
+    /* Menu details */
 
-   /* Option details */
+    menuSystem[15].numOptions = 2;
+    menuSystem[15].displayObject = DrawShip;
+    menuSystem[15].displayMenu = 0;
+    menuSystem[15].prevMenu = CLASS_MENU;
 
-   /* Menu details */
+    /*******************/
+    /***** Menu 17 *****/
+    /*******************/
 
-   menuSystem[14].numOptions = 0 ;
-   menuSystem[14].displayObject = 0 ;
-   //JJS menuSystem[14].displayMenu = SerialNetworkHandling ;
-   menuSystem[14].prevMenu = MAIN_MENU;
+    /* Option details */
 
-   /******************/
-   /***** Menu 16 *****/
-   /******************/
+    /* Menu details */
 
-   /* Menu title details */
+    menuSystem[16].numOptions = 0;
+    menuSystem[16].displayObject = 0;
+    // menuSystem[16].displayMenu = StartTwoPlayer ;
+    menuSystem[16].prevMenu = START_TWO_PLAYER_MENU;
 
-   menuSystem[15].titleX = 75 ;
-   strcpy (menuSystem[15].menuTitle,"SELECT RACE TYPE") ;
+    /*******************/
+    /***** Menu 18 *****/
+    /*******************/
 
-   /* Option details */
+    /* Option details */
 
-   menuSystem[15].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[15].menuOptions[0].optionText,"MULTI PLAYER RACE") ;
+    /* Menu details */
 
-   menuSystem[15].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[15].menuOptions[1].optionText,"HEAD TO HEAD") ;
+    menuSystem[17].numOptions = 0;
+    menuSystem[17].displayObject = 0;
+    menuSystem[17].displayMenu = 0;
+    menuSystem[17].prevMenu = OPTION_MENU;
 
-   /* Menu details */
+    /*******************/
+    /***** Menu 19 *****/
+    /*******************/
 
-   menuSystem[15].numOptions = 2 ;
-   menuSystem[15].displayObject = DrawShip ;
-   menuSystem[15].displayMenu = 0 ;
-   menuSystem[15].prevMenu = CLASS_MENU ;
+    /* Option details */
 
+    /* Menu details */
 
-   /*******************/
-   /***** Menu 17 *****/
-   /*******************/
+    menuSystem[18].numOptions = 0;
+    menuSystem[18].displayObject = 0;
+    menuSystem[18].displayMenu = ConfirmFormat;
+    menuSystem[18].prevMenu = SAVE_MENU;
 
-   /* Option details */
+    /******************/
+    /***** Menu 20 *****/
+    /******************/
 
-   /* Menu details */
+    /* Menu title details */
 
-   menuSystem[16].numOptions = 0 ;
-   menuSystem[16].displayObject = 0 ;
-   // menuSystem[16].displayMenu = StartTwoPlayer ;
-   menuSystem[16].prevMenu = START_TWO_PLAYER_MENU ;
+    menuSystem[19].titleX = 75;
+    strcpy(menuSystem[19].menuTitle, "CONFIGURE NEGCON");
 
-   /*******************/
-   /***** Menu 18 *****/
-   /*******************/
+    /* Option details */
 
-   /* Option details */
+    menuSystem[19].menuOptions[0].textY = 130;
+    strcpy(menuSystem[19].menuOptions[0].optionText, "DEFINE BUTTON PRESETS");
 
-   /* Menu details */
+    menuSystem[19].menuOptions[1].textY = 130;
+    strcpy(menuSystem[19].menuOptions[1].optionText, "DEFINE NEGCON TWIST");
 
-   menuSystem[17].numOptions = 0 ;
-   menuSystem[17].displayObject = 0 ;
-   menuSystem[17].displayMenu = 0 ;
-   menuSystem[17].prevMenu = OPTION_MENU ;
+    /* Menu details */
 
-   /*******************/
-   /***** Menu 19 *****/
-   /*******************/
+    menuSystem[19].numOptions = 2;
+    menuSystem[19].displayObject = DisplayNegConMenu;
+    menuSystem[19].displayMenu = 0;
+    menuSystem[19].prevMenu = OPTION_MENU;
 
-   /* Option details */
+    /*******************/
+    /***** Menu 21 *****/
+    /*******************/
 
-   /* Menu details */
+    /* Option details */
 
-   menuSystem[18].numOptions = 0 ;
-   menuSystem[18].displayObject = 0 ;
-   menuSystem[18].displayMenu = ConfirmFormat ;
-   menuSystem[18].prevMenu = SAVE_MENU ;
+    /* Menu details */
 
-   /******************/
-   /***** Menu 20 *****/
-   /******************/
+    menuSystem[20].numOptions = 0;
+    menuSystem[20].displayObject = DrawNegCon;
+    menuSystem[20].displayMenu = 0;
+    menuSystem[20].prevMenu = NEGCON_MENU;
 
-   /* Menu title details */
+    /******************/
+    /***** Menu 22 *****/
+    /******************/
 
-   menuSystem[19].titleX = 75 ;
-   strcpy (menuSystem[19].menuTitle,"CONFIGURE NEGCON") ;
+    /* Menu title details */
 
+    menuSystem[21].titleX = 75;
+    strcpy(menuSystem[21].menuTitle, "VIEW BEST TIMES");
 
-   /* Option details */
+    /* Option details */
 
-   menuSystem[19].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[19].menuOptions[0].optionText,"DEFINE BUTTON PRESETS") ;
+    menuSystem[21].menuOptions[0].textY = 130;
+    strcpy(menuSystem[21].menuOptions[0].optionText, "VIEW BEST RACE TIMES");
 
-   menuSystem[19].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[19].menuOptions[1].optionText,"DEFINE NEGCON TWIST") ;
+    menuSystem[21].menuOptions[1].textY = 130;
+    strcpy(menuSystem[21].menuOptions[1].optionText, "VIEW BEST TIME TRIAL TIMES");
 
-   /* Menu details */
+    /* Menu details */
 
-   menuSystem[19].numOptions = 2 ;
-   menuSystem[19].displayObject = DisplayNegConMenu ;
-   menuSystem[19].displayMenu = 0 ;
-   menuSystem[19].prevMenu = OPTION_MENU ;
+    menuSystem[21].numOptions = 2;
+    menuSystem[21].displayObject = DrawHiScoreMenu;
+    menuSystem[21].displayMenu = 0;
+    menuSystem[21].prevMenu = OPTION_MENU;
 
-   /*******************/
-   /***** Menu 21 *****/
-   /*******************/
+    /*******************/
+    /***** Menu 23 *****/
+    /*******************/
 
-   /* Option details */
+    /* Option details */
 
-   /* Menu details */
+    /* Menu details */
 
-   menuSystem[20].numOptions = 0 ;
-   menuSystem[20].displayObject = DrawNegCon ;
-   menuSystem[20].displayMenu = 0 ;
-   menuSystem[20].prevMenu = NEGCON_MENU ;
+    menuSystem[22].numOptions = 0;
+    menuSystem[22].displayObject = 0;
+    menuSystem[22].displayMenu = ShowTimeTrialScores;
+    menuSystem[22].prevMenu = BEST_TIMES_MENU;
 
+    // set what we want to call when option selected
 
-   /******************/
-   /***** Menu 22 *****/
-   /******************/
+    /*******************/
+    /***** Menu 24 *****/
+    /*******************/
 
-   /* Menu title details */
+    menuSystem[23].numOptions = 0;
+    menuSystem[23].displayObject = 0;
+    menuSystem[23].displayMenu = QuitYesNo;
+    menuSystem[23].prevMenu = MAIN_MENU;
 
-   menuSystem[21].titleX = 75 ;
-   strcpy (menuSystem[21].menuTitle,"VIEW BEST TIMES") ;
+    /*******************/
+    /***** Menu 25 *****/
+    /*******************/
 
-   /* Option details */
+    menuSystem[24].numOptions = 0;
+    menuSystem[24].displayObject = DrawGraphicDetail;
+    menuSystem[24].displayMenu = GraphicOptions;
+    menuSystem[24].prevMenu = OPTION_MENU;
 
-   menuSystem[21].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[21].menuOptions[0].optionText,"VIEW BEST RACE TIMES") ;
+    /*******************/
+    /***** Menu 26 *****/
+    /*******************/
 
-   menuSystem[21].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[21].menuOptions[1].optionText,"VIEW BEST TIME TRIAL TIMES") ;
+    menuSystem[25].numOptions = 0;
+    menuSystem[25].displayObject = DrawControllerMenu;
+    menuSystem[25].displayMenu = ControllerOptions;
+    menuSystem[25].prevMenu = OPTION_MENU;
 
-   /* Menu details */
+    /*******************/
+    /***** Menu 27 *****/
+    /*******************/
 
-   menuSystem[21].numOptions = 2 ;
-   menuSystem[21].displayObject = DrawHiScoreMenu ;
-   menuSystem[21].displayMenu = 0 ;
-   menuSystem[21].prevMenu = OPTION_MENU ;
+    menuSystem[26].numOptions = 0;
+    menuSystem[26].displayObject = DrawControllerEdit;
+    menuSystem[26].displayMenu = ControllerEdit;
+    menuSystem[26].prevMenu = CONTROLLER_MENU;
 
-   /*******************/
-   /***** Menu 23 *****/
-   /*******************/
+    /*******************/
+    /***** Menu 28 *****/
+    /*******************/
 
-   /* Option details */
+    menuSystem[27].titleX = 85;
+    strcpy(menuSystem[27].menuTitle, "MULTI PLAYER OPTIONS");
 
-   /* Menu details */
+    /* Option details */
 
-   menuSystem[22].numOptions = 0 ;
-   menuSystem[22].displayObject = 0 ;
-   menuSystem[22].displayMenu = ShowTimeTrialScores ;
-   menuSystem[22].prevMenu = BEST_TIMES_MENU ;
+    menuSystem[27].menuOptions[0].textY = 130;
+    strcpy(menuSystem[27].menuOptions[0].optionText, "TWO PLAYER SERIAL LINK");
 
-   // set what we want to call when option selected
+    menuSystem[27].menuOptions[1].textY = 130;
+    strcpy(menuSystem[27].menuOptions[1].optionText, "NETWORK");
 
-   /*******************/
-   /***** Menu 24 *****/
-   /*******************/
+    menuSystem[27].numOptions = 2;
+    menuSystem[27].displayObject = 0;
+    menuSystem[27].displayMenu = 0;
+    menuSystem[27].prevMenu = MAIN_MENU;
 
-   menuSystem[23].numOptions = 0 ;
-   menuSystem[23].displayObject = 0 ;
-   menuSystem[23].displayMenu = QuitYesNo ;
-   menuSystem[23].prevMenu = MAIN_MENU ;
+    /*******************/
+    /***** Menu 29 *****/
+    /*******************/
 
-   /*******************/
-   /***** Menu 25 *****/
-   /*******************/
+    menuSystem[28].numOptions = 0;
+    menuSystem[28].displayObject = 0;
+    // menuSystem[28].displayMenu = NetworkOptions ;
+    menuSystem[28].prevMenu = MULTI_MENU;
 
-   menuSystem[24].numOptions = 0 ;
-   menuSystem[24].displayObject = DrawGraphicDetail;
-   menuSystem[24].displayMenu = GraphicOptions ;
-   menuSystem[24].prevMenu = OPTION_MENU ;
+    /*******************/
+    /***** Menu 30 *****/
+    /*******************/
 
-   /*******************/
-   /***** Menu 26 *****/
-   /*******************/
-
-   menuSystem[25].numOptions = 0 ;
-   menuSystem[25].displayObject = DrawControllerMenu ;
-   menuSystem[25].displayMenu = ControllerOptions ;
-   menuSystem[25].prevMenu = OPTION_MENU ;
-
-   /*******************/
-   /***** Menu 27 *****/
-   /*******************/
-
-   menuSystem[26].numOptions = 0 ;
-   menuSystem[26].displayObject = DrawControllerEdit ;
-   menuSystem[26].displayMenu = ControllerEdit ;
-   menuSystem[26].prevMenu = CONTROLLER_MENU ;
-
-   /*******************/
-   /***** Menu 28 *****/
-   /*******************/
-
-   menuSystem[27].titleX = 85 ;
-   strcpy (menuSystem[27].menuTitle,"MULTI PLAYER OPTIONS") ;
-
-   /* Option details */
-
-   menuSystem[27].menuOptions[0].textY = 130 ;
-   strcpy (menuSystem[27].menuOptions[0].optionText,"TWO PLAYER SERIAL LINK") ;
-
-   menuSystem[27].menuOptions[1].textY = 130 ;
-   strcpy (menuSystem[27].menuOptions[1].optionText,"NETWORK") ;
-
-   menuSystem[27].numOptions = 2 ;
-   menuSystem[27].displayObject = 0 ;
-   menuSystem[27].displayMenu = 0 ;
-   menuSystem[27].prevMenu = MAIN_MENU ;
-
-   /*******************/
-   /***** Menu 29 *****/
-   /*******************/
-
-   menuSystem[28].numOptions = 0 ;
-   menuSystem[28].displayObject = 0 ;
-   // menuSystem[28].displayMenu = NetworkOptions ;
-   menuSystem[28].prevMenu = MULTI_MENU ;
-
-   /*******************/
-   /***** Menu 30 *****/
-   /*******************/
-
-   menuSystem[29].numOptions = 0 ;
-   menuSystem[29].displayObject = 0 ;
-   // menuSystem[29].displayMenu = SerialOptions;
-   menuSystem[29].prevMenu = MULTI_MENU;
-
+    menuSystem[29].numOptions = 0;
+    menuSystem[29].displayObject = 0;
+    // menuSystem[29].displayMenu = SerialOptions;
+    menuSystem[29].prevMenu = MULTI_MENU;
 }
-
 
 /*TODO menu gb*/
 #if 0
@@ -2147,225 +2108,216 @@ void ShowMenuBackground(POLY_FT4 *menuPrim, POLY_FT4 *menu1Prim, TimData *timSiz
 }
 #endif
 
-
-void LoadTexModel (Object** modelShapes, char *fileName)
+void LoadTexModel(Object** modelShapes, char* fileName)
 {
-   short    modelTextures= 0;
-   Object*  obj;
-   int      count = 0 ;
-   TIMlist  *timPtr;
-   char     modelFile[256];
+    short modelTextures = 0;
+    Object* obj;
+    int count = 0;
+    TIMlist* timPtr;
+    char modelFile[256];
 
-   /******************************************************/
-   /** Load compressed texture files, first to allow    **/
-   /** temporary memory to be allocated                 **/
-   /******************************************************/
+    /******************************************************/
+    /** Load compressed texture files, first to allow    **/
+    /** temporary memory to be allocated                 **/
+    /******************************************************/
 
-   strcpy( modelFile, "wipeout\\common\\" );
-   strcat( modelFile, fileName) ;
-   strcat( modelFile, ".cmp");
-   modelTextures = TextureTableCount;
-   timPtr = LoadCompressedTextureSequence( modelFile );
-   LoadCmpFiles( timPtr );
+    strcpy(modelFile, "wipeout\\common\\");
+    strcat(modelFile, fileName);
+    strcat(modelFile, ".cmp");
+    modelTextures = TextureTableCount;
+    timPtr = LoadCompressedTextureSequence(modelFile);
+    LoadCmpFiles(timPtr);
 
-   strcpy( modelFile, "wipeout\\common\\" );
-   strcat( modelFile, fileName) ;
-   strcat( modelFile, ".prm");
+    strcpy(modelFile, "wipeout\\common\\");
+    strcat(modelFile, fileName);
+    strcat(modelFile, ".prm");
 
-   modelShapes[0] = (Object *)LoadPrm( modelFile, modelTextures );
+    modelShapes[0] = (Object*)LoadPrm(modelFile, modelTextures);
 
-   obj = modelShapes[0] ;
+    obj = modelShapes[0];
 
-   while ( obj )
-   {
-      obj->skeleton = NewSkeleton();
-      modelShapes[count] = obj;
-      count ++ ;
-      obj = obj->next;
-   }
+    while (obj)
+    {
+        obj->skeleton = NewSkeleton();
+        modelShapes[count] = obj;
+        count++;
+        obj = obj->next;
+    }
 }
 
-
-void DrawMainMenu (Menus *menuSystem, int *currMenu, int shapeNo)
+void DrawMainMenu(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   int hdg = gFrameIndex * 20;
-   int heading = gFrameIndex * 5;
+    int hdg = gFrameIndex * 20;
+    int heading = gFrameIndex * 5;
 
-   andybodge=1;
+    andybodge = 1;
 
-   if (shapeNo == 0)
-      DrawTeamShips (0, 0, MODELSIZE, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]) ;
+    if (shapeNo == 0)
+        DrawTeamShips(0, 0, MODELSIZE, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]);
 
-   // if (shapeNo == 1)
-   // {
-   //    DrawTeamShips (-450, 0, 1100, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[3]]) ;
-   //    DrawTeamShips (450, 0, 1100, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[1]]) ;
-   // }
+    // if (shapeNo == 1)
+    // {
+    //    DrawTeamShips (-450, 0, 1100, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[3]]) ;
+    //    DrawTeamShips (450, 0, 1100, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[1]]) ;
+    // }
 
-   if (shapeNo == 1)
-   {
-      SetSkeletonPosition(menuSystem[(*currMenu)].menu2Model[3]->skeleton, 0, 0, MODELSIZE) ;    /*1800*/
-      SetSkeletonDirectionHPR(menuSystem[(*currMenu)].menu2Model[3]->skeleton,hdg,0,0);
-      TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[3]);
-   }
+    if (shapeNo == 1)
+    {
+        SetSkeletonPosition(menuSystem[(*currMenu)].menu2Model[3]->skeleton, 0, 0, MODELSIZE); /*1800*/
+        SetSkeletonDirectionHPR(menuSystem[(*currMenu)].menu2Model[3]->skeleton, hdg, 0, 0);
+        TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[3]);
+    }
 
-   //if (shapeNo ==2)
-   //{
-   //SetSkeletonPosition(menuSystem[(*currMenu)].menu2Model[1]->skeleton,  0, 0, MODELSIZE) ;    /*1800*/
-   //SetSkeletonDirectionHPR(menuSystem[(*currMenu)].menu2Model[1]->skeleton,hdg,0,0);
-   //TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[1]);
-   //hdg += 40;
-   //}//SJR-msdos
-
+    // if (shapeNo ==2)
+    //{
+    // SetSkeletonPosition(menuSystem[(*currMenu)].menu2Model[1]->skeleton,  0, 0, MODELSIZE) ;    /*1800*/
+    // SetSkeletonDirectionHPR(menuSystem[(*currMenu)].menu2Model[1]->skeleton,hdg,0,0);
+    // TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[1]);
+    // hdg += 40;
+    //}//SJR-msdos
 }
 
-void DrawTeams (Menus *menuSystem, int *currMenu, int shapeNo)
+void DrawTeams(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   int hdg = gFrameIndex * 20;
-   int heading = gFrameIndex * 10;
+    int hdg = gFrameIndex * 20;
+    int heading = gFrameIndex * 10;
 
-   SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]->skeleton),0,0,9000) ;
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]->skeleton),hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]);
+    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]->skeleton), 0, 0, 9000);
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]->skeleton), hdg, 0, 0);
+    TransformStaticObject(menuSystem[(*currMenu)].menuModel[teamShapeOrder[shapeNo]]);
 
-   DrawTeamShips (-900, 800, 1500, heading, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo*2]]) ;
-   DrawTeamShips (900, 800, 1500, heading, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo*2+1]]) ;
+    DrawTeamShips(-900, 800, 1500, heading, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo * 2]]);
+    DrawTeamShips(900, 800, 1500, heading, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo * 2 + 1]]);
 }
 
-void DrawTeamShips (int x, int y, int size, int heading, Object *shipModel)
+void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
 {
-   SetSkeletonPosition(shipModel->skeleton,x,y, size) ;
-   SetSkeletonDirectionHPR(shipModel->skeleton,-heading,0,0);
+    SetSkeletonPosition(shipModel->skeleton, x, y, size);
+    SetSkeletonDirectionHPR(shipModel->skeleton, -heading, 0, 0);
 
-   TransformStaticMenuObject(shipModel);
+    TransformStaticMenuObject(shipModel);
 }
 
-void DrawPilot (Menus *menuSystem, int *currMenu, int shapeNo)
+void DrawPilot(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   int hdg = gFrameIndex * 20;
-   int shdg = gFrameIndex * 5;
+    int hdg = gFrameIndex * 20;
+    int shdg = gFrameIndex * 5;
 
-   SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]->skeleton), 0, -400, 11000) ;
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]->skeleton),hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]);
+    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]->skeleton), 0, -400, 11000);
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]->skeleton), hdg, 0, 0);
+    TransformStaticObject(menuSystem[(*currMenu)].menuModel[pilotShapeOrder[shapeNo]]);
 
-   DrawTeamShips (0, 700, 1300, shdg, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo]]) ;
+    DrawTeamShips(0, 700, 1300, shdg, menuSystem[(*currMenu)].menu2Model[shipShapeOrder[shapeNo]]);
 }
 
-void DrawPlayPad (Menus *menuSystem, int *currMenu, int shapeNo)
+void DrawPlayPad(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   InitMenuDisplay (120) ;
+    InitMenuDisplay(120);
 
-   SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, -1140,6220+zoomInOut);
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),(modelHdg),0, 0);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
-   SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 2260+downUp,6670) ;
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton),250, -3440,10);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
+    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton), 0, -1140, 6220 + zoomInOut);
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton), (modelHdg), 0, 0);
+    TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
+    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton), 0, 2260 + downUp, 6670);
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), 250, -3440, 10);
+    TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
 }
 
-void DrawNegCon(Menus* menuSystem, int* currMenu, int shapeNo)
+void DrawNegCon(Menus* menuSystem, int* currMenu, int shapeNo) { }
+
+void NegConButtonDisplay(Menus* menuSystem, int* currMenu, int shapeNo) { }
+
+void DrawShip(Menus* menuSystem, int* currMenu, int shipNo)
 {
+    int hdg = gFrameIndex * 5;
+
+    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]->skeleton), 0, 0, MODELSIZE);
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]->skeleton), hdg, 0, 0);
+    TransformStaticObject(menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]);
 }
 
-void NegConButtonDisplay (Menus *menuSystem, int *currMenu, int shapeNo)
+void DrawClass(Menus* menuSystem, int* currMenu, int shipNo)
 {
+    int hdg = gFrameIndex * 20;
+
+    if (shipNo == 0)
+    {
+        SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton), 0, 0, 500);
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton), hdg, 0, 0);
+        TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
+    }
+
+    if (shipNo == 1)
+    {
+        SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton), 0, -25, 500);
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg, 0, 0);
+        TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
+    }
 }
 
-void DrawShip(Menus *menuSystem, int *currMenu, int shipNo)
+void InitSelectData(SelectionData* selectData)
 {
-   int hdg = gFrameIndex * 5;
-
-   SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]->skeleton),0, 0, MODELSIZE) ;
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]->skeleton),hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menuModel[shipShapeOrder[shipNo]]);
+    selectData->slotRow = 0;
+    selectData->optionNo = 0;
+    selectData->slotColumn = 0;
+    selectData->slotsFilled = 0;
+    selectData->select = 0;
+    selectData->firstTime = 1;
+    selectData->numCardFiles = 0;
+    selectData->hiscoreTrack = 0;
+    selectData->speechMode = 0;
+    selectData->toggle = 0;
+    selectData->cardNum = 0;
+    selectData->card1 = FORMATTED;
+    selectData->card2 = FORMATTED;
+    selectData->formatCard = 0;
+    selectData->formatConfirm = 0;
 }
 
-void DrawClass (Menus *menuSystem, int *currMenu, int shipNo)
+void InitMusicVSfx(SlideTextures* musicTex)
 {
-   int hdg = gFrameIndex * 20;
-
-   if (shipNo==0)
-   {
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),   0, 0,500);
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),hdg,0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
-   }
-
-   if (shipNo==1)
-   {
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),   0, -25,500);
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton),hdg,0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
-   }
+    musicTex->slideTex = LoadTexture("wipeout\\textures\\slider1.tim", 1); /*slide*/
+    musicTex->sliderTex = LoadTexture("wipeout\\textures\\slide1.tim", 1);
 }
 
-void InitSelectData (SelectionData *selectData)
+void MusicVSfx(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   selectData->slotRow = 0 ;
-   selectData->optionNo = 0 ;
-   selectData->slotColumn = 0 ;
-   selectData->slotsFilled = 0 ;
-   selectData->select = 0 ;
-   selectData->firstTime = 1 ;
-   selectData->numCardFiles = 0 ;
-   selectData->hiscoreTrack = 0 ;
-   selectData->speechMode = 0 ;
-   selectData->toggle = 0 ;
-   selectData->cardNum = 0 ;
-   selectData->card1 = FORMATTED ;
-   selectData->card2 = FORMATTED ;
-   selectData->formatCard = 0 ;
-   selectData->formatConfirm = 0 ;
-}
+    int slidePosx = 48;
+    int slidePosy = 85;
+    int slideWidth = 224;
+    int slideHeight = 28; /*28*/
+    int sliderLeftOffset = 0;
+    int sliderRightOffset = 24;
+    int sliderRange = 218;
 
+    static int ShieldOn = 0;
 
-void InitMusicVSfx (SlideTextures *musicTex)
-{
-   musicTex->slideTex = LoadTexture ( "wipeout\\textures\\slider1.tim", 1 ) ; /*slide*/
-   musicTex->sliderTex = LoadTexture ( "wipeout\\textures\\slide1.tim", 1 ) ;
-}
+    static int toggle = 0;
 
+    extern short CurrTrkNo;
 
-void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
-{
-   int   slidePosx = 48 ;
-   int   slidePosy = 85 ;
-   int   slideWidth = 224 ;
-   int   slideHeight = 28 ;       /*28*/
-   int   sliderLeftOffset = 0 ;
-   int   sliderRightOffset = 24 ;
-   int   sliderRange = 218 ;
+    if (xpad & IN_UP)
+    {
+        PlayNote(MENU_MOVE, 1, 2);
+        selectData->optionNo--;
+        if (selectData->optionNo < 0)
+            selectData->optionNo = 1;
+    }
 
-   static int  ShieldOn = 0;
+    if (xpad & IN_DOWN)
+    {
+        PlayNote(MENU_MOVE, 1, 2);
+        selectData->optionNo++;
+        if (selectData->optionNo > 1)
+            selectData->optionNo = 0;
+    }
 
-   static int  toggle = 0 ;
+    AddText("AUDIO CONFIGURATION", text_data(60, 20, 8), RedText);
 
-   extern   short CurrTrkNo;
-
-   if (xpad & IN_UP)
-   {
-      PlayNote(MENU_MOVE, 1, 2);
-      selectData->optionNo -- ;
-      if (selectData->optionNo < 0)
-         selectData->optionNo = 1 ;
-   }
-
-   if (xpad & IN_DOWN)
-   {
-      PlayNote(MENU_MOVE, 1, 2);
-      selectData->optionNo ++ ;
-      if (selectData->optionNo > 1)
-         selectData->optionNo = 0 ;
-   }
-
-   AddText ("AUDIO CONFIGURATION",text_data (60, 20, 8),RedText) ;
-
-   {
-      DisplayButtons ( 30, 210, PSELECT) ;
-      DisplayButtons ( 240, 210, PBACK) ;
-   }
-   /*TODO audio settings*/
+    {
+        DisplayButtons(30, 210, PSELECT);
+        DisplayButtons(240, 210, PBACK);
+    }
+    /*TODO audio settings*/
 #if 0
    /* Slider overlay knob */
    SetPolyFT4(&(musicPrims->sliderPrim));
@@ -2411,771 +2363,737 @@ void MusicVSfx (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *
 
    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(musicPrims->slidePrim) );
 #endif
-   AddText (GetCdTrackName(gameData->oldCdTrack-1), text_data (130, 175, 8), RedText) ;
+    AddText(GetCdTrackName(gameData->oldCdTrack - 1), text_data(130, 175, 8), RedText);
 
-   if (selectData->optionNo == 0)
-   {
-      AddText ("SFX",text_data (33, 51, 8),RedText) ;
-      AddText ("MUSIC",text_data (250, 139, 8),RedText) ;
+    if (selectData->optionNo == 0)
+    {
+        AddText("SFX", text_data(33, 51, 8), RedText);
+        AddText("MUSIC", text_data(250, 139, 8), RedText);
 
-      if (pad & IN_LEFT)
-      {
-         andyTimeout = 0;
-         if (!ShieldOn)
-         {
-            PlayNote(SHIELDS,0,-1);
-            ShieldOn = 1;
-         }
-         /*TODO audio
-         chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
-         chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
-         */
-         gameData->oldSliderPos -- ;
-         if (gameData->oldSliderPos < 0)
-            gameData->oldSliderPos = 0 ;
-         SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos))>>6));
-         globalvol = 218 - gameData->oldSliderPos;
-         CdSetVol(gameData->oldSliderPos);
-         SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos))>>6));
-      }
-      else if (pad & IN_RIGHT)
-      {
-         andyTimeout = 0;
-         if (!ShieldOn)
-         {
-            PlayNote(SHIELDS,0,-1);
-            ShieldOn = 1;
-         }
-         /*TODO audio*/
-         //chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
-         //chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
-         gameData->oldSliderPos ++ ;
-         if (gameData->oldSliderPos > sliderRange)
-            gameData->oldSliderPos = sliderRange ;
-         globalvol = 218 - gameData->oldSliderPos;
-         CdSetVol(gameData->oldSliderPos);
-         SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos))>>6));
+        if (pad & IN_LEFT)
+        {
+            andyTimeout = 0;
+            if (!ShieldOn)
+            {
+                PlayNote(SHIELDS, 0, -1);
+                ShieldOn = 1;
+            }
+            /*TODO audio
+            chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
+            chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
+            */
+            gameData->oldSliderPos--;
+            if (gameData->oldSliderPos < 0)
+                gameData->oldSliderPos = 0;
+            SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos)) >> 6));
+            globalvol = 218 - gameData->oldSliderPos;
+            CdSetVol(gameData->oldSliderPos);
+            SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos)) >> 6));
+        }
+        else if (pad & IN_RIGHT)
+        {
+            andyTimeout = 0;
+            if (!ShieldOn)
+            {
+                PlayNote(SHIELDS, 0, -1);
+                ShieldOn = 1;
+            }
+            /*TODO audio*/
+            // chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
+            // chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
+            gameData->oldSliderPos++;
+            if (gameData->oldSliderPos > sliderRange)
+                gameData->oldSliderPos = sliderRange;
+            globalvol = 218 - gameData->oldSliderPos;
+            CdSetVol(gameData->oldSliderPos);
+            SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos)) >> 6));
 #ifdef PORT_SOUND
-         SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos))>>6));
+            SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos)) >> 6));
 #endif
-      }
-      else
-      {
-         if (ShieldOn)
-         {
+        }
+        else
+        {
+            if (ShieldOn)
+            {
+                KillNote(SHIELDS);
+                ShieldOn = 0;
+            }
+            /*TODO audio
+            chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0;
+            chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0;
+            */
+        }
+
+        globalvol = 218 - gameData->oldSliderPos;
+        CdSetVol(gameData->oldSliderPos);
+        /*TODO audio
+        c_attr.cd.volume.left  = 150 * gameData->oldSliderPos;   // Master volume (left)
+        c_attr.cd.volume.right  = 150 * gameData->oldSliderPos;  // Master volume (right)
+        */
+    }
+    else
+    {
+        AddText("SFX", text_data(33, 51, 8), WhiteText);
+        AddText("MUSIC", text_data(250, 139, 8), WhiteText);
+    }
+
+    if (selectData->optionNo == 1)
+    {
+        AddText("SELECT CD", text_data(15, 175, 8), RedText);
+        if (ShieldOn)
+        {
             KillNote(SHIELDS);
             ShieldOn = 0;
-         }
-         /*TODO audio
-         chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0;
-         chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0;
-         */
-      }
+        }
+        if (xpad & IN_LEFT)
+        {
+            andyTimeout = 0;
+            PlayNote(MENU_MOVE, 1, 2);
 
-      globalvol = 218 - gameData->oldSliderPos;
-      CdSetVol(gameData->oldSliderPos);
-      /*TODO audio
-      c_attr.cd.volume.left  = 150 * gameData->oldSliderPos;   // Master volume (left)
-      c_attr.cd.volume.right  = 150 * gameData->oldSliderPos;  // Master volume (right)
-      */
-   }
-   else
-   {
-      AddText ("SFX",text_data (33, 51, 8),WhiteText) ;
-      AddText ("MUSIC",text_data (250, 139, 8),WhiteText) ;
-   }
+            if (gameData->oldCdTrack == starttrack)
+                gameData->oldCdTrack = 1;
+            else
+                gameData->oldCdTrack--;
 
-   if (selectData->optionNo == 1)
-   {
-      AddText ("SELECT CD" , text_data (15, 175, 8), RedText) ;
-      if (ShieldOn)
-      {
-         KillNote(SHIELDS);
-         ShieldOn = 0;
-      }
-      if (xpad & IN_LEFT)
-      {
-         andyTimeout = 0;
-         PlayNote(MENU_MOVE, 1, 2);
+            if (gameData->oldCdTrack < 1)
+                gameData->oldCdTrack = endtrack;
 
-         if (gameData->oldCdTrack == starttrack)
-            gameData->oldCdTrack = 1;
-         else
-            gameData->oldCdTrack -- ;
+            /*TODO audio
+            CdControlB(CdlStop, 0, 0);
 
-         if (gameData->oldCdTrack < 1)
-            gameData->oldCdTrack = endtrack ;
+            if(gameData->oldCdTrack != 1)
+            {
+               //          CdControlB(CdlSetloc, (u_char *)&(loc[gameData->oldCdTrack]), 0);
+               CurrTrkNo = gameData->oldCdTrack;
+               CdControlB(CdlPlay, 0, 0);
+            }
+            else
+            {
+               CurrTrkNo = (randy() % (endtrack - 1)) + 2;
+               CdControlB(CdlPlay, 0, 0);
+            }
+            */
+        }
 
+        if (xpad & IN_RIGHT)
+        {
+            andyTimeout = 0;
+            PlayNote(MENU_MOVE, 1, 2);
 
-         /*TODO audio
-         CdControlB(CdlStop, 0, 0);
+            if (gameData->oldCdTrack == 1)
+                gameData->oldCdTrack = starttrack;
+            else
+                gameData->oldCdTrack++;
 
-         if(gameData->oldCdTrack != 1)
-         {
-            //          CdControlB(CdlSetloc, (u_char *)&(loc[gameData->oldCdTrack]), 0);
-            CurrTrkNo = gameData->oldCdTrack;
-            CdControlB(CdlPlay, 0, 0);
-         }
-         else
-         {
-            CurrTrkNo = (randy() % (endtrack - 1)) + 2;
-            CdControlB(CdlPlay, 0, 0);
-         }
-         */
-      }
+            if (gameData->oldCdTrack > endtrack)
+                gameData->oldCdTrack = 1;
 
-      if (xpad & IN_RIGHT)
-      {
-         andyTimeout = 0;
-         PlayNote(MENU_MOVE, 1, 2);
+            /*TODO audio
+            CdControlB(CdlStop, 0, 0);
 
-         if (gameData->oldCdTrack == 1)
-            gameData->oldCdTrack = starttrack;
-         else
-            gameData->oldCdTrack ++ ;
+            if(gameData->oldCdTrack != 1)
+            {
+               //          CdControlB(CdlSetloc, (u_char *)&(loc[gameData->oldCdTrack]), 0);
+               CurrTrkNo = gameData->oldCdTrack;
+               CdControlB(CdlPlay, 0, 0);
+            }
+            else
+            {
+               CurrTrkNo = (randy() % (endtrack - 1)) + 2;
+               CdControlB(CdlPlay, 0, 0);
+            }
+            */
+        }
+    }
+    else
+    {
+        AddText("SELECT CD", text_data(15, 175, 8), WhiteText);
+    }
 
-         if (gameData->oldCdTrack > endtrack)
-            gameData->oldCdTrack = 1 ;
-
-         /*TODO audio
-         CdControlB(CdlStop, 0, 0);
-
-         if(gameData->oldCdTrack != 1)
-         {
-            //          CdControlB(CdlSetloc, (u_char *)&(loc[gameData->oldCdTrack]), 0);
-            CurrTrkNo = gameData->oldCdTrack;
-            CdControlB(CdlPlay, 0, 0);
-         }
-         else
-         {
-            CurrTrkNo = (randy() % (endtrack - 1)) + 2;
-            CdControlB(CdlPlay, 0, 0);
-         }
-         */
-      }
-   }
-   else
-   {
-      AddText ("SELECT CD" , text_data (15, 175, 8), WhiteText) ;
-   }
-
-   toggle ++ ;
+    toggle++;
 }
 
-void InitLoadSave (char loadGames[][9])
+void InitLoadSave(char loadGames[][9])
 {
-   short i ;
+    short i;
 
-   for (i=0; i < MAX_GAMES; i++)
-      loadGames[i][0] = 0 ;
+    for (i = 0; i < MAX_GAMES; i++)
+        loadGames[i][0] = 0;
 }
 
-
-void EnterLoadGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void EnterLoadGame(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   unsigned short       KeyCode = 0;
-   // extern signed char      etc_KeyPressed;
-   // extern unsigned char etc_Key;
-   // extern unsigned long etc_KeyboardMap[256];
+    unsigned short KeyCode = 0;
+    // extern signed char      etc_KeyPressed;
+    // extern unsigned char etc_Key;
+    // extern unsigned long etc_KeyboardMap[256];
 
+    CentreText("LOAD GAME FROM DISK", text_data(70, 20, 8), RedText);
+    AddText("ENTER NAME OF FILE", text_data(65, 60, 8), WhiteText);
+    /*TODO wtf text input?
+       if(TextEntry)
+       {
+          KeyCode = GetKeyNoBlock();
 
-   CentreText ("LOAD GAME FROM DISK", text_data (70, 20, 8), RedText) ;
-   AddText ("ENTER NAME OF FILE", text_data (65, 60, 8), WhiteText) ;
-/*TODO wtf text input?
-   if(TextEntry)
-   {
-      KeyCode = GetKeyNoBlock();
+          if((KeyCode > 0x40 && KeyCode < 0x5b))//A - Z
+             // ||       // Q - P
 
-      if((KeyCode > 0x40 && KeyCode < 0x5b))//A - Z
-         // ||       // Q - P
+             //  (KeyCode > 29 && KeyCode < 39) ||     // A - L
 
-         //  (KeyCode > 29 && KeyCode < 39) ||     // A - L
+             //(KeyCode > 43 && KeyCode < 51))         // Z - M
+          {
+             LoadFilename[TextPos] = ScanToAscii[KeyCode];
 
-         //(KeyCode > 43 && KeyCode < 51))         // Z - M
-      {
-         LoadFilename[TextPos] = ScanToAscii[KeyCode];
+             if(TextPos < (MAXSTRING - 2))
+                TextPos++;
 
-         if(TextPos < (MAXSTRING - 2))
-            TextPos++;
+             LoadFilename[TextPos] = 101;     // Cursor
+          }
 
-         LoadFilename[TextPos] = 101;     // Cursor
-      }
-
-      if((KeyCode == 0x08) && (TextPos > 0))    // Backspace
-      {
-         LoadFilename[TextPos] = ' ';
-         LoadFilename[--TextPos] = 101;
-      }
-   }
-   else
-   {
-      if(davebodge2 == 0)
-      {
-         strcpy(LoadFilename, "         ");
-         LoadFilename[0] = 101;
-         TextEntry = 1;
-         TextPos = 0;
-      }
-   }
-*/
-   AddText (LoadFilename, text_data (40, 80, 16), WhiteText) ;
+          if((KeyCode == 0x08) && (TextPos > 0))    // Backspace
+          {
+             LoadFilename[TextPos] = ' ';
+             LoadFilename[--TextPos] = 101;
+          }
+       }
+       else
+       {
+          if(davebodge2 == 0)
+          {
+             strcpy(LoadFilename, "         ");
+             LoadFilename[0] = 101;
+             TextEntry = 1;
+             TextPos = 0;
+          }
+       }
+    */
+    AddText(LoadFilename, text_data(40, 80, 16), WhiteText);
 }
 
-
-
-void EnterSaveGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void EnterSaveGame(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   unsigned short       KeyCode = 0;
-   // extern signed char      etc_KeyPressed;
-   // extern unsigned char etc_Key;
-   // extern unsigned long etc_KeyboardMap[256];
+    unsigned short KeyCode = 0;
+    // extern signed char      etc_KeyPressed;
+    // extern unsigned char etc_Key;
+    // extern unsigned long etc_KeyboardMap[256];
 
+    CentreText("SAVE GAME TO DISK", text_data(70, 20, 8), RedText);
+    AddText("ENTER NAME OF FILE", text_data(65, 60, 8), WhiteText);
+    /*TODO wtf text input
+       if(TextEntry)
+       {
+          KeyCode = GetKeyNoBlock();
 
-   CentreText ("SAVE GAME TO DISK", text_data (70, 20, 8), RedText) ;
-   AddText ("ENTER NAME OF FILE", text_data (65, 60, 8), WhiteText) ;
-/*TODO wtf text input
-   if(TextEntry)
-   {
-      KeyCode = GetKeyNoBlock();
+          if((KeyCode > 0x40 && KeyCode < 0x5b))//A - Z
+             //if((KeyCode > 15 && KeyCode < 26) ||       // Q - P
+             //(KeyCode > 29 && KeyCode < 39) ||       // A - L
+             //(KeyCode > 43 && KeyCode < 51))         // Z - M
+          {
+             SaveFilename[TextPos] = ScanToAscii[KeyCode];
 
-      if((KeyCode > 0x40 && KeyCode < 0x5b))//A - Z
-         //if((KeyCode > 15 && KeyCode < 26) ||       // Q - P
-         //(KeyCode > 29 && KeyCode < 39) ||       // A - L
-         //(KeyCode > 43 && KeyCode < 51))         // Z - M
-      {
-         SaveFilename[TextPos] = ScanToAscii[KeyCode];
+             if(TextPos < (MAXSTRING - 2))
+                TextPos++;
 
-         if(TextPos < (MAXSTRING - 2))
-            TextPos++;
+             SaveFilename[TextPos] = 101;     // Cursor
+          }
 
-         SaveFilename[TextPos] = 101;     // Cursor
-      }
+          if((KeyCode == 0x08) && (TextPos > 0))    // Backspace
+          {
+             SaveFilename[TextPos] = ' ';
+             SaveFilename[--TextPos] = 101;
+          }
+       }
+       else
+       {
+          if(davebodge2 == 0)
+          {
+             strcpy(SaveFilename, "         ");
+             SaveFilename[0] = 101;
+             TextEntry = 1;
+             TextPos = 0;
+          }
+       }
 
-      if((KeyCode == 0x08) && (TextPos > 0))    // Backspace
-      {
-         SaveFilename[TextPos] = ' ';
-         SaveFilename[--TextPos] = 101;
-      }
-   }
-   else
-   {
-      if(davebodge2 == 0)
-      {
-         strcpy(SaveFilename, "         ");
-         SaveFilename[0] = 101;
-         TextEntry = 1;
-         TextPos = 0;
-      }
-   }
-
-   AddText (SaveFilename, text_data (40, 80, 16), WhiteText) ;
-*/
+       AddText (SaveFilename, text_data (40, 80, 16), WhiteText) ;
+    */
 }
 
-
-
-void MenuErrors (int *currMenu, Menus *menuSystem)
+void MenuErrors(int* currMenu, Menus* menuSystem)
 {
-   int i ;
+    int i;
 
-   if (menuSystem[*currMenu].updateCount > 0 && menuSystem[*currMenu].errorFlag != 0)
-   {
-      AddText ("ERROR", text_data (105,20, 16), RedText) ;
+    if (menuSystem[*currMenu].updateCount > 0 && menuSystem[*currMenu].errorFlag != 0)
+    {
+        AddText("ERROR", text_data(105, 20, 16), RedText);
 
-      switch ( menuSystem[*currMenu].errorFlag )
-      {
-      case CARD_FULL: AddText ("CARD IS FULL",
-                     text_data (90,112, 12), RedText) ;
-         break ;
+        switch (menuSystem[*currMenu].errorFlag)
+        {
+            case CARD_FULL:
+                AddText("CARD IS FULL", text_data(90, 112, 12), RedText);
+                break;
 
-      case DUP_NAME: AddText ("DUPLICATE NAME",
-                     text_data (50,112, 12), RedText) ;
-         AddText ("PLEASE ENTER NEW NAME",
-            text_data (40,142, 8), RedText) ;
-         break ;
+            case DUP_NAME:
+                AddText("DUPLICATE NAME", text_data(50, 112, 12), RedText);
+                AddText("PLEASE ENTER NEW NAME", text_data(40, 142, 8), RedText);
+                break;
 
-      case LOAD_ERROR:  AddText ("ERROR DURING LOAD",
-                        text_data (25,112, 12), RedText) ;
-         break ;
+            case LOAD_ERROR:
+                AddText("ERROR DURING LOAD", text_data(25, 112, 12), RedText);
+                break;
 
-      case SAVE_ERROR:  AddText ("ERROR DURING SAVE",
-                        text_data (30,112, 12), RedText) ;
-         break ;
+            case SAVE_ERROR:
+                AddText("ERROR DURING SAVE", text_data(30, 112, 12), RedText);
+                break;
 
-      case RENAME_ERROR:AddText ("ERROR DURING RENAME",
-                       text_data (10,112, 12), RedText) ;
-         break ;
+            case RENAME_ERROR:
+                AddText("ERROR DURING RENAME", text_data(10, 112, 12), RedText);
+                break;
 
-      case NO_CARD:  CentreText ("NO CARD PRESENT",
-                     text_data (10,112, 12), RedText) ;
-         break ;
+            case NO_CARD:
+                CentreText("NO CARD PRESENT", text_data(10, 112, 12), RedText);
+                break;
 
-      case NO_FILES: CentreText ("NO FILES PRESENT",
-                     text_data (10,112, 12), RedText) ;
-         break ;
+            case NO_FILES:
+                CentreText("NO FILES PRESENT", text_data(10, 112, 12), RedText);
+                break;
 
-      case NO_FORMAT:CentreText ("CARD NOT FORMATTED",
-                     text_data (10,112, 12), RedText) ;
-         break ;
+            case NO_FORMAT:
+                CentreText("CARD NOT FORMATTED", text_data(10, 112, 12), RedText);
+                break;
 
-      case FORMAT_ERROR:CentreText ("ERROR DURING FORMAT",
-                       text_data (10,112, 12), RedText) ;
-         break ;
+            case FORMAT_ERROR:
+                CentreText("ERROR DURING FORMAT", text_data(10, 112, 12), RedText);
+                break;
 
-         // unknown errors
-      default                       :
-         CentreText("ERROR CONNECTING", text_data (10,112,8), RedText);
-         break;
-         }
+                // unknown errors
+            default:
+                CentreText("ERROR CONNECTING", text_data(10, 112, 8), RedText);
+                break;
+        }
 
-         menuSystem[*currMenu].updateCount -- ;
-      }
-      else
-      {
-         for (i=0; i < MAX_MENUS; i++)
-         {
-            menuSystem[i].errorFlag = 0 ;
-         }
-      }
+        menuSystem[*currMenu].updateCount--;
+    }
+    else
+    {
+        for (i = 0; i < MAX_MENUS; i++)
+        {
+            menuSystem[i].errorFlag = 0;
+        }
+    }
 }
 
-
-
-void ShowHiScores (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void ShowHiScores(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   static int           toggleDisplay = 0 ;
-   short                actualTrack = 0 ;
+    static int toggleDisplay = 0;
+    short actualTrack = 0;
 
-
-   if (GetMenuKey(M_RIGHT))
-   {
-      PlayNote(MENU_MOVE, 1, 20);
-      selectData->hiscoreTrack ++ ;
-      if (gameData->RapierClass == 0)
-      {
-         if (selectData->hiscoreTrack == NumTracks)
-            selectData->hiscoreTrack = (NumTracks-1) ;
-      }
-      else
-      {
-         if (gameData->showBonusTrack == 0)
-         {
+    if (GetMenuKey(M_RIGHT))
+    {
+        PlayNote(MENU_MOVE, 1, 20);
+        selectData->hiscoreTrack++;
+        if (gameData->RapierClass == 0)
+        {
             if (selectData->hiscoreTrack == NumTracks)
-               selectData->hiscoreTrack = (NumTracks + 1) ;
-         }
+                selectData->hiscoreTrack = (NumTracks - 1);
+        }
+        else
+        {
+            if (gameData->showBonusTrack == 0)
+            {
+                if (selectData->hiscoreTrack == NumTracks)
+                    selectData->hiscoreTrack = (NumTracks + 1);
+            }
 
-         if (selectData->hiscoreTrack == totalTracks)
-            selectData->hiscoreTrack = (totalTracks-1) ;
-      }
-   }
+            if (selectData->hiscoreTrack == totalTracks)
+                selectData->hiscoreTrack = (totalTracks - 1);
+        }
+    }
 
-   if (GetMenuKey(M_LEFT))
-   {
-      PlayNote(MENU_MOVE, 1, 20);
-      selectData->hiscoreTrack -- ;
-      if (gameData->RapierClass == 0)
-      {
-         if (selectData->hiscoreTrack < 0)
-            selectData->hiscoreTrack = 0 ;
-      }
-      else
-      {
-         if (gameData->showBonusTrack == 0)
-         {
-            if (selectData->hiscoreTrack == NumTracks)
-               selectData->hiscoreTrack = (NumTracks - 1) ;
-         }
+    if (GetMenuKey(M_LEFT))
+    {
+        PlayNote(MENU_MOVE, 1, 20);
+        selectData->hiscoreTrack--;
+        if (gameData->RapierClass == 0)
+        {
+            if (selectData->hiscoreTrack < 0)
+                selectData->hiscoreTrack = 0;
+        }
+        else
+        {
+            if (gameData->showBonusTrack == 0)
+            {
+                if (selectData->hiscoreTrack == NumTracks)
+                    selectData->hiscoreTrack = (NumTracks - 1);
+            }
 
+            if (selectData->hiscoreTrack < 0)
+                selectData->hiscoreTrack = 0;
+        }
+    }
 
-         if (selectData->hiscoreTrack < 0)
-            selectData->hiscoreTrack = 0 ;
-      }
-   }
+    CentreText("BEST TIMES", text_data(1, 21, 12), RedText);
 
-   CentreText ("BEST TIMES", text_data (1, 21, 12), RedText) ;
+    actualTrack = selectData->hiscoreTrack;
 
-   actualTrack = selectData->hiscoreTrack ;
+    if (selectData->hiscoreTrack >= NumTracks)
+    {
+        if (gameData->showBonusTrack == 0)
+            actualTrack -= (NumTracks + 1);
+        else
+            actualTrack -= NumTracks;
+        CentreText("RAPIER", text_data(1, 40, 8), RedText);
+    }
+    else
+    {
+        CentreText("VENOM", text_data(1, 40, 8), RedText);
+    }
 
-   if (selectData->hiscoreTrack >= NumTracks)
-   {
-      if (gameData->showBonusTrack == 0)
-         actualTrack -= (NumTracks+1) ;
-      else
-         actualTrack -= NumTracks ;
-      CentreText ("RAPIER", text_data (1, 40, 8), RedText) ;
-   }
-   else
-   {
-      CentreText ("VENOM", text_data (1, 40, 8), RedText) ;
-   }
+    DisplayButtons(240, 210, PBACK);
 
-   DisplayButtons ( 240, 210, PBACK) ;
+    if (((gameData->RapierClass == 0) && (selectData->hiscoreTrack == (NumTracks - 1))) || ((gameData->RapierClass == 1) && (selectData->hiscoreTrack == (totalTracks - 1))))
+        DisplayButtons(290, 116, ARROWR);
+    else
+    {
+        if ((toggleDisplay % 30) <= 20)
+            DisplayButtons(290, 116, ARROWR);
+    }
 
+    if (selectData->hiscoreTrack == 0)
+        DisplayButtons(20, 116, ARROWL);
+    else
+    {
+        if ((toggleDisplay % 30) <= 20)
+            DisplayButtons(20, 116, ARROWL);
+    }
 
-   if (((gameData->RapierClass == 0) && (selectData->hiscoreTrack == (NumTracks-1)))
-      || ((gameData->RapierClass == 1) && (selectData->hiscoreTrack == (totalTracks-1))))
-      DisplayButtons ( 290, 116, ARROWR) ;
-   else
-   {
-      if ((toggleDisplay % 30) <= 20)
-         DisplayButtons ( 290, 116, ARROWR) ;
-   }
+    toggleDisplay++;
 
-   if (selectData->hiscoreTrack == 0)
-      DisplayButtons ( 20, 116, ARROWL) ;
-   else
-   {
-      if ((toggleDisplay % 30) <= 20)
-         DisplayButtons ( 20, 116, ARROWL) ;
-   }
+    if (gameData->trackNum <= NumTracks)
+    {
+        CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX, selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY - 70, 12), RedText);
+    }
+    else
+    {
+        CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX, selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY - 70, 12), RedText);
+    }
 
-   toggleDisplay ++ ;
+    if ((toggleDisplay % 30) <= 20)
+    {
+        AddText("LAP RECORD", text_data(40, 195, 8), WhiteText);
+        AddTime(scoreTable[selectData->hiscoreTrack].lapRecord, text_data(165, 188, 16), RedText);
+    }
+    toggleDisplay++;
 
-   if (gameData->trackNum <= NumTracks)
-   {
-      CentreText (selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data ( selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX,
-         selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY-70, 12), RedText) ;
-   }
-   else
-   {
-      CentreText (selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data ( selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX,
-         selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY-70, 12), RedText) ;
-   }
-
-   if ((toggleDisplay % 30) <= 20)
-   {
-      AddText ("LAP RECORD", text_data (40,195, 8), WhiteText) ;
-      AddTime(scoreTable[selectData->hiscoreTrack].lapRecord,
-         text_data (165, 188, 16), RedText);
-   }
-   toggleDisplay ++ ;
-
-   DisplayHiScore (selectData->hiscoreTrack) ;
+    DisplayHiScore(selectData->hiscoreTrack);
 }
 
-
-void ShowTimeTrialScores (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void ShowTimeTrialScores(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   static int           toggleDisplay = 0 ;
-   short                actualTrack = 0 ;
+    static int toggleDisplay = 0;
+    short actualTrack = 0;
 
+    if (GetMenuKey(M_RIGHT))
+    {
+        PlayNote(MENU_MOVE, 1, 20);
+        selectData->hiscoreTrack++;
+        if (gameData->RapierClass == 0)
+        {
+            if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
+                selectData->hiscoreTrack = ((NumTracks - 1) + HiScoreTracks);
+        }
+        else
+        {
+            if (gameData->showBonusTrack == 0)
+            {
+                if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
+                    selectData->hiscoreTrack = ((NumTracks + 1) + HiScoreTracks);
+            }
 
-   if (GetMenuKey(M_RIGHT))
-   {
-      PlayNote(MENU_MOVE, 1, 20);
-      selectData->hiscoreTrack ++ ;
-      if (gameData->RapierClass == 0)
-      {
-         if (selectData->hiscoreTrack == (NumTracks+HiScoreTracks))
-            selectData->hiscoreTrack = ((NumTracks-1)+HiScoreTracks) ;
-      }
-      else
-      {
-         if (gameData->showBonusTrack == 0)
-         {
-            if (selectData->hiscoreTrack == (NumTracks+HiScoreTracks))
-               selectData->hiscoreTrack = ((NumTracks + 1)+HiScoreTracks) ;
-         }
+            if (selectData->hiscoreTrack == (totalTracks + HiScoreTracks))
+                selectData->hiscoreTrack = ((totalTracks - 1) + HiScoreTracks);
+        }
+    }
 
-         if (selectData->hiscoreTrack == (totalTracks+HiScoreTracks))
-            selectData->hiscoreTrack = ((totalTracks-1)+HiScoreTracks) ;
-      }
-   }
+    if (GetMenuKey(M_LEFT))
+    {
+        PlayNote(MENU_MOVE, 1, 20);
+        selectData->hiscoreTrack--;
+        if (gameData->RapierClass == 0)
+        {
+            if (selectData->hiscoreTrack < 14)
+                selectData->hiscoreTrack = 14;
+        }
+        else
+        {
+            if (gameData->showBonusTrack == 0)
+            {
+                if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
+                    selectData->hiscoreTrack = ((NumTracks - 1) + HiScoreTracks);
+            }
 
-   if (GetMenuKey(M_LEFT))
-   {
-      PlayNote(MENU_MOVE, 1, 20);
-      selectData->hiscoreTrack -- ;
-      if (gameData->RapierClass == 0)
-      {
-         if (selectData->hiscoreTrack < 14)
-            selectData->hiscoreTrack = 14 ;
-      }
-      else
-      {
-         if (gameData->showBonusTrack == 0)
-         {
-            if (selectData->hiscoreTrack == (NumTracks+HiScoreTracks))
-               selectData->hiscoreTrack = ((NumTracks - 1)+HiScoreTracks) ;
-         }
+            if (selectData->hiscoreTrack < 14)
+                selectData->hiscoreTrack = 14;
+        }
+    }
 
-         if (selectData->hiscoreTrack < 14)
-            selectData->hiscoreTrack = 14 ;
-      }
-   }
+    CentreText("BEST TIMES", text_data(1, 21, 12), RedText);
 
-   CentreText ("BEST TIMES", text_data (1, 21, 12), RedText) ;
+    actualTrack = (selectData->hiscoreTrack - HiScoreTracks);
 
-   actualTrack = (selectData->hiscoreTrack - HiScoreTracks) ;
+    if ((selectData->hiscoreTrack - HiScoreTracks) >= (NumTracks))
+    {
+        if (gameData->showBonusTrack == 0)
+            actualTrack -= ((NumTracks + 1));
+        else
+            actualTrack -= (NumTracks);
+        CentreText("RAPIER", text_data(1, 40, 8), RedText);
+    }
+    else
+    {
+        CentreText("VENOM", text_data(1, 40, 8), RedText);
+    }
 
-   if ((selectData->hiscoreTrack-HiScoreTracks) >= (NumTracks))
-   {
-      if (gameData->showBonusTrack == 0)
-         actualTrack -= ((NumTracks+1)) ;
-      else
-         actualTrack -= (NumTracks) ;
-      CentreText ("RAPIER", text_data (1, 40, 8), RedText) ;
-   }
-   else
-   {
-      CentreText ("VENOM", text_data (1, 40, 8), RedText) ;
-   }
+    DisplayButtons(240, 210, PBACK);
 
-   DisplayButtons ( 240, 210, PBACK) ;
+    if (((gameData->RapierClass == 0) && ((selectData->hiscoreTrack - HiScoreTracks) == (NumTracks - 1))) || ((gameData->RapierClass == 1) && ((selectData->hiscoreTrack - HiScoreTracks) == (totalTracks - 1))))
+        DisplayButtons(290, 116, ARROWR);
+    else
+    {
+        if ((toggleDisplay % 30) <= 20)
+            DisplayButtons(290, 116, ARROWR);
+    }
 
-   if (((gameData->RapierClass == 0) && ((selectData->hiscoreTrack-HiScoreTracks) == (NumTracks-1)))
-      || ((gameData->RapierClass == 1) && ((selectData->hiscoreTrack-HiScoreTracks) == (totalTracks-1))))
-      DisplayButtons ( 290, 116, ARROWR) ;
-   else
-   {
-      if ((toggleDisplay % 30) <= 20)
-         DisplayButtons ( 290, 116, ARROWR) ;
-   }
+    if ((selectData->hiscoreTrack - HiScoreTracks) == 0)
+        DisplayButtons(20, 116, ARROWL);
+    else
+    {
+        if ((toggleDisplay % 30) <= 20)
+            DisplayButtons(20, 116, ARROWL);
+    }
 
-   if ((selectData->hiscoreTrack-HiScoreTracks) == 0)
-      DisplayButtons ( 20, 116, ARROWL) ;
-   else
-   {
-      if ((toggleDisplay % 30) <= 20)
-         DisplayButtons ( 20, 116, ARROWL) ;
-   }
+    toggleDisplay++;
 
-   toggleDisplay ++ ;
+    if (gameData->trackNum <= NumTracks)
+    {
+        CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX, selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY - 70, 12), RedText);
+    }
+    else
+    {
+        CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX, selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY - 70, 12), RedText);
+    }
 
-   if (gameData->trackNum <= NumTracks)
-   {
-      CentreText (selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data ( selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX,
-         selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY-70, 12), RedText) ;
-   }
-   else
-   {
-      CentreText (selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data ( selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX,
-         selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY-70, 12), RedText) ;
-   }
+    if ((toggleDisplay % 30) <= 20)
+    {
+        AddText("LAP RECORD", text_data(40, 195, 8), WhiteText);
+        AddTime(scoreTable[selectData->hiscoreTrack].lapRecord, text_data(165, 188, 16), RedText);
+    }
+    toggleDisplay++;
 
-
-   if ((toggleDisplay % 30) <= 20)
-   {
-      AddText ("LAP RECORD", text_data (40,195, 8), WhiteText) ;
-      AddTime(scoreTable[selectData->hiscoreTrack].lapRecord,
-         text_data (165, 188, 16), RedText);
-   }
-   toggleDisplay ++ ;
-
-   DisplayHiScore (selectData->hiscoreTrack) ;
+    DisplayHiScore(selectData->hiscoreTrack);
 }
 
-
-void InitGameData (ConfigData *gameData)
+void InitGameData(ConfigData* gameData)
 {
-   gameData->shipNum = randy () % 8 ;
-   gameData->trackNum = gameData->actTrackNum = gameData->ship2Num = 0 ;
-   gameData->oppMenu = gameData->exitMenu = gameData->exit2Menu = gameData->Class = 0 ;
-   gameData->team = gameData->team2 = gameData->gameType = 0 ;
-   gameData->Lives = 3 ;
-   gameData->EndOfGame = 0 ;
-   gameData->continueConfirm = 1 ;
-   gameData->NumTracks = 1 ;
-   gameData->Position = 8 ;
-   gameData->defaultMenu = -2 ;
-   gameData->RapierClass = 0 ;
-   gameData->CheatMode = 0 ;
-   gameData->cdTrack = 1 ;
-   gameData->gameComplete = 0 ;
-   gameData->showPilotCount = 0 ;
-   gameData->gameOverCount = 0 ;
-   gameData->venomComplete = 0 ;
-   gameData->newLapRecord = 0 ;
-   gameData->masterWins = 0 ;
-   gameData->slaveWins = 0 ;
-   gameData->prevLap = 0 ;
-   gameData->gotoMenu = 0 ;
-   gameData->normpadPreset = 0 ;
-   gameData->cardPresent = 0 ;
-   gameData->currSliderPos = 150 ;
-   gameData->showBonusTrack = 0 ;
-   gameData->trackInc = 1 ;
-   gameData->lostGame = 0 ;
-   gameData->showGameOver = 0 ;
+    gameData->shipNum = randy() % 8;
+    gameData->trackNum = gameData->actTrackNum = gameData->ship2Num = 0;
+    gameData->oppMenu = gameData->exitMenu = gameData->exit2Menu = gameData->Class = 0;
+    gameData->team = gameData->team2 = gameData->gameType = 0;
+    gameData->Lives = 3;
+    gameData->EndOfGame = 0;
+    gameData->continueConfirm = 1;
+    gameData->NumTracks = 1;
+    gameData->Position = 8;
+    gameData->defaultMenu = -2;
+    gameData->RapierClass = 0;
+    gameData->CheatMode = 0;
+    gameData->cdTrack = 1;
+    gameData->gameComplete = 0;
+    gameData->showPilotCount = 0;
+    gameData->gameOverCount = 0;
+    gameData->venomComplete = 0;
+    gameData->newLapRecord = 0;
+    gameData->masterWins = 0;
+    gameData->slaveWins = 0;
+    gameData->prevLap = 0;
+    gameData->gotoMenu = 0;
+    gameData->normpadPreset = 0;
+    gameData->cardPresent = 0;
+    gameData->currSliderPos = 150;
+    gameData->showBonusTrack = 0;
+    gameData->trackInc = 1;
+    gameData->lostGame = 0;
+    gameData->showGameOver = 0;
 }
 
-
-void ConfirmSaveGame (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void ConfirmSaveGame(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   static int  toggle = 0 ;
+    static int toggle = 0;
 
-   DisplayButtons ( 30, 210, PSELECT) ;
-   DisplayButtons ( 240, 210, PBACK) ;
+    DisplayButtons(30, 210, PSELECT);
+    DisplayButtons(240, 210, PBACK);
 
-   CentreText ("OVERWRITE EXISTING FILE", text_data (70, 50, 8), RedText) ;
-   if (selectData->saveType == NORM)
-      CentreText ("PERFORM SAVE", text_data (55, 60, 8), WhiteText) ;
+    CentreText("OVERWRITE EXISTING FILE", text_data(70, 50, 8), RedText);
+    if (selectData->saveType == NORM)
+        CentreText("PERFORM SAVE", text_data(55, 60, 8), WhiteText);
 
-   if ((selectData->saveType == OVERWRITE) ||
-      (selectData->saveType == RENAME))
-      CentreText ("OVERWRITE EXISTING FILE", text_data (55, 60, 8), WhiteText) ;
+    if ((selectData->saveType == OVERWRITE) || (selectData->saveType == RENAME))
+        CentreText("OVERWRITE EXISTING FILE", text_data(55, 60, 8), WhiteText);
 
-   AddText (selectData->nameEntered, text_data (140, 74, 8), RedText) ;
+    AddText(selectData->nameEntered, text_data(140, 74, 8), RedText);
 
-   if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
-   {
-      selectData->confirm ^= 1 ;
-      PlayNote(MENU_MOVE, 1, 20);
-   }
+    if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
+    {
+        selectData->confirm ^= 1;
+        PlayNote(MENU_MOVE, 1, 20);
+    }
 
-   if (selectData->confirm)
-   {
-      AddText ("YES", text_data (80, 120, 16), WhiteText) ;
-      //if ((toggle % 2) == 0)
-      AddText ("NO", text_data (210, 120, 16), RedText) ;
-      //else
-      //AddText ("NO", text_data (210, 120, 16), WhiteText) ;
+    if (selectData->confirm)
+    {
+        AddText("YES", text_data(80, 120, 16), WhiteText);
+        // if ((toggle % 2) == 0)
+        AddText("NO", text_data(210, 120, 16), RedText);
+        // else
+        // AddText ("NO", text_data (210, 120, 16), WhiteText) ;
+    }
+    else
+    {
+        // if ((toggle % 2) == 0)
+        AddText("YES", text_data(80, 120, 16), RedText);
+        // else
+        // AddText ("YES", text_data (80, 120, 16), WhiteText) ;
+        AddText("NO", text_data(210, 120, 16), WhiteText);
+    }
 
-   }
-   else
-   {
-      //if ((toggle % 2) == 0)
-      AddText ("YES", text_data (80, 120, 16), RedText) ;
-      //else
-      //AddText ("YES", text_data (80, 120, 16), WhiteText) ;
-      AddText ("NO", text_data (210, 120, 16), WhiteText) ;
-   }
-
-   toggle ++ ;
+    toggle++;
 }
 
-
-
-void  ContinueGameConfirm (char *confirm, short xpad, char *lConfirm, ulong *toggle)
+void ContinueGameConfirm(char* confirm, short xpad, char* lConfirm, ulong* toggle)
 {
-   CentreText ("CONTINUE QUALIFYING OR QUIT", text_data (77, 95, 8), WhiteText) ;
+    CentreText("CONTINUE QUALIFYING OR QUIT", text_data(77, 95, 8), WhiteText);
 
+    if (*lConfirm)
+    {
+        // if ((*toggle %2) == 0)
+        AddText("QUIT", text_data(215, 120, 16), RedText);
+        // else
+        // AddText ("QUIT", text_data (215, 120, 16), WhiteText) ;
+        AddText("QUALIFY", text_data(45, 120, 16), WhiteText);
+    }
+    else
+    {
+        AddText("QUIT", text_data(215, 120, 16), WhiteText);
+        // if ((*toggle %2) == 0)
+        AddText("QUALIFY", text_data(45, 120, 16), RedText);
+        // else
+        // AddText ("QUALIFY", text_data (45, 120, 16), WhiteText) ;
+    }
 
-   if (*lConfirm)
-   {
-      //if ((*toggle %2) == 0)
-      AddText ("QUIT", text_data (215, 120, 16), RedText) ;
-      //else
-      //AddText ("QUIT", text_data (215, 120, 16), WhiteText) ;
-      AddText ("QUALIFY", text_data (45, 120, 16), WhiteText) ;
-   }
-   else
-   {
-      AddText ("QUIT", text_data (215, 120, 16), WhiteText) ;
-      //if ((*toggle %2) == 0)
-      AddText ("QUALIFY", text_data (45, 120, 16), RedText) ;
-      //else
-      //AddText ("QUALIFY", text_data (45, 120, 16), WhiteText) ;
-   }
-
-   (*toggle) ++ ;
+    (*toggle)++;
 }
 
-
-void  RestartGameConfirm (char *confirm, short xpad, char *lConfirm, ulong *toggle)
+void RestartGameConfirm(char* confirm, short xpad, char* lConfirm, ulong* toggle)
 {
-   CentreText ("RESTART RACE", text_data (77, 95, 16), WhiteText) ;
+    CentreText("RESTART RACE", text_data(77, 95, 16), WhiteText);
 
+    if (*lConfirm)
+    {
+        // if ((*toggle %2) == 0)
+        AddText("NO", text_data(215, 120, 16), RedText);
+        // else
+        // AddText ("NO", text_data (215, 120, 16), WhiteText) ;
+        AddText("YES", text_data(68, 120, 16), WhiteText);
+    }
+    else
+    {
+        AddText("NO", text_data(215, 120, 16), WhiteText);
+        // if ((*toggle %2) == 0)
+        AddText("YES", text_data(68, 120, 16), RedText);
+        // else
+        // AddText ("YES", text_data (68, 120, 16), WhiteText) ;
+    }
 
-   if (*lConfirm)
-   {
-      //if ((*toggle %2) == 0)
-      AddText ("NO", text_data (215, 120, 16), RedText) ;
-      //else
-      //AddText ("NO", text_data (215, 120, 16), WhiteText) ;
-      AddText ("YES", text_data (68, 120, 16), WhiteText) ;
-   }
-   else
-   {
-      AddText ("NO", text_data (215, 120, 16), WhiteText) ;
-      //if ((*toggle %2) == 0)
-      AddText ("YES", text_data (68, 120, 16), RedText) ;
-      //else
-      //AddText ("YES", text_data (68, 120, 16), WhiteText) ;
-   }
-
-   (*toggle) ++ ;
+    (*toggle)++;
 }
 
-void SetUpPilots (int teamNum, Menus *menuSystem)
+void SetUpPilots(int teamNum, Menus* menuSystem)
 {
 
-   if (teamNum == AG_SYSTEMS)
-   {
-      strcpy (menuSystem[7].menuOptions[0].optionText,"JOHN DEKKA") ;
-      strcpy (menuSystem[7].menuOptions[1].optionText,"DANIEL CHANG") ;
-   }
+    if (teamNum == AG_SYSTEMS)
+    {
+        strcpy(menuSystem[7].menuOptions[0].optionText, "JOHN DEKKA");
+        strcpy(menuSystem[7].menuOptions[1].optionText, "DANIEL CHANG");
+    }
 
-   if (teamNum == AURICOM)
-   {
-      strcpy (menuSystem[7].menuOptions[0].optionText,"ARIAL TETSUO") ;
-      strcpy (menuSystem[7].menuOptions[1].optionText,"ANASTASIA CHEROVOSKI") ;
-   }
+    if (teamNum == AURICOM)
+    {
+        strcpy(menuSystem[7].menuOptions[0].optionText, "ARIAL TETSUO");
+        strcpy(menuSystem[7].menuOptions[1].optionText, "ANASTASIA CHEROVOSKI");
+    }
 
-   if (teamNum == QIREX)
-   {
-      strcpy (menuSystem[7].menuOptions[0].optionText,"KEL SOLAAR") ;
-      strcpy (menuSystem[7].menuOptions[1].optionText,"ARIAN TETSUO") ;
-   }
+    if (teamNum == QIREX)
+    {
+        strcpy(menuSystem[7].menuOptions[0].optionText, "KEL SOLAAR");
+        strcpy(menuSystem[7].menuOptions[1].optionText, "ARIAN TETSUO");
+    }
 
-   if (teamNum == FEISAR)
-   {
-      strcpy (menuSystem[7].menuOptions[0].optionText,"SOFIA DE LA RENTE") ;
-      strcpy (menuSystem[7].menuOptions[1].optionText,"PAUL JACKSON") ;
-   }
+    if (teamNum == FEISAR)
+    {
+        strcpy(menuSystem[7].menuOptions[0].optionText, "SOFIA DE LA RENTE");
+        strcpy(menuSystem[7].menuOptions[1].optionText, "PAUL JACKSON");
+    }
 }
 
-void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void MenuPlayPad(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   static int  delay = 0 ;
-   static char key = 0 ;
-   static int  toggleDisplay = 0 ;
-   char   temp = 0 ;
+    static int delay = 0;
+    static char key = 0;
+    static int toggleDisplay = 0;
+    char temp = 0;
 
-   DisplayButtons ( 30, 210, PSELECT) ;
-   DisplayButtons ( 240, 210, PBACK) ;
+    DisplayButtons(30, 210, PSELECT);
+    DisplayButtons(240, 210, PBACK);
 
-   if ((toggleDisplay % 30) <= 20)
-   {
-      DisplayButtons ( 290, 116, ARROWR) ;
-      DisplayButtons ( 20, 116, ARROWL) ;
-   }
+    if ((toggleDisplay % 30) <= 20)
+    {
+        DisplayButtons(290, 116, ARROWR);
+        DisplayButtons(20, 116, ARROWL);
+    }
 
-   toggleDisplay ++ ;
+    toggleDisplay++;
 
-   CentreText ("JOYPAD CONFIGURATION", text_data (1,21, 8), RedText) ;
+    CentreText("JOYPAD CONFIGURATION", text_data(1, 21, 8), RedText);
 
-   temp = 0 ;
+    temp = 0;
 
-   if (delay == 0)
-   {
-      if ((GetMenuKey(M_RIGHT)))
-      {
-         key = 1 ;
-         temp = 1 ;
-         delay = 32 ;
-         PlayNote(MENU_MOVE, 1, 20);
-         gameData->oldPadPreset ++ ;
-         if (gameData->oldPadPreset == NORMPAD_PRESETS)
-            gameData->oldPadPreset = 0 ;
-      }
+    if (delay == 0)
+    {
+        if ((GetMenuKey(M_RIGHT)))
+        {
+            key = 1;
+            temp = 1;
+            delay = 32;
+            PlayNote(MENU_MOVE, 1, 20);
+            gameData->oldPadPreset++;
+            if (gameData->oldPadPreset == NORMPAD_PRESETS)
+                gameData->oldPadPreset = 0;
+        }
 
-      if ((GetMenuKey(M_LEFT)))
-      {
-         key = 2 ;
-         temp = 1 ;
-         delay = 32 ;
-         PlayNote(MENU_MOVE, 1, 20);
-         gameData->oldPadPreset -- ;
-         if (gameData->oldPadPreset < 0)
-            gameData->oldPadPreset = (NORMPAD_PRESETS-1) ;
-      }
+        if ((GetMenuKey(M_LEFT)))
+        {
+            key = 2;
+            temp = 1;
+            delay = 32;
+            PlayNote(MENU_MOVE, 1, 20);
+            gameData->oldPadPreset--;
+            if (gameData->oldPadPreset < 0)
+                gameData->oldPadPreset = (NORMPAD_PRESETS - 1);
+        }
 
-      if (temp == 0)
-      {
-         DisplayButtons ( 17, 153, LBRAKE) ; /* Left */
-         DisplayButtons ( 237, 153, RBRAKE) ; /* Right */
-         /*TODO show controls*/
+        if (temp == 0)
+        {
+            DisplayButtons(17, 153, LBRAKE); /* Left */
+            DisplayButtons(237, 153, RBRAKE); /* Right */
+            /*TODO show controls*/
 #if 0
          switch (gameData->oldPadPreset)
          {
@@ -3289,554 +3207,545 @@ void MenuPlayPad (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData
             break ;
          }
 #endif
-      }
-   }
-   else
-   {
-      delay -- ;
-      if (key == 1)
-         modelHdg += 256 ;
+        }
+    }
+    else
+    {
+        delay--;
+        if (key == 1)
+            modelHdg += 256;
 
-      if (key == 2)
-         modelHdg -= 256 ;
+        if (key == 2)
+            modelHdg -= 256;
 
-      if (delay > 15)
-      {
-         zoomInOut += 500 ;
-         downUp += 500 ;
-      }
+        if (delay > 15)
+        {
+            zoomInOut += 500;
+            downUp += 500;
+        }
 
-      if (delay <= 15)
-      {
-         zoomInOut -= 500 ;
-         downUp -= 500 ;
-      }
-   }
+        if (delay <= 15)
+        {
+            zoomInOut -= 500;
+            downUp -= 500;
+        }
+    }
 }
 
-void SetNormPadPresets (ConfigData *gameData)
+void SetNormPadPresets(ConfigData* gameData)
 {
-   switch (gameData->normpadPreset)
-   {
-   case 0 :
-      pCon.thrust    = IN_A;
-      pCon.view      = IN_Y;
-      pCon.fire      = IN_B;
-      pCon.lBrake    = IN_RT;
-      pCon.rBrake    = IN_LT;
-      break ;
+    switch (gameData->normpadPreset)
+    {
+        case 0:
+            pCon.thrust = IN_A;
+            pCon.view = IN_Y;
+            pCon.fire = IN_B;
+            pCon.lBrake = IN_RT;
+            pCon.rBrake = IN_LT;
+            break;
 
-   case 1 :
-      pCon.thrust    = IN_A;
-      pCon.view      = IN_Y;
-      pCon.fire      = IN_X;
-      pCon.lBrake    = IN_RT;
-      pCon.rBrake    = IN_LT;
-      break ;
+        case 1:
+            pCon.thrust = IN_A;
+            pCon.view = IN_Y;
+            pCon.fire = IN_X;
+            pCon.lBrake = IN_RT;
+            pCon.rBrake = IN_LT;
+            break;
 
-   case 2 :
-      pCon.thrust    = IN_A;
-      pCon.view      = IN_LB;
-      pCon.fire      = IN_RB;
-      pCon.lBrake    = IN_RT;
-      pCon.rBrake    = IN_LT;
-      break ;
+        case 2:
+            pCon.thrust = IN_A;
+            pCon.view = IN_LB;
+            pCon.fire = IN_RB;
+            pCon.lBrake = IN_RT;
+            pCon.rBrake = IN_LT;
+            break;
 
-   case 3 :
-      pCon.thrust    = IN_X;
-      pCon.view      = IN_B;
-      pCon.fire      = IN_A;
-      pCon.lBrake    = IN_RT;
-      pCon.rBrake    = IN_LT;
-      break ;
+        case 3:
+            pCon.thrust = IN_X;
+            pCon.view = IN_B;
+            pCon.fire = IN_A;
+            pCon.lBrake = IN_RT;
+            pCon.rBrake = IN_LT;
+            break;
 
-   case 4 :
-      pCon.thrust    = IN_A;
-      pCon.view      = IN_Y;
-      pCon.fire      = IN_B;
-      pCon.lBrake    = IN_RB;
-      pCon.rBrake    = IN_LB;
-      break ;
+        case 4:
+            pCon.thrust = IN_A;
+            pCon.view = IN_Y;
+            pCon.fire = IN_B;
+            pCon.lBrake = IN_RB;
+            pCon.rBrake = IN_LB;
+            break;
 
-   case 5 :
-      pCon.thrust    = IN_A;
-      pCon.view      = IN_Y;
-      pCon.fire      = IN_X;
-      pCon.lBrake    = IN_RB;
-      pCon.rBrake    = IN_LB;
-      break ;
+        case 5:
+            pCon.thrust = IN_A;
+            pCon.view = IN_Y;
+            pCon.fire = IN_X;
+            pCon.lBrake = IN_RB;
+            pCon.rBrake = IN_LB;
+            break;
 
-   case 6 :
-      pCon.thrust    = IN_Y;
-      pCon.view      = IN_X;
-      pCon.fire      = IN_B;
-      pCon.lBrake    = IN_RT;
-      pCon.rBrake    = IN_LT;
-      break ;
+        case 6:
+            pCon.thrust = IN_Y;
+            pCon.view = IN_X;
+            pCon.fire = IN_B;
+            pCon.lBrake = IN_RT;
+            pCon.rBrake = IN_LT;
+            break;
 
-   case 7 :
-      pCon.thrust    = IN_B;
-      pCon.view      = IN_X;
-      pCon.fire      = IN_Y;
-      pCon.lBrake    = IN_RT;
-      pCon.rBrake    = IN_LT;
-      break ;
-   }
+        case 7:
+            pCon.thrust = IN_B;
+            pCon.view = IN_X;
+            pCon.fire = IN_Y;
+            pCon.lBrake = IN_RT;
+            pCon.rBrake = IN_LT;
+            break;
+    }
 }
 
-
-void DrawGames (Menus *menuSystem, int *currMenu, int shipNo)
+void DrawGames(Menus* menuSystem, int* currMenu, int shipNo)
 {
-   int hdg = gFrameIndex * 20;
+    int hdg = gFrameIndex * 20;
 
-   InitMenuDisplay (90) ;
+    InitMenuDisplay(90);
 
-   // jed
+    // jed
 
-   if (shipNo == 0)
-   {
-      // jed
+    if (shipNo == 0)
+    {
+        // jed
 
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, -50,600) ;   /*1800*/
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),hdg, 0, 0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
-   }
+        SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton), 0, -50, 600); /*1800*/
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton), hdg, 0, 0);
+        TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
+    }
 
-   if (shipNo == 1)
-   {
-      // jed
+    if (shipNo == 1)
+    {
+        // jed
 
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, -50,600) ;   /*1800*/
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),hdg, 0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
-   }
+        SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton), 0, -50, 600); /*1800*/
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton), hdg, 0, 0);
+        TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
+    }
 
+    if (shipNo == 2)
+    {
+        // jed
 
-   if (shipNo == 2)
-   {
-      // jed
-
-      SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[2]->skeleton),0,-50,600) ;   /*1800*/
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[2]->skeleton), hdg, 0,0);
-      TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[2]);
-   }
+        SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[2]->skeleton), 0, -50, 600); /*1800*/
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[2]->skeleton), hdg, 0, 0);
+        TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[2]);
+    }
 }
 
-
-
-void DrawOptionMenus(Menus *menuSystem, int *currMenu, int shipNo)
+void DrawOptionMenus(Menus* menuSystem, int* currMenu, int shipNo)
 {
-   int hdg = gFrameIndex * 20;
-   int heading = gFrameIndex * 5;
+    int hdg = gFrameIndex * 20;
+    int heading = gFrameIndex * 5;
 
-   andybodge=1;   // pc wipeout - horrid but i don't care !!! (used in detail & controller configs)
+    andybodge = 1; // pc wipeout - horrid but i don't care !!! (used in detail & controller configs)
 
-   InitMenuDisplay (90) ;
+    InitMenuDisplay(90);
 
-   if (shipNo == 0)
-   {
-      // jed
-      Reallyinmenu = 0;
-      inmenu = 1;
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 0, 400) ;    /*1800*/
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg,0, 0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
-   }
+    if (shipNo == 0)
+    {
+        // jed
+        Reallyinmenu = 0;
+        inmenu = 1;
+        SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton), 0, 0, 400); /*1800*/
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg, 0, 0);
+        TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
+    }
 
-   if (shipNo == 1)
-   {
-      // jed
+    if (shipNo == 1)
+    {
+        // jed
 
-      Reallyinmenu = 0;
-      inmenu = 1;
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, 0, 400) ;    /*1800*/
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton), hdg,0, 0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
-   }
+        Reallyinmenu = 0;
+        inmenu = 1;
+        SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton), 0, 0, 400); /*1800*/
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton), hdg, 0, 0);
+        TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
+    }
 
-   if (shipNo == 2)
-   {
-      // jed
+    if (shipNo == 2)
+    {
+        // jed
 
-      Reallyinmenu = 0;
-      inmenu = 1;
-      /*TODO input menu
-      switch(controller)
-      {
-      case _KEYBOARD:
-         DisplayPadMenu1(menuSystem,currMenu,shipNo);
-         break;
-      case _MOUSE1:
-         DisplayPadMenu(menuSystem,currMenu,shipNo);
-         break;
-      case _JOYSTICK1:
-         DisplayPadMenu2(menuSystem,currMenu,shipNo);
-         break;
-      }
-      */
-   }
+        Reallyinmenu = 0;
+        inmenu = 1;
+        /*TODO input menu
+        switch(controller)
+        {
+        case _KEYBOARD:
+           DisplayPadMenu1(menuSystem,currMenu,shipNo);
+           break;
+        case _MOUSE1:
+           DisplayPadMenu(menuSystem,currMenu,shipNo);
+           break;
+        case _JOYSTICK1:
+           DisplayPadMenu2(menuSystem,currMenu,shipNo);
+           break;
+        }
+        */
+    }
 
-   if (shipNo == 3)           // Graphics Detail
-   {
-      // jed
+    if (shipNo == 3) // Graphics Detail
+    {
+        // jed
 
-      Reallyinmenu = 1;
-      inmenu = 0;
-      DrawTeamShips (0, 0, MODELSIZE, heading, menuSystem[DETAILS_MENU].menuModel[shipShapeOrder[0]]) ;
-      //    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 600) ;    /*1800*/
-      //    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton), hdg,0, 0);
-      //    TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
-   }
+        Reallyinmenu = 1;
+        inmenu = 0;
+        DrawTeamShips(0, 0, MODELSIZE, heading, menuSystem[DETAILS_MENU].menuModel[shipShapeOrder[0]]);
+        //    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 600) ;    /*1800*/
+        //    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton), hdg,0, 0);
+        //    TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
+    }
 
-   //silly me - I thought shipNo meant it was drawing ships...
-   //it was drawing headphones all the time. SJR
+    // silly me - I thought shipNo meant it was drawing ships...
+    // it was drawing headphones all the time. SJR
 
-   /*if (shipNo == 4)
-   {
-   // jed
-   Reallyinmenu = 0;
-   inmenu = 1;
-   SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[3]->skeleton),0, 0, 600) ;    //1800
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[3]->skeleton),  hdg,0,0);
-      TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[3]);
-}*/
+    /*if (shipNo == 4)
+    {
+    // jed
+    Reallyinmenu = 0;
+    inmenu = 1;
+    SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[3]->skeleton),0, 0, 600) ;    //1800
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[3]->skeleton),  hdg,0,0);
+       TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[3]);
+ }*/
 
-   //now i'tll not draw the headphones and draw the stopwatch instead.
-   if (shipNo == 4)
-   {
-      // jed
-      Reallyinmenu = 0;
-      inmenu = 1;
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 600) ;    /*1800*/
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),  hdg,0,0);
-      TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[2]);
-   }
+    // now i'tll not draw the headphones and draw the stopwatch instead.
+    if (shipNo == 4)
+    {
+        // jed
+        Reallyinmenu = 0;
+        inmenu = 1;
+        SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton), 0, 0, 600); /*1800*/
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton), hdg, 0, 0);
+        TransformStaticMenuObject(menuSystem[(*currMenu)].menuModel[2]);
+    }
 }
 
-
-void DrawHiScoreMenu (Menus *menuSystem, int *currMenu, int shipNo)
+void DrawHiScoreMenu(Menus* menuSystem, int* currMenu, int shipNo)
 {
-   int hdg = gFrameIndex * 20;
+    int hdg = gFrameIndex * 20;
 
-   InitMenuDisplay (90) ;
+    InitMenuDisplay(90);
 
-   if ((shipNo == 0) || (shipNo == 1))
-   {
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0,0,600) ;   /*1800*/
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),hdg, 0,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
-   }
+    if ((shipNo == 0) || (shipNo == 1))
+    {
+        SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton), 0, 0, 600); /*1800*/
+        SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton), hdg, 0, 0);
+        TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
+    }
 }
 
-void DisplayPadMenu (Menus *menuSystem, int *currMenu, int shapeNo)
+void DisplayPadMenu(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   int hdg = gFrameIndex * 20;
-   // jed
-   SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[0]->skeleton),0,0, 6500) ;
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[0]->skeleton), hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menu2Model[0]);
+    int hdg = gFrameIndex * 20;
+    // jed
+    SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[0]->skeleton), 0, 0, 6500);
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[0]->skeleton), hdg, 0, 0);
+    TransformStaticObject(menuSystem[(*currMenu)].menu2Model[0]);
 }
 
-void DisplayPadMenu1 (Menus *menuSystem, int *currMenu, int shapeNo)
+void DisplayPadMenu1(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   int hdg = gFrameIndex * 20;
-   // jed
-   SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[1]->skeleton),0,-5,   4500) ;
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[1]->skeleton), hdg,0,0);
-   TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[1]);
+    int hdg = gFrameIndex * 20;
+    // jed
+    SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[1]->skeleton), 0, -5, 4500);
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[1]->skeleton), hdg, 0, 0);
+    TransformStaticMenuObject(menuSystem[(*currMenu)].menu2Model[1]);
 }
 
-void DisplayPadMenu2 (Menus *menuSystem, int *currMenu, int shapeNo)
+void DisplayPadMenu2(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   int hdg = gFrameIndex * 20;
-   // jed
-   SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[2]->skeleton),0,0, 4500) ;
-   SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[2]->skeleton), hdg,0,0);
-   TransformStaticObject(menuSystem[(*currMenu)].menu2Model[2]);
+    int hdg = gFrameIndex * 20;
+    // jed
+    SetSkeletonPosition((menuSystem[(*currMenu)].menu2Model[2]->skeleton), 0, 0, 4500);
+    SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menu2Model[2]->skeleton), hdg, 0, 0);
+    TransformStaticObject(menuSystem[(*currMenu)].menu2Model[2]);
 }
 
-void DisplayNegConMenu (Menus *menuSystem, int *currMenu, int shapeNo)
+void DisplayNegConMenu(Menus* menuSystem, int* currMenu, int shapeNo) { }
+
+void ConfirmFormat(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
+    DisplayButtons(30, 210, PSELECT);
+    DisplayButtons(240, 210, PBACK);
+
+    CentreText("FORMAT DISK", text_data(70, 20, 8), RedText);
+    CentreText("DO YOU WISH TO FORMAT CARD", text_data(55, 60, 8), WhiteText);
+    if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
+    {
+        selectData->formatConfirm ^= 1;
+        PlayNote(MENU_MOVE, 1, 20);
+    }
+
+    if (selectData->formatConfirm)
+    {
+        // if ((toggle % 2) == 0)
+        AddText("YES", text_data(80, 120, 16), RedText);
+        // else
+        // AddText ("YES", text_data (80, 120, 16), WhiteText) ;
+        AddText("NO", text_data(210, 120, 16), WhiteText);
+    }
+    else
+    {
+        AddText("YES", text_data(80, 120, 16), WhiteText);
+        // if ((toggle % 2) == 0)
+        AddText("NO", text_data(210, 120, 16), RedText);
+        // else
+        // AddText ("NO", text_data (210, 120, 16), WhiteText) ;
+    }
 }
 
-
-void ConfirmFormat (MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void InitChampionship()
 {
-   DisplayButtons ( 30, 210, PSELECT) ;
-   DisplayButtons ( 240, 210, PBACK) ;
+    short i;
 
-   CentreText ("FORMAT DISK", text_data (70, 20, 8), RedText) ;
-   CentreText ("DO YOU WISH TO FORMAT CARD", text_data (55, 60, 8), WhiteText) ;
-   if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
-   {
-      selectData->formatConfirm ^= 1 ;
-      PlayNote(MENU_MOVE, 1, 20);
-   }
-
-   if (selectData->formatConfirm)
-   {
-      //if ((toggle % 2) == 0)
-      AddText ("YES", text_data (80, 120, 16), RedText) ;
-      //else
-      //AddText ("YES", text_data (80, 120, 16), WhiteText) ;
-      AddText ("NO", text_data (210, 120, 16), WhiteText) ;
-   }
-   else
-   {
-      AddText ("YES", text_data (80, 120, 16), WhiteText) ;
-      //if ((toggle % 2) == 0)
-      AddText ("NO", text_data (210, 120, 16), RedText) ;
-      //else
-      //AddText ("NO", text_data (210, 120, 16), WhiteText) ;
-   }
+    for (i = 0; i < NO_OF_SHIPS; i++)
+    {
+        winTable[i].points = 0;
+        winTable[i].racePoints = 0;
+        winTable[i].pilot[0] = '\0';
+        winTable[i].xPos = 0;
+        winTable[i].position = 0;
+        winTable[i].racePosition = 0;
+    }
 }
 
-void InitChampionship ()
+void CheckSaveType(SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   short i ;
+    LoadCardFiles(selectData, &(loadGames[0]), selectData->cardNum);
 
-   for (i=0; i < NO_OF_SHIPS; i++)
-   {
-      winTable[i].points = 0 ;
-      winTable[i].racePoints = 0 ;
-      winTable[i].pilot[0] = '\0' ;
-      winTable[i].xPos = 0 ;
-      winTable[i].position = 0 ;
-      winTable[i].racePosition = 0 ;
-   }
+    if (((selectData->slotRow * 2) + (selectData->slotColumn + 1)) == (selectData->slotsFilled + 1))
+    {
+        if (selectData->nameEntered[0] != 0)
+        {
+            selectData->saveType = NORM;
+        }
+    }
+    else
+    {
+        if (selectData->nameEntered[0] != 0)
+        {
+            if (strcmp(selectData->nameEntered, loadGames[(selectData->slotRow * 2) + selectData->slotColumn]) == 0)
+            {
+                selectData->saveType = OVERWRITE;
+            }
+            else
+            {
+
+                selectData->saveType = RENAME;
+            }
+        }
+    }
 }
 
-
-void CheckSaveType (SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void InitButtons(char* fileName)
 {
-   LoadCardFiles (selectData, &(loadGames[0]), selectData->cardNum)  ;
+    TIMlist* timPtr;
+    short tablePos;
+    char modelFile[256];
+    int i;
 
-   if (((selectData->slotRow*2)+(selectData->slotColumn+1)) == (selectData->slotsFilled+1))
-   {
-      if (selectData->nameEntered[0] != 0)
-      {
-         selectData->saveType = NORM ;
-      }
-   }
-   else
-   {
-      if (selectData->nameEntered[0] != 0)
-      {
-         if ( strcmp (selectData->nameEntered, loadGames[(selectData->slotRow*2)+selectData->slotColumn]) == 0)
-         {
-            selectData->saveType = OVERWRITE ;
-         }
-         else
-         {
+    strcpy(modelFile, "wipeout\\textures\\");
+    strcat(modelFile, fileName);
+    strcat(modelFile, ".cmp");
 
-            selectData->saveType = RENAME ;
-         }
-      }
-   }
+    tablePos = TextureTableCount;
+
+    timPtr = LoadCompressedTextureSequence(modelFile);
+    LoadCmpFiles(timPtr);
+
+    for (i = 0; i < 18; i++)
+    {
+        buttonTex[i] = TextureTable[tablePos];
+        tablePos++;
+    }
 }
 
-void InitButtons (char *fileName)
+void DisplayButtons(int x, int y, int buttType)
 {
-   TIMlist        *timPtr;
-   short          tablePos ;
-   char           modelFile[256];
-   int            i ;
+    const Texture* tex = buttonTex[buttType];
+    AddGlyph(x, y, (tex->textureW * 4) - 1, tex->textureH, tex->u0, tex->v0, tex->cba);
 
-   strcpy( modelFile, "wipeout\\textures\\" );
-   strcat( modelFile, fileName) ;
-   strcat( modelFile, ".cmp");
+    /*
+       GRECT  tw;
 
-   tablePos = TextureTableCount;
+       SetDrawMode(&(drmode[buttType][CurrentScreen]), 0, 0, FONT_TPAGE, &tw);
+       AddPrim(OT[CurrentScreen], (ulong *)&(drmode[buttType][CurrentScreen]));
 
-   timPtr = LoadCompressedTextureSequence( modelFile );
-   LoadCmpFiles( timPtr );
+       SetSprt(&(buttons[buttType][CurrentScreen]));
 
-   for (i=0; i < 18; i++)
-   {
-      buttonTex[i] = TextureTable [tablePos] ;
-      tablePos ++ ;
-   }
+       buttons[buttType][CurrentScreen].r0=230 ; // PCwipeout
+       buttons[buttType][CurrentScreen].g0=0 ;
+       buttons[buttType][CurrentScreen].b0=BLACK_NOT_DRAWN ;
+
+       buttons[buttType][CurrentScreen].x0 = x;
+       buttons[buttType][CurrentScreen].y0 = y;
+
+       buttons[buttType][CurrentScreen].w = ;
+       buttons[buttType][CurrentScreen].h = ;
+
+       buttons[buttType][CurrentScreen].u0 = ;
+       buttons[buttType][CurrentScreen].v0 = ;
+
+          AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(buttons[buttType][CurrentScreen]) );
+
+          SetDrawMode(&drmode2[buttType][CurrentScreen], 0, 0, 27, &tw);
+          AddPrim(OT[CurrentScreen], (ulong *)&drmode2[buttType][CurrentScreen]);*/
 }
 
-void DisplayButtons (int x, int y, int buttType)
+void DrawLine(int x, int y, int x1, int y1, int lineNum)
 {
-   const Texture* tex = buttonTex[buttType];
-   AddGlyph(x, y, (tex->textureW * 4) - 1, tex->textureH, tex->u0, tex->v0, tex->cba);
+    /*TODO draw line
+    SetPolyF4(&(line[lineNum]));
+    line[lineNum].r0=230 ;
+    line[lineNum].g0=0 ;
+    line[lineNum].b0=BLACK_NOT_DRAWN ;
 
-/*
-   GRECT  tw;
+    setXY4(&(line[lineNum]),x, y, x+2, y,
+       x1, y1, x1+2,y1+2 ) ;
 
-   SetDrawMode(&(drmode[buttType][CurrentScreen]), 0, 0, FONT_TPAGE, &tw);
-   AddPrim(OT[CurrentScreen], (ulong *)&(drmode[buttType][CurrentScreen]));
-
-   SetSprt(&(buttons[buttType][CurrentScreen]));
-
-   buttons[buttType][CurrentScreen].r0=230 ; // PCwipeout
-   buttons[buttType][CurrentScreen].g0=0 ;
-   buttons[buttType][CurrentScreen].b0=BLACK_NOT_DRAWN ;
-
-   buttons[buttType][CurrentScreen].x0 = x;
-   buttons[buttType][CurrentScreen].y0 = y;
-
-   buttons[buttType][CurrentScreen].w = ;
-   buttons[buttType][CurrentScreen].h = ;
-
-   buttons[buttType][CurrentScreen].u0 = ;
-   buttons[buttType][CurrentScreen].v0 = ;
-
-      AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(buttons[buttType][CurrentScreen]) );
-
-      SetDrawMode(&drmode2[buttType][CurrentScreen], 0, 0, 27, &tw);
-      AddPrim(OT[CurrentScreen], (ulong *)&drmode2[buttType][CurrentScreen]);*/
+    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(line[lineNum]) );
+    */
 }
 
-void DrawLine (int x, int y, int x1, int y1, int lineNum)
+void JJSReadTIM(char* filename, char* location, TimData* tim)
 {
-   /*TODO draw line
-   SetPolyF4(&(line[lineNum]));
-   line[lineNum].r0=230 ;
-   line[lineNum].g0=0 ;
-   line[lineNum].b0=BLACK_NOT_DRAWN ;
+    FILE* fp;
+    unsigned short pix0, pix1, *data;
+    int i;
 
-   setXY4(&(line[lineNum]),x, y, x+2, y,
-      x1, y1, x1+2,y1+2 ) ;
-
-   AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(line[lineNum]) );
-   */
+    fp = fopen(filename, "rb");
+    fread(tim, 12, 1, fp); // id and flags & bnum
+    fread(&tim->textureX, 2, 1, fp);
+    fread(&tim->textureY, 2, 1, fp);
+    fread(&tim->textureH, 2, 1, fp);
+    fread(&tim->textureW, 2, 1, fp);
+    data = (unsigned short*)location;
+    for (i = 0; i < 320 * 240; ++i)
+    {
+        fread(&pix0, 2, 1, fp);
+        /*
+        if(Screen565)
+           pix1=((pix0&0x1f)<<11)|((pix0&0x3e0)<<1)|(pix0>>10);
+        else*/
+        pix1 = ((pix0 & 0x1f) << 10) | (pix0 & 0x3e0) | (pix0 >> 10);
+        *data++ = pix1;
+    }
+    fclose(fp);
 }
 
-void JJSReadTIM(char *filename , char *location, TimData *tim)
+void QuitYesNo(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   FILE *fp;
-   unsigned short pix0,pix1,*data;
-   int i;
+    if (andybodge)
+    {
+        selectData->confirm = 1;
+        andybodge = 0;
+    }
 
-   fp=fopen(filename,"rb");
-   fread(tim,12,1,fp);     // id and flags & bnum
-   fread(&tim->textureX,2,1,fp);
-   fread(&tim->textureY,2,1,fp);
-   fread(&tim->textureH,2,1,fp);
-   fread(&tim->textureW,2,1,fp);
-   data=(unsigned short *)location;
-   for(i=0;i<320*240;++i)
-   {
-      fread(&pix0,2,1,fp);
-      /*
-      if(Screen565)
-         pix1=((pix0&0x1f)<<11)|((pix0&0x3e0)<<1)|(pix0>>10);
-      else*/
-         pix1=((pix0&0x1f)<<10)|(pix0&0x3e0)|(pix0>>10);
-      *data++=pix1;
-   }
-   fclose(fp);
+    DisplayButtons(30, 210, PSELECT);
+    DisplayButtons(240, 210, PBACK);
+
+    CentreText("ARE YOU SURE YOU", text_data(77, 95, 8), RedText);
+    CentreText("WANT TO QUIT", text_data(105, 105, 8), RedText);
+
+    if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
+    {
+        selectData->confirm ^= 1;
+    }
+
+    if (selectData->confirm)
+    {
+        AddText("YES", text_data(80, 120, 16), WhiteText);
+        // if ((toggle % 2) == 0)
+        AddText("NO", text_data(210, 120, 16), RedText);
+        // else
+        // AddText ("NO", text_data (210, 120, 16), WhiteText) ;
+    }
+    else
+    {
+        // if ((toggle % 2) == 0)
+        AddText("YES", text_data(80, 120, 16), RedText);
+        // else
+        // AddText ("YES", text_data (80, 120, 16), WhiteText) ;
+        AddText("NO", text_data(210, 120, 16), WhiteText);
+    }
 }
 
-void QuitYesNo(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void GraphicOptions(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   if (andybodge)
-   {
-      selectData->confirm = 1;
-      andybodge=0;
-   }
+    static char listpos = 0;
+    char x = 50, y = 140, l = 12;
+    char DrawStr[8];
+    char ResStr[8];
+    char ScreenStr[8];
+    char SkyStr[8];
+    char TexStr[8];
+    char PCStr[8];
 
-   DisplayButtons ( 30, 210, PSELECT) ;
-   DisplayButtons ( 240, 210, PBACK) ;
+    if (andybodge)
+    {
+        andybodge = 0;
+        inmenu = 0;
+        Reallyinmenu = 1;
+    }
 
-   CentreText ("ARE YOU SURE YOU", text_data (77, 95, 8), RedText) ;
-   CentreText ("WANT TO QUIT", text_data (105, 105, 8), RedText) ;
+    CentreText("GRAPHIC DETAIL OPTIONS", text_data(1, 21, 8), RedText);
 
-   if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
-   {
-      selectData->confirm ^= 1 ;
-   }
+    DisplayButtons(30, 210, PSELECT);
+    DisplayButtons(240, 210, PBACK);
 
-   if (selectData->confirm)
-   {
-      AddText ("YES", text_data (80, 120, 16), WhiteText) ;
-      //if ((toggle % 2) == 0)
-      AddText ("NO", text_data (210, 120, 16), RedText) ;
-      //else
-      //AddText ("NO", text_data (210, 120, 16), WhiteText) ;
-   }
-   else
-   {
-      //if ((toggle % 2) == 0)
-      AddText ("YES", text_data (80, 120, 16), RedText) ;
-      //else
-      //AddText ("YES", text_data (80, 120, 16), WhiteText) ;
-      AddText ("NO", text_data (210, 120, 16), WhiteText) ;
-   }
-}
+    if (GetMenuKey(M_DOWN))
+    {
+        if (listpos == 3)
+            listpos = 0;
+        else
+            listpos++;
+    }
 
+    if (GetMenuKey(M_UP))
+    {
+        if (listpos == 0)
+            listpos = 3;
+        else
+            listpos--;
+    }
 
-void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
-{
-   static char listpos = 0;
-   char  x=50, y=140, l=12;
-   char  DrawStr[8];
-   char  ResStr[8];
-   char  ScreenStr[8];
-   char  SkyStr[8];
-   char  TexStr[8];
-   char  PCStr[8];
+    if (GetMenuKey(M_LEFT))
+    {
+        PlayNote(MENU_SELECT, 1, 20);
+    }
 
+    if (GetMenuKey(M_RIGHT))
+    {
+        PlayNote(MENU_SELECT, 1, 20);
+    }
 
-   if(andybodge)
-   {
-      andybodge=0;
-      inmenu = 0;
-      Reallyinmenu = 1;
-   }
-
-   CentreText ("GRAPHIC DETAIL OPTIONS", text_data (1,21, 8), RedText) ;
-
-   DisplayButtons ( 30, 210, PSELECT) ;
-   DisplayButtons ( 240, 210, PBACK) ;
-
-   if (GetMenuKey(M_DOWN))
-   {
-      if (listpos==3)
-         listpos = 0;
-      else
-         listpos++;
-   }
-
-   if (GetMenuKey(M_UP))
-   {
-      if (listpos==0)
-         listpos = 3;
-      else
-         listpos--;
-   }
-
-   if (GetMenuKey(M_LEFT))
-   {
-      PlayNote(MENU_SELECT, 1, 20);
-   }
-
-   if (GetMenuKey(M_RIGHT))
-   {
-      PlayNote(MENU_SELECT, 1, 20);
-   }
-
-   switch(listpos)
-   {
-   case 0:  AddText ("DRAW DISTANCE", text_data (x, y, 8), RedText);
-      AddText ("RESOLUTION", text_data (x, y+l, 8), WhiteText) ;
-      //AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
-      //AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
-      AddText ("TEXTURE FILTER", text_data (x, y+(l*2), 8), WhiteText) ;
-      //AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
-      AddText ("SKY", text_data (x, y+(l*3), 8), WhiteText) ;
-      break;
-   case 1:  AddText ("RESOLUTION", text_data (x, y+l, 8), RedText) ;
-      AddText ("DRAW DISTANCE", text_data (x, y, 8), WhiteText);
-      //AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
-      //          AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
-      AddText ("TEXTURE FILTER", text_data (x, y+(l*2), 8), WhiteText) ;
-      //          AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
-      AddText ("SKY", text_data (x, y+(l*3), 8), WhiteText) ;
-      break;
+    switch (listpos)
+    {
+        case 0:
+            AddText("DRAW DISTANCE", text_data(x, y, 8), RedText);
+            AddText("RESOLUTION", text_data(x, y + l, 8), WhiteText);
+            // AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
+            // AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
+            AddText("TEXTURE FILTER", text_data(x, y + (l * 2), 8), WhiteText);
+            // AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
+            AddText("SKY", text_data(x, y + (l * 3), 8), WhiteText);
+            break;
+        case 1:
+            AddText("RESOLUTION", text_data(x, y + l, 8), RedText);
+            AddText("DRAW DISTANCE", text_data(x, y, 8), WhiteText);
+            // AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
+            //          AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
+            AddText("TEXTURE FILTER", text_data(x, y + (l * 2), 8), WhiteText);
+            //          AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
+            AddText("SKY", text_data(x, y + (l * 3), 8), WhiteText);
+            break;
 #if 0
    case 3:  //AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), RedText) ;
       AddText ("DRAW DISTANCE", text_data (x, y, 8), WhiteText);
@@ -3845,621 +3754,607 @@ void GraphicOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionDa
       //AddText ("PERS CORR", text_data (x, y+(l*4), 8), WhiteText) ;
       break;
 #endif
-   case 2:  AddText ("TEXTURE FILTER", text_data (x, y+(l*2), 8), RedText) ;
-      AddText ("DRAW DISTANCE", text_data (x, y, 8), WhiteText);
-      AddText ("RESOLUTION", text_data (x, y+l, 8), WhiteText) ;
-      //AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
-      //AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
-      //AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
-      AddText ("SKY", text_data (x, y+(l*3), 8), WhiteText) ;
-      break;
-   case 3: AddText ("SKY", text_data (x, y+(l*3), 8), RedText) ;
-      //       AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
-      AddText ("DRAW DISTANCE", text_data (x, y, 8), WhiteText);
-      AddText ("RESOLUTION", text_data (x, y+l, 8), WhiteText) ;
-      //AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
-      AddText ("TEXTURE FILTER", text_data (x, y+(l*2), 8), WhiteText) ;
-      break;
-   }
+        case 2:
+            AddText("TEXTURE FILTER", text_data(x, y + (l * 2), 8), RedText);
+            AddText("DRAW DISTANCE", text_data(x, y, 8), WhiteText);
+            AddText("RESOLUTION", text_data(x, y + l, 8), WhiteText);
+            // AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
+            // AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
+            // AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
+            AddText("SKY", text_data(x, y + (l * 3), 8), WhiteText);
+            break;
+        case 3:
+            AddText("SKY", text_data(x, y + (l * 3), 8), RedText);
+            //       AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
+            AddText("DRAW DISTANCE", text_data(x, y, 8), WhiteText);
+            AddText("RESOLUTION", text_data(x, y + l, 8), WhiteText);
+            // AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
+            AddText("TEXTURE FILTER", text_data(x, y + (l * 2), 8), WhiteText);
+            break;
+    }
 
-   strcpy(ResStr, "320X240");
+    strcpy(ResStr, "320X240");
 
-   AddText (DrawStr, text_data (x+180, y, 8), RedText);
-   AddText (ResStr, text_data (x+180, y+l, 8), RedText) ;
-   //AddText (ScreenStr, text_data (x+190, y+(l*2), 8), RedText) ;
-   AddText (SkyStr, text_data (x+180, y+(l*3), 8), RedText) ;
-   AddText (TexStr, text_data (x+180, y+(l*2), 8), RedText) ;
-   //    AddText (PCStr, text_data (x+180, y+(l*3), 8), RedText) ;
+    AddText(DrawStr, text_data(x + 180, y, 8), RedText);
+    AddText(ResStr, text_data(x + 180, y + l, 8), RedText);
+    // AddText (ScreenStr, text_data (x+190, y+(l*2), 8), RedText) ;
+    AddText(SkyStr, text_data(x + 180, y + (l * 3), 8), RedText);
+    AddText(TexStr, text_data(x + 180, y + (l * 2), 8), RedText);
+    //    AddText (PCStr, text_data (x+180, y+(l*3), 8), RedText) ;
 }
 
-
-
-void ControllerOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void ControllerOptions(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   char  controllerstring[20];
-   char  configstring[20];
-   char colour1;
-   char colour2;
+    char controllerstring[20];
+    char configstring[20];
+    char colour1;
+    char colour2;
 
+    davebodge = 1;
+    andybodge2 = 1;
 
-   davebodge = 1;
-   andybodge2=1;
+    if (andybodge)
+    {
+        andybodge = 0;
+    }
 
-   if (andybodge)
-   {
-      andybodge=0;
-   }
+    CentreText("CONTROLLER OPTIONS", text_data(1, 21, 8), RedText);
 
-   CentreText ("CONTROLLER OPTIONS", text_data (1,21, 8), RedText) ;
+    DisplayButtons(30, 210, PSELECT);
+    DisplayButtons(240, 210, PBACK);
+    /*TODO input menu
+       if (GetMenuKey(M_UP)||GetMenuKey(M_DOWN))
+       {
+          if (orig_controller != _JOYSTICK1)
+          {
+             if (changecontroller)
+                changecontroller=0;
+             else
+                changecontroller=1;
+          }
+       }
 
-   DisplayButtons ( 30, 210, PSELECT);
-   DisplayButtons ( 240, 210, PBACK);
-/*TODO input menu
-   if (GetMenuKey(M_UP)||GetMenuKey(M_DOWN))
-   {
-      if (orig_controller != _JOYSTICK1)
-      {
-         if (changecontroller)
-            changecontroller=0;
-         else
-            changecontroller=1;
-      }
-   }
+       if (changecontroller)
+       {
+          colour1=RedText;
+          colour2=WhiteText;
+          if (GetMenuKey(M_LEFT))
+          {
+             PlayNote(MENU_MOVE, 1, 20);
+             if (orig_controller==_KEYBOARD) orig_controller=_JOYSTICK1;
+             else
+                if (orig_controller==_MOUSE1) orig_controller=_KEYBOARD;
+                else
+                   if (orig_controller==_JOYSTICK1) orig_controller=_MOUSE1;
+          }
 
-   if (changecontroller)
-   {
-      colour1=RedText;
-      colour2=WhiteText;
-      if (GetMenuKey(M_LEFT))
-      {
-         PlayNote(MENU_MOVE, 1, 20);
-         if (orig_controller==_KEYBOARD) orig_controller=_JOYSTICK1;
-         else
-            if (orig_controller==_MOUSE1) orig_controller=_KEYBOARD;
-            else
-               if (orig_controller==_JOYSTICK1) orig_controller=_MOUSE1;
-      }
+          if (GetMenuKey(M_RIGHT))
+          {
+             PlayNote(MENU_MOVE, 1, 20);
+             if (orig_controller==_KEYBOARD) orig_controller=_MOUSE1;
+             else
+                if (orig_controller==_MOUSE1) orig_controller=_JOYSTICK1;
+                else
+                   if (orig_controller==_JOYSTICK1) orig_controller=_KEYBOARD;
+          }
 
-      if (GetMenuKey(M_RIGHT))
-      {
-         PlayNote(MENU_MOVE, 1, 20);
-         if (orig_controller==_KEYBOARD) orig_controller=_MOUSE1;
-         else
-            if (orig_controller==_MOUSE1) orig_controller=_JOYSTICK1;
-            else
-               if (orig_controller==_JOYSTICK1) orig_controller=_KEYBOARD;
-      }
+       }
+       else
+       {
+          if (orig_controller != _JOYSTICK1)
+          {
+             colour1=WhiteText;
+             colour2=RedText;
+          }
+       }
 
-   }
-   else
-   {
-      if (orig_controller != _JOYSTICK1)
-      {
-         colour1=WhiteText;
-         colour2=RedText;
-      }
-   }
+       switch (orig_controller)
+       {
+       case _KEYBOARD: strcpy(configstring, "CONFIGURE KEYBOARD");
+                      strcpy(controllerstring, "KEYBOARD");
+                      CentreText (configstring, text_data (0, 170, 8), colour2) ;
+                      break;
+       case _MOUSE1: strcpy(configstring, "CONFIGURE MOUSE");
+          strcpy(controllerstring, "MOUSE");
+                      CentreText (configstring, text_data (0, 170, 8), colour2) ;
+                      break;
+       case _JOYSTICK1:
+          if (!JJSJoyConfig())
+          {
+             colour1=WhiteText;
+             colour2=RedText;
+             strcpy(configstring, "NO JOYSTICK DETECTED");
+             CentreText (configstring, text_data (0, 170, 8), colour2) ;
+          }
+          strcpy(controllerstring, "JOYSTICK");
 
-   switch (orig_controller)
-   {
-   case _KEYBOARD: strcpy(configstring, "CONFIGURE KEYBOARD");
-                  strcpy(controllerstring, "KEYBOARD");
-                  CentreText (configstring, text_data (0, 170, 8), colour2) ;
-                  break;
-   case _MOUSE1: strcpy(configstring, "CONFIGURE MOUSE");
-      strcpy(controllerstring, "MOUSE");
-                  CentreText (configstring, text_data (0, 170, 8), colour2) ;
-                  break;
-   case _JOYSTICK1:
-      if (!JJSJoyConfig())
-      {
-         colour1=WhiteText;
-         colour2=RedText;
-         strcpy(configstring, "NO JOYSTICK DETECTED");
-         CentreText (configstring, text_data (0, 170, 8), colour2) ;
-      }
-      strcpy(controllerstring, "JOYSTICK");
-
-      break;
-   }
-   CentreText (controllerstring, text_data (0, 50, 8), colour1) ;
-*/
+          break;
+       }
+       CentreText (controllerstring, text_data (0, 50, 8), colour1) ;
+    */
 }
 
-
-
-void ControllerEdit(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
+void ControllerEdit(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData)
 {
-   DisplayButtons ( 30, 210, PSELECT) ;
-   DisplayButtons ( 240, 210, PBACK) ;
+    DisplayButtons(30, 210, PSELECT);
+    DisplayButtons(240, 210, PBACK);
 
-   CentreText ("CONFIGURE KEYBOARD", text_data (1,21, 8), RedText) ;
-   if(davebodge == 1)
-   {
-      KeyConfig0();
-      davebodge = 0;
-   }
-   else
-   {
-      KeyConfig();
-   }
+    CentreText("CONFIGURE KEYBOARD", text_data(1, 21, 8), RedText);
+    if (davebodge == 1)
+    {
+        KeyConfig0();
+        davebodge = 0;
+    }
+    else
+    {
+        KeyConfig();
+    }
 }
 
-
-
-void DrawControllerMenu (Menus *menuSystem, int *currMenu, int shapeNo)
+void DrawControllerMenu(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   InitMenuDisplay (110);
-/*TODO input draw menu
-   switch(orig_controller)
-   {
-      // jed
-   case _KEYBOARD:
-      etc_Joystick1Switch = _DEVICE_OFF; //jjs quick and dirty
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 0, 3500) ;
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg,0, 0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
-      hdg += 20;
-      break;
+    InitMenuDisplay(110);
+    /*TODO input draw menu
+       switch(orig_controller)
+       {
+          // jed
+       case _KEYBOARD:
+          etc_Joystick1Switch = _DEVICE_OFF; //jjs quick and dirty
+          SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[1]->skeleton),0, 0, 3500) ;
+          SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[1]->skeleton), hdg,0, 0);
+          TransformStaticObject(menuSystem[(*currMenu)].menuModel[1]);
+          hdg += 20;
+          break;
 
-      // jed
-   case _MOUSE1:
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, 0, 4500) ;
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),  hdg,75,25);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
-      hdg += 40;
-      break;
+          // jed
+       case _MOUSE1:
+          SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[0]->skeleton),0, 0, 4500) ;
+          SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[0]->skeleton),  hdg,75,25);
+          TransformStaticObject(menuSystem[(*currMenu)].menuModel[0]);
+          hdg += 40;
+          break;
 
-      // jed
-   case _JOYSTICK1:
-      SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 3500) ;
-      SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),  hdg,-50,0);
-      TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
-      hdg += 40;
-      break;
-   }
-*/
+          // jed
+       case _JOYSTICK1:
+          SetSkeletonPosition((menuSystem[(*currMenu)].menuModel[2]->skeleton),0, 0, 3500) ;
+          SetSkeletonDirectionHPR((menuSystem[(*currMenu)].menuModel[2]->skeleton),  hdg,-50,0);
+          TransformStaticObject(menuSystem[(*currMenu)].menuModel[2]);
+          hdg += 40;
+          break;
+       }
+    */
 }
-
-
 
 void KeyConfig0(void)
 {
-   /*TODO input 
-   char  keyc;
+    /*TODO input
+    char  keyc;
 
 
-   // Keep a copy of the keys
-   Keycons[0] = OriginalKeyCodes[15];
-   Keycons[1] = OriginalKeyCodes[13];
-   Keycons[2] = OriginalKeyCodes[12];
-   Keycons[3] = OriginalKeyCodes[14];
-   Keycons[4] = OriginalKeyCodes[0];
-   Keycons[5] = OriginalKeyCodes[1];
-   Keycons[6] = OriginalKeyCodes[6];
-   Keycons[7] = OriginalKeyCodes[5];
-   Keycons[8] = OriginalKeyCodes[4];
-   Keycons[9] = OriginalKeyCodes[11];
+    // Keep a copy of the keys
+    Keycons[0] = OriginalKeyCodes[15];
+    Keycons[1] = OriginalKeyCodes[13];
+    Keycons[2] = OriginalKeyCodes[12];
+    Keycons[3] = OriginalKeyCodes[14];
+    Keycons[4] = OriginalKeyCodes[0];
+    Keycons[5] = OriginalKeyCodes[1];
+    Keycons[6] = OriginalKeyCodes[6];
+    Keycons[7] = OriginalKeyCodes[5];
+    Keycons[8] = OriginalKeyCodes[4];
+    Keycons[9] = OriginalKeyCodes[11];
 
-   // Clear the main keys
-   //
-   // Left
-   etc_KeyboardMap[etc_KeyboardConfig[15]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[15] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[15]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[15] + 128] = 0xFFFFFFFF;
+    // Clear the main keys
+    //
+    // Left
+    etc_KeyboardMap[etc_KeyboardConfig[15]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[15] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[15]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[15] + 128] = 0xFFFFFFFF;
 
-   // Right
-   etc_KeyboardMap[etc_KeyboardConfig[13]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[13] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[13]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[13] + 128] = 0xFFFFFFFF;
+    // Right
+    etc_KeyboardMap[etc_KeyboardConfig[13]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[13] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[13]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[13] + 128] = 0xFFFFFFFF;
 
-   // Up
-   etc_KeyboardMap[etc_KeyboardConfig[12]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[12] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[12]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[12] + 128] = 0xFFFFFFFF;
+    // Up
+    etc_KeyboardMap[etc_KeyboardConfig[12]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[12] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[12]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[12] + 128] = 0xFFFFFFFF;
 
-   // Down
-   etc_KeyboardMap[etc_KeyboardConfig[14]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[14] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[14]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[14] + 128] = 0xFFFFFFFF;
+    // Down
+    etc_KeyboardMap[etc_KeyboardConfig[14]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[14] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[14]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[14] + 128] = 0xFFFFFFFF;
 
-   // Brake Left
-   etc_KeyboardMap[etc_KeyboardConfig[0]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[0] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[0]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[0] + 128] = 0xFFFFFFFF;
+    // Brake Left
+    etc_KeyboardMap[etc_KeyboardConfig[0]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[0] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[0]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[0] + 128] = 0xFFFFFFFF;
 
-   // Brake Right
-   etc_KeyboardMap[etc_KeyboardConfig[1]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[1] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[1]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[1] + 128] = 0xFFFFFFFF;
+    // Brake Right
+    etc_KeyboardMap[etc_KeyboardConfig[1]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[1] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[1]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[1] + 128] = 0xFFFFFFFF;
 
-   // Accel
-   etc_KeyboardMap[etc_KeyboardConfig[6]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[6] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[6]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[6] + 128] = 0xFFFFFFFF;
+    // Accel
+    etc_KeyboardMap[etc_KeyboardConfig[6]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[6] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[6]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[6] + 128] = 0xFFFFFFFF;
 
-   // Fire
-   etc_KeyboardMap[etc_KeyboardConfig[5]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[5] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[5]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[5] + 128] = 0xFFFFFFFF;
+    // Fire
+    etc_KeyboardMap[etc_KeyboardConfig[5]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[5] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[5]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[5] + 128] = 0xFFFFFFFF;
 
-   // View [triangle]
-   etc_KeyboardMap[etc_KeyboardConfig[4]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[4] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[4]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[4] + 128] = 0xFFFFFFFF;
+    // View [triangle]
+    etc_KeyboardMap[etc_KeyboardConfig[4]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[4] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[4]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[4] + 128] = 0xFFFFFFFF;
 
-   // Pause [Start]
-   etc_KeyboardMap[etc_KeyboardConfig[11]] = 0;
-   //etc_KeyboardMap[etc_KeyboardConfig[11] + 128] = 0xFFFFFFFF;
-   etc_ExtendedKeyboardMap[etc_KeyboardConfig[11]] = 0;
-   //etc_ExtendedKeyboardMap[etc_KeyboardConfig[11] + 128] = 0xFFFFFFFF;
+    // Pause [Start]
+    etc_KeyboardMap[etc_KeyboardConfig[11]] = 0;
+    //etc_KeyboardMap[etc_KeyboardConfig[11] + 128] = 0xFFFFFFFF;
+    etc_ExtendedKeyboardMap[etc_KeyboardConfig[11]] = 0;
+    //etc_ExtendedKeyboardMap[etc_KeyboardConfig[11] + 128] = 0xFFFFFFFF;
 
-   etc_KeyboardConfig[15] = 0;      // Left
-   etc_KeyboardConfig[13] = 0;      // Right
-   etc_KeyboardConfig[12] = 0;      // Up
-   etc_KeyboardConfig[14] = 0;      // Down
-   etc_KeyboardConfig[0] = 0;    // Brake Left
-   etc_KeyboardConfig[1] = 0;    // Brake Right
-   etc_KeyboardConfig[6] = 0;    // Accel
-   etc_KeyboardConfig[5] = 0;    // Fire
-   etc_KeyboardConfig[4] = 0;    // Change View
-   etc_KeyboardConfig[11] = 0;      // Pause (start)
+    etc_KeyboardConfig[15] = 0;      // Left
+    etc_KeyboardConfig[13] = 0;      // Right
+    etc_KeyboardConfig[12] = 0;      // Up
+    etc_KeyboardConfig[14] = 0;      // Down
+    etc_KeyboardConfig[0] = 0;    // Brake Left
+    etc_KeyboardConfig[1] = 0;    // Brake Right
+    etc_KeyboardConfig[6] = 0;    // Accel
+    etc_KeyboardConfig[5] = 0;    // Fire
+    etc_KeyboardConfig[4] = 0;    // Change View
+    etc_KeyboardConfig[11] = 0;      // Pause (start)
 
-   for(keyc = 0; keyc < 16; keyc++)
-      NewOriginalKeyCodes[keyc] = 0;
+    for(keyc = 0; keyc < 16; keyc++)
+       NewOriginalKeyCodes[keyc] = 0;
 
-   etc_KeyPressed = 0;
-   etc_Key = 0;
-   */
+    etc_KeyPressed = 0;
+    etc_Key = 0;
+    */
 }
-
-
 
 void KeyConfig(void)
 {
-   char        exists;
-   unsigned short KeyCode = 0;
+    char exists;
+    unsigned short KeyCode = 0;
 
-/*TODO input
-   CentreText ("PRESS KEY FOR", text_data (1, 6*12, 8), RedText) ;
+    /*TODO input
+       CentreText ("PRESS KEY FOR", text_data (1, 6*12, 8), RedText) ;
 
-   switch(KeyToChange)
-   {
-   case NONE:
-      if(DelayCounter >= 15)
-      {
-         etc_KeyPressed = 0;
-         etc_Key = 0;
-         KeyToChange = LEFT;
-         DelayCounter = 0;
-      }
-      else
-         DelayCounter++;
+       switch(KeyToChange)
+       {
+       case NONE:
+          if(DelayCounter >= 15)
+          {
+             etc_KeyPressed = 0;
+             etc_Key = 0;
+             KeyToChange = LEFT;
+             DelayCounter = 0;
+          }
+          else
+             DelayCounter++;
 
-      break;
+          break;
 
-   case LEFT:
-      CentreText ("LEFT", text_data (1, 7*12, 8), WhiteText) ;
+       case LEFT:
+          CentreText ("LEFT", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[15] = KeyCode;
-               NewOriginalKeyCodes[15] = KeyCode;
-               SetKey(15, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[15] = KeyCode;
+                   NewOriginalKeyCodes[15] = KeyCode;
+                   SetKey(15, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case RIGHT:
-      CentreText ("RIGHT", text_data (1, 7*12, 8), WhiteText) ;
+       case RIGHT:
+          CentreText ("RIGHT", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[13] = KeyCode;
-               NewOriginalKeyCodes[13] = KeyCode;
-               SetKey(13, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[13] = KeyCode;
+                   NewOriginalKeyCodes[13] = KeyCode;
+                   SetKey(13, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case UP:
-      CentreText ("UP", text_data (1, 7*12, 8), WhiteText) ;
+       case UP:
+          CentreText ("UP", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[12] = KeyCode;
-               NewOriginalKeyCodes[12] = KeyCode;
-               SetKey(12, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[12] = KeyCode;
+                   NewOriginalKeyCodes[12] = KeyCode;
+                   SetKey(12, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case DOWN:
-      CentreText ("DOWN", text_data (1, 7*12, 8), WhiteText) ;
+       case DOWN:
+          CentreText ("DOWN", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[14] = KeyCode;
-               NewOriginalKeyCodes[14] = KeyCode;
-               SetKey(14, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[14] = KeyCode;
+                   NewOriginalKeyCodes[14] = KeyCode;
+                   SetKey(14, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case BRAKEL:
-      CentreText ("LEFT AIRBRAKE", text_data (1, 7*12, 8), WhiteText) ;
+       case BRAKEL:
+          CentreText ("LEFT AIRBRAKE", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[0] = KeyCode;
-               NewOriginalKeyCodes[0] = KeyCode;
-               SetKey(0, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[0] = KeyCode;
+                   NewOriginalKeyCodes[0] = KeyCode;
+                   SetKey(0, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case BRAKER:
-      CentreText ("RIGHT AIRBRAKE", text_data (1, 7*12, 8), WhiteText) ;
+       case BRAKER:
+          CentreText ("RIGHT AIRBRAKE", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[1] = KeyCode;
-               NewOriginalKeyCodes[1] = KeyCode;
-               SetKey(1, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[1] = KeyCode;
+                   NewOriginalKeyCodes[1] = KeyCode;
+                   SetKey(1, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case ACCEL:
-      CentreText ("ACCELERATE", text_data (1, 7*12, 8), WhiteText) ;
+       case ACCEL:
+          CentreText ("ACCELERATE", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[6] = KeyCode;
-               NewOriginalKeyCodes[6] = KeyCode;
-               SetKey(6, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[6] = KeyCode;
+                   NewOriginalKeyCodes[6] = KeyCode;
+                   SetKey(6, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case FIRE:
-      CentreText ("FIRE", text_data (1, 7*12, 8), WhiteText) ;
+       case FIRE:
+          CentreText ("FIRE", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[5] = KeyCode;
-               NewOriginalKeyCodes[5] = KeyCode;
-               SetKey(5, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[5] = KeyCode;
+                   NewOriginalKeyCodes[5] = KeyCode;
+                   SetKey(5, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case VIEW_KEY:
-      CentreText ("CHANGE VIEW", text_data (1, 7*12, 8), WhiteText) ;
+       case VIEW_KEY:
+          CentreText ("CHANGE VIEW", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[4] = KeyCode;
-               NewOriginalKeyCodes[4] = KeyCode;
-               SetKey(4, KeyCode);
-               KeyToChange++;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[4] = KeyCode;
+                   NewOriginalKeyCodes[4] = KeyCode;
+                   SetKey(4, KeyCode);
+                   KeyToChange++;
+                }
+             }
+          }
 
-      break;
+          break;
 
-   case PAUSE_KEY:
-      CentreText ("PAUSE", text_data (1, 7*12, 8), WhiteText) ;
+       case PAUSE_KEY:
+          CentreText ("PAUSE", text_data (1, 7*12, 8), WhiteText) ;
 
-      if(etc_KeyPressed)
-      {
-         KeyCode = GetKeyNoBlock();
+          if(etc_KeyPressed)
+          {
+             KeyCode = GetKeyNoBlock();
 
-         if(KeyCode > 0)
-         {
-            exists = CheckKey(KeyCode);
+             if(KeyCode > 0)
+             {
+                exists = CheckKey(KeyCode);
 
-            if(exists)
-            {
-               PlayNote(MENU_SELECT, 1, 20);
-               OriginalKeyCodes[11] = KeyCode;
-               NewOriginalKeyCodes[11] = KeyCode;
-               SetKey(11, KeyCode);
-               KeyToChange = NONE;
-               davebodge = 2;
-            }
-         }
-      }
+                if(exists)
+                {
+                   PlayNote(MENU_SELECT, 1, 20);
+                   OriginalKeyCodes[11] = KeyCode;
+                   NewOriginalKeyCodes[11] = KeyCode;
+                   SetKey(11, KeyCode);
+                   KeyToChange = NONE;
+                   davebodge = 2;
+                }
+             }
+          }
 
-      break;
-   }
-*/
+          break;
+       }
+    */
 }
 
-void DrawControllerEdit (Menus *menuSystem, int *currMenu, int shapeNo)
-{
-   InitMenuDisplay (80);
-}
+void DrawControllerEdit(Menus* menuSystem, int* currMenu, int shapeNo) { InitMenuDisplay(80); }
 
-void DrawGraphicDetail (Menus *menuSystem, int *currMenu, int shapeNo)
+void DrawGraphicDetail(Menus* menuSystem, int* currMenu, int shapeNo)
 {
-   int heading = gFrameIndex * 5;
+    int heading = gFrameIndex * 5;
 
-   DrawTeamShips (0, 0, MODELSIZE, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]) ;
+    DrawTeamShips(0, 0, MODELSIZE, heading, menuSystem[(*currMenu)].menuModel[shipShapeOrder[0]]);
 }
 
 char CheckKey(unsigned short code)
 {
-   /*TODO input remap
-   if(NewOriginalKeyCodes[15] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[13] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[12] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[14] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[0] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[1] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[6] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[5] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[4] == code)
-      return(0);
-   else if(NewOriginalKeyCodes[11] == code)
-      return(0);
+    /*TODO input remap
+    if(NewOriginalKeyCodes[15] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[13] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[12] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[14] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[0] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[1] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[6] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[5] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[4] == code)
+       return(0);
+    else if(NewOriginalKeyCodes[11] == code)
+       return(0);
 
-   if(code == 0x1c)
-      return(0);
-      */
-   return(1);
+    if(code == 0x1c)
+       return(0);
+       */
+    return (1);
 }
-
-
 
 void ResetKeys(void)
 {
-/*TODO input default keys
-   OriginalKeyCodes[15] = Keycons[0];
-   OriginalKeyCodes[13] = Keycons[1];
-   OriginalKeyCodes[12] = Keycons[2];
-   OriginalKeyCodes[14] = Keycons[3];
-   OriginalKeyCodes[0] = Keycons[4];
-   OriginalKeyCodes[1] = Keycons[5];
-   OriginalKeyCodes[6] = Keycons[6];
-   OriginalKeyCodes[5] = Keycons[7];
-   OriginalKeyCodes[4] = Keycons[8];
-   OriginalKeyCodes[11] = Keycons[9];
+    /*TODO input default keys
+       OriginalKeyCodes[15] = Keycons[0];
+       OriginalKeyCodes[13] = Keycons[1];
+       OriginalKeyCodes[12] = Keycons[2];
+       OriginalKeyCodes[14] = Keycons[3];
+       OriginalKeyCodes[0] = Keycons[4];
+       OriginalKeyCodes[1] = Keycons[5];
+       OriginalKeyCodes[6] = Keycons[6];
+       OriginalKeyCodes[5] = Keycons[7];
+       OriginalKeyCodes[4] = Keycons[8];
+       OriginalKeyCodes[11] = Keycons[9];
 
-   SetKey(15, OriginalKeyCodes[15]);
-   SetKey(13, OriginalKeyCodes[13]);
-   SetKey(12, OriginalKeyCodes[12]);
-   SetKey(14, OriginalKeyCodes[14]);
-   SetKey(0,  OriginalKeyCodes[0]);
-   SetKey(1,  OriginalKeyCodes[1]);
-   SetKey(6,  OriginalKeyCodes[6]);
-   SetKey(5,  OriginalKeyCodes[5]);
-   SetKey(4,  OriginalKeyCodes[4]);
-   SetKey(11, OriginalKeyCodes[11]);
-*/
+       SetKey(15, OriginalKeyCodes[15]);
+       SetKey(13, OriginalKeyCodes[13]);
+       SetKey(12, OriginalKeyCodes[12]);
+       SetKey(14, OriginalKeyCodes[14]);
+       SetKey(0,  OriginalKeyCodes[0]);
+       SetKey(1,  OriginalKeyCodes[1]);
+       SetKey(6,  OriginalKeyCodes[6]);
+       SetKey(5,  OriginalKeyCodes[5]);
+       SetKey(4,  OriginalKeyCodes[4]);
+       SetKey(11, OriginalKeyCodes[11]);
+    */
 }
 #if 0
 void NetworkOptions(MusicPrims *musicPrims, SlideTextures *musicTex, SelectionData *selectData, char loadGames[][9], ConfigData *gameData)
@@ -4687,6 +4582,5 @@ void  SerialNetworkHandling(MusicPrims *musicPrims, SlideTextures *musicTex, Sel
    if(global_mark_error)
       davebodge = 3;
 }
-
 
 #endif

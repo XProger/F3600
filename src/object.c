@@ -22,8 +22,8 @@
 // PCwipeout
 #define SHIELD_BODGE 50
 
-extern char     ScreenSize;
-extern char     Resolution;
+extern char ScreenSize;
+extern char Resolution;
 
 /*
  * !!! NOTES ON 2D PRIMITIVES !!!
@@ -43,50 +43,44 @@ extern char     Resolution;
  *
  */
 
-void InitMenuDisplay(int geomOffset)
-{
-   SetGeomOffset(160, geomOffset);
-}
+void InitMenuDisplay(int geomOffset) { SetGeomOffset(160, geomOffset); }
 
-void InitGameDisplay(void)
-{
-   SetGeomOffset(160, 120);
-}
+void InitGameDisplay(void) { SetGeomOffset(160, 120); }
 
 void Swap()
 {
-   ProcessMessages();
-   renderSwap();
+    ProcessMessages();
+    renderSwap();
 }
 
 void TransformStaticObject(Object* object)
 {
-   renderBegin3D();
-   renderObject(object);
-   renderEnd3D();
+    renderBegin3D();
+    renderObject(object);
+    renderEnd3D();
 }
 
 void TransformStaticMenuObject(Object* object)
 {
-   renderBegin3D();
-   renderObject(object);
-   renderEnd3D();
+    renderBegin3D();
+    renderObject(object);
+    renderEnd3D();
 }
 
-void TransformStaticObjectBodge(Object * object)
+void TransformStaticObjectBodge(Object* object)
 {
-   renderBegin3D();
-   renderTransparent(1);
-   renderObject(object);
-   renderTransparent(0);
-   renderEnd3D();
+    renderBegin3D();
+    renderTransparent(1);
+    renderObject(object);
+    renderTransparent(0);
+    renderEnd3D();
 }
 
 void SetSkeletonTransform(Skeleton* skeleton)
 {
-   MATRIX* matrix;
-   matrix = GetSkeletonMatrix(skeleton);
+    MATRIX* matrix;
+    matrix = GetSkeletonMatrix(skeleton);
 
-   //   SetTransMatrix(matrix);
-   //   SetRotMatrix(matrix);
+    //   SetTransMatrix(matrix);
+    //   SetRotMatrix(matrix);
 }

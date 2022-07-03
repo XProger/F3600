@@ -1,11 +1,10 @@
-
 /* (C) Psygnosis 1994. By Jason Carl Denton
 */
 
-Skeleton* NewSkeleton( );
+Skeleton* NewSkeleton();
 
-void SetSkeletonPosition( Skeleton* skeleton, long x, long y, long z  );
+void SetSkeletonPosition(Skeleton* skeleton, long x, long y, long z);
 
-void SetSkeletonDirection( Skeleton* skeleton, short xa, short ya, short za  );
+void SetSkeletonDirection(Skeleton* skeleton, short xa, short ya, short za);
 
-MATRIX* GetSkeletonMatrix( Skeleton* skeleton );
+MATRIX* GetSkeletonMatrix(Skeleton* skeleton);

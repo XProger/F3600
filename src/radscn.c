@@ -19,395 +19,346 @@
 #include "error.h"
 #include "utils.h"
 
-
 /* reduce this later !!! */
 #define ObjectListMax 128
 
-
-void CalcNewRadius( TrackSection *section, Object* objects )
+void CalcNewRadius(TrackSection* section, Object* objects)
 {
 
-   TrackSection*  visSection;
-   Object*        object;
-   Object*        nextObject;
-   MATRIX*        matrix;
-   Vector*        sectionCentre;
-   VECTOR         vector;
-   long      distance;         // PCwipeout
-   short          i, j;
-   short          objectCount;
-   short          withinLocal;
-   short          withinGlobal;
-   short          allCount;
-   short          pad;
+    TrackSection* visSection;
+    Object* object;
+    Object* nextObject;
+    MATRIX* matrix;
+    Vector* sectionCentre;
+    VECTOR vector;
+    long distance; // PCwipeout
+    short i, j;
+    short objectCount;
+    short withinLocal;
+    short withinGlobal;
+    short allCount;
+    short pad;
 
-   short          objectList[ ObjectListMax ];
+    short objectList[ObjectListMax];
 
+    free(section->objects);
+    section->objectCount = 0;
 
-   free( section->objects );
-   section->objectCount = 0;
+    object = objects;
+    objectCount = 0;
+    allCount = 0;
+    while (object)
+    {
+        withinLocal = 0;
+        withinGlobal = 0;
 
+        matrix = &object->skeleton->relative;
+        sectionCentre = &section->centre;
 
-   object = objects;
-   objectCount = 0;
-   allCount = 0;
-   while( object )
-   {
-      withinLocal = 0;
-      withinGlobal = 0;
+        vector.vx = matrix->t[0] - sectionCentre->vx;
+        vector.vy = matrix->t[1] - sectionCentre->vy;
+        vector.vz = matrix->t[2] - sectionCentre->vz;
 
-      matrix = &object->skeleton->relative;
-      sectionCentre = &section->centre;
-
-      vector.vx = matrix->t[ 0 ] - sectionCentre->vx;
-      vector.vy = matrix->t[ 1 ] - sectionCentre->vy;
-      vector.vz = matrix->t[ 2 ] - sectionCentre->vz;
-
-
-      if ( section->flags & Jump )
-      {
-         if ( ( abs( vector.vx ) < section->globalRadius * 2 ) &&
-              ( abs( vector.vy ) < section->globalRadius * 2 ) &&
-              ( abs( vector.vz ) < section->globalRadius * 2 ) )
-         {
-            distance = SquareRoot0( ( vector.vx * vector.vx ) +
-                                    ( vector.vy * vector.vy ) +
-                                    ( vector.vz * vector.vz ) );
-
-            distance = distance - object->extent;
-
-            if ( distance < section->globalRadius )
+        if (section->flags & Jump)
+        {
+            if ((abs(vector.vx) < section->globalRadius * 2) && (abs(vector.vy) < section->globalRadius * 2) && (abs(vector.vz) < section->globalRadius * 2))
             {
-            /* within the global radius */
-               withinGlobal = 1;
+                distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+
+                distance = distance - object->extent;
+
+                if (distance < section->globalRadius)
+                {
+                    /* within the global radius */
+                    withinGlobal = 1;
+                }
             }
-         }
-      }
-      else
-      {
-         if ( ( abs( vector.vx ) < section->globalRadius ) &&
-              ( abs( vector.vy ) < section->globalRadius ) &&
-              ( abs( vector.vz ) < section->globalRadius ) )
-         {
-            distance = SquareRoot0( ( vector.vx * vector.vx ) +
-                                    ( vector.vy * vector.vy ) +
-                                    ( vector.vz * vector.vz ) );
-
-            distance = distance - object->extent;
-
-            if ( distance < section->globalRadius )
+        }
+        else
+        {
+            if ((abs(vector.vx) < section->globalRadius) && (abs(vector.vy) < section->globalRadius) && (abs(vector.vz) < section->globalRadius))
             {
-            /* within the global radius */
-               withinGlobal = 1;
+                distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+
+                distance = distance - object->extent;
+
+                if (distance < section->globalRadius)
+                {
+                    /* within the global radius */
+                    withinGlobal = 1;
+                }
             }
-         }
-      }
+        }
 
+        if (withinGlobal)
+        {
+            /* Check distance forwards along the track */
 
-      if ( withinGlobal )
-      {
-      /* Check distance forwards along the track */
-
-         visSection = section;
-         for ( j=0; ( !withinLocal ) && ( j < 30 ); j++ )
-         {
-            matrix = &object->skeleton->relative;
-            sectionCentre = &visSection->centre;
-
-            vector.vx = matrix->t[ 0 ] - sectionCentre->vx;
-            vector.vy = matrix->t[ 1 ] - sectionCentre->vy;
-            vector.vz = matrix->t[ 2 ] - sectionCentre->vz;
-
-            if ( ( abs( vector.vx ) < section->localRadius ) &&
-                 ( abs( vector.vy ) < section->localRadius ) &&
-                 ( abs( vector.vz ) < section->localRadius ) )
+            visSection = section;
+            for (j = 0; (!withinLocal) && (j < 30); j++)
             {
-               distance = SquareRoot0( ( vector.vx * vector.vx ) +
-                                       ( vector.vy * vector.vy ) +
-                                       ( vector.vz * vector.vz ) );
+                matrix = &object->skeleton->relative;
+                sectionCentre = &visSection->centre;
 
-               distance = distance - object->extent;
+                vector.vx = matrix->t[0] - sectionCentre->vx;
+                vector.vy = matrix->t[1] - sectionCentre->vy;
+                vector.vz = matrix->t[2] - sectionCentre->vz;
 
-               if ( distance < section->localRadius )
-               {
-               /* within the local radius */
-                  withinLocal = 1;
-               }
+                if ((abs(vector.vx) < section->localRadius) && (abs(vector.vy) < section->localRadius) && (abs(vector.vz) < section->localRadius))
+                {
+                    distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+
+                    distance = distance - object->extent;
+
+                    if (distance < section->localRadius)
+                    {
+                        /* within the local radius */
+                        withinLocal = 1;
+                    }
+                }
+                visSection = visSection->nextSection.ptr;
             }
-            visSection = visSection->nextSection.ptr;
-         }
 
-      /* Check distance backwards along the track */
+            /* Check distance backwards along the track */
 
-         visSection = section;
-         for ( j=0; ( !withinLocal ) && ( j < 30 ); j++ )
-         {
-            matrix = &object->skeleton->relative;
-            sectionCentre = &visSection->centre;
-
-            vector.vx = matrix->t[ 0 ] - sectionCentre->vx;
-            vector.vy = matrix->t[ 1 ] - sectionCentre->vy;
-            vector.vz = matrix->t[ 2 ] - sectionCentre->vz;
-
-            if ( ( abs( vector.vx ) < section->localRadius ) &&
-                 ( abs( vector.vy ) < section->localRadius ) &&
-                 ( abs( vector.vz ) < section->localRadius ) )
+            visSection = section;
+            for (j = 0; (!withinLocal) && (j < 30); j++)
             {
-               distance = SquareRoot0( ( vector.vx * vector.vx ) +
-                                       ( vector.vy * vector.vy ) +
-                                       ( vector.vz * vector.vz ) );
+                matrix = &object->skeleton->relative;
+                sectionCentre = &visSection->centre;
 
-               distance = distance - object->extent;
+                vector.vx = matrix->t[0] - sectionCentre->vx;
+                vector.vy = matrix->t[1] - sectionCentre->vy;
+                vector.vz = matrix->t[2] - sectionCentre->vz;
 
-               if ( distance < section->localRadius )
-               {
-               /* within the local radius */
-                  withinLocal = 1;
-               }
+                if ((abs(vector.vx) < section->localRadius) && (abs(vector.vy) < section->localRadius) && (abs(vector.vz) < section->localRadius))
+                {
+                    distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+
+                    distance = distance - object->extent;
+
+                    if (distance < section->localRadius)
+                    {
+                        /* within the local radius */
+                        withinLocal = 1;
+                    }
+                }
+                visSection = visSection->prevSection.ptr;
             }
-            visSection = visSection->prevSection.ptr;
-         }
+        }
 
-      }
+        if (withinLocal)
+        {
+            if (objectCount < ObjectListMax)
+            {
+                objectList[objectCount++] = allCount;
+            }
+            else
+            {
+                Error("Radius.c:SceneRadiusCheck: Maximum number of objects exceeded");
+            }
+        }
 
+        object = object->next;
+        allCount++;
+    }
 
-      if ( withinLocal )
-      {
-         if ( objectCount < ObjectListMax )
-         {
-            objectList[ objectCount++ ] = allCount;
-         }
-         else
-         {
-            Error("Radius.c:SceneRadiusCheck: Maximum number of objects exceeded");
-         }
-      }
+    section->objects = (short*)malloc(objectCount * sizeof(short));
+    if (!section->objects)
+    {
+        Error("Error:: radius.c: Not enough memory for section object list");
+    }
+    section->objectCount = objectCount;
 
-      object = object->next;
-      allCount++;
-   }
-
-   section->objects = ( short* )malloc( objectCount * sizeof(short) );
-   if (!section->objects)
-   {
-      Error("Error:: radius.c: Not enough memory for section object list");
-   }
-   section->objectCount = objectCount;
-
-   for ( j=0; j<objectCount; j++ )
-   {
-      section->objects[ j ] = objectList[ j ];
-   }
-
+    for (j = 0; j < objectCount; j++)
+    {
+        section->objects[j] = objectList[j];
+    }
 }
 
-
-
-void SceneRadiusCheck( Object* objects )
+void SceneRadiusCheck(Object* objects)
 {
-   TrackSection*  section;
-   TrackSection*  visSection;
-   short          i, j;
-   Object*        object;
-   Object*        nextObject;
-   MATRIX*        matrix;
-   Vector*        sectionCentre;
-   short          objectCount;
-   VECTOR         vector;
-//   long long      distance;
-   long      distance; // PCwipeout
-   short          objectList[ ObjectListMax ];
-   short          withinLocal;
-   short          withinGlobal;
-   short          allCount;
+    TrackSection* section;
+    TrackSection* visSection;
+    short i, j;
+    Object* object;
+    Object* nextObject;
+    MATRIX* matrix;
+    Vector* sectionCentre;
+    short objectCount;
+    VECTOR vector;
+    //   long long      distance;
+    long distance; // PCwipeout
+    short objectList[ObjectListMax];
+    short withinLocal;
+    short withinGlobal;
+    short allCount;
 
+    /* allocate and fill in a global object table */
 
-
-   /* allocate and fill in a global object table */
-
-   object = objects;
-   objectCount = 0;
-   while( object )
-   {
-      object = object->next;
-      objectCount++;
-   }
+    object = objects;
+    objectCount = 0;
+    while (object)
+    {
+        object = object->next;
+        objectCount++;
+    }
 #if 0
    printf( "num of objects = %d\n", objectCount );
 #endif
 
-   objectTable = ( Object** )malloc( ( objectCount + 1 ) * sizeof( Object* ) );
-   if ( !objectTable )
-   {
-      Error("radscn.c::SceneRadiusCheck(): No memory for global object table");
-   }
+    objectTable = (Object**)malloc((objectCount + 1) * sizeof(Object*));
+    if (!objectTable)
+    {
+        Error("radscn.c::SceneRadiusCheck(): No memory for global object table");
+    }
 
-   object = objects;
-   for ( i=0; i<objectCount; i++ )
-   {
-      objectTable[ i ] = object;
-      object = object->next;
-   }
+    object = objects;
+    for (i = 0; i < objectCount; i++)
+    {
+        objectTable[i] = object;
+        object = object->next;
+    }
 
+    /* do the radius check */
 
+    section = track->sections;
 
-   /* do the radius check */
-
-   section = track->sections;
-
-   for ( i=0; i<track->sectionCount; i++ )
-   {
+    for (i = 0; i < track->sectionCount; i++)
+    {
 #if 0
       printf( "," );
 #endif
-      object = objects;
-      objectCount = 0;
-      allCount = 0;
-      while( object )
-      {
-         withinLocal = 0;
-         withinGlobal = 0;
+        object = objects;
+        objectCount = 0;
+        allCount = 0;
+        while (object)
+        {
+            withinLocal = 0;
+            withinGlobal = 0;
 
-         matrix = &object->skeleton->relative;
-         sectionCentre = &section->centre;
+            matrix = &object->skeleton->relative;
+            sectionCentre = &section->centre;
 
-         vector.vx = matrix->t[ 0 ] - sectionCentre->vx;
-         vector.vy = matrix->t[ 1 ] - sectionCentre->vy;
-         vector.vz = matrix->t[ 2 ] - sectionCentre->vz;
+            vector.vx = matrix->t[0] - sectionCentre->vx;
+            vector.vy = matrix->t[1] - sectionCentre->vy;
+            vector.vz = matrix->t[2] - sectionCentre->vz;
 
-         if ( section->flags & Jump )
-         {
-            if ( ( abs( vector.vx ) < ( section->globalRadius * 2 ) ) &&
-                 ( abs( vector.vy ) < ( section->globalRadius * 2 ) ) &&
-                 ( abs( vector.vz ) < ( section->globalRadius * 2 ) ) )
+            if (section->flags & Jump)
             {
-               distance = SquareRoot0( ( vector.vx * vector.vx ) +
-                                       ( vector.vy * vector.vy ) +
-                                       ( vector.vz * vector.vz ) );
+                if ((abs(vector.vx) < (section->globalRadius * 2)) && (abs(vector.vy) < (section->globalRadius * 2)) && (abs(vector.vz) < (section->globalRadius * 2)))
+                {
+                    distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
 
-               distance = distance - object->extent;
+                    distance = distance - object->extent;
 
-               if ( distance < section->globalRadius )
-               {
-               /* within the global radius */
-                  withinGlobal = 1;
-               }
-            }
-         }
-         else
-         {
-            if ( ( abs( vector.vx ) < section->globalRadius ) &&
-                 ( abs( vector.vy ) < section->globalRadius ) &&
-                 ( abs( vector.vz ) < section->globalRadius ) )
-            {
-               distance = SquareRoot0( ( vector.vx * vector.vx ) +
-                                       ( vector.vy * vector.vy ) +
-                                       ( vector.vz * vector.vz ) );
-
-               distance = distance - object->extent;
-
-               if ( distance < section->globalRadius )
-               {
-               /* within the global radius */
-                  withinGlobal = 1;
-               }
-            }
-         }
-
-
-         if ( withinGlobal )
-         {
-         /* Check distance forwards along the track */
-
-            visSection = section;
-            for ( j=0; ( !withinLocal ) && ( j < 30 ); j++ )
-            {
-               matrix = &object->skeleton->relative;
-               sectionCentre = &visSection->centre;
-
-               vector.vx = matrix->t[ 0 ] - sectionCentre->vx;
-               vector.vy = matrix->t[ 1 ] - sectionCentre->vy;
-               vector.vz = matrix->t[ 2 ] - sectionCentre->vz;
-
-               if ( ( abs( vector.vx ) < section->localRadius ) &&
-                  ( abs( vector.vy ) < section->localRadius ) &&
-                  ( abs( vector.vz ) < section->localRadius ) )
-               {
-                  distance = SquareRoot0( ( vector.vx * vector.vx ) +
-                                          ( vector.vy * vector.vy ) +
-                                          ( vector.vz * vector.vz ) );
-
-                  distance = distance - object->extent;
-
-                  if ( distance < section->localRadius )
-                  {
-                  /* within the local radius */
-                     withinLocal = 1;
-                  }
-               }
-               visSection = visSection->nextSection.ptr;
-            }
-
-         /* Check distance backwards along the track */
-
-            visSection = section;
-            for ( j=0; ( !withinLocal ) && ( j < 30 ); j++ )
-            {
-               matrix = &object->skeleton->relative;
-               sectionCentre = &visSection->centre;
-
-               vector.vx = matrix->t[ 0 ] - sectionCentre->vx;
-               vector.vy = matrix->t[ 1 ] - sectionCentre->vy;
-               vector.vz = matrix->t[ 2 ] - sectionCentre->vz;
-
-               if ( ( abs( vector.vx ) < section->localRadius ) &&
-                  ( abs( vector.vy ) < section->localRadius ) &&
-                  ( abs( vector.vz ) < section->localRadius ) )
-               {
-                  distance = SquareRoot0( ( vector.vx * vector.vx ) +
-                                          ( vector.vy * vector.vy ) +
-                                          ( vector.vz * vector.vz ) );
-
-                  distance = distance - object->extent;
-
-                  if ( distance < section->localRadius )
-                  {
-                  /* within the local radius */
-                     withinLocal = 1;
-                  }
-               }
-               visSection = visSection->prevSection.ptr;
-            }
-         }
-
-
-         if ( withinLocal )
-         {
-            if ( objectCount < ObjectListMax )
-            {
-               objectList[ objectCount++ ] = allCount;
+                    if (distance < section->globalRadius)
+                    {
+                        /* within the global radius */
+                        withinGlobal = 1;
+                    }
+                }
             }
             else
             {
-               Error("Radius.c:SceneRadiusCheck: Maximum number of objects exceeded");
+                if ((abs(vector.vx) < section->globalRadius) && (abs(vector.vy) < section->globalRadius) && (abs(vector.vz) < section->globalRadius))
+                {
+                    distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+
+                    distance = distance - object->extent;
+
+                    if (distance < section->globalRadius)
+                    {
+                        /* within the global radius */
+                        withinGlobal = 1;
+                    }
+                }
             }
-         }
 
-         object = object->next;
-         allCount++;
-      }
+            if (withinGlobal)
+            {
+                /* Check distance forwards along the track */
 
-      section->objects = ( short* )malloc( objectCount * sizeof(short) );
-      if (!section->objects)
-      {
-         Error("Error:: radius.c: Not enough memory for section object list");
-      }
-      section->objectCount = objectCount;
+                visSection = section;
+                for (j = 0; (!withinLocal) && (j < 30); j++)
+                {
+                    matrix = &object->skeleton->relative;
+                    sectionCentre = &visSection->centre;
 
-      for ( j=0; j<objectCount; j++ )
-      {
-         section->objects[ j ] = objectList[ j ];
-      }
+                    vector.vx = matrix->t[0] - sectionCentre->vx;
+                    vector.vy = matrix->t[1] - sectionCentre->vy;
+                    vector.vz = matrix->t[2] - sectionCentre->vz;
+
+                    if ((abs(vector.vx) < section->localRadius) && (abs(vector.vy) < section->localRadius) && (abs(vector.vz) < section->localRadius))
+                    {
+                        distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+
+                        distance = distance - object->extent;
+
+                        if (distance < section->localRadius)
+                        {
+                            /* within the local radius */
+                            withinLocal = 1;
+                        }
+                    }
+                    visSection = visSection->nextSection.ptr;
+                }
+
+                /* Check distance backwards along the track */
+
+                visSection = section;
+                for (j = 0; (!withinLocal) && (j < 30); j++)
+                {
+                    matrix = &object->skeleton->relative;
+                    sectionCentre = &visSection->centre;
+
+                    vector.vx = matrix->t[0] - sectionCentre->vx;
+                    vector.vy = matrix->t[1] - sectionCentre->vy;
+                    vector.vz = matrix->t[2] - sectionCentre->vz;
+
+                    if ((abs(vector.vx) < section->localRadius) && (abs(vector.vy) < section->localRadius) && (abs(vector.vz) < section->localRadius))
+                    {
+                        distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+
+                        distance = distance - object->extent;
+
+                        if (distance < section->localRadius)
+                        {
+                            /* within the local radius */
+                            withinLocal = 1;
+                        }
+                    }
+                    visSection = visSection->prevSection.ptr;
+                }
+            }
+
+            if (withinLocal)
+            {
+                if (objectCount < ObjectListMax)
+                {
+                    objectList[objectCount++] = allCount;
+                }
+                else
+                {
+                    Error("Radius.c:SceneRadiusCheck: Maximum number of objects exceeded");
+                }
+            }
+
+            object = object->next;
+            allCount++;
+        }
+
+        section->objects = (short*)malloc(objectCount * sizeof(short));
+        if (!section->objects)
+        {
+            Error("Error:: radius.c: Not enough memory for section object list");
+        }
+        section->objectCount = objectCount;
+
+        for (j = 0; j < objectCount; j++)
+        {
+            section->objects[j] = objectList[j];
+        }
 
 #if 0
       printf( "List %d ::", i );
@@ -421,10 +372,6 @@ void SceneRadiusCheck( Object* objects )
 #if 0
       printf( "Track section %d object count %d\n", i, objectCount );
 #endif
-      section = NextIndexSection(section);
-   }
+        section = NextIndexSection(section);
+    }
 }
-
-
-
-

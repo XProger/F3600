@@ -1,0 +1,10 @@
+﻿---
+BasedOnStyle: WebKit
+AlignEscapedNewlines: Left
+BreakBeforeBraces: Allman
+ColumnLimit: '1024'
+IndentCaseLabels: 'true'
+MaxEmptyLinesToKeep: '1'
+SortIncludes: 'false'
+
+...
