@@ -5,6 +5,7 @@
 #include "input.h"
 #include "tim.h"
 #include "object.h"
+#include "render.h"
 #include "file.h"
 #include "skeleton.h"
 #include "track.h"
@@ -15,7 +16,6 @@
 #include "camera.h"
 #include "draw.h"
 #include "scene.h"
-#include "fileops.h"
 #include "sound.h"
 #include "control.h"
 #include "menus.h"
@@ -26,11 +26,20 @@
 #include "sfx.h"
 #include "card.h"
 #include "utils.h"
-#include "error.h"
-#include "render.h"
 #include "race.h"
+#include "search.h"
+#include "dynam.h"
+#include "collide.h"
+#include "cone.h"
+#include "effects.h"
+#include "init.h"
+#include "radscn.h"
+#include "lzss.h"
+#include "spline.h"
+#include "credits.h"
+#include "options.h"
 
-void gameInit();
-void gameCtrl();
+void gameInit(void);
+void gameCtrl(void);
 
 #endif

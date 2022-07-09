@@ -1,28 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "draw.h"
-#include "file.h"
-#include "scene.h"
-#include "sound.h"
-#include "global.h"
-#include "tilelib.h"
-#include "ttf.h"
-#include "effects.h"
-#include "fileops.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "utils.h"
-#include "render.h"
+#include "game.h"
 
 char TrackDirection(TrackCamera* camera)
 {
@@ -65,10 +41,9 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
     TrackSection* section;
     long extent;
     SVECTOR centre;
+    Object* obj; // = objectTable[0];
 
     section = camera->section;
-
-    Object* obj; // = objectTable[0];
 
     if (section->objectCount > 0)
     {

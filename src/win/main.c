@@ -2,8 +2,6 @@
 #include <mmsystem.h>
 #include "game.h"
 
-short trackNum;
-
 BOOL isActive;
 HWND hWnd;
 
@@ -32,7 +30,10 @@ long osGetSystemTimeMS()
     return (long)((count.QuadPart - gTimerStart.QuadPart) * 1000L / gTimerFreq.QuadPart);
 }
 
-void osQuit() { PostQuitMessage(0); }
+void osQuit()
+{
+    PostQuitMessage(0);
+}
 
 #define INPUT_JOY_COUNT 4
 
@@ -131,7 +132,7 @@ void inputInit()
     if (!h)
         return;
 
-#define GetProcAddr(lib, x) (x = GetProcAddress(lib, #x + 1))
+#define GetProcAddr(lib, x) ((FARPROC)x = GetProcAddress(lib, #x + 1))
 
     GetProcAddr(h, _XInputGetState);
     GetProcAddr(h, _XInputSetState);
@@ -141,9 +142,6 @@ void inputInit()
         XINPUT_STATE state;
         int res = _XInputGetState(i, &state);
         joyDevice[i].ready = (_XInputGetState(i, &state) == ERROR_SUCCESS);
-
-        if (joyDevice[i].ready)
-            printf("Gamepad %d is ready\n", i + 1);
     }
 }
 
@@ -464,12 +462,8 @@ void SfxEffectPitch(int16 wPlayId, uint16 wPitch) { }
 void SfxEffectPan(int16 wPlayId, uint16 bPan) { }
 
 // cd
-int CdControl(unsigned char Cmd, struct CdlPos* parm1, unsigned char* parm2) { }
+int CdControl(unsigned char Cmd, struct CdlPos* parm1, unsigned char* parm2) { return 0; }
 void CDRestart(void) { }
 void CDPlay(short int CurrTrackNo) { }
 void CDStop(void) { }
 void CdSetVol(long newVol) { }
-
-short starttrack;
-short endtrack;
-short int CurrTrkNo;

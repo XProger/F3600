@@ -1,3 +1,3 @@
-long FileLength(char* name);
+long FileLength(const char* name);
 
-long LoadFile(char* name, char* buffer);
+long LoadFile(const char* name, char* buffer);

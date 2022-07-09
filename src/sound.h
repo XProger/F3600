@@ -88,7 +88,7 @@ typedef struct ChanTable
 
 typedef struct VagTable
 {
-    u_long addr;
+    uint32 addr;
     short channelID;
 } VagTable; /*   int ?? */
 
@@ -108,10 +108,10 @@ typedef struct _sfx_info
     int16 pad;
 } SFX_INFO;
 
-void InitSpuSound();
+void InitSpuSound(void);
 void UpdateNotes(int paused);
 void KillNote(int note);
-void KillNotes();
+void KillNotes(void);
 short PlayNote(short, short, short);
 short PlayDirectionalNote(short vagID, short priority, short duration, VECTOR pos);
 void SetPitch(short VagID, short pitch);

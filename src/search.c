@@ -1,18 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "search.h"
-#include "droid.h"
-#include "camera.h"
-#include "sound.h"
-#include "global.h"
-#include "utils.h"
+#include "game.h"
 
 int SectionSearch(ShipData* playerShip)
 {
@@ -20,7 +6,7 @@ int SectionSearch(ShipData* playerShip)
     int smallest_mag;
     VECTOR cent2ship;
     int mag;
-    int i, index;
+    int i;
     short juncChecked = 0;
     TrackSection* junc = NULL;
 
@@ -114,7 +100,7 @@ TrackSection* FindNearestSection(TrackSection* trk, VECTOR pos)
     int smallest_mag;
     VECTOR cent2ship;
     int mag;
-    int i, index;
+    int i;
     short juncChecked = 0;
     TrackSection* junc = NULL;
 

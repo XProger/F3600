@@ -1,5 +1,4 @@
-#include "standard.h"
-#include "utils.h"
+#include "game.h"
 
 const short arccos_tab[4096] = {
     8191 ,
@@ -4708,7 +4707,10 @@ int ang(int a)
     return (a);
 }
 
-long ratan2(long y, long x) { return ((long)((atan2((double)y, (double)x)) * 652)); }
+long ratan2(long y, long x)
+{
+    return ((long)((atan2((double)y, (double)x)) * 652));
+}
 
 long rsin(long a)
 {
@@ -4803,6 +4805,7 @@ void ApplyMatrix(MATRIX* m, SVECTOR* v0, VECTOR* v1)
 
 void RotTrans(SVECTOR* v0, VECTOR* v1, long* flag)
 {
+    /*TODO RotTrans*/
     v1->vx = 0;
     v1->vy = 0;
     v1->vz = 256;
@@ -4823,4 +4826,29 @@ void RotTrans(SVECTOR* v0, VECTOR* v1, long* flag)
        if (v1->vx < -32767) { *flag |= 0x81000000; v1->vx = -32767; }
        if (v1->vy < -32767) { *flag |= 0x80800000; v1->vy = -32767; }
     */
+}
+
+extern int gWidth;
+extern int gHeight;
+extern int gBorder;
+
+long RotTransPers(SVECTOR* v0, DVECTOR* sxy, long* flag)
+{
+    /*TODO RotTransPers*/
+    //VECTOR r0;
+    //ApplyMatrix(&RTM, v0, &r0);
+    //DLSRotTransPers(sxy, &r0, flag);
+    sxy->vx = 160;
+    sxy->vy = 120;
+
+    *flag = 0;
+
+    if (sxy->vx < -(gBorder + 32) || sxy->vx > (320 + gBorder + 32) || sxy->vx < -(32) || sxy->vx > (240 + 32))
+    {
+        *flag |= CrtClipped;
+    }
+
+//        ( | ZNegative | ZLarge | ZSmall)
+
+    return 1;//r0.vz >> 2;
 }

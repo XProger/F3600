@@ -2,33 +2,7 @@
 /******     ships.c - Ship initialisation routines      *****/
 /************************************************************/
 
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "scene.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "fileops.h"
-#include "sound.h"
-#include "menus.h"
-#include "global.h"
-#include "hiscores.h"
-#include "effects.h"
-#include "options.h"
-#include "cone.h"
-#include "ttf.h"
-#include "hud.h"
-#include "dynam.h"
-#include "utils.h"
-#include "init.h"
-#include "utils.h"
-#include "render.h"
+#include "game.h"
 
 extern TrackCamera ctrlcamera;
 
@@ -449,7 +423,6 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         shipIndex[i].attr |= VISIBLE;
         shipIndex[i].attr |= DIRECTION;
         shipIndex[i].combatAttr = 0;
-        shipIndex[i].collideCount = 0;
         shipIndex[i].weaponType = NO_WEAPON;
         shipIndex[i].lapNo = 0;
         shipIndex[i].prevLapNo = 0;

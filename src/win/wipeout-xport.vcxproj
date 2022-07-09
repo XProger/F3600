@@ -35,7 +35,6 @@
     <ClCompile Include="..\hiscores.c" />
     <ClCompile Include="..\hud.c" />
     <ClCompile Include="..\init.c" />
-    <ClCompile Include="..\loadall.c" />
     <ClCompile Include="..\lzss.c" />
     <ClCompile Include="..\menus.c" />
     <ClCompile Include="..\object.c" />
@@ -43,19 +42,18 @@
     <ClCompile Include="..\pad.c" />
     <ClCompile Include="..\race.c" />
     <ClCompile Include="..\radscn.c" />
-    <ClCompile Include="..\render.c" />
     <ClCompile Include="..\scene.c" />
     <ClCompile Include="..\search.c" />
     <ClCompile Include="..\ships.c" />
     <ClCompile Include="..\skeleton.c" />
     <ClCompile Include="..\sound.c" />
     <ClCompile Include="..\spline.c" />
-    <ClCompile Include="..\tim.c" />
     <ClCompile Include="..\track.c" />
     <ClCompile Include="..\ttf.c" />
     <ClCompile Include="..\utils.c" />
     <ClCompile Include="..\weapon.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="render.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera.h" />
@@ -69,9 +67,7 @@
     <ClInclude Include="..\droid.h" />
     <ClInclude Include="..\dynam.h" />
     <ClInclude Include="..\effects.h" />
-    <ClInclude Include="..\error.h" />
     <ClInclude Include="..\file.h" />
-    <ClInclude Include="..\fileops.h" />
     <ClInclude Include="..\game.h" />
     <ClInclude Include="..\global.h" />
     <ClInclude Include="..\hiscores.h" />

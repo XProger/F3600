@@ -1,7 +1,8 @@
 /* (C) Psygnosis 1994. By Jason Carl Denton
 */
 
-Skeleton* NewSkeleton();
+void InitSkeleton(Skeleton* skeleton);
+Skeleton* NewSkeleton(void);
 
 void SetSkeletonPosition(Skeleton* skeleton, long x, long y, long z);
 

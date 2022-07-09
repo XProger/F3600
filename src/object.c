@@ -3,21 +3,7 @@
  * (C) Psygnosis 1994, 1995. By Jason Carl Denton & Rob Smith
  */
 
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "scene.h"
-#include "sound.h"
-#include "global.h"
-#include "error.h"
-#include "render.h"
+#include "game.h"
 
 // PCwipeout
 #define SHIELD_BODGE 50
@@ -43,9 +29,15 @@ extern char Resolution;
  *
  */
 
-void InitMenuDisplay(int geomOffset) { SetGeomOffset(160, geomOffset); }
+void InitMenuDisplay(int geomOffset)
+{
+    SetGeomOffset(160, geomOffset);
+}
 
-void InitGameDisplay(void) { SetGeomOffset(160, 120); }
+void InitGameDisplay(void)
+{
+    SetGeomOffset(160, 120);
+}
 
 void TransformStaticObject(Object* object)
 {

@@ -1,35 +1,10 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "scene.h"
-#include "track.h"
-#include "tilelib.h"
-#include "ttf.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "dynam.h"
-#include "search.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "camera.h"
-#include "draw.h"
-#include "sound.h"
-#include "fileops.h"
-#include "global.h"
-#include "effects.h"
-#include "options.h"
-#include "init.h"
-#include "collide.h"
-#include "utils.h"
+#include "game.h"
 
 extern long ctrlNeedTargetIcon;
 extern int ctrlnearShip;
 extern TrackCamera ctrlcamera;
+
+Texture* targetTexture;
 
 void DrawInternalShield(void);
 
@@ -264,13 +239,7 @@ void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
 {
     int i;
     int distance, shortestDistance;
-    SVECTOR* vertex;
-    DVECTOR sxy;
-    long p, flag;
-    short x, y;
-    int nearShip;
-    Poly poly;
-    short* coords;
+    int nearShip = 0;
     TrackSection* section;
 
     shortestDistance = 999;
@@ -370,46 +339,22 @@ void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
 
 void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
 {
-    /*TODO weapon target icon
-    SVECTOR              *vertex;
-    DVECTOR              sxy;
-    long                 p, flag;
-    short                x, y;
-    Poly                 poly;
-    short*               coords;
+    SVECTOR* vertex;
+    DVECTOR sxy;
+    long flag;
 
     shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton->update = 1;
-     SetSkeletonTransform( shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton );
-     vertex = shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->vertices;
-    poly.prim = shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->primitives;
-     coords = poly.f3->coords;
+    SetSkeletonTransform(shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton);
+    vertex = shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->vertices;
 
-    RotTransPers(  vertex,
-       &sxy,
-       &p,
-       &flag);
-    x = sxy.vx;
-    y = sxy.vy;
+    RotTransPers(vertex, &sxy, &flag);
 
+    if ((flag & (CrtClipped | ZNegative | ZLarge | ZSmall)))
+        return;
 
-    if(!(flag & (CrtClipped | ZNegative | ZLarge | ZSmall)))
-    {
-       setXY4(&(target[CurrentScreen]),
-          x - 8 , y - 8,
-          x + 7 , y - 8,
-          x - 8 , y + 7,
-          x + 7 , y + 7);
-       target->z0 = vertex->vz;
-       target->z1 = vertex->vz;
-       target->z2 = vertex->vz;
-       target->z3 = vertex->vz;
-       target->pad4 = 0;
-       target->pad5 = 0;
-       target->pad6 = 0;
-       target->pad7 = 0;
-       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(target[CurrentScreen]) );
-    }
-    */
+    renderTransparent(1);
+    AddGlyph(sxy.vx - (targetTexture->width >> 1), sxy.vy - (targetTexture->height >> 1), targetTexture->width, targetTexture->height, 0, 0, targetTexture);
+    renderTransparent(0);
 }
 
 void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex)
@@ -417,10 +362,8 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapon
     int i, j, k;
     Object* obj;
     short weaponTextures;
-    Texture* targetTexture;
     Poly poly;
     short primitiveCount;
-    StdPoly prim;
     long length;
     Prm prm;
     char* start;
@@ -604,27 +547,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapon
         weaponIndex[i].type = NO_WEAPON;
     }
 
-    targetTexture = LoadTexture("wipeout\\textures\\target2.tim", 1);
-    /*TODO target texture
-    for(i = 0; i < 2; i++)
-    {
-       SetPolyFT4(&(target[i]));
-
-       target[i].r0 = 230;
-       target[i].g0 = 0;
-       target[i].b0 = BLACK_NOT_DRAWN;
-
-       setUV4(&(target[i]),
-          targetTexture->u0, targetTexture->v0,
-          targetTexture->u1, targetTexture->v1,
-          targetTexture->u2, targetTexture->v2,
-          targetTexture->u3, targetTexture->v3) ;
-
-       setTPage(&(target[i]),0,3,targetTexture->textureX,targetTexture->textureY);
-       SetSemiTrans((P_TAG *)&(target[i]), 1);
-
-       target[i].clut = targetTexture->cba;
-    }*/
+    targetTexture = LoadTexture("wipeout\\textures\\target2.tim");
 }
 
 void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
@@ -680,10 +603,6 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
 
     weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
-
-#if FRI
-    TransformStaticObject(weaponShapes[weapon->currentWeapon].shapePtr);
-#endif
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -773,10 +692,8 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
 {
     VECTOR distance;
     VECTOR targetVector;
-    VECTOR bestPath;
     Face* facePtr;
     int i, mag, temp, vhdg, vpitch;
-    TrackSection* nextSection;
     VECTOR facePoint;
     int alpha;
 
@@ -866,12 +783,6 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
     SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->hdg, weapon->pitch, 0);
 
     weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
-
-#if FRI
-
-    TransformStaticObject(weaponShapes[weapon->currentWeapon].shapePtr);
-
-#endif
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -1012,7 +923,6 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     int ossilation;
     int i, mag;
     Poly poly;
-    StdPoly prim;
     short r;
 
     weapon->count--;
@@ -1172,10 +1082,8 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
 
     VECTOR distance;
     VECTOR targetVector;
-    VECTOR bestPath;
     Face* facePtr;
     int i, mag, temp, vhdg, vpitch;
-    TrackSection* nextSection;
     VECTOR facePoint;
     int alpha;
 
@@ -1465,14 +1373,11 @@ void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
 void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-
     VECTOR distance;
     VECTOR targetVector;
-    VECTOR bestPath;
+    VECTOR facePoint;
     Face* facePtr;
     int i, mag, temp, vhdg, vpitch;
-    TrackSection* nextSection;
-    VECTOR facePoint;
     int alpha;
 
     if (weapon->targetShip > -1)
@@ -1697,17 +1602,12 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
 void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    VECTOR distance;
-    Face* facePtr;
-    int i, k, j, mag;
-    VECTOR facePoint;
+    int k;
     Poly poly;
     short primitiveCount;
-    StdPoly prim;
     short* coords;
     short col0, col1, col2, col3;
     int shieldID;
-    DVECTOR screen0, screen1, screen2, screen3;
 
     if (shipIndex[weapon->fireShip].attr & VIEW_IN)
     {
@@ -1726,12 +1626,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
     if (weapon->count == 0)
     {
-        //    if (current_palette==SHIELD_PAL)
-        //    {
-        //     CopyPal(main_palette,0,255);
-        //     current_palette=MAIN_PAL;
-        //    }
-
         weaponShapes[weapon->currentWeapon].used = 0;
         weaponIndex[weapon->currentWeapon].availible = 0;
 
@@ -1741,17 +1635,10 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         }
 
         shipIndex[weapon->fireShip].attr &= ~SHIELDED;
-        //    return;
     }
 
     if ((shipIndex[weapon->fireShip].attr & VIEW_IN) == 0)
     {
-        //    if (current_palette==SHIELD_PAL)
-        //    {
-        //     CopyPal(main_palette,0,255);
-        //     current_palette=MAIN_PAL;
-        //    }
-
         SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
 
         SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), shipIndex[weapon->fireShip].hdg, shipIndex[weapon->fireShip].pitch, shipIndex[weapon->fireShip].roll);
@@ -1764,7 +1651,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             switch (poly.prim->type)
             {
                 case TypeG3:
-                    /* prim.g3 = poly.g3->tri + CurrentScreen;*/
                     coords = poly.g3->coords;
 
                     col0 = (rsin(weapon->count * coords[0]) >> 5) + 128;
@@ -1792,7 +1678,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
                     break;
 
                 case TypeG4:
-                    /* prim.g4 = poly.g4->quad + CurrentScreen;*/
                     coords = poly.g4->coords;
 
                     col0 = (rsin(weapon->count * coords[0]) >> 5) + 128;
@@ -1850,7 +1735,6 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
 {
     int i, j;
     Face* facePtr;
-    SVECTOR tempColour;
 
     for (i = 0; i < noWeaponGrids; i++)
     {
@@ -1873,13 +1757,7 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
                         if (j == ownShip)
                         {
                             PlayNote(POWER_UP, 0, 40);
-                            if (shipIndex[j].weaponType == SHIELD)
-                            {
-                                // shipIndex[j].weaponType = GetNewWeaponBodge();
-                                shipIndex[j].weaponType = GetNewWeapon();
-                            }
-                            else
-                                shipIndex[j].weaponType = GetNewWeapon();
+                            shipIndex[j].weaponType = GetNewWeapon();
                         }
                         else
                             shipIndex[j].weaponType = 1;
@@ -1897,10 +1775,7 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
                         if (j == ownShip)
                         {
                             PlayNote(POWER_UP, 0, 40);
-                            if (shipIndex[j].weaponType == SHIELD)
-                                shipIndex[j].weaponType = GetNewWeaponBodge();
-                            else
-                                shipIndex[j].weaponType = GetNewWeapon();
+                            shipIndex[j].weaponType = GetNewWeapon();
                         }
                         else
                             shipIndex[j].weaponType = 1;
@@ -2033,7 +1908,7 @@ int GetNewWeapon(void)
             weaponType = MISSILE;
         else if (index < 59)
             weaponType = TURBO;
-        else if (index < 65)
+        else
             weaponType = ELEC_BOLT;
     }
     else
@@ -2054,48 +1929,10 @@ int GetNewWeapon(void)
             weaponType = ELEC_BOLT;
         else if (index < 69)
             weaponType = REV_CON;
-        else if (index < 70) /* 70 */
+        else
             weaponType = SPECIAL;
     }
 
-    return (weaponType);
-}
-
-int GetNewWeaponBodge(void)
-{
-    int index;
-    int weaponType;
-
-    if (gameType == SINGLE)
-    {
-        index = randy() % 60;
-
-        if (index < 27)
-            weaponType = ROCKET;
-        else if (index < 40)
-            weaponType = MISSILE;
-        else if (index < 50)
-            weaponType = TURBO;
-        else if (index < 60)
-            weaponType = ELEC_BOLT;
-    }
-    else
-    {
-        index = randy() % 65; /* 70 */
-
-        if (index < 27)
-            weaponType = ROCKET;
-        else if (index < 40)
-            weaponType = MISSILE;
-        else if (index < 50)
-            weaponType = TURBO;
-        else if (index < 60)
-            weaponType = ELEC_BOLT;
-        else if (index < 69)
-            weaponType = REV_CON;
-        else if (index < 70) /* 70 */
-            weaponType = SPECIAL;
-    }
     return (weaponType);
 }
 
@@ -2103,10 +1940,8 @@ void SetTargetShip(ShipData* shipIndex, int shipNo)
 {
     int i;
     int distance, shortestDistance;
-    int nearShip;
+    int nearShip = 0;
     TrackSection* section;
-    int target;
-    int start;
 
     shortestDistance = 999;
 

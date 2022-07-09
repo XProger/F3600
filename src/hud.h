@@ -1,8 +1,8 @@
 #define NUM_BARS        12
 #define SPEEDO_X        179
 #define SPEEDO_Y        195 /*200*/
-#define SPEEDO_WIDTH    127
-#define SPEEDO_HEIGHT   31 /*31*/
+#define SPEEDO_WIDTH    128
+#define SPEEDO_HEIGHT   32
 #define BAR_X           178
 #define BAR_Y           229
 #define MAX_TEXT        256
@@ -55,12 +55,12 @@ typedef struct
     short x, y;
 } PilotData;
 
-void InitText();
+void InitText(void);
 void InitSpeedo(Speedo*);
 void fill_speedo(Speedo*, int, int);
 void AddNumber(int, TEXT_DATA*, int);
 void AddTime(int, TEXT_DATA*, int);
-void AddText(char*, TEXT_DATA*, int);
+void AddText(const char*, TEXT_DATA*, int);
 TEXT_DATA* text_data(int, int, int);
 void UpdateRaceHud(ShipData*, Speedo*, int, ConfigData*);
 void SetCharTextures(char);
@@ -69,14 +69,15 @@ void CentreText(const char*, TEXT_DATA*, int);
 void DisplayLives(ConfigData*); // PCwipeout
 int CalcPosition(ShipData* shipIndex);
 void ScreenFooter(int x, int y, int colour);
-void InitChampTable();
-void DisplayChampTable();
-void DisplayRacePoints();
-void InitScreenTex(Texture** screenTex, char* fileName);
+void InitChampTable(void);
+void DisplayChampTable(void);
+void DisplayRacePoints(void);
+void InitScreenTex(Texture** screenTex, const char* fileName);
 void DisplayPicture(Texture* pic, short x, short y, short width, short height);
-void DisplayVenomComplete();
-void DisplayAllVenomComplete();
+void DisplayVenomComplete(void);
+void DisplayAllVenomComplete(void);
 void InitTrackTex(Texture** trackTex);
 void BackPoly(short, short, short, short);
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData);
 void DrawHud(ShipData* shipIndex, Speedo* speedo, int choice, ConfigData* gameData);
+void AddGlyph(int x, int y, int w, int h, int u, int v, const Texture* tex);

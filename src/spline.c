@@ -1,33 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "tilelib.h"
-#include "ttf.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "draw.h"
-#include "scene.h"
-#include "dynam.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "sound.h"
-#include "effects.h"
-#include "fileops.h"
-#include "options.h"
-#include "global.h"
-#include "cone.h"
-#include "spline.h"
-#include "search.h"
-#include "error.h"
-#include "collide.h"
-#include "utils.h"
+#include "game.h"
 
 /* the spline position we are currently on */
 short camerasplineCount = 0;
@@ -54,56 +25,56 @@ short textY;
 
 #define ExtroMessages 0
 
-const char c1[] = "AWESOME";
-const char c2[] = " ";
-const char c3[] = "YOU HAVE BEATEN";
-const char c4[] = " ";
-const char c5[] = "WIPEOUT";
-const char c6[] = " ";
-const char c7[] = "YOU ARE A TRULY";
-const char c8[] = " ";
-const char c9[] = "AMAZING PILOT";
-const char c10[] = " ";
-const char c11[] = " ";
-const char c12[] = " ";
-const char c13[] = "CONGRATULATIONS";
-const char c14[] = " ";
-const char c15[] = " ";
-const char c16[] = " ";
-const char c17[] = " ";
-const char c18[] = "A BIG THANKS";
-const char c19[] = " ";
-const char c20[] = "FROM ALL OF US ON THE TEAM";
-const char c21[] = " ";
-const char c22[] = "LOOK OUT FOR";
-const char c23[] = " ";
-const char c24[] = "WIPEOUT II";
-const char c25[] = " ";
-const char c26[] = "COMING SOON";
+const char str_c1[] = "AWESOME";
+const char str_c2[] = " ";
+const char str_c3[] = "YOU HAVE BEATEN";
+const char str_c4[] = " ";
+const char str_c5[] = "WIPEOUT";
+const char str_c6[] = " ";
+const char str_c7[] = "YOU ARE A TRULY";
+const char str_c8[] = " ";
+const char str_c9[] = "AMAZING PILOT";
+const char str_c10[] = " ";
+const char str_c11[] = " ";
+const char str_c12[] = " ";
+const char str_c13[] = "CONGRATULATIONS";
+const char str_c14[] = " ";
+const char str_c15[] = " ";
+const char str_c16[] = " ";
+const char str_c17[] = " ";
+const char str_c18[] = "A BIG THANKS";
+const char str_c19[] = " ";
+const char str_c20[] = "FROM ALL OF US ON THE TEAM";
+const char str_c21[] = " ";
+const char str_c22[] = "LOOK OUT FOR";
+const char str_c23[] = " ";
+const char str_c24[] = "WIPEOUT II";
+const char str_c25[] = " ";
+const char str_c26[] = "COMING SOON";
 
-const char i1[] = "CONGRATULATIONS";
-const char i2[] = " ";
-const char i3[] = "RAPIER CLASS";
-const char i4[] = " ";
-const char i5[] = "COMPETENCE ACHIEVED";
-const char i6[] = " ";
-const char i7[] = "YOU NOW HAVE ACCESS TO THE";
-const char i8[] = " ";
-const char i9[] = "FULL VENOM AND RAPIER";
-const char i10[] = " ";
-const char i11[] = "CHAMPIONSHIPS WITH THE ";
-const char i12[] = " ";
-const char i13[] = "NEWLY CONSTRUCTED CIRCUIT";
-const char i14[] = " ";
-const char i15[] = "FIRESTAR";
-const char i16[] = " ";
-const char i17[] = "WE RECOMMEND YOU";
-const char i18[] = " ";
-const char i19[] = "SAVE";
-const char i20[] = " ";
-const char i21[] = "YOUR CURRENT GAME";
-const char i22[] = " ";
-const char i23[] = "GOOD LUCK";
+const char str_i1[] = "CONGRATULATIONS";
+const char str_i2[] = " ";
+const char str_i3[] = "RAPIER CLASS";
+const char str_i4[] = " ";
+const char str_i5[] = "COMPETENCE ACHIEVED";
+const char str_i6[] = " ";
+const char str_i7[] = "YOU NOW HAVE ACCESS TO THE";
+const char str_i8[] = " ";
+const char str_i9[] = "FULL VENOM AND RAPIER";
+const char str_i10[] = " ";
+const char str_i11[] = "CHAMPIONSHIPS WITH THE ";
+const char str_i12[] = " ";
+const char str_i13[] = "NEWLY CONSTRUCTED CIRCUIT";
+const char str_i14[] = " ";
+const char str_i15[] = "FIRESTAR";
+const char str_i16[] = " ";
+const char str_i17[] = "WE RECOMMEND YOU";
+const char str_i18[] = " ";
+const char str_i19[] = "SAVE";
+const char str_i20[] = " ";
+const char str_i21[] = "YOUR CURRENT GAME";
+const char str_i22[] = " ";
+const char str_i23[] = "GOOD LUCK";
 
 typedef struct name
 {
@@ -624,7 +595,7 @@ This is the camera high up looking down
 void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueDroid)
 {
     VECTOR pos;
-    long hdg, pitch, temp;
+    long temp;
     VECTOR targetVector;
 
     camera->section = ship[ownShip].nearTrkSect;
@@ -668,9 +639,9 @@ This is the camera high up looking down
 
 */
 void UpdateCameraStationary(TrackCamera* camera, ShipData* ship, RescueData* rescueDroid)
-{
+{ 
     VECTOR pos;
-    long hdg, pitch, temp;
+    long temp;
     VECTOR targetVector;
 
     timeOut--;
@@ -1076,13 +1047,11 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 break;
 
             case 5:
-                //            printf( "\nfinished firestar extro \n" );
                 finishedExtro = 1;
-
                 break;
 
             default:
-                Error("spline.c::UpdateCameraExtroAttract():Reached default in firestar");
+                ASSERT(0);
                 break;
         }
 
@@ -1515,12 +1484,11 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 break;
 
             case 7:
-                //            printf( "\nfinished silverstream extro \n" );
                 finishedExtro = 1;
                 break;
 
             default:
-                Error("spline.c::UpdateCameraExtroAttract():Reached default in silverstream");
+                ASSERT(0);
                 break;
         }
 
@@ -1533,204 +1501,204 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     }
 }
 
-void InitFireCongratulations()
+void InitFireCongratulations(void)
 {
-    con[0].words = c1;
+    con[0].words = str_c1;
     con[0].colour = Red;
     con[0].size = 8;
 
-    con[1].words = c2;
+    con[1].words = str_c2;
     con[1].colour = White;
     con[1].size = 8;
 
-    con[2].words = c3;
+    con[2].words = str_c3;
     con[2].colour = White;
     con[2].size = 8;
 
-    con[3].words = c4;
+    con[3].words = str_c4;
     con[3].colour = White;
     con[3].size = 8;
 
-    con[4].words = c5;
+    con[4].words = str_c5;
     con[4].colour = Red;
     con[4].size = 8;
 
-    con[5].words = c6;
+    con[5].words = str_c6;
     con[5].colour = White;
     con[5].size = 8;
 
-    con[6].words = c7;
+    con[6].words = str_c7;
     con[6].colour = White;
     con[6].size = 8;
 
-    con[7].words = c8;
+    con[7].words = str_c8;
     con[7].colour = White;
     con[7].size = 8;
 
-    con[8].words = c9;
+    con[8].words = str_c9;
     con[8].colour = White;
     con[8].size = 8;
 
-    con[9].words = c10;
+    con[9].words = str_c10;
     con[9].colour = White;
     con[9].size = 8;
 
-    con[10].words = c11;
+    con[10].words = str_c11;
     con[10].colour = White;
     con[10].size = 8;
 
-    con[11].words = c12;
+    con[11].words = str_c12;
     con[11].colour = White;
     con[11].size = 8;
 
-    con[12].words = c13;
+    con[12].words = str_c13;
     con[12].colour = Red;
     con[12].size = 16;
 
-    con[13].words = c14;
+    con[13].words = str_c14;
     con[13].colour = White;
     con[13].size = 8;
 
-    con[14].words = c15;
+    con[14].words = str_c15;
     con[14].colour = White;
     con[14].size = 8;
 
-    con[15].words = c16;
+    con[15].words = str_c16;
     con[15].colour = White;
     con[15].size = 8;
 
-    con[16].words = c17;
+    con[16].words = str_c17;
     con[16].colour = White;
     con[16].size = 8;
 
-    con[17].words = c18;
+    con[17].words = str_c18;
     con[17].colour = Red;
     con[17].size = 8;
 
-    con[18].words = c19;
+    con[18].words = str_c19;
     con[18].colour = White;
     con[18].size = 8;
 
-    con[19].words = c20;
+    con[19].words = str_c20;
     con[19].colour = White;
     con[19].size = 8;
 
-    con[20].words = c21;
+    con[20].words = str_c21;
     con[20].colour = White;
     con[20].size = 8;
 
-    con[21].words = c22;
+    con[21].words = str_c22;
     con[21].colour = White;
     con[21].size = 8;
 
-    con[22].words = c23;
+    con[22].words = str_c23;
     con[22].colour = White;
     con[22].size = 8;
 
-    con[23].words = c24;
+    con[23].words = str_c24;
     con[23].colour = Red;
     con[23].size = 8;
 
-    con[24].words = c25;
+    con[24].words = str_c25;
     con[24].colour = White;
     con[24].size = 8;
 
-    con[25].words = c26;
+    con[25].words = str_c26;
     con[25].colour = White;
     con[25].size = 8;
 }
 
-void InitIceCongratulations()
+void InitIceCongratulations(void)
 {
-    con[0].words = i1;
+    con[0].words = str_i1;
     con[0].colour = White;
     con[0].size = 8;
 
-    con[1].words = i2;
+    con[1].words = str_i2;
     con[1].colour = White;
     con[1].size = 8;
 
-    con[2].words = i3;
+    con[2].words = str_i3;
     con[2].colour = White;
     con[2].size = 8;
 
-    con[3].words = i4;
+    con[3].words = str_i4;
     con[3].colour = White;
     con[3].size = 8;
 
-    con[4].words = i5;
+    con[4].words = str_i5;
     con[4].colour = White;
     con[4].size = 8;
 
-    con[5].words = i6;
+    con[5].words = str_i6;
     con[5].colour = White;
     con[5].size = 8;
 
-    con[6].words = i7;
+    con[6].words = str_i7;
     con[6].colour = White;
     con[6].size = 8;
 
-    con[7].words = i8;
+    con[7].words = str_i8;
     con[7].colour = White;
     con[7].size = 8;
 
-    con[8].words = i9;
+    con[8].words = str_i9;
     con[8].colour = White;
     con[8].size = 8;
 
-    con[9].words = i10;
+    con[9].words = str_i10;
     con[9].colour = White;
     con[9].size = 8;
 
-    con[10].words = i11;
+    con[10].words = str_i11;
     con[10].colour = White;
     con[10].size = 8;
 
-    con[11].words = i12;
+    con[11].words = str_i12;
     con[11].colour = White;
     con[11].size = 8;
 
-    con[12].words = i13;
+    con[12].words = str_i13;
     con[12].colour = White;
     con[12].size = 8;
 
-    con[13].words = i14;
+    con[13].words = str_i14;
     con[13].colour = White;
     con[13].size = 8;
 
-    con[14].words = i15;
+    con[14].words = str_i15;
     con[14].colour = White;
     con[14].size = 8;
 
-    con[15].words = i16;
+    con[15].words = str_i16;
     con[15].colour = White;
     con[15].size = 8;
 
-    con[16].words = i17;
+    con[16].words = str_i17;
     con[16].colour = White;
     con[16].size = 8;
 
-    con[17].words = i18;
+    con[17].words = str_i18;
     con[17].colour = White;
     con[17].size = 8;
 
-    con[18].words = i19;
+    con[18].words = str_i19;
     con[18].colour = White;
     con[18].size = 8;
 
-    con[19].words = i20;
+    con[19].words = str_i20;
     con[19].colour = White;
     con[19].size = 8;
 
-    con[20].words = i21;
+    con[20].words = str_i21;
     con[20].colour = White;
     con[20].size = 8;
 
-    con[21].words = i22;
+    con[21].words = str_i22;
     con[21].colour = White;
     con[21].size = 8;
 
-    con[22].words = i23;
+    con[22].words = str_i23;
     con[22].colour = White;
     con[22].size = 8;
 }

@@ -1,39 +1,20 @@
 /* (C) Psygnosis 1994. By Jason Carl Denton
 */
 
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "sound.h"
-#include "global.h"
-#include "error.h"
+#include "game.h"
 
-long FileLength(char* name)
+long FileLength(const char* name)
 {
+/*TODO 3DO*/
+#ifdef __3DO__
+    return 0;
+#else
     FILE* fd;
     long length;
 
     /* Open file */
-    char* cleanname;
 
-    cleanname = (char*)strchr(name, ':');
-    if (cleanname != NULL)
-    {
-        cleanname++;
-    }
-    else
-    {
-        cleanname = name;
-    }
-
-    fd = fopen(cleanname, "rb");
+    fd = fopen(name, "rb");
     if (fd == NULL)
     {
         return 0;
@@ -52,30 +33,24 @@ long FileLength(char* name)
     /* Return file length */
 
     return (length);
+#endif
 }
 
-long LoadFile(char* name, char* buffer)
+long LoadFile(const char* name, char* buffer)
 {
+/*TODO 3DO*/
+#ifdef __3DO__
+    return 0;
+#else
     FILE* fd;
     long length;
 
     /* Open file */
-    char* cleanname;
 
-    cleanname = (char*)strchr(name, ':');
-    if (cleanname != NULL)
-    {
-        cleanname++;
-    }
-    else
-    {
-        cleanname = name;
-    }
-
-    fd = fopen(cleanname, "rb");
+    fd = fopen(name, "rb");
     if (fd == NULL)
     {
-        printf("File.c:LoadFile(): Bad file name %s\n", name);
+        ASSERT(0);
         return (0);
     }
 
@@ -90,7 +65,7 @@ long LoadFile(char* name, char* buffer)
 
     if (fread(buffer, 1, length, fd) != length)
     {
-        printf("File.c:LoadFile(): Failed to load file %s\n", name);
+        ASSERT(0);
         fclose(fd);
         return (0);
     }
@@ -102,4 +77,5 @@ long LoadFile(char* name, char* buffer)
     /* Return file length */
 
     return (length);
+#endif
 }

@@ -1,26 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ttf.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "draw.h"
-#include "scene.h"
-#include "sound.h"
-#include "dynam.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "global.h"
-#include "cone.h"
-#include "error.h"
-#include "utils.h"
+#include "game.h"
 
 void InitCone(Cone* cone)
 {
@@ -49,18 +27,10 @@ void InitCone(Cone* cone)
             switch (prm.f3->type)
             {
                 case TypeF3:
-                    if (prm.f3->flag & ShipEngine)
-                    {
-                        Error("F3 ::SE marked polys should be ft3's");
-                    }
                     prm.f3 += 1;
                     break;
 
                 case TypeF4:
-                    if (prm.f4->flag & ShipEngine)
-                    {
-                        Error("F4 ::SE marked polys should be ft3's");
-                    }
                     prm.f4 += 1;
                     break;
 
@@ -73,7 +43,7 @@ void InitCone(Cone* cone)
 
                         prm.ft3->flag |= Translucent;
 
-                        prm.ft3->tsb = GetTPage(0, 0, TextureTable[prm.ft3->texture]->textureX, TextureTable[prm.ft3->texture]->textureY);
+                        //prm.ft3->tsb = GetTPage(0, 0, TextureTable[prm.ft3->texture]->textureX, TextureTable[prm.ft3->texture]->textureY);
                         /*
                         prm.ft3->colour.r = 230;
                         prm.ft3->colour.g = 0 ;
@@ -88,26 +58,14 @@ void InitCone(Cone* cone)
                     break;
 
                 case TypeFT4:
-                    if (prm.ft4->flag & ShipEngine)
-                    {
-                        Error("FT4 ::SE marked polys should be ft3's");
-                    }
                     prm.ft4 += 1;
                     break;
 
                 case TypeG3:
-                    if (prm.g3->flag & ShipEngine)
-                    {
-                        Error("G3 ::SE marked polys should be ft3's");
-                    }
                     prm.g3 += 1;
                     break;
 
                 case TypeG4:
-                    if (prm.g4->flag & ShipEngine)
-                    {
-                        Error("G4 ::SE marked polys should be ft3's");
-                    }
                     prm.g4 += 1;
                     break;
 
@@ -120,7 +78,7 @@ void InitCone(Cone* cone)
 
                         prm.gt3->flag |= Translucent;
 
-                        prm.gt3->tsb = GetTPage(0, 0, TextureTable[prm.gt3->texture]->textureX, TextureTable[prm.gt3->texture]->textureY);
+                        //prm.gt3->tsb = GetTPage(0, 0, TextureTable[prm.gt3->texture]->textureX, TextureTable[prm.gt3->texture]->textureY);
                         /*
                         for ( j=0; j<3; j++ )
                         {
@@ -136,15 +94,11 @@ void InitCone(Cone* cone)
                     break;
 
                 case TypeGT4:
-                    if (prm.gt4->flag & ShipEngine)
-                    {
-                        Error("GT3 ::SE marked polys should be ft3's");
-                    }
                     prm.gt4 += 1;
                     break;
 
                 default:
-                    Error("cone.c::InitCone:Bad primitive type %x\n", prm.f3->type);
+                    ASSERT(0);
                     break;
             }
         }

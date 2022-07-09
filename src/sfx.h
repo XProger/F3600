@@ -11,7 +11,7 @@
 #ifndef _SFX_H_INCLUDED_
 #define _SFX_H_INCLUDED_
 
-#include "standard.h"
+#include "game.h"
 
 /*
  * Card Types
@@ -70,7 +70,7 @@ void SfxPlay(int16 wSampleId, uint8 bVolume, uint8 bLRPan, uint8 bFBPan, uint16 
 int16 SfxPlayID(int16 wSampleId, uint8 bVolume, uint8 bLRPan, uint8 bFBPan, uint16 wPitch, uint8 bFlags);
 
 void SfxStop(int16 wPlayId);
-void SfxStopAll();
+void SfxStopAll(void);
 void SfxEffectVol(int16 wPlayId, uint8 bVolume);
 void SfxEffectPitch(int16 wPlayId, uint16 wPitch);
 void SfxEffectPan(int16 wPlayId, uint16 bPan);

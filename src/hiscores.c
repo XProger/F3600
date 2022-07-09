@@ -1,20 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "fileops.h"
-#include "droid.h"
-#include "camera.h"
-#include "sound.h"
-#include "global.h"
+#include "game.h"
 
 extern TexChar CharSet16[];
 
@@ -49,9 +33,6 @@ void FillHighScoreNames(HiScores* scoreTable, char* n1, char* n2, char* n3, char
 
 void HighScore(ConfigData* gameData)
 {
-
-    BlkFill* clear[2];
-    TimData* timInfo = NULL;
     short charX = 40, charY = 185;
     char nameEntered[9];
     char currChar = 'A';

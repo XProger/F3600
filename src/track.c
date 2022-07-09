@@ -1,29 +1,7 @@
 /* (C) Psygnosis 1994. By Jason Carl Denton & Rob Smith
 */
 
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "droid.h"
-#include "camera.h"
-#include "weapon.h"
-#include "control.h"
-#include "sound.h"
-#include "draw.h"
-#include "global.h"
-#include "ttf.h"
-#include "effects.h"
-#include "scene.h"
-#include "dynam.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "cone.h"
-#include "error.h"
+#include "game.h"
 
 #define TrackVersion 8
 
@@ -127,7 +105,7 @@ void CheckVersion(void)
     {
         if (section->version != TrackVersion)
         {
-            Error("Convert track with track10");
+            ASSERT(0);
         }
         section += 1;
     }
@@ -184,21 +162,17 @@ void InitVertices(char* file)
     length = FileLength(file);
     if (length <= 0)
     {
-        Error("Track.c:InitVertices: file %s not found\n", file);
-    }
-
-    track->vertices = (VECTOR*)malloc(length + 32);
-    if (!track->vertices)
-    {
-        Error("Track.c:InitVertices: Failed to allocate memory for track vertices");
-    }
-
-    if (LoadFile(file, (Ptr)track->vertices) != length)
-    {
-        Error("Track.c:InitVertices(): Failed to load file %s\n", file);
+        ASSERT(0);
     }
 
     track->vertexCount = length / sizeof(VECTOR);
+
+    ASSERT(track->vertexCount <= MAX_VERTICES);
+
+    if (LoadFile(file, (char*)track->vertices) != length)
+    {
+        ASSERT(0);
+    }
 
     IntelVertex();
 }
@@ -206,26 +180,21 @@ void InitVertices(char* file)
 void InitFaces(char* file)
 {
     long length;
-    short i;
-    CVECTOR cols;
 
     length = FileLength(file);
     if (length <= 0)
     {
-        Error("Track.c:InitFaces: file %s not found\n", file);
+        ASSERT(0);
     }
 
-    track->faces = (Face*)malloc(length + 32);
-    if (!track->faces)
-    {
-        Error("Track.c:InitFaces: Failed to allocate memory for track faces");
-    }
-
-    if (LoadFile(file, (Ptr)track->faces) != length)
-    {
-        Error("Track.c:InitFaces(): Failed to load file %s\n", file);
-    }
     track->faceCount = length / sizeof(Face);
+
+    ASSERT(track->faceCount <= MAX_FACES);
+
+    if (LoadFile(file, (char*)track->faces) != length)
+    {
+        ASSERT(0);
+    }
 
     IntelFace();
 }
@@ -233,27 +202,21 @@ void InitFaces(char* file)
 void InitSections(char* file)
 {
     long length;
-    TrackSection* junctionSection;
-    TrackSection* section;
-    short i;
 
     length = FileLength(file);
     if (length <= 0)
     {
-        Error("Track.c:InitSections: file %s not found\n", file);
+        ASSERT(0);
     }
 
-    track->sections = (TrackSection*)malloc(length + 32);
-    if (!track->sections)
-    {
-        Error("Track.c:InitSections: Failed to allocate memory for track sections");
-    }
-
-    if (LoadFile(file, (Ptr)track->sections) != length)
-    {
-        Error("Track.c:InitSections(): Failed to load file %s\n", file);
-    }
     track->sectionCount = length / sizeof(TrackSection);
+
+    ASSERT(track->sectionCount <= MAX_SECTIONS);
+
+    if (LoadFile(file, (char*)track->sections) != length)
+    {
+        ASSERT(0);
+    }
 
     IntelSection();
 
@@ -266,30 +229,28 @@ void InitSections(char* file)
 
 void InitViewList(char* file)
 {
-
     long length;
     TrackSection* section;
     long total;
     short i, j;
+    int viewListCount;
 
     length = FileLength(file);
     if (length <= 0)
     {
-        Error("Track.c:InitViewList: file %s not found\n", file);
+        ASSERT(0);
     }
 
-    track->viewList = (short*)malloc(length + 32);
-    if (!track->viewList)
+    viewListCount = length / 2;
+
+    ASSERT(viewListCount <= MAX_VIEWLIST);
+
+    if (LoadFile(file, (char*)track->viewList) != length)
     {
-        Error("Track.c:InitViewList: Failed to allocate memory for view list");
+        ASSERT(0);
     }
 
-    if (LoadFile(file, (Ptr)track->viewList) != length)
-    {
-        Error("Track.c:InitViewList(): Failed to load file %s\n", file);
-    }
-
-    for (i = 0; i < length / 2; i++)
+    for (i = 0; i < viewListCount; i++)
     {
         IntelShort(&track->viewList[i]);
     }
@@ -317,14 +278,6 @@ void InitViewList(char* file)
         }
 
         section++;
-    }
-
-    if ((total * 2) != length)
-    {
-        printf("\n");
-        printf("total  %d\n", total);
-        printf("length %d\n", length);
-        Error("track.c::InitViewList():problem with view list");
     }
 }
 

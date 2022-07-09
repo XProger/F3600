@@ -1,22 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "droid.h"
-#include "camera.h"
-#include "fileops.h"
-#include "card.h"
-#include "sound.h"
-#include "global.h"
-#include "sfx.h"
+#include "game.h"
 
 //#define SAVEDIR       "wipeout\\"
 #define FILE_EXTENSION ".wsf"
@@ -28,14 +10,12 @@ long GetCardInfo(int cardNum)
 {
     return (0); // PCwipeout
 }
-long CheckHWCardEvents()
+long CheckHWCardEvents(void)
 {
     return (0); // PCwipeout
 }
 
-void ClearEventHW() { }
-
-long CardContentStatus()
+long CardContentStatus(void)
 {
     return (0); // PCwipeout
 }
@@ -119,7 +99,7 @@ char WriteFile(char* header, char* fileName, ConfigData* gameData, short sliderV
           *char_ptr ++ = NumTracks;
           *char_ptr ++ = totalTracks;
 
-          //*char_ptr ++ = Sky;
+          *char_ptr ++ = Sky;
           *char_ptr ++ = ScreenSize;
           *char_ptr ++ = Resolution;
 
@@ -176,15 +156,7 @@ void LoadCardFiles(SelectionData* selectData, char loadGames[][9], int cardNum)
                         printf ("file size = %d \n", fileDir.size) ;
             */
 
-#if DEBUG
-            if ((strncmp((&fileDir.name[7]), "00001WO", 7)) == 0)
-#else
-#if EUROPE
-            if ((strncmp((&fileDir.name[7]), "00010WO", 7)) == 0)
-#else
             if ((strncmp((&fileDir.name[7]), "94301WO", 7)) == 0)
-#endif
-#endif
             {
                 /*              printf ("Matched file name \n") ;*/
 

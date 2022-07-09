@@ -1,25 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "dynam.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "droid.h"
-#include "camera.h"
-#include "sound.h"
-#include "global.h"
-#include "utils.h"
-#include "search.h"
-#include "effects.h"
-#include "collide.h"
-#include "utils.h"
+#include "game.h"
 
 extern short behindSpeed[];
 extern short shipOrder[];
@@ -66,8 +45,6 @@ void UpdateShips(ShipData* shipIndex, WeaponShape* weaponShapes, Object** shipSh
 
 void GeneralStartProcs(ShipData* playerShip)
 {
-    static int vc;
-
     if (playerShip->updateCount == START_TIME)
     {
         PlayNote(REMOTE, 0, -1); /*** Reserve channel for remote craft ***/
@@ -135,7 +112,7 @@ void GeneralStartProcs(ShipData* playerShip)
 
 /**************************************************************************/
 /****             Start control routine for normal pad                 ****/
-/**************************************************************************/
+/**************************************************************************/
 
 void UpdatePlayerShipNormStart(ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
 {
@@ -182,6 +159,8 @@ void UpdatePlayerShipNormStart(ShipData* shipIndex, Object** shipShapes, int shi
 void UpdatePlayerShipNorm(ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
 {
     ShipData* playerShip;
+    int headingInc;
+    int vpitchInc;
     static int maxThrust;
     static short revLeft = 0;
     static short revRight = 0;
@@ -225,8 +204,8 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, Object** shipShapes, int shipNo, 
         revRight = 0;
     }
 
-    int headingInc = playerShip->headingInc * gPadStickX >> 8;
-    int vpitchInc = FR30U * gPadStickY >> 8;
+    headingInc = playerShip->headingInc * gPadStickX >> 8;
+    vpitchInc = FR30U * gPadStickY >> 8;
 
     if (pad & pCon.left) /** Inc = 128 , max 2048 **/
     {
@@ -402,13 +381,12 @@ void AvoidOtherShips(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, in
     int i;
     short DPASectDiff; /** Change to run from sect not DPA sect **/
     short minDPASec = 100;
-    int shipID;
+    int shipID = -1;
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
         if (i != shipNo)
         {
-
             DPASectDiff = shipIndex[i].DPASectDiff - shipIndex[shipNo].DPASectDiff;
             if (minDPASec < DPASectDiff)
             {
@@ -417,6 +395,9 @@ void AvoidOtherShips(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, in
             }
         }
     }
+
+    if (shipID == -1)
+        return;
 
     if ((minDPASec < 10) && (minDPASec > -2))
     {

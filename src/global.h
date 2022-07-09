@@ -6,29 +6,30 @@
 #define INTERACTIVE 0
 #define ATTRACT 1
 
-#define LoadMessages 0 /* printf for Loading etc */
-#define RedText 0
-#define WhiteText 1
+#define RedText     0
+#define WhiteText   1
 
-#define TextureTableMax 800
+#define DRTEXT_16   0
+#define DRTEXT_12   1
+#define DRTEXT_8    2
+#define DRTEXT_RED  4
+#define DRTEXT_CLUT 10
 
-#define OT_SIZE 8192
+#define FontTextureTableMax 20
+#define TextureTableMax 512
 
-#define FONT_TPAGE 25 // PCWipeout
+#define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? WhiteText : RedText)
+#define BLINK_SLOW ((gFrameIndex & 63) <= 42)
 
 extern TrackData* track;
 extern int ownShip;
 extern int serialShip;
 extern char gameType;
-extern short DRTEXT_16;
-extern short DRTEXT_12;
-extern short DRTEXT_8;
-extern short DRTEXT_RED;
 extern void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
 extern TrackCamera* cameraPtr;
 extern int NoOfMainSections;
-extern ushort pad;
-extern ushort opad, xpad;
+extern uint16 pad;
+extern uint16 opad, xpad;
 extern PadInfo pCon;
 
 extern ChanTable chanTable[24];
@@ -44,24 +45,18 @@ extern int raceType;
 extern int tempLapTimes[5];
 extern int serialLapTimes[5];
 
-extern char trackPath[64];
 extern Object* startBoom[4];
 extern short startBoomCount;
 extern int crossedLine;
 
 extern short numTex;
 
+#define ObjectTableMax 512 // 464
+
+extern Texture* FontTextureTable[];
 extern Texture* TextureTable[];
 extern short TextureTableCount;
-
-/* Quick bodge to auto place textures in vram! */
-extern short textureX;
-extern short textureY;
-
-extern short clutX;
-extern short clutY;
-
-extern Object** objectTable;
+extern Object* objectTable[ObjectTableMax];
 
 #define TrackTextures 24
 

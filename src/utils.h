@@ -16,6 +16,7 @@ long ratan2(long y, long x);
 long SquareRoot0(long a);
 
 void RotTrans(SVECTOR* v0, VECTOR* v1, long* flag);
+long RotTransPers(SVECTOR* v0, DVECTOR* sxy, long* flag);
 void MulMatrix0(MATRIX* m0, MATRIX* m1, MATRIX* ret);
 
 #endif

@@ -1,33 +1,12 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ttf.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "draw.h"
-#include "scene.h"
-#include "sound.h"
-#include "dynam.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "options.h"
-#include "global.h"
+#include "game.h"
 
 extern short starttrack, endtrack;
 
-char* GetCdTrackName(int no)
+const char* const fulltrack[] = { "RANDOM", "CAIRODROME", "CARDINAL DANCER", "COLD COMFORT", "DOH T", "MESSIJ", "OPERATIQUE", "TENTATIVE", "TRANCEVAAL", "AFRO RIDE", "CHEMICAL BEATS", "WIPEOUT" };
+const char* const sometrack[] = { "RANDOM", "COLD COMFORT", "DOH T", "MESSIJ", "TENTATIVE", "WIPEOUT" };
+
+const char* GetCdTrackName(int no)
 {
-    static char* fulltrack[] = { "RANDOM", "CAIRODROME", "CARDINAL DANCER", "COLD COMFORT", "DOH T", "MESSIJ", "OPERATIQUE", "TENTATIVE", "TRANCEVAAL", "WIPEOUT" };
-
-    static char* sometrack[] = { "RANDOM", "COLD COMFORT", "DOH T", "MESSIJ", "TENTATIVE", "WIPEOUT" };
-
     if (no < 0)
         return ("NO CD");
     else if (endtrack - starttrack == 7)
@@ -36,17 +15,17 @@ char* GetCdTrackName(int no)
         return (sometrack[no]);
 }
 
-void InGameReset(int choice, ulong* toggle, char machinePaused, ConfigData* gameData, int* cdPause)
+void InGameReset(int choice, char machinePaused, ConfigData* gameData, int* cdPause)
 {
     int i;
     char ingameMenu[4][9];
     short yPos = 122, xPos[4];
     char gap = 16;
 
-    // if ((*toggle % 30) <= 20)
-    //{
-    CentreText("PAUSED", text_data(107, 90, 12), RedText);
-    //}
+    if (BLINK_SLOW)
+    {
+        CentreText("PAUSED", text_data(107, 90, 12), RedText);
+    }
 
     if (machinePaused == SINGLE || machinePaused == MASTER)
     {
@@ -61,28 +40,18 @@ void InGameReset(int choice, ulong* toggle, char machinePaused, ConfigData* game
 
         for (i = 0; i < 4; i++)
         {
-            if (i == choice)
-            {
-                // if ((*toggle % 2) == 0)
-                CentreText(&(ingameMenu[i][0]), text_data(xPos[i], yPos + (gap * i), 8), RedText);
-                // else
-                // CentreText (&(ingameMenu[i][0]), text_data(xPos[i], yPos+(gap*i), 8), WhiteText) ;
-            }
-            else
-            {
-                CentreText(&(ingameMenu[i][0]), text_data(xPos[i], yPos + (gap * i), 8), WhiteText);
-            }
+            CentreText(&(ingameMenu[i][0]), text_data(xPos[i], yPos + (gap * i), 8), (i == choice) ? BLINK_TEXT : WhiteText);
         }
 
-        CentreText(GetCdTrackName(gameData->cdTrack - 1), text_data(0, yPos + (gap * 4), 8), RedText);
+        if (choice == 3)
+        {
+            CentreText(GetCdTrackName(gameData->cdTrack - 1), text_data(0, yPos + (gap * 4), 8), RedText);
+        }
     }
-
-    (*toggle)++;
 }
 
-void InGameConfirm(char* confirm, int choice, short xpad, char* lConfirm, ulong* toggle)
+void InGameConfirm(char* confirm, int choice, short xpad, char* lConfirm)
 {
-
     if (choice == 1)
     {
         CentreText("ARE YOU SURE YOU", text_data(77, 95, 8), WhiteText);
@@ -102,34 +71,16 @@ void InGameConfirm(char* confirm, int choice, short xpad, char* lConfirm, ulong*
    }
 #endif
 
-    if (*lConfirm)
-    {
-        // if ((*toggle % 2) == 0)
-        AddText("YES", text_data(75, 120, 16), RedText);
-        // else
-        // AddText ("YES", text_data (75, 120, 16), WhiteText) ;
-        AddText("NO", text_data(205, 120, 16), WhiteText);
-    }
-    else
-    {
-        AddText("YES", text_data(75, 120, 16), WhiteText);
-        // if ((*toggle % 2) == 0)
-        AddText("NO", text_data(205, 120, 16), RedText);
-        // else
-        // AddText ("NO", text_data (205, 120, 16), WhiteText) ;
-    }
+    AddText("YES", text_data(75, 120, 16), (*lConfirm) ? BLINK_TEXT : WhiteText);
+    AddText("NO", text_data(205, 120, 16), (*lConfirm) ? WhiteText : BLINK_TEXT);
 
 #if 0
    if ((GetMenuKey(M_SELECT)) || (GetMenuKey(M_START)))
       *confirm = *lConfirm ;
 #endif
-
-    // printf ("Quit yes no \n") ;
-
-    (*toggle)++;
 }
 
-void DeSelectScreen()
+void DeSelectScreen(void)
 {
     /*TODO deselect screen?
        SetPolyF4(&(selectBox[CurrentScreen]));

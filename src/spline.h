@@ -10,8 +10,8 @@ void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueD
 
 void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid);
 
-void InitFireCongratulations();
-void InitIceCongratulations();
+void InitFireCongratulations(void);
+void InitIceCongratulations(void);
 
 void ShowFireCongratulations(void);
 void ShowIceCongratulations(void);

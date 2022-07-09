@@ -1,34 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "tilelib.h"
-#include "ttf.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "draw.h"
-#include "scene.h"
-#include "dynam.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "sound.h"
-#include "effects.h"
-#include "fileops.h"
-#include "options.h"
-#include "global.h"
-#include "cone.h"
-#include "spline.h"
-#include "credits.h"
-#include "init.h"
-#include "collide.h"
-#include "race.h"
-#include "render.h"
+#include "game.h"
 
 #define START_EXTRO     0
 #define UPDATE_EXTRO    1
@@ -63,14 +33,17 @@ TrackSection* ctrlnextSection;
 TrackCamera ctrlcamera;
 Skeleton* ctrlcamDir;
 
+Skeleton gCamPos;
+Skeleton gCamDir;
+
 Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
-ShipData* ctrlshipIndex;
+ShipData ctrlshipIndex[NO_OF_SHIPS];
 RescueData ctrlrescueDroid;
 
-WeaponShape* ctrlweaponShapes;
-WeaponData* ctrlweaponIndex;
+WeaponShape ctrlweaponShapes[NO_OF_WEAPONS];
+WeaponData ctrlweaponIndex[NO_ACTIVE_WEAPONS];
 
-WeaponGrid* ctrlweaponGrid;
+WeaponGrid ctrlweaponGrid[64];
 
 int ctrlnoWeaponGrids;
 Texture* ctrlweaponIconTextures[NO_OF_WEAPON_TYPES];
@@ -79,8 +52,7 @@ short ctrlsky;
 int ctrlchoice;
 TrackSection* ctrlsection;
 Face* ctrlfacePtr;
-VECTOR ctrlfacePoint;
-Effect* ctrleffects;
+Effect ctrleffects[NO_OF_EFFECTS];
 Texture* ctrleffectTextures[NO_OF_EFFECT_TEXTURES];
 int ctrlcdTrack;
 int ctrlnoCdTracks;
@@ -104,7 +76,6 @@ int ctrlnearShip;
 /**************************************************/
 Speedo ctrlspeedo;
 int ctrlframe_cnt;
-ulong ctrltoggleDisplay;
 char ctrlshowMenu;
 char ctrlconfirm;
 char ctrllConfirm;
@@ -143,7 +114,6 @@ long ctrlNeedInGameConfirm;
 long ctrlNeedTargetIcon;
 long ctrlCDPaused;
 long ctrlfirsttime;
-extern long CDRestartNeeded;
 
 long ctrl_says_quit;
 long CDRestartNeeded;
@@ -151,13 +121,23 @@ long CDloopCheck;
 unsigned long ctrlFramesCount;
 
 extern short trackNum; // SJR
-extern int menuTexturesIn;
+
+const char* const PILOT_NAMES[] =
+{
+    "dekka",
+    "chang",
+    "arial",
+    "anast",
+    "solar",
+    "arian",
+    "sophi",
+    "paul"
+};
 
 void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex, WeaponShape* weaponShapes, Effect* effects, RescueData* rescueDroid, Object** shipShapes)
 {
     int i;
 
-    JJSLoadSprites();
     KillNotes();
     StopNotes();
     initShipData(track->sections, shipIndex, gameData);
@@ -188,9 +168,8 @@ void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex,
 
 void QuitGame()
 {
-    int i;
-
     /*TODO audio
+    int i;
     for(i = 0; i < 10; i++)
     {
        c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   // Master volume (left)
@@ -207,31 +186,24 @@ void QuitGame()
 void showLoadingScreen()
 {
     char loadPath[48];
-    char loadNo[2];
+    char loadNo[3];
 
     /* load screen stuff */
     strcpy(loadPath, "wipeout\\textures\\load");
-
-    if (ctrlConfigData.actTrackNum <= 9)
-    {
-        sprintf(loadNo, "%d", ctrlConfigData.actTrackNum);
-    }
-    else
-    {
-        sprintf(loadNo, "%2d", ctrlConfigData.actTrackNum);
-    }
+    getTrackStrNo(loadNo, ctrlConfigData.actTrackNum);
     strcat(loadPath, loadNo);
     strcat(loadPath, ".tim");
 
-    JJSLoad16BitTexture(loadPath, SCREEN);
+    //TODO render/swap/render/swap
+    //JJSLoad16BitTexture(loadPath, SCREEN);
 }
 
 void raceInit(ConfigData* gameData)
 {
-    CVECTOR colvector;
     int i, j;
     int ctrlcheck;
     int ctrljcheck;
+    char trackPath[64];
 
     InitGameDisplay();
 
@@ -245,77 +217,7 @@ void raceInit(ConfigData* gameData)
 
     showLoadingScreen();
 
-    menuTexturesIn = 0;
     trackNum = gameData->trackNum; // for restoring - SJR
-    switch (gameData->trackNum)
-    {
-        case 1:
-            SJRNewTexture("wipeout\\newgraph\\venom\\altima\\altima.sjr");
-            strcpy(trackdir, "venom\\altima\\");
-            break;
-        case 2:
-            SJRNewTexture("wipeout\\newgraph\\venom\\karbonis\\karbonis.sjr");
-            strcpy(trackdir, "venom\\karbonis\\");
-            break;
-        case 3:
-            SJRNewTexture("wipeout\\newgraph\\venom\\terramax\\terramax.sjr");
-            strcpy(trackdir, "venom\\terramax\\");
-            break;
-        case 4:
-            SJRNewTexture("wipeout\\newgraph\\venom\\korodera\\korodera.sjr");
-            strcpy(trackdir, "venom\\korodera\\");
-            break;
-        case 5:
-            SJRNewTexture("wipeout\\newgraph\\venom\\arridos\\arridos.sjr");
-            strcpy(trackdir, "venom\\arridos\\");
-            break;
-        case 6:
-            SJRNewTexture("wipeout\\newgraph\\venom\\silver\\silver.sjr");
-            strcpy(trackdir, "venom\\silver\\");
-            break;
-        case 7:
-            SJRNewTexture("wipeout\\newgraph\\venom\\firestar\\firestar.sjr");
-            strcpy(trackdir, "venom\\firestar\\");
-            break;
-        case 8:
-            SJRNewTexture("wipeout\\newgraph\\rapier\\altima\\altima.sjr");
-            strcpy(trackdir, "rapier\\altima\\");
-            break;
-        case 9:
-            SJRNewTexture("wipeout\\newgraph\\rapier\\karbonis\\karbonis.sjr");
-            strcpy(trackdir, "rapier\\karbonis\\");
-            break;
-        case 10:
-            SJRNewTexture("wipeout\\newgraph\\rapier\\terramax\\terramax.sjr");
-            strcpy(trackdir, "rapier\\terramax\\");
-            break;
-        case 11:
-            SJRNewTexture("wipeout\\newgraph\\rapier\\korodera\\korodera.sjr");
-            strcpy(trackdir, "rapier\\korodera\\");
-            break;
-        case 12:
-            SJRNewTexture("wipeout\\newgraph\\rapier\\arridos\\arridos.sjr");
-            strcpy(trackdir, "rapier\\arridos\\");
-            break;
-        case 13:
-            SJRNewTexture("wipeout\\newgraph\\rapier\\silver\\silver.sjr");
-            strcpy(trackdir, "rapier\\silver\\");
-            break;
-        case 14:
-            SJRNewTexture("wipeout\\newgraph\\rapier\\firestar\\firestar.sjr");
-            strcpy(trackdir, "rapier\\firestar\\");
-            break;
-        default:
-            printf("what track ?\n");
-            exit(0);
-            break;
-    }
-
-    textureX = 320;
-    textureY = 0;
-
-    clutX = 320;
-    clutY = 256;
 
     TextureTableCount = 0;
 
@@ -347,7 +249,6 @@ void raceInit(ConfigData* gameData)
     ctrlgameOverTime = 0;
     ctrlcdPause = 0;
     ctrlframe_cnt = 1;
-    ctrltoggleDisplay = 0;
     ctrlshowMenu = 1;
     ctrlconfirm = 0;
     ctrllConfirm = 0;
@@ -364,10 +265,13 @@ void raceInit(ConfigData* gameData)
     /***                 Initialise Camera                  ***/
     /**********************************************************/
 
-    ctrlcamera.camPos = NewSkeleton();
+    ctrlcamera.camPos = &gCamPos;
+    ctrlcamDir = &gCamDir;
+
+    InitSkeleton(ctrlcamera.camPos);
     SetSkeletonPosition(ctrlcamera.camPos, 0, 0, 0);
     SetSkeletonDirection(ctrlcamera.camPos, 0, 0, 0);
-    ctrlcamDir = NewSkeleton();
+    InitSkeleton(ctrlcamDir);
     SetSkeletonPosition(ctrlcamDir, 0, 0, 0);
     SetSkeletonDirection(ctrlcamDir, 0, 0, 0);
     ctrlcamera.camPos->super = ctrlcamDir;
@@ -379,7 +283,6 @@ void raceInit(ConfigData* gameData)
     /**********************************************************/
     /***                 Initialise Track                   ***/
     /**********************************************************/
-    //   printf( "Initialise Track\n" );
     getPath(trackPath, gameData->actTrackNum, "\\track.trv");
     InitVertices(trackPath);
     getPath(trackPath, gameData->actTrackNum, "\\track.trf");
@@ -394,7 +297,6 @@ void raceInit(ConfigData* gameData)
     /* firestar */
     if (gameData->actTrackNum == 14)
     {
-        //      printf ( "loading firestar extro\n" );
         extroLevel = 14;
 
         camSpline[0] = LoadPrm("wipeout\\common\\cam1s.prm", 0);
@@ -425,7 +327,6 @@ void raceInit(ConfigData* gameData)
     /* silverstream */
     if (gameData->actTrackNum == 13)
     {
-        //      printf ( "loading silverstream extro\n" );
         extroLevel = 13;
 
         camSpline[4] = LoadPrm("wipeout\\common\\cam5s.prm", 0);
@@ -447,13 +348,11 @@ void raceInit(ConfigData* gameData)
         shipSpline[6]->skeleton->super = ctrlcamera.camPos;
     }
 
-    //   printf( "Initialise track library Textures\n" );
     ctrllibraryTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\library.cmp");
     ctrltimPtr = LoadCompressedTextureSequence(trackPath);
     LoadCmpFiles(ctrltimPtr);
 
-    //   printf( "Initialise track library Texture templates\n" );
     getPath(trackPath, gameData->actTrackNum, "\\library.ttf");
     ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
 
@@ -461,11 +360,6 @@ void raceInit(ConfigData* gameData)
 
     i = 0;
     NoOfMainSections = 0;
-
-    /*** Reserve memory for weapons functions ***/
-    ctrlweaponGrid = (WeaponGrid*)malloc((sizeof(WeaponGrid) * 64) + 32);
-    ctrlweaponShapes = (WeaponShape*)malloc((sizeof(WeaponShape) * NO_OF_WEAPONS) + 32);
-    ctrlweaponIndex = (WeaponData*)malloc((sizeof(WeaponData) * NO_ACTIVE_WEAPONS) + 32);
 
     while (ctrlcheck)
     {
@@ -497,9 +391,7 @@ void raceInit(ConfigData* gameData)
     }
 
     InitSpeedo(&ctrlspeedo);
-    InitText();
 
-    ctrlshipIndex = (ShipData*)malloc(((sizeof(ShipData) + 32) * (NO_OF_SHIPS)));
     loadShipData(track->sections, ctrlshipIndex, ctrlshipShapes, ctrlcamera.camPos);
     ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
 
@@ -525,49 +417,14 @@ void raceInit(ConfigData* gameData)
         InitAuroraBorialis(ctrlprm[ctrlsky]);
 
     InitWeaponSprtIcons(ctrlweaponIconTextures);
-    //   printf("after wicons\n");
-    switch (gameData->shipNum)
-    {
-        case 0:
-            InitScreenTex(ctrlwinLose, "dekka");
-            break;
 
-        case 1:
-            InitScreenTex(ctrlwinLose, "chang");
-            break;
-
-        case 2:
-            InitScreenTex(ctrlwinLose, "arial");
-            break;
-
-        case 3:
-            InitScreenTex(ctrlwinLose, "anast");
-            break;
-
-        case 4:
-            InitScreenTex(ctrlwinLose, "solar");
-            break;
-
-        case 5:
-            InitScreenTex(ctrlwinLose, "arian");
-            break;
-
-        case 6:
-            InitScreenTex(ctrlwinLose, "sophi");
-            break;
-
-        case 7:
-            InitScreenTex(ctrlwinLose, "paul");
-            break;
-    }
-    //   printf("after win lose\n");
+    InitScreenTex(ctrlwinLose, PILOT_NAMES[gameData->shipNum]);
 
     initShipData(track->sections, ctrlshipIndex, gameData);
     InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
 
     initWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
 
-    ctrleffects = (Effect*)malloc((sizeof(Effect) * NO_OF_EFFECTS) + 32);
     InitEffects(ctrleffects, ctrlcamera.camPos, ctrleffectTextures);
 
     CameraUpdate = UpdateCameraRaceStart;
@@ -576,7 +433,6 @@ void raceInit(ConfigData* gameData)
 
     InitHiScoreData(&ctrlhiScoreData);
 
-    gameData->defaultMenu = -2;
     gameData->Lives = 3;
     gameData->Position = 8;
     gameData->EndOfGame = 0;
@@ -613,7 +469,6 @@ void raceInit(ConfigData* gameData)
         {
             attractDelay = 60 * FR30; // was 30*30 but this was too short I think
         }
-        //          if(ctrlplayCredits == 1)
     }
 
     ctrlnextSection = ctrlcamera.section;
@@ -652,8 +507,6 @@ void raceInit(ConfigData* gameData)
 
 void raceCtrl(ConfigData* gameData)
 {
-    int i;
-
     // Reset all of my little Drawing markers
     ctrlNeedEndText = 0;
     ctrlNeedWinLose = 0;
@@ -819,7 +672,6 @@ void raceCtrl(ConfigData* gameData)
                     if (ctrlmachinePaused == SINGLE)
                     {
                         QuitGame();
-                        gameData->defaultMenu = -2;
                         gameData->gameType = NO_GAME_SET;
                         ctrl_says_quit = 1;
                         return;
@@ -867,7 +719,6 @@ void raceCtrl(ConfigData* gameData)
         if (ctrlshowGameOver == 0)
         {
             QuitGame();
-            gameData->defaultMenu = MAIN_MENU;
             gameData->gameType = NO_GAME_SET;
             ctrl_says_quit = 1;
             return;
@@ -934,7 +785,6 @@ void raceCtrl(ConfigData* gameData)
         attractDelay--;
         if ((GetMenuKey(M_START)) || (GetMenuKey(M_SELECT)) || (attractDelay == 0))
         {
-            gameData->defaultMenu = -2;
             gameData->gameType = NO_GAME_SET;
             QuitGame();
             ctrl_says_quit = 1;
@@ -1031,7 +881,6 @@ void raceCtrl(ConfigData* gameData)
                             ctrlhiScoreData.confirm = 2;
                             ctrlhiScoreData.lConfirm = 0;
                             attractDelay = 0;
-                            gameData->defaultMenu = -2;
                             gameData->gameType = NO_GAME_SET;
                             QuitGame();
                             ctrl_says_quit = 1;
@@ -1051,18 +900,6 @@ void raceCtrl(ConfigData* gameData)
                             PlayNote(CROWD, 0, -1);
                             PlayNote(CROWD2, 0, -1);
                         }
-
-                        //                   if ((GetMenuKey(M_SELECT))||(ajscount>AJSDELAY))
-                        //                   {
-                        //                      ajscount=0;
-                        //                      gameData->newLapRecord = 0 ;
-                        //                      ctrlhiScoreData.displayHiScore = 0 ;
-                        //                      attractDelay = 0 ;
-                        //                      gameData->defaultMenu = TRACK_MENU ;
-                        //                      QuitGame();
-                        //                      ctrl_says_quit = 1;
-                        //                      return ;
-                        //                   }
                     }
                 }
             }
@@ -1132,7 +969,6 @@ void raceCtrl(ConfigData* gameData)
                                 ctrlhiScoreData.confirm = 2;
                                 ctrlhiScoreData.lConfirm = 0;
                                 attractDelay = 0;
-                                gameData->defaultMenu = -2;
                                 gameData->gameType = NO_GAME_SET;
                                 QuitGame();
                                 ctrl_says_quit = 1;
@@ -1150,20 +986,6 @@ void raceCtrl(ConfigData* gameData)
                                 PlayNote(CROWD, 0, -1);
                                 PlayNote(CROWD2, 0, -1);
                             }
-
-                            //                      ajscount++;
-                            //                      if ((GetMenuKey(M_SELECT))||(ajscount>AJSDELAY))
-                            //                      {
-                            //                         ajscount=0;
-                            //                         gameData->newLapRecord = 0 ;
-                            //                         ctrlhiScoreData.displayHiScore = 0 ;
-                            //                         attractDelay = 0 ;
-                            //                         gameData->defaultMenu = TRACK_MENU ;
-                            //                         QuitGame();
-                            //                         ctrl_says_quit = 1;
-                            //                         return ;
-                            //
-                            //                      }
                         }
                     }
                 }
@@ -1203,7 +1025,6 @@ void raceCtrl(ConfigData* gameData)
                         {
                             gameData->gotoMenu = 0;
                             gameData->gameType = NO_GAME_SET;
-                            gameData->defaultMenu = -2;
                             gameData->newLapRecord = 0;
                             QuitGame();
                             ctrl_says_quit = 1;
@@ -1343,7 +1164,7 @@ void raceCtrl(ConfigData* gameData)
                                     {
                                         if (ctrldoneExtro == START_EXTRO)
                                         {
-                                            //                                       printf( "init extro\n" );
+                                            int i;
                                             CameraUpdate = UpdateCameraExtroAttract;
                                             for (i = 0; i < NO_OF_SHIPS; i++)
                                             {
@@ -1366,9 +1187,7 @@ void raceCtrl(ConfigData* gameData)
 
                                         if (finishedExtro)
                                         {
-                                            //                                       printf( "\nif finished extro \n" );
                                             gameData->gameType = NO_GAME_SET;
-                                            gameData->defaultMenu = OPTION_MENU;
                                             gameData->gotoMenu = 0;
                                             InitChampionship();
                                             gameData->gameComplete = 0;
@@ -1386,7 +1205,6 @@ void raceCtrl(ConfigData* gameData)
                                         if (gameData->gotoMenu != 0)
                                         {
                                             gameData->gameType = NO_GAME_SET;
-                                            gameData->defaultMenu = OPTION_MENU;
                                             gameData->gotoMenu = 0;
                                             InitChampionship();
                                             gameData->gameComplete = 0;
@@ -1429,7 +1247,6 @@ void raceCtrl(ConfigData* gameData)
                                                 ctrlhiScoreData.confirm = 2;
                                                 ctrlhiScoreData.lConfirm = 0;
                                                 attractDelay = 0;
-                                                gameData->defaultMenu = -2;
                                                 gameData->gameType = NO_GAME_SET;
                                                 QuitGame();
                                                 ctrl_says_quit = 1;
@@ -1453,8 +1270,6 @@ void raceCtrl(ConfigData* gameData)
                     }
                 }
             }
-            else
-                gameData->continueConfirm = 1;
         }
     }
 
@@ -1487,7 +1302,6 @@ void raceCtrl(ConfigData* gameData)
         ctrlactivated = 0;
         ctrlmachinePaused = SINGLE;
         ctrlchoice = -1;
-        gameData->defaultMenu = -2;
         QuitGame();
         ctrl_says_quit = 1;
         return;
@@ -1521,7 +1335,6 @@ void raceCtrl(ConfigData* gameData)
             ctrlactivated = 0;
             ctrlmachinePaused = SINGLE;
             ctrlchoice = -1;
-            gameData->defaultMenu = -2;
             QuitGame();
             ctrl_says_quit = 1;
             return;
@@ -1533,16 +1346,11 @@ void raceCtrl(ConfigData* gameData)
         ctrlactivated = 0;
         ctrlmachinePaused = SINGLE;
         ctrlchoiceData = -1;
-        gameData->defaultMenu = -2;
         QuitGame();
         ctrl_says_quit = 1;
         return;
     }
-
-    //    copy_glob_to_spare(xpad);
-    //    xpad = archive_xpad; //bodge to restore the xpad of the current drawing frame
-    //    pad = archive_pad;   //bodge to restore the xpad of the current drawing frame
-} /*end of race*/
+}
 
 
 void raceLoop(ConfigData* gameData)
@@ -1569,8 +1377,7 @@ void raceLoop(ConfigData* gameData)
         ctrlmode = INTERACTIVE;
 
         TextureTableCount = 0;
-        InitText();
-        ctrlGameLoop = GAME_LOOP_MENU_INIT;
+        ctrlGameLoop = GAME_LOOP_TITLE_INIT;//GAME_LOOP_MENU_INIT;
         return;
     }
 
@@ -1603,8 +1410,9 @@ void raceLoop(ConfigData* gameData)
 
     renderClear();
 
-    // if(trackNo == 13)
+    //if (trackNo == 13)
     //    AuroraBorialis(ctrlprm[ctrlsky]);
+
     if ((trackNo == 8) || (trackNo == 11))
     {
         ColourRedLight(ctrlredLight);
@@ -1614,7 +1422,8 @@ void raceLoop(ConfigData* gameData)
     {
         ColourRedLight(ctrlredLight);
     }
-    // ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
+    
+    ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
 
     renderBegin3D();
 
@@ -1645,8 +1454,6 @@ void raceLoop(ConfigData* gameData)
 
     // WEAPONS
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
-    if (ctrlNeedTargetIcon == 1)
-        DrawTargetIcon(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
 
     // Effects
     AddEffects(ctrleffects, ctrlweaponIndex, ctrleffectTextures, ctrlshipIndex);
@@ -1654,10 +1461,15 @@ void raceLoop(ConfigData* gameData)
 
     renderEnd3D();
 
+    if (ctrlNeedTargetIcon == 1)
+        DrawTargetIcon(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
+
     if (ctrlmode == ATTRACT)
     {
         if (ctrlplayCredits == 1)
             ShowCredits(attractDelay);
+        else
+            CentreText("DEMO MODE", text_data(60, 14, 8), RedText);
     }
 
     // All game overs
@@ -1702,13 +1514,13 @@ void raceLoop(ConfigData* gameData)
     if (ctrlNeedVenomComplete)
         DisplayVenomComplete();
     if (ctrlNeedContinueGameConfirm)
-        ContinueGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm), &ctrltoggleDisplay);
+        ContinueGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm));
     if (ctrlNeedInSingleGameConfirm)
-        RestartGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm), &ctrltoggleDisplay);
+        RestartGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm));
     if (ctrlNeedInGameReset)
-        InGameReset(ctrlchoice, &ctrltoggleDisplay, ctrlmachinePaused, gameData, &ctrlcdPause);
+        InGameReset(ctrlchoice, ctrlmachinePaused, gameData, &ctrlcdPause);
     if (ctrlNeedInGameConfirm)
-        InGameConfirm(&ctrlconfirm, ctrlchoice, xpad, &ctrllConfirm, &ctrltoggleDisplay);
+        InGameConfirm(&ctrlconfirm, ctrlchoice, xpad, &ctrllConfirm);
     /*TODO deselect screen?
     if (ctrlNeedDeSelectScreen)
         DeSelectScreen (ctrlselectBox, ctrlselectTrans) ;
@@ -1731,8 +1543,8 @@ void raceLoop(ConfigData* gameData)
     // HUD display
     if (ctrlshipIndex[ownShip].attr & RACING)
     {
-        //if (gameData->gameType == CHAMPIONSHIP)
-        //    DisplayLives(gameData);
+        if (gameData->gameType == CHAMPIONSHIP)
+            DisplayLives(gameData);
 
         DrawWeaponSprtIcons(ctrlweaponIconTextures, &(ctrlshipIndex[ownShip]));
         DrawHud(ctrlshipIndex, &ctrlspeedo, ctrlchoice, gameData);

@@ -1,21 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "dynam.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "droid.h"
-#include "camera.h"
-#include "sound.h"
-#include "global.h"
-#include "utils.h"
+#include "game.h"
 
 /**************************************************************************/
 /****             Rescue droid control update routine                  ****/

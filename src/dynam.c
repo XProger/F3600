@@ -1,24 +1,7 @@
 /************************************************************/
 /******     dynam.c - Ship 2 track reaction             *****/
 /************************************************************/
-
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "dynam.h"
-#include "search.h"
-#include "droid.h"
-#include "menus.h"
-#include "camera.h"
-#include "sound.h"
-#include "global.h"
-#include "utils.h"
-#include "collide.h"
-#include "skeleton.h"
+#include "game.h"
 
 void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
 {
@@ -219,27 +202,24 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
 
         alpha = PlaneLineCollision(facePoint, nosePos, facePtr->normal);
 
-        if (playerShip->collideCount == 0) /***** NO HUGE COLLISION *****/
+        noseAlpha -= alpha;
+
+        if (alpha < 600)
         {
-            noseAlpha -= alpha;
-
-            if (alpha < 600)
-            {
-                playerShip->vpitch += (noseAlpha + 5);
-            }
-            else
-            {
-                playerShip->vpitch -= 50;
-            }
-
-            playerShip->vpitch -= playerShip->vpitch >> 2;
-            brake = sar(playerShip->r_brake_rot - playerShip->l_brake_rot, 3);
-
-            playerShip->hdg += sar(brake * playerShip->speed, 15);
-
-            playerShip->vroll += sar(playerShip->vhdg, 5);
-            playerShip->vroll -= playerShip->vroll >> 1;
+            playerShip->vpitch += (noseAlpha + 5);
         }
+        else
+        {
+            playerShip->vpitch -= 50;
+        }
+
+        playerShip->vpitch -= playerShip->vpitch >> 2;
+        brake = sar(playerShip->r_brake_rot - playerShip->l_brake_rot, 3);
+
+        playerShip->hdg += sar(brake * playerShip->speed, 15);
+
+        playerShip->vroll += sar(playerShip->vhdg, 5);
+        playerShip->vroll -= playerShip->vroll >> 1;
     }
 
     /***************************************************************************/

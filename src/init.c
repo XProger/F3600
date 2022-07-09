@@ -1,38 +1,19 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ttf.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "draw.h"
-#include "scene.h"
-#include "sound.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "fileops.h"
-#include "init.h"
-#include "global.h"
-#include "error.h"
-#include "radscn.h"
-#include "lzss.h"
+#include "game.h"
+
+int FontLoadHack;
 
 const int skyPos[15] = { -820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0 };
+const uint16 RED_TEXT_CLUT[] = { 0x0000, 0x0043, 0x0465, 0x0487, 0x04ca, 0x090c, 0x092e, 0x0970, 0x0db2, 0x0dd4, 0x0e16, 0x0e57, 0x0e79, 0x0e9a, 0x0edc, 0x0f1e };
 
 short InitScene(Object** prm, short* prmCount, Skeleton* camPos, ConfigData* gameData)
 {
     short sceneTextures;
     short skyTextures;
-    short i, j;
+    short i;
     Object* obj;
     short sky;
     TIMlist *timPtr, *skyTimPtr;
+    char trackPath[64];
 
     sceneTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\scene.cmp");
@@ -77,188 +58,56 @@ short InitScene(Object** prm, short* prmCount, Skeleton* camPos, ConfigData* gam
     return (sky);
 }
 
+void getTrackStrNo(char* trackStr, char trackNo)
+{
+    if (trackNo <= 9)
+    {
+        trackStr[0] = '0';
+        trackStr[1] = '0' + trackNo;
+    }
+    else
+    {
+        trackStr[0] = '1';
+        trackStr[1] = '0' + (trackNo % 10);
+    }
+    trackStr[2] = 0;
+}
+
 void getPath(char* trackPath, char trackNo, char* name)
 {
-    char No[4];
+    char No[3];
 
     strcpy(trackPath, "wipeout\\track");
-    if (trackNo <= 9)
-        sprintf(No, "%02d", trackNo);
-    else
-        sprintf(No, "%2d", trackNo);
+    getTrackStrNo(No, trackNo);
     strcat(trackPath, No);
     strcat(trackPath, name);
 }
 
 void LoadCmpFiles(TIMlist* timPtr)
 {
-    short i;
-    Texture* texture;
+    int i;
+
+    ASSERT(TextureTableCount + numTex <= TextureTableMax);
 
     for (i = 0; i < numTex; i++)
     {
-        texture = NewLoadTexture(timPtr->memOffset[i], 1);
-        if (texture)
-        {
-            TextureTable[TextureTableCount++] = texture;
-        }
+        TextureTable[TextureTableCount++] = renderCreateTexture((Tim*)(timPtr->memOffset[i]));
+    }
 
-        if (TextureTableCount >= TextureTableMax)
+    if (FontLoadHack)
+    {
+        for (i = 0; i < 10; i++)
         {
-            Error("Wtl.c:LoadWtlFiles(): TextureTable is full\n");
+            Tim4* tim = (Tim4*)(timPtr->memOffset[i]);
+            memcpy(tim->clut, RED_TEXT_CLUT, sizeof(RED_TEXT_CLUT));
+            TextureTable[TextureTableCount++] = renderCreateTexture((Tim*)tim);
         }
     }
+
     free(timPtr->memBase);
 }
 
-Texture* NewLoadTexture(long timPtr, short translucent)
-{
-    Tim* tim;
-    TimClut4* tc4;
-    TimClut8* tc8;
-    Texture* texture;
-    GRECT rect;
-    CLUT cluts[256]; // PCwipeout
-
-    int x, y;
-
-#if LoadMessages
-    //   printf( "Loading Tim File : %s\n", name );
-#endif
-
-    tim = (Tim*)timPtr;
-
-    if (ClutType(tim) == Clut4Bit)
-    {
-        tc4 = (TimClut4*)(tim);
-        texture = (Texture*)malloc(sizeof(Texture));
-
-        texture->type = CLUT4;
-
-        if ((!tc4->textureX) && (!tc4->textureY))
-        {
-            tc4->clutX = clutX;
-            tc4->clutY = clutY;
-
-            tc4->clutW = 16;
-            tc4->clutH = 1;
-
-            tc4->textureX = textureX;
-            tc4->textureY = textureY;
-
-            clutX += 16;
-            if (clutX >= 384)
-            {
-                clutX = 320;
-                clutY += 1;
-            }
-
-            textureY += 32;
-            if (textureY >= 256)
-            {
-                textureX += 8;
-                textureY = 0;
-            }
-        }
-
-        texture->clutX = tc4->clutX;
-        texture->clutY = tc4->clutY;
-        texture->clutW = tc4->clutW;
-        texture->clutH = tc4->clutH;
-
-        texture->textureX = tc4->textureX;
-        texture->textureY = tc4->textureY;
-        texture->textureW = tc4->textureW;
-        texture->textureH = tc4->textureH;
-
-        x = tc4->textureX - TextureHOffset(tc4->textureX);
-        y = tc4->textureY - TextureVOffset(tc4->textureY);
-
-        texture->u0 = (x << 2);
-        texture->v0 = (y);
-        texture->u1 = ((x + tc4->textureW) << 2) - 1;
-        texture->v1 = (y);
-        texture->u2 = (x << 2);
-        texture->v2 = (y + tc4->textureH) - 1;
-        texture->u3 = ((x + tc4->textureW) << 2) - 1;
-        texture->v3 = (y + tc4->textureH) - 1;
-
-        texture->tsb = TSB(Clut4Bit, translucent, TPAGE(texture->textureX, texture->textureY));
-        texture->cba = CBA(texture->clutX >> 4, texture->clutY);
-
-        rect.x = tc4->clutX;
-        rect.y = tc4->clutY;
-        rect.w = tc4->clutW;
-        rect.h = tc4->clutH;
-        // LoadClut4( &rect, ( ushort* )( &tc4->clut ) , cluts);  // PCwipeout
-        //      LoadImage( &rect, ( ulong* )( &tc4->clut ) );
-
-        rect.x = tc4->textureX;
-        rect.y = tc4->textureY;
-        rect.w = tc4->textureW;
-        rect.h = tc4->textureH;
-        // LoadImage4( &rect, ( ulong* )( tc4+1 ), cluts );  // PCwipeout
-        //      LoadImage( &rect, ( ulong* )( tc4+1 ) );
-    }
-    else if (ClutType(tim) == Clut8Bit)
-    {
-        tc8 = (TimClut8*)(tim);
-        texture = (Texture*)malloc(sizeof(Texture));
-
-        texture->type = CLUT8;
-
-        if ((!tc8->textureX) && (!tc8->textureY))
-        {
-            Error("tim.c:LoadTexture(): Cannot auto place 8 bit textures");
-        }
-
-        texture->clutX = tc8->clutX;
-        texture->clutY = tc8->clutY;
-        texture->clutW = tc8->clutW;
-        texture->clutH = tc8->clutH;
-
-        texture->textureX = tc8->textureX;
-        texture->textureY = tc8->textureY;
-        texture->textureW = tc8->textureW;
-        texture->textureH = tc8->textureH;
-
-        x = tc8->textureX - TextureHOffset(tc8->textureX);
-        y = tc8->textureY - TextureVOffset(tc8->textureY);
-
-        texture->u0 = (x << 1);
-        texture->v0 = (y);
-        texture->u1 = ((x + tc8->textureW) << 1) - 1;
-        texture->v1 = (y);
-        texture->u2 = (x << 1);
-        texture->v2 = (y + tc8->textureH) - 1;
-        texture->u3 = ((x + tc8->textureW) << 1) - 1;
-        texture->v3 = (y + tc8->textureH) - 1;
-
-        texture->tsb = TSB(Clut8Bit, translucent, TPAGE(texture->textureX, texture->textureY));
-        texture->cba = CBA(texture->clutX >> 4, texture->clutY);
-
-        rect.x = tc8->clutX;
-        rect.y = tc8->clutY;
-        rect.w = tc8->clutW;
-        rect.h = tc8->clutH;
-        LoadClut8(&rect, (ushort*)(&tc8->clut), cluts);
-        //      LoadImage( &rect, ( ulong* )( &tc8->clut ) );
-
-        rect.x = tc8->textureX;
-        rect.y = tc8->textureY;
-        rect.w = tc8->textureW;
-        rect.h = tc8->textureH;
-        LoadImage8(&rect, (ulong*)(tc8 + 1), cluts);
-        //      LoadImage( &rect, ( ulong* )( tc8+1 ) );
-    }
-    else
-    {
-        texture = NULL;
-    }
-    return (texture);
-}
-
-TIMlist* LoadCompressedTextureSequence(char* fileName)
+TIMlist* LoadCompressedTextureSequence(const char* fileName)
 {
     short texNum;
     char* fileBuffer;
@@ -269,18 +118,18 @@ TIMlist* LoadCompressedTextureSequence(char* fileName)
     fileSize = FileLength(fileName);
     if (fileSize <= 0)
     {
-        Error("Tim decompress: file %s not found\n", fileName);
+        ASSERT(0);
     }
 
     fileBuffer = (char*)malloc(fileSize + 32);
 
     if (!fileBuffer)
     {
-        Error("Decompress Load: Failed to allocate memory for track vertices");
+        ASSERT(0);
     }
     if (LoadFile(fileName, (char*)fileBuffer) != fileSize)
     {
-        Error("Decompress(): Failed to load file %s\n", fileName);
+        ASSERT(0);
     }
 
     numTex = *(long*)fileBuffer;
@@ -303,12 +152,42 @@ TIMlist* LoadCompressedTextureSequence(char* fileName)
         timList.memOffset[texNum] += (long)timList.memBase;
     }
 
-    /* printf("Decompressing: %s\n", fileName);*/
-
-    // GsClearVcount();
-    ExpandData((uchar*)fileBuffer + 4 + numTex * 4, (uchar*)timList.memBase);
+    ExpandData((uint8*)fileBuffer + 4 + numTex * 4, (uint8*)timList.memBase);
 
     free(fileBuffer); /* free compressed file memory */
 
     return (&timList);
+}
+
+Texture* LoadTexture(const char* fileName)
+{
+    long length;
+    Tim* tim;
+    Texture* tex;
+
+    length = FileLength(fileName);
+    if (length <= 0)
+    {
+        ASSERT(0);
+        return NULL;
+    }
+
+    tim = (Tim*)malloc(length + 32);
+
+    if (!tim)
+    {
+        ASSERT(0);
+    }
+
+    if (LoadFile(fileName, (char*)tim) != length)
+    {
+        /* File Error! */
+        ASSERT(0);
+    }
+
+    tex = renderCreateTexture(tim);
+
+    free(tim);
+
+    return tex;
 }

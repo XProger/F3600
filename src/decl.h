@@ -1,5 +1,4 @@
-void CDRestart();
+void CDRestart(void);
 void CDPlay(short int CurrTrackNo);
-void CDStop();
-int SJRNewTexture(char* filename);
-void reloadScr(void);
+void CDStop(void);
+void CdSetVol(long newVol);

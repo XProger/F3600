@@ -1,19 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "sound.h"
-#include "menus.h"
-#include "global.h"
-#include "sfx.h"
-#include "utils.h"
+#include "game.h"
 
 #define NO_SOUND 1
 
@@ -34,10 +19,13 @@ SampRec SampTable[MAX_FX]; // PC Sound
 
 static signed char bOrg, bImg; // PC File handling gubbins
 static uint8 *pHeadPtr, *pOrgPtr, *pImgPtr;
-static FILE *pHeadFile, *pOrgFile, *pImgFile;
-static char pbFileName[80];
 static uint8 bIndx;
 static int16 wFirstId;
+
+short starttrack;
+short endtrack;
+short int CurrTrkNo;
+short trackNum;
 
 /*
 ** WhatChannel
@@ -232,10 +220,9 @@ uint8 ConvCDVol(int16 LeftVol, int16 RightVol)
 /*****  & sets channel manager                          *****/
 /************************************************************/
 
-void InitSpuSound()
+void InitSpuSound(void)
 {
     int i;
-    long decval;
 
     error = SfxInit(AUTO_DETECT, STEREO, SR_22K);
     if (error != 1)
@@ -450,7 +437,6 @@ void UpdateNotes(int paused)
 
 void KillNote(int note)
 {
-    short i;
     short channel;
 
     if (error == NO_SOUND)
@@ -472,7 +458,7 @@ void KillNote(int note)
     }
 }
 
-void KillNotes()
+void KillNotes(void)
 {
     int i;
 
@@ -509,7 +495,7 @@ Playnote:
 short PlayNote(short vagID, short priority, short duration)
 {
 
-    u_short i;
+    uint16 i;
 
     if (error == NO_SOUND)
         return (-1);
@@ -607,7 +593,6 @@ short PlayNote(short vagID, short priority, short duration)
 
 short PlayDirectionalNote(short vagID, short priority, short duration, VECTOR pos)
 {
-    u_short i;
     VECTOR distance;
     int mag;
     int voll, volr;
@@ -670,7 +655,6 @@ short PlayDirectionalNote(short vagID, short priority, short duration, VECTOR po
 
 void SetPitch(short VagID, short pitch)
 {
-    u_short i;
     short channel;
 
     if (error == NO_SOUND)
@@ -689,7 +673,6 @@ void SetPitch(short VagID, short pitch)
 
 void SetVolume(short vagID, short voll, short volr)
 {
-    u_short i;
     short channel;
 
     if (error == NO_SOUND)
@@ -713,7 +696,6 @@ void SetVolume(short vagID, short voll, short volr)
 
 void SetVolumeFade(short vagID, short vol)
 {
-    u_short i;
     short channel;
 
     if (error == NO_SOUND)
@@ -730,12 +712,10 @@ void SetVolumeFade(short vagID, short vol)
 
 short AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR pos)
 {
-    u_short i;
     VECTOR distance;
     int mag;
     int voll, volr;
     short angle;
-    short channel;
 
     distance.vx = (pos.vx + cameraPtr->camPos->relative.t[0]) >> 3;
     distance.vy = (pos.vy + cameraPtr->camPos->relative.t[1]) >> 3;
@@ -775,7 +755,7 @@ short AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR 
 
 short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCamera* camera)
 {
-    u_short i;
+    uint16 i;
     VECTOR distance;
     int mag, smallestMag[3];
     short ident[3];
@@ -887,10 +867,8 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
 void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
 {
     short vol;
-    short vol2;
     short pitch;
-    short noteChange;
-    short breakPoint;
+    /*TODO engine sound*/
     return;
 
     /******************************************/
@@ -950,7 +928,7 @@ int InitCrowdSound(Object** prm, short prmCount, Object** lostad, int stadCount)
 {
     int i, j;
     Object* obj;
-
+    /*TODO crowd sound*/
     return 0;
     for (i = 0; i < prmCount; i++)
     {
@@ -961,8 +939,6 @@ int InitCrowdSound(Object** prm, short prmCount, Object** lostad, int stadCount)
             {
                 lostad[stadCount] = obj;
                 stadCount++;
-
-                //          printf("Stadium = %s \n", &(obj->name) );
             }
 
             obj = obj->next;
@@ -982,7 +958,7 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
     int chosen[2];
     int smallestMag[2];
     VECTOR pos;
-
+    /*TODO crowd sound*/
     return;
     if (error == NO_SOUND)
         return;

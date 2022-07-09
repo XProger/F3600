@@ -37,9 +37,9 @@ typedef struct Face
     SVector normal;
     char texture;
     char flags;
-    uchar red;
-    uchar green;
-    uchar blue;
+    uint8 red;
+    uint8 green;
+    uint8 blue;
 } Face;
 
 typedef union
@@ -101,17 +101,21 @@ typedef struct colors
     char blue;
 } Colors;
 
+#define MAX_VERTICES    (32 * 104)
+#define MAX_FACES       (32 * 88)
+#define MAX_SECTIONS    (32 * 19)
+#define MAX_VIEWLIST    (32 * 933)
+
 typedef struct TrackData
 {
     long vertexCount;
     long faceCount;
     long sectionCount;
 
-    VECTOR* vertices; /* pointer to our track vertex table (which is later deallocated) */
-    Face* faces; /* pointer to our list of faces */
-    TrackSection* sections; /* pointer to the first section */
-
-    short* viewList;
+    VECTOR vertices[MAX_VERTICES];
+    Face faces[MAX_FACES];
+    TrackSection sections[MAX_SECTIONS];
+    short viewList[MAX_VIEWLIST];
 } TrackData;
 
 typedef struct TrackCamera

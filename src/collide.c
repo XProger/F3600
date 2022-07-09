@@ -1,19 +1,4 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "dynam.h"
-#include "search.h"
-#include "collide.h"
-#include "droid.h"
-#include "camera.h"
-#include "menus.h"
-#include "sound.h"
-#include "global.h"
-#include "utils.h"
+#include "game.h"
 
 void ForceFeedback(int mag)
 {
@@ -708,6 +693,7 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     playerShip->ppivot.vy -= playerShip->vpivot.vy >> 6;
     playerShip->ppivot.vz -= playerShip->vpivot.vz >> 6;
 
+    /*TODO no slowdown by side collision*/
     playerShip->vpivot.vx -= playerShip->vpivot.vx >> 1;
     playerShip->vpivot.vy -= playerShip->vpivot.vy >> 1;
     playerShip->vpivot.vz -= playerShip->vpivot.vz >> 1;

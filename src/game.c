@@ -1,4 +1,3 @@
-#include <windows.h>
 #include "game.h"
 
 long ctrlmode;
@@ -7,32 +6,26 @@ long ctrlGameLoop;
 ConfigData ctrlConfigData;
 
 extern short trackNum; // SJR
-extern int menuTexturesIn;
 extern long ctrlfirsttime;
-
-char trackdir[21];
 
 Texture* titleScreen;
 int gTimeout;
 
-void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, int clut, int page);
-
 void titleInit()
 {
-    titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim", 0);
+    titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim");
     if (ctrlfirsttime)
-        gTimeout = 60 * 5;
-    else
         gTimeout = 60 * 30;
+    else
+        gTimeout = 60 * 5;
 }
 
 void titleLoop()
 {
     int i;
 
-    /*TODO title screen*/
-    // AddGlyph(0, 0, 320, 240, titleScreen->u0, titleScreen->v0, titleScreen->cba);
-    CentreText("PRESS START", text_data(0, 200, 8), RedText);
+    AddGlyph(0, 0, 320, 240, 0, 0, titleScreen);
+    CentreText("PRESS START", text_data(0, 200, 8), WhiteText);
 
     if (GetMenuKey(M_SELECT))
     {
@@ -52,7 +45,7 @@ void titleLoop()
     }
 }
 
-void gameInit()
+void gameInit(void)
 {
     InitGameDisplay();
 
@@ -76,7 +69,6 @@ void gameInit()
 
     ctrlConfigData.Lives = 3;
     ctrlConfigData.EndOfGame = 0;
-    ctrlConfigData.continueConfirm = 1;
     ctrlConfigData.Position = 8;
 
     /*TODO cheats*/
@@ -104,7 +96,7 @@ void gameInit()
     ctrlGameLoop = GAME_LOOP_TITLE_INIT;
 }
 
-void gameCtrl()
+void gameCtrl(void)
 {
     opad = pad;
     pad = gPad;

@@ -1,21 +1,6 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "dynam.h"
-#include "sound.h"
-#include "global.h"
-#include "search.h" // PCwipeout
-#include "utils.h"
+#include "game.h"
 
-static short target = 0;
+short target = 0;
 
 void InitCamera(TrackCamera* camera, TrackSection* section)
 {
@@ -48,8 +33,6 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
     VECTOR acc;
     int mag;
     static int vel = 0;
-    short hdg;
-    short pitch;
 
     TrackSection* nextSection;
 
@@ -137,8 +120,6 @@ void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData
 void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
 {
     VECTOR pos;
-    short sx, sy, sz;
-    short cx, cy, cz;
     VECTOR targetVector;
 
     /*** Set to final position ***/
@@ -186,7 +167,7 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
 void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
 {
     VECTOR pos;
-    int hdg, pitch, temp;
+    int temp;
     VECTOR targetVector;
     short sx, sy, sz;
     short cx, cy, cz;
@@ -245,9 +226,8 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
 void UpdateCameraDroidView(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
 {
     VECTOR pos;
-    int hdg, pitch, temp;
+    int temp;
     VECTOR targetVector;
-    TrackSection* section;
     VECTOR av;
 
     pos.vx = camera->section->centre.vx + 300;
@@ -314,7 +294,7 @@ void UpdateCameraAttractInternal(TrackCamera* camera, ShipData* camShip, RescueD
 void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
 {
     static VECTOR pos;
-    int hdg, pitch, temp;
+    int temp;
     VECTOR targetVector;
     TrackSection* section;
     int i;

@@ -1,6 +1,9 @@
 ﻿---
 BasedOnStyle: WebKit
 AlignEscapedNewlines: Left
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: 'false'
 BreakBeforeBraces: Allman
 ColumnLimit: '1024'
 IndentCaseLabels: 'true'

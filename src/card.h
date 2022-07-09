@@ -1,14 +1,8 @@
-#define EUROPE 0
-#define US     1
-#define JAPAN  0
-#define DEBUG  0
-
 char SaveCardFile(char*, int, ConfigData*, short);
 void GetHeader(char*);
 void LoadCardFiles(SelectionData*, char[][9], int);
 char LoadCardData(char*, int, ConfigData*, SelectionData*);
 long GetCardInfo(int);
-void ClearEventHW();
-long CardContentStatus();
+long CardContentStatus(void);
 void LoadCard(int);
-long CheckHWCardEvents();
+long CheckHWCardEvents(void);

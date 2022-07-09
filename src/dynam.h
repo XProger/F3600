@@ -7,8 +7,6 @@
 #define TARGETHEIGHT 256
 
 #define COLLIDE 0x1
-#define OUT 0
-#define IN 1
 #define frac(x, y) (((x) * (y)) >> 12) /* 9 */
 
 void shipTrkReaction(ShipData* playerShip, Object** shipShapes);

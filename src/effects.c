@@ -1,39 +1,18 @@
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "tilelib.h"
-#include "ttf.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "draw.h"
-#include "scene.h"
-#include "fileops.h"
-#include "sound.h"
-#include "dynam.h"
-#include "menus.h"
-#include "hiscores.h"
-#include "hud.h"
-#include "global.h"
-#include "effects.h"
-#include "init.h"
-#include "error.h"
-#include "collide.h"
-#include "utils.h"
+#include "game.h"
 
-char tranny_table[] = {
+/*TODO remove shadows array*/
+Shadow shipShadow[NO_OF_SHIPS];
+
+extern int gFrameIndex;
+
+const char tranny_table[] = {
     YELLOW_WHITE_TRANSL,    // MISSILE/ROCKET EXPLODE HIT NOTHING
     WHITE2_TRANSL,          // MISSILE/ROCKET TRAIL
     YELLOW_TRANSL,          // MISSILE/ROCKEY EXPLODE HIT SHIP
-    WHITE8_TRANSL,          // SHADOW NOT USED
-    BLUE_TRANSL,            // EBOLT TRAIL
-    WHITE8_TRANSL,          // HALO NOT USED
-    PURPLE_TRANSL };        // GREENY (NOT USED?) WAS REV_CON SO USE FOR EBOLT EXPLODE
+    WHITE8_TRANSL,          // FX_SHADOW NOT USED
+    BLUE_TRANSL,            // FX_EBOLT TRAIL
+    WHITE8_TRANSL,          // FX_HALO NOT USED
+    PURPLE_TRANSL };        // FX_GREENY (NOT USED?) WAS REV_CON SO USE FOR FX_EBOLT EXPLODE
 
 void InitEffects(Effect* effects, Skeleton* camPos, Texture** effectTextures)
 {
@@ -46,12 +25,12 @@ void InitEffects(Effect* effects, Skeleton* camPos, Texture** effectTextures)
 
        timPtr = LoadCompressedTextureSequence( "wipeout\\common\\effects.cmp" );
        LoadCmpFiles( timPtr );
-       effectTextures[FIRE]       = TextureTable[loc++];
-       effectTextures[FIRE_WHITE] = TextureTable[loc++];
-       effectTextures[SMOKE]      = TextureTable[loc++];
-       effectTextures[EBOLT]      = TextureTable[loc++];
-       effectTextures[HALO]       = TextureTable[loc++];
-       effectTextures[GREENY]     = TextureTable[loc++];
+       effectTextures[FX_FIRE]       = TextureTable[loc++];
+       effectTextures[FX_FIRE_WHITE] = TextureTable[loc++];
+       effectTextures[FX_SMOKE]      = TextureTable[loc++];
+       effectTextures[FX_EBOLT]      = TextureTable[loc++];
+       effectTextures[FX_HALO]       = TextureTable[loc++];
+       effectTextures[FX_GREENY]     = TextureTable[loc++];
 
        for(i = 0; i < NO_OF_EFFECTS; i++)
        {
@@ -65,16 +44,16 @@ void InitEffects(Effect* effects, Skeleton* camPos, Texture** effectTextures)
 
              effects[i].sprite[j].r0 = 230;   // PCwipeout
              effects[i].sprite[j].g0 = 0;
-             effects[i].sprite[j].b0 = tranny_table[SMOKE];  //Default is smoke
+             effects[i].sprite[j].b0 = tranny_table[FX_SMOKE];  //Default is smoke
              setTPage(&(effects[i].sprite[j]),0,3,
-                effectTextures[SMOKE]->textureX,
-                effectTextures[SMOKE]->textureY);
-             effects[i].sprite[j].clut = effectTextures[SMOKE]->cba;
+                effectTextures[FX_SMOKE]->textureX,
+                effectTextures[FX_SMOKE]->textureY);
+             effects[i].sprite[j].clut = effectTextures[FX_SMOKE]->cba;
              setUV4(&(effects[i].sprite[j]),
-                effectTextures[SMOKE]->u0, effectTextures[SMOKE]->v0,
-                effectTextures[SMOKE]->u1, effectTextures[SMOKE]->v1,
-                effectTextures[SMOKE]->u2, effectTextures[SMOKE]->v2,
-                effectTextures[SMOKE]->u3, effectTextures[SMOKE]->v3) ;
+                effectTextures[FX_SMOKE]->u0, effectTextures[FX_SMOKE]->v0,
+                effectTextures[FX_SMOKE]->u1, effectTextures[FX_SMOKE]->v1,
+                effectTextures[FX_SMOKE]->u2, effectTextures[FX_SMOKE]->v2,
+                effectTextures[FX_SMOKE]->u3, effectTextures[FX_SMOKE]->v3) ;
           }
        }
        */
@@ -123,7 +102,6 @@ void DrawEffects(Effect* effects)
     int         x, y;
     long        depth;
     short       size;
-    int         count = 0;
     VECTOR      camPos;
 
     camPos.vx = cameraPtr->camPos->relative.t[0] ;
@@ -197,8 +175,7 @@ void DrawEffects(Effect* effects)
 
 void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextures, ShipData* shipIndex)
 {
-    /*TODO effects*/
-#if 0
+#if 0 /*TODO effects*/
    int i, j, k;
    int exploType;
    short noToRelease = 0;
@@ -213,11 +190,11 @@ void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextur
          (weaponIndex[i].type == REV_CON))
       {
          if(weaponIndex[i].type == ELEC_BOLT)
-            exploType = EBOLT;
+            exploType = FX_EBOLT;
          else if(weaponIndex[i].type == REV_CON)
-            exploType = GREENY;
+            exploType = FX_GREENY;
          else
-            exploType = SMOKE;
+            exploType = FX_SMOKE;
 
          if(weaponIndex[i].count > 0)
          {
@@ -260,15 +237,15 @@ void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextur
                         effects[j].size = 7;
                         if(weaponIndex[i].type == ELEC_BOLT)
                         {
-                           effects[j].sprite[k].clut = effectTextures[EBOLT]->cba;
+                           effects[j].sprite[k].clut = effectTextures[FX_EBOLT]->cba;
                         }
                         else if(weaponIndex[i].type == REV_CON)
                         {
-                           effects[j].sprite[k].clut = effectTextures[GREENY]->cba;
+                           effects[j].sprite[k].clut = effectTextures[FX_GREENY]->cba;
                         }
                         else
                         {
-                           effects[j].sprite[k].clut = effectTextures[FIRE]->cba;
+                           effects[j].sprite[k].clut = effectTextures[FX_FIRE]->cba;
                         }
                         effects[j].sprite[k].b0 = tranny_table[exploType];  //Set the colour
                         setUV4(&(effects[j].sprite[k]),
@@ -315,27 +292,27 @@ void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextur
          {
             if(weaponIndex[i].type == ELEC_BOLT)
             {
-               exploType = GREENY; // PCwipeout NOW PURPLE
+               exploType = FX_GREENY; // PCwipeout NOW PURPLE
             }
             else if(weaponIndex[i].type == REV_CON)
             {
-               exploType = GREENY;
+               exploType = FX_GREENY;
             }
             else
-               exploType = FIRE_WHITE;
+               exploType = FX_FIRE_WHITE;
          }
          else
          {
             if(weaponIndex[i].type == ELEC_BOLT)
             {
-               exploType = EBOLT;
+               exploType = FX_EBOLT;
             }
             else if(weaponIndex[i].type == REV_CON)
             {
-               exploType = GREENY;
+               exploType = FX_GREENY;
             }
             else
-               exploType = FIRE;
+               exploType = FX_FIRE;
          }
 
          for(j = 0; j < NO_OF_EFFECTS; j++)
@@ -364,10 +341,10 @@ void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextur
                   effects[j].size = 8;
                   effects[j].sprite[k].b0 = tranny_table[exploType];  //Set the colour
                   setUV4(&(effects[j].sprite[k]),
-                     effectTextures[EBOLT]->u0, effectTextures[EBOLT]->v0,
-                     effectTextures[EBOLT]->u1, effectTextures[EBOLT]->v1,
-                     effectTextures[EBOLT]->u2, effectTextures[EBOLT]->v2,
-                     effectTextures[EBOLT]->u3, effectTextures[EBOLT]->v3) ;
+                     effectTextures[FX_EBOLT]->u0, effectTextures[FX_EBOLT]->v0,
+                     effectTextures[FX_EBOLT]->u1, effectTextures[FX_EBOLT]->v1,
+                     effectTextures[FX_EBOLT]->u2, effectTextures[FX_EBOLT]->v2,
+                     effectTextures[FX_EBOLT]->u3, effectTextures[FX_EBOLT]->v3) ;
                   effects[j].sprite[k].clut = effectTextures[exploType]->cba;
                }
                noToRelease++;
@@ -415,7 +392,7 @@ void ColourStartBoom(int noToLight)
             g = 0x80;
             b = 0x00;
         }
-        else if (noToLight == 3)
+        else
         {
             r = 0x00;
             g = 0xff;
@@ -440,7 +417,7 @@ void ColourStartBoom(int noToLight)
     }
 }
 
-void ResetStartBoom()
+void ResetStartBoom(void)
 {
     Object* obj;
     int i, j;
@@ -496,7 +473,7 @@ void InitStartBoom(Object** prm, short prmCount)
 
             if (startBoomCount > 4)
             {
-                Error("Too many start booms !!!!!\n");
+                ASSERT(0);
             }
 
             obj = obj->next;
@@ -526,11 +503,11 @@ void InitRedLight(Object** prm, short prmCount, Object** redLight)
 void ColourRedLight(Object* redLight)
 {
     short r;
-    static short count = 0;
+    short count;
 
     Prm libPoly;
 
-    count += 140;
+    count = gFrameIndex * 140;
     r = (rsin(count) >> 5) + 128;
     if (r > 255)
         r = 255;
@@ -551,6 +528,90 @@ void ColourRedLight(Object* redLight)
     libPoly.gt4->colour[3].b = 0x00;
 }
 
+void ColourDroidLights(Object* droid)
+{
+    short r, g, b;
+    short rf, gf, bf;
+    int i;
+    Poly libPoly;
+    short primitiveCount;
+    short count = gFrameIndex * 70;
+
+    rf = (rsin(count) >> 5) + 128;
+    if (rf > 255)
+        rf = 255;
+
+    gf = (rsin(count + 75) >> 5) + 128;
+    if (gf > 255)
+        gf = 255;
+
+    bf = (rsin((count >> 1) + 32) >> 5) + 128;
+    if (bf > 255)
+        bf = 255;
+
+    libPoly.prim = droid->primitives;
+
+    for (i = 0; i < 11; i++)
+    {
+        if (i < 2)
+        {
+            r = 40;
+            g = gf;
+            b = 40;
+        }
+        else if (i < 6)
+        {
+            r = bf >> 1;
+            b = bf;
+            g = bf >> 1;
+        }
+        else
+        {
+            r = rf;
+            b = 40;
+            g = 40;
+        }
+
+        switch (libPoly.prim->type)
+        {
+            case TypeGT3:
+                libPoly.gt3->colour[0].r = r;
+                libPoly.gt3->colour[0].g = g;
+                libPoly.gt3->colour[0].b = b;
+
+                libPoly.gt3->colour[1].r = r;
+                libPoly.gt3->colour[1].g = g;
+                libPoly.gt3->colour[1].b = b;
+
+                libPoly.gt3->colour[2].r = r;
+                libPoly.gt3->colour[2].g = g;
+                libPoly.gt3->colour[2].b = b;
+                libPoly.gt3++;
+                break;
+
+            case TypeGT4:
+                libPoly.gt4->colour[0].r = r;
+                libPoly.gt4->colour[0].g = g;
+                libPoly.gt4->colour[0].b = b;
+
+                libPoly.gt4->colour[1].r = r;
+                libPoly.gt4->colour[1].g = g;
+                libPoly.gt4->colour[1].b = b;
+
+                libPoly.gt4->colour[2].r = r;
+                libPoly.gt4->colour[2].g = g;
+                libPoly.gt4->colour[2].b = b;
+
+                libPoly.gt4->colour[3].r = r;
+                libPoly.gt4->colour[3].g = g;
+                libPoly.gt4->colour[3].b = b;
+
+                libPoly.gt4++;
+                break;
+        }
+    }
+}
+
 void InitDonkey(Object** prm, short prmCount, Object** donkey)
 {
     int i;
@@ -566,8 +627,6 @@ void InitDonkey(Object** prm, short prmCount, Object** donkey)
             {
                 donkey[count] = obj;
                 count++;
-
-                //          printf("Donkey = %s \n", &(obj->name) );
             }
             obj = obj->next;
         }
@@ -578,7 +637,9 @@ void MoveDonkey(Object** donkey)
 {
     int i;
     Object* obj;
-    static short count = 0;
+    short count;
+
+    count = gFrameIndex * 20;
 
     for (i = 0; i < 2; i++)
     {
@@ -586,33 +647,30 @@ void MoveDonkey(Object** donkey)
 
         SetSkeletonDirection(obj->skeleton, rsin(count) >> 3, 0, 0);
     }
-    count += 20;
 }
 
 Shadow* InitShadow(Skeleton* camPos, Texture** effectTextures)
 {
-    int i, j, k;
-    Shadow* shadow;
+    Shadow* shadow = shipShadow;
 
     char u[6], v[6];
 
     if (ownShip < 2)
-        effectTextures[SHADOW] = LoadTexture("wipeout\\textures\\shad1.tim", 1);
+        effectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad1.tim");
     else if (ownShip < 4)
-        effectTextures[SHADOW] = LoadTexture("wipeout\\textures\\shad2.tim", 1);
+        effectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad2.tim");
     else if (ownShip < 6)
-        effectTextures[SHADOW] = LoadTexture("wipeout\\textures\\shad3.tim", 1);
+        effectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad3.tim");
     else if (ownShip < 8)
-        effectTextures[SHADOW] = LoadTexture("wipeout\\textures\\shad4.tim", 1);
+        effectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad4.tim");
 
-    shadow = (Shadow*)malloc((sizeof(Shadow) * NO_OF_SHIPS) + 32);
-
-    u[0] = (effectTextures[SHADOW]->u0 + effectTextures[SHADOW]->u1) >> 1;
-    v[0] = (effectTextures[SHADOW]->v0 + effectTextures[SHADOW]->v1) >> 1;
-    u[1] = effectTextures[SHADOW]->u2;
-    v[1] = effectTextures[SHADOW]->v2;
-    u[2] = effectTextures[SHADOW]->u3;
-    v[2] = effectTextures[SHADOW]->v3;
+    /*TODO shadow
+    u[0] = (effectTextures[FX_SHADOW]->u0 + effectTextures[FX_SHADOW]->u1) >> 1;
+    v[0] = (effectTextures[FX_SHADOW]->v0 + effectTextures[FX_SHADOW]->v1) >> 1;
+    u[1] = effectTextures[FX_SHADOW]->u2;
+    v[1] = effectTextures[FX_SHADOW]->v2;
+    u[2] = effectTextures[FX_SHADOW]->u3;
+    v[2] = effectTextures[FX_SHADOW]->v3;
     u[3] = (u[0] + u[1]) >> 1;
     v[3] = (v[0] + v[1]) >> 1;
     u[4] = (u[1] + u[2]) >> 1;
@@ -620,7 +678,6 @@ Shadow* InitShadow(Skeleton* camPos, Texture** effectTextures)
     u[5] = (u[2] + u[0]) >> 1;
     v[5] = (v[2] + v[0]) >> 1;
 
-    /*TODO shadow
     for(i = 0; i < NO_OF_SHIPS; i++)
     {
        for(j = 0; j < 2; j++)
@@ -629,9 +686,9 @@ Shadow* InitShadow(Skeleton* camPos, Texture** effectTextures)
           {
              SetPolyFT3(&(shadow[i].poly[k][j]));
              setTPage(&(shadow[i].poly[k][j]),0, 2,
-                effectTextures[SHADOW]->textureX,
-                effectTextures[SHADOW]->textureY);
-             shadow[i].poly[k][j].clut = effectTextures[SHADOW]->cba;
+                effectTextures[FX_SHADOW]->textureX,
+                effectTextures[FX_SHADOW]->textureY);
+             shadow[i].poly[k][j].clut = effectTextures[FX_SHADOW]->cba;
 
              SetShadeTex((P_TAG *)&(shadow[i].poly[k][j]), 1);
 
@@ -871,7 +928,6 @@ void DrawShadow(Object** shipShapes, ShipData* shipIndex, Shadow* shadow)
 
 void InitWeaponSprtIcons(Texture** weaponIconTextures)
 {
-    int i;
     TIMlist* timPtr;
     short loc;
 
@@ -893,13 +949,12 @@ void InitWeaponSprtIcons(Texture** weaponIconTextures)
 
 void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip)
 {
-    return;
     int icon = playerShip->weaponType;
 
     if (icon != NO_WEAPON)
     {
         icon -= 1;
-        AddGlyph(144, 20, 32, 32, weaponIconTextures[icon]->u0, weaponIconTextures[icon]->v0, weaponIconTextures[icon]->cba);
+        AddGlyph(144, 20, 32, 32, 0, 0, weaponIconTextures[icon]);
     }
 }
 
@@ -907,7 +962,7 @@ static int shakeCount = 0;
 
 void SetShake(int duration) { shakeCount = duration; }
 
-void ShakeScreen()
+void ShakeScreen(void)
 {
     if (shakeCount == 0)
         return;
@@ -962,7 +1017,6 @@ void InitAuroraBorialis(Object* object)
 
                 coords = poly.gt4->coords;
                 y = vertex[coords[0]].vy;
-                //          printf("y = %d\n", y);
                 if (y < -6000) /* -8000 */
                 {
                     abPtr[count] = poly.gt4;
@@ -984,7 +1038,6 @@ void InitAuroraBorialis(Object* object)
                 break;
         }
     }
-    // printf("Count = %d\n", count);
 }
 
 void AuroraBorialis(Object* object)
@@ -1001,7 +1054,6 @@ void AuroraBorialis(Object* object)
 
     for (i = 0; i < 80; i++)
     {
-        /*   prim.gt4 = abPtr[i] + CurrentScreen;*/
         coords = abCoords[i];
 
         if (greyCoords[i] != -2)
@@ -1029,8 +1081,6 @@ void AuroraBorialis(Object* object)
             abPtr[i]->colour[3].g = (rsin(coords[3] * (count + 54)) >> 6) + 190;
             abPtr[i]->colour[3].b = (rsin(coords[3] * (count + 39)) >> 6) + 190;
         }
-
-        /*          printf("col = %d\n", prim.gt4->colour3.r); */
     }
 }
 

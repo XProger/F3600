@@ -3,16 +3,52 @@
 #ifndef _STANDARD_H_INCLUDED_
 #define _STANDARD_H_INCLUDED_
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
 
-typedef unsigned char  u_char;
-typedef unsigned short u_short;
-typedef unsigned int   u_int;
-typedef unsigned long  u_long;
-typedef unsigned short ushort; /* sys III compat */
+#ifdef WIN32
+    #include <windows.h>
+#endif
+
+#ifdef __3DO__
+    #include <displayutils.h>
+    #include <debug.h>
+    #include <nodes.h>
+    #include <kernelnodes.h>
+    #include <list.h>
+    #include <folio.h>
+    #include <audio.h>
+    #include <task.h>
+    #include <kernel.h>
+    #include <mem.h>
+    #include <operamath.h>
+    #include <semaphore.h>
+    #include <io.h>
+    #include <event.h>
+    #include <controlpad.h>
+    #include <graphics.h>
+    #include <celutils.h>
+    #include <timerutils.h>
+    #include <hardware.h>
+#else
+    #include <stdio.h>
+#endif
+
+#ifndef __3DO__
+typedef signed char         int8;
+typedef unsigned char       uint8;
+typedef short int           int16;
+typedef unsigned short int  uint16;
+typedef int                 int32;
+typedef unsigned int        uint32;
+#endif
+
+#ifdef __3DO__
+    #define ASSERT(x)
+#else
+    #define ASSERT(x) if (!(x)) __debugbreak()
+#endif
 
 typedef struct
 {
@@ -34,7 +70,7 @@ typedef struct
 
 typedef struct
 { /* color type vector */
-    u_char r, g, b, cd;
+    uint8 r, g, b, cd;
 } CVECTOR;
 
 typedef struct
@@ -51,19 +87,6 @@ typedef struct
 #define RETIRE      0x32
 #define QUIT        0x33
 #define NULLDATA    0x34
-
-typedef unsigned char   uchar;
-typedef unsigned long   ulong;
-typedef unsigned int    uint;
-
-typedef signed char         int8;
-typedef unsigned char       uint8;
-typedef short int           int16;
-typedef unsigned short int  uint16;
-typedef int                 int32;
-typedef unsigned int        uint32;
-
-typedef char* Ptr;
 
 #ifndef NULL
     #define NULL 0
@@ -86,39 +109,10 @@ long rsin( long angle );
 long rcos( long angle );
 */
 
-typedef struct
-{
-    int width;
-    int height;
-    int vram_xpos;
-    int vram_ypos;
-    char* bitmap;
-    char* palette;
-} bm;
-
-int JJSLoadSprites(void);
-void changeScreen(void);
-void setRenderBegin(void);
-void setRenderEnd(void);
-int ProcessMessages(void);
-
-unsigned short GetKeyNoBlock();
+unsigned short GetKeyNoBlock(void);
 
 void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
-
-typedef struct
-{
-    int x, y, w, h;
-} GRECT;
-
-typedef struct
-{
-    unsigned short red   : 5;
-    unsigned short green : 5;
-    unsigned short blue  : 5;
-    unsigned short trans : 1;
-} CLUT;
 
 #define ShipForwards    1
 #define ShipBackwards   2
@@ -134,5 +128,11 @@ enum GameLoop
     GAME_LOOP_RACE_INIT,
     GAME_LOOP_RACE
 };
+
+typedef struct Texture
+{
+    uint16 width;
+    uint16 height;
+} Texture;
 
 #endif

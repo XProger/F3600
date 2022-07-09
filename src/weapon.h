@@ -44,7 +44,7 @@
 #define TRACK_EXPLODE -2
 #define NON_ACTIVE 0
 
-#define NO_ACTIVE_WEAPONS 20
+#define NO_ACTIVE_WEAPONS 32
 
 /***** Weapon Grid defines *****/
 
@@ -109,4 +109,3 @@ void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
 void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes);
 void SetTargetShip(ShipData* shipIndex, int shipNo);
 int GetNewWeapon(void);
-int GetNewWeaponBodge(void);

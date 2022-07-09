@@ -243,15 +243,6 @@ typedef struct
 
 typedef struct
 {
-    long id;
-    long flags;
-    long bnum;
-    short textureX, textureY;
-    short textureH, textureW;
-} TimData;
-
-typedef struct
-{
     short textX, textY;
     char optionText[32];
 } MenuOptions;
@@ -273,11 +264,6 @@ typedef struct menu
 
 typedef struct ConfigData
 {
-    int defaultMenu;
-    int masterWins;
-    int slaveWins;
-    int modelHdg;
-
     short gameOverCount;
     short showPilotCount;
 
@@ -287,50 +273,40 @@ typedef struct ConfigData
     short currSliderPos;
     short oldSliderPos;
 
-    short venomComplete;
-
+    char venomComplete;
     signed char normpadPreset;
     signed char oldPadPreset;
+    char cdTrack;
 
-    signed char cdTrack;
-    signed char oldCdTrack;
-    char pad1;
-    char pad2;
-
+    char oldCdTrack;
     char trackNum;
     char actTrackNum;
     char shipNum;
-    char ship2Num;
 
+    char ship2Num;
     char Class;
     char team;
     char team2;
-    char oppMenu;
 
-    char exitMenu;
-    char exit2Menu;
+    char oppMenu;
     char gameType;
     char NumTracks;
-
     char Lives;
+
     char Position;
     char EndOfGame;
     char gameComplete;
-
-    char continueConfirm;
     char RapierClass;
-    char CheatMode;
-    char cardPresent;
 
-    char prevLap;
+    char cardPresent;
+    char pad5;
     char newLapRecord;
     char gotoMenu;
-    char showGameOver;
 
+    char showGameOver;
     char showBonusTrack;
     char trackInc;
     char lostGame;
-    char pad3;
 } ConfigData;
 
 typedef struct SelectionData
@@ -350,7 +326,7 @@ typedef struct SelectionData
     signed char speechMode;
     signed char hiscoreTrack;
     Menus* menuSystem;
-    ulong toggle;
+    uint32 toggle;
     char combatInit;
     char combatComplete;
     int cardNum;
@@ -378,15 +354,12 @@ typedef struct SortTable
     char points;
 } SortTable;
 
-void menuInit();
+void menuInit(void);
 void menuLoop(ConfigData*);
 void InitMenuSystem(Menus*);
-TimData* Load16BitTexture(char*, char);
 void CallMenuSelector(Menus*, int*, int*, Object**, ConfigData*, MusicPrims*, SlideTextures*, SelectionData*, char[][9]);
 void CallMenuActivator(ConfigData*, int*, int*, Menus*, SelectionData*, char[][9]);
-void LoadModel(Object**, char*);
-void LoadTexModel(Object**, char*);
-void LoadNegConTexModel(Object**, char*);
+int LoadTexModel(Object**, Skeleton*, char*);
 void DrawShip(Menus*, int*, int);
 void MusicVSfx(MusicPrims*, SlideTextures*, SelectionData*, char[][9], ConfigData*);
 void LoadGame(MusicPrims*, SlideTextures*, SelectionData*, char[][9], ConfigData*);
@@ -402,8 +375,8 @@ void ConfirmSaveGame(MusicPrims*, SlideTextures*, SelectionData*, char[][9], Con
 void DrawPilot(Menus*, int*, int);
 void DrawTeams(Menus*, int*, int);
 void DrawClass(Menus*, int*, int);
-void DrawTeamShips(int, int, int, int*, Object*);
-void ContinueGameConfirm(char*, short, char*, ulong*);
+void DrawTeamShips(int, int, int, int, Object*);
+void ContinueGameConfirm(char*, short, char*);
 void SetUpPilots(int, Menus*);
 void MasterSlaveSIO(MusicPrims*, SlideTextures*, SelectionData*, char[][9], ConfigData*);
 void MenuMaster(ConfigData*, int*);
@@ -420,7 +393,7 @@ void DisplayPadMenu(Menus*, int*, int);
 void DisplayNegConMenu(Menus*, int*, int);
 void ConfirmFormat(MusicPrims*, SlideTextures*, SelectionData*, char[][9], ConfigData*);
 void SetNormPadPresets(ConfigData*);
-void InitChampionship();
+void InitChampionship(void);
 void CheckSaveType(SelectionData*, char[][9], ConfigData*);
 void NegConButtonDisplay(Menus*, int*, int);
 void InitButtons(char*);
@@ -438,6 +411,6 @@ void ControllerEdit(MusicPrims*, SlideTextures*, SelectionData*, char[][9], Conf
 void NetworkOptions(MusicPrims*, SlideTextures*, SelectionData*, char[][9], ConfigData*);
 void SerialOptions(MusicPrims*, SlideTextures*, SelectionData*, char[][9], ConfigData*);
 void SerialNetworkHandling(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9], ConfigData* gameData);
-void RestartGameConfirm(char* confirm, short xpad, char* lConfirm, ulong* toggle);
+void RestartGameConfirm(char* confirm, short xpad, char* lConfirm);
 
 #endif

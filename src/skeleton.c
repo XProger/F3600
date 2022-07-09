@@ -1,39 +1,13 @@
 /* (C) Psygnosis 1994. By Jason Carl Denton
 */
 
-#include "standard.h"
-#include "tim.h"
-#include "object.h"
-#include "file.h"
-#include "skeleton.h"
-#include "track.h"
-#include "ships.h"
-#include "weapon.h"
-#include "control.h"
-#include "droid.h"
-#include "camera.h"
-#include "sound.h"
-#include "global.h"
-#include "utils.h"
+#include "game.h"
 
-Skeleton* NewSkeleton()
+void InitSkeleton(Skeleton* skeleton)
 {
-    Skeleton* skeleton;
-
-    skeleton = (Skeleton*)malloc(sizeof(Skeleton));
-    if (!skeleton)
-    {
-        /* Memory allocation failed! */
-
-        printf("Skeleton.c:SkeletonRoot(): Failed to allocate skeleton\n");
-        return (NULL);
-    }
-
     /* Set pointers */
 
     skeleton->super = NULL;
-    skeleton->sub = NULL;
-    skeleton->next = NULL;
 
     /* Set translation matrix */
 
@@ -62,8 +36,6 @@ Skeleton* NewSkeleton()
     /* Set flag to indicate absolute matrix needs recalculating */
 
     skeleton->update = 1;
-
-    return (skeleton);
 }
 
 void SetSkeletonPosition(Skeleton* skeleton, long x, long y, long z)

@@ -51,23 +51,22 @@ typedef struct ShipData
     short mass; /* Mass of ship */
     VECTOR thrust; /* Thrust vector */
     short r_brake_rot, l_brake_rot; /* Air brakes */
-    u_short speed; /* speed */
+    uint16 speed; /* speed */
     short thrust_mag; /* Thrust magnitude */
     short max_thrust; /* Miximum thrust */
-    short collideCount;
     short headingInc, maxHeading;
     short resistance;
     short skid;
 
     /***** Remote Ship Attributes *****/
     short fightBack, numtospeed;
-    u_short remoteThrustMag; /* Thrust magnitude */
-    u_short remoteMaxThrust; /* Miximum thrust */
+    uint16 remoteThrustMag; /* Thrust magnitude */
+    uint16 remoteMaxThrust; /* Miximum thrust */
     short DPASectDiff;
 
     /***** Weapon Attributes *****/
-    u_char weaponType;
-    u_char targetShip;
+    uint8 weaponType;
+    uint8 targetShip;
     short haveFired;
     short electroCount;
     short revConCount;

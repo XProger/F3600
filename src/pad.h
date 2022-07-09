@@ -10,18 +10,18 @@
 
 typedef struct PadInfo
 {
-    u_short thrust;
-    u_short view;
-    u_short fire;
-    u_short lBrake;
-    u_short rBrake;
-    u_short up;
-    u_short down;
-    u_short left;
-    u_short right;
+    uint16 thrust;
+    uint16 view;
+    uint16 fire;
+    uint16 lBrake;
+    uint16 rBrake;
+    uint16 up;
+    uint16 down;
+    uint16 left;
+    uint16 right;
 } PadInfo;
 
-void InitPadSettings();
+void InitPadSettings(void);
 void SetBrake(ShipData* playerShip, short padLeft, short padRight);
 void SetView(ShipData* playerShip, short padView);
 void SetFire(ShipData* playerShip, short padFire, WeaponData* weaponIndex, int shipNo);
