@@ -12,9 +12,6 @@ extern HWND hWnd;
 HDC hDC;
 HGLRC hRC;
 
-extern short WinWidth;
-extern short WinHeight;
-
 extern const TrackCamera ctrlcamera;
 
 long xOffset;
@@ -138,8 +135,6 @@ void renderInit(void)
     glLoadIdentity();
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    WinWidth = 320;
-    WinHeight = 240;
 }
 
 void renderFree(void)

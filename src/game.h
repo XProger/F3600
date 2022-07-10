@@ -2,7 +2,6 @@
 #define _GAME_H_INCLUDED_
 
 #include "standard.h"
-#include "input.h"
 #include "tim.h"
 #include "object.h"
 #include "render.h"

@@ -7,23 +7,20 @@ const uint16 RED_TEXT_CLUT[] = { 0x0000, 0x0043, 0x0465, 0x0487, 0x04ca, 0x090c,
 
 short InitScene(Object** prm, short* prmCount, Skeleton* camPos, ConfigData* gameData)
 {
-    short sceneTextures;
-    short skyTextures;
-    short i;
+    int sceneTextures;
+    int skyTextures;
+    int i;
     Object* obj;
-    short sky;
-    TIMlist *timPtr, *skyTimPtr;
+    int sky;
     char trackPath[64];
 
     sceneTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\scene.cmp");
-    timPtr = LoadCompressedTextureSequence(trackPath);
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence(trackPath);
 
     skyTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\sky.cmp");
-    skyTimPtr = LoadCompressedTextureSequence(trackPath);
-    LoadCmpFiles(skyTimPtr);
+    LoadCompressedTextureSequence(trackPath);
 
     getPath(trackPath, gameData->actTrackNum, "\\scene.prm");
 
@@ -83,7 +80,7 @@ void getPath(char* trackPath, char trackNo, char* name)
     strcat(trackPath, name);
 }
 
-void LoadCmpFiles(TIMlist* timPtr)
+void LoadCmpFiles(TIMlist* timPtr, int numTex)
 {
     int i;
 
@@ -103,13 +100,11 @@ void LoadCmpFiles(TIMlist* timPtr)
             TextureTable[TextureTableCount++] = renderCreateTexture((Tim*)tim);
         }
     }
-
-    free(timPtr->memBase);
 }
 
-TIMlist* LoadCompressedTextureSequence(const char* fileName)
+void LoadCompressedTextureSequence(const char* fileName)
 {
-    short texNum;
+    int texNum;
     char* fileBuffer;
     long fileSize;
     static TIMlist timList;
@@ -132,7 +127,7 @@ TIMlist* LoadCompressedTextureSequence(const char* fileName)
         ASSERT(0);
     }
 
-    numTex = *(long*)fileBuffer;
+    int numTex = *(long*)fileBuffer;
 
     timTotalSize = 0;
 
@@ -156,7 +151,9 @@ TIMlist* LoadCompressedTextureSequence(const char* fileName)
 
     free(fileBuffer); /* free compressed file memory */
 
-    return (&timList);
+    LoadCmpFiles(&timList, numTex);
+
+    free(timList.memBase);
 }
 
 Texture* LoadTexture(const char* fileName)

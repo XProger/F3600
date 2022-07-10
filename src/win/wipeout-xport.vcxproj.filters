@@ -75,7 +75,6 @@
     <ClInclude Include="..\utils.h" />
     <ClInclude Include="..\weapon.h" />
     <ClInclude Include="..\render.h" />
-    <ClInclude Include="..\input.h" />
     <ClInclude Include="..\game.h" />
   </ItemGroup>
 </Project>

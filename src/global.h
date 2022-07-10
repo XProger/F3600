@@ -49,8 +49,6 @@ extern Object* startBoom[4];
 extern short startBoomCount;
 extern int crossedLine;
 
-extern short numTex;
-
 #define ObjectTableMax 512 // 464
 
 extern Texture* FontTextureTable[];
@@ -114,8 +112,3 @@ extern short extroLevel;
 #define FR32U   (32 * 30 / frameRate30)
 
 extern char trackdir[];
-
-extern long DrawnShieldBefore;
-
-extern short WinWidth;
-extern short WinHeight;

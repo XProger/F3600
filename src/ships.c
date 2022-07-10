@@ -120,11 +120,10 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
 
 void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
 {
-    short shipTextures, droidTextures, colTextures;
+    int shipTextures, droidTextures, colTextures;
     Object* obj;
-    TIMlist* timPtr;
-    char shipFile[256];
-    short count = 0;
+    char shipFile[64];
+    int count = 0;
 
     /******************************************************/
     /** Load compressed texture files, first to allow    **/
@@ -134,16 +133,13 @@ void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShape
     strcpy(shipFile, "wipeout\\common\\allsh");
     strcat(shipFile, ".cmp");
     shipTextures = TextureTableCount;
-    timPtr = LoadCompressedTextureSequence(shipFile);
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence(shipFile);
 
     colTextures = TextureTableCount;
-    timPtr = LoadCompressedTextureSequence("wipeout\\common\\alcol.cmp");
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence("wipeout\\common\\alcol.cmp");
 
     droidTextures = TextureTableCount;
-    timPtr = LoadCompressedTextureSequence("wipeout\\common\\rescu.cmp");
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence("wipeout\\common\\rescu.cmp");
 
     strcpy(shipFile, "wipeout\\common\\allsh");
     strcat(shipFile, ".prm");

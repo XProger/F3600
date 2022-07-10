@@ -50,7 +50,6 @@ char DelayCounter = 0;
 char KeyToChange = NONE;
 char davebodge = 1;
 char davebodge2 = 0;
-int andyTimeout = 0;
 
 short TextEntry = 0;
 short TextPos = 0;
@@ -164,8 +163,6 @@ void menuInit(void)
 
     menuScreen = LoadTexture("wipeout\\textures\\wipeout1.tim");
 
-    andyTimeout = 0;
-
     gCurrMenu = 0;
     gCurrOption = 0;
 }
@@ -173,6 +170,8 @@ void menuInit(void)
 void menuLoop(ConfigData* gameData)
 {
     int i;
+
+    UpdatePad();
 
     UpdateNotes(NOT_PAUSED);
 
@@ -1939,11 +1938,10 @@ void InitMenuSystem(Menus* menuSystem)
 
 int LoadTexModel(Object** modelShapes, Skeleton* skeletons, char* fileName)
 {
-    short modelTextures = 0;
+    int modelTextures = 0;
     Object* obj;
     int count = 0;
-    TIMlist* timPtr;
-    char modelFile[256];
+    char modelFile[64];
 
     /******************************************************/
     /** Load compressed texture files, first to allow    **/
@@ -1954,8 +1952,7 @@ int LoadTexModel(Object** modelShapes, Skeleton* skeletons, char* fileName)
     strcat(modelFile, fileName);
     strcat(modelFile, ".cmp");
     modelTextures = TextureTableCount;
-    timPtr = LoadCompressedTextureSequence(modelFile);
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence(modelFile);
 
     strcpy(modelFile, "wipeout\\common\\");
     strcat(modelFile, fileName);
@@ -2204,7 +2201,6 @@ void MusicVSfx(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* s
 
         if (pad & IN_LEFT)
         {
-            andyTimeout = 0;
             if (!ShieldOn)
             {
                 PlayNote(SHIELDS, 0, -1);
@@ -2224,7 +2220,6 @@ void MusicVSfx(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* s
         }
         else if (pad & IN_RIGHT)
         {
-            andyTimeout = 0;
             if (!ShieldOn)
             {
                 PlayNote(SHIELDS, 0, -1);
@@ -2279,7 +2274,6 @@ void MusicVSfx(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* s
         }
         if (xpad & IN_LEFT)
         {
-            andyTimeout = 0;
             PlayNote(MENU_MOVE, 1, 2);
             /*TODO audio
             if (gameData->oldCdTrack == starttrack)
@@ -2308,7 +2302,6 @@ void MusicVSfx(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* s
 
         if (xpad & IN_RIGHT)
         {
-            andyTimeout = 0;
             PlayNote(MENU_MOVE, 1, 2);
             /*TODO audio
             if (gameData->oldCdTrack == 1)
@@ -3278,9 +3271,8 @@ void CheckSaveType(SelectionData* selectData, char loadGames[][9], ConfigData* g
 
 void InitButtons(char* fileName)
 {
-    TIMlist* timPtr;
-    short tablePos;
-    char modelFile[256];
+    int tablePos;
+    char modelFile[64];
     int i;
 
     strcpy(modelFile, "wipeout\\textures\\");
@@ -3289,8 +3281,7 @@ void InitButtons(char* fileName)
 
     tablePos = TextureTableCount;
 
-    timPtr = LoadCompressedTextureSequence(modelFile);
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence(modelFile);
 
     for (i = 0; i < 18; i++)
     {

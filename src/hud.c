@@ -46,7 +46,6 @@ void AddGlyph(int x, int y, int w, int h, int u, int v, const Texture* tex)
 
 void InitText(void)
 {
-    TIMlist* timPtr;
     int i;
     extern int FontLoadHack;
 
@@ -57,8 +56,7 @@ void InitText(void)
 
     ASSERT(TextureTableCount == 0);
 
-    timPtr = LoadCompressedTextureSequence("wipeout\\textures\\drfonts.cmp");
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence("wipeout\\textures\\drfonts.cmp");
 
     ASSERT(TextureTableCount <= FontTextureTableMax);
     for (i = 0; i < TextureTableCount; i++)
@@ -1193,9 +1191,8 @@ void DisplayRacePoints(void)
 
 void InitScreenTex(Texture** screenTex, const char* fileName)
 {
-    TIMlist* timPtr;
-    short tablePos;
-    char modelFile[256];
+    int tablePos;
+    char modelFile[64];
 
     strcpy(modelFile, "wipeout\\textures\\");
     strcat(modelFile, fileName);
@@ -1203,8 +1200,7 @@ void InitScreenTex(Texture** screenTex, const char* fileName)
 
     tablePos = TextureTableCount;
 
-    timPtr = LoadCompressedTextureSequence(modelFile);
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence(modelFile);
 
     screenTex[0] = TextureTable[tablePos++];
     screenTex[1] = TextureTable[tablePos++];
@@ -1266,12 +1262,9 @@ void DisplayAllVenomComplete(void)
 
 void InitTrackTex(Texture** trackTex)
 {
-    TIMlist* timPtr;
-    short tablePos;
-    tablePos = TextureTableCount;
+    int tablePos = TextureTableCount;
 
-    timPtr = LoadCompressedTextureSequence("wipeout\\textures\\track.cmp");
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence("wipeout\\textures\\track.cmp");
 
     trackTex[0] = TextureTable[tablePos++];
     trackTex[1] = TextureTable[tablePos++];

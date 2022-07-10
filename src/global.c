@@ -29,8 +29,6 @@ int tempLapTimes[5];
 int serialLapTimes[5];
 int attractDelay;
 
-short numTex;
-
 Texture* FontTextureTable[FontTextureTableMax];
 Texture* TextureTable[TextureTableMax];
 short TextureTableCount = 0;
@@ -42,8 +40,3 @@ Object* camSpline[20];
 Object* shipSpline[20];
 short finishedExtro;
 short extroLevel;
-
-long DrawnShieldBefore;
-
-short WinWidth;
-short WinHeight;

@@ -73,7 +73,6 @@
     <ClInclude Include="..\hiscores.h" />
     <ClInclude Include="..\hud.h" />
     <ClInclude Include="..\init.h" />
-    <ClInclude Include="..\input.h" />
     <ClInclude Include="..\lzss.h" />
     <ClInclude Include="..\menus.h" />
     <ClInclude Include="..\object.h" />

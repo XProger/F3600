@@ -1,7 +1,5 @@
 #include "game.h"
 
-extern int andyTimeout;
-
 void InitPadSettings(void)
 {
     pCon.thrust = IN_A;
@@ -13,6 +11,13 @@ void InitPadSettings(void)
     pCon.down   = IN_DOWN;
     pCon.left   = IN_LEFT;
     pCon.right  = IN_RIGHT;
+}
+
+void UpdatePad()
+{
+    opad = pad;
+    pad = gPad;
+    xpad = (pad ^ opad) & pad;
 }
 
 void SetBrake(ShipData* playerShip, short padLeft, short padRight)
@@ -75,32 +80,18 @@ short GetMenuKey(short key)
     switch (key)
     {
         case M_UP:
-            if (xpad & IN_UP)
-                andyTimeout = 0;
             return (xpad & IN_UP);
         case M_DOWN:
-            if (xpad & IN_DOWN)
-                andyTimeout = 0;
             return (xpad & IN_DOWN);
         case M_LEFT:
-            if (xpad & IN_LEFT)
-                andyTimeout = 0;
             return (xpad & IN_LEFT);
         case M_RIGHT:
-            if (xpad & IN_RIGHT)
-                andyTimeout = 0;
             return (xpad & IN_RIGHT);
         case M_BACK:
-            if (xpad & (IN_B | IN_START))
-                andyTimeout = 0;
             return (xpad & (IN_B | IN_START));
         case M_SELECT:
-            if (xpad & IN_A)
-                andyTimeout = 0;
             return (xpad & IN_A);
         case M_START:
-            if (xpad & IN_START)
-                andyTimeout = 0;
             return (xpad & IN_START);
         default:
             break;

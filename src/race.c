@@ -56,7 +56,6 @@ Effect ctrleffects[NO_OF_EFFECTS];
 Texture* ctrleffectTextures[NO_OF_EFFECT_TEXTURES];
 int ctrlcdTrack;
 int ctrlnoCdTracks;
-TIMlist* ctrltimPtr;
 Shadow* ctrlShadow;
 Object* ctrllostad[20]; /* It wouldn`t suprise me ! */
 int ctrlstadCount;
@@ -350,8 +349,7 @@ void raceInit(ConfigData* gameData)
 
     ctrllibraryTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\library.cmp");
-    ctrltimPtr = LoadCompressedTextureSequence(trackPath);
-    LoadCmpFiles(ctrltimPtr);
+    LoadCompressedTextureSequence(trackPath);
 
     getPath(trackPath, gameData->actTrackNum, "\\library.ttf");
     ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
@@ -523,6 +521,8 @@ void raceCtrl(ConfigData* gameData)
     ctrlNeedInGameConfirm = 0;
     ctrlNeedInSingleGameConfirm = 0;
     ctrlNeedTargetIcon = 0;
+
+    UpdatePad();
 
     //    AJSVSync(2);
     if (ctrlfirsttime)
@@ -1365,8 +1365,6 @@ void raceLoop(ConfigData* gameData)
     {
         raceCtrl(gameData);
     }
-
-    DrawnShieldBefore = 0; // Reset the shield prim.
 
     if (ctrl_says_quit)
     {

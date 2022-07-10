@@ -23,6 +23,9 @@ void titleInit()
 void titleLoop()
 {
     int i;
+    UpdatePad();
+
+    renderClear(); // TODO if gBorder != 0
 
     AddGlyph(0, 0, 320, 240, 0, 0, titleScreen);
     CentreText("PRESS START", text_data(0, 200, 8), WhiteText);
@@ -98,10 +101,6 @@ void gameInit(void)
 
 void gameCtrl(void)
 {
-    opad = pad;
-    pad = gPad;
-    xpad = (pad ^ opad) & pad;
-
     switch (ctrlGameLoop)
     {
         case GAME_LOOP_TITLE_INIT:

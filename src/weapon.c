@@ -6,8 +6,6 @@ extern TrackCamera ctrlcamera;
 
 Texture* targetTexture;
 
-void DrawInternalShield(void);
-
 void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex)
 {
     int i;
@@ -31,13 +29,6 @@ void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
         if ((weaponIndex[i].count > 0) && (weaponIndex[i].availible))
         {
             weapon = &(weaponIndex[i]);
-
-            //       if ((weapon->type == SHIELD)) && (shipIndex[weapon->fireShip].attr & VIEW_IN))
-            if ((shipIndex[weapon->fireShip].attr & SHIELDED) && (shipIndex[weapon->fireShip].attr & VIEW_IN))
-            {
-                DrawInternalShield();
-                continue;
-            }
 
             if (weapon->type == SHIELD)
                 TransformStaticObjectBodge(weaponShapes[weapon->currentWeapon].shapePtr);
@@ -361,18 +352,16 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapon
 {
     int i, j, k;
     Object* obj;
-    short weaponTextures;
+    int weaponTextures;
     Poly poly;
-    short primitiveCount;
+    int primitiveCount;
     long length;
     Prm prm;
     char* start;
     Object* object;
-    TIMlist* timPtr;
 
     weaponTextures = TextureTableCount;
-    timPtr = LoadCompressedTextureSequence("wipeout\\common\\mine.cmp");
-    LoadCmpFiles(timPtr);
+    LoadCompressedTextureSequence("wipeout\\common\\mine.cmp");
 
     length = FileLength("wipeout\\common\\rock.prm");
     weaponShapes[ROCKET_OFFSET].shapePtr = LoadPrm("wipeout\\common\\rock.prm", weaponTextures);
@@ -1715,20 +1704,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
         shieldID = weapon->currentWeapon - SHIELD_OFFSET;
     }
-}
-
-void DrawInternalShield(void)
-{
-    if (!DrawnShieldBefore)
-    {
-        /*TODO internal shield
-        setXY4(&shieldPoly,0,0,320,0,0,240,320,240);
-           setRGB0(&shieldPoly,0,0,WHITE2_TRANSL);
-        setPolyF4(&shieldPoly);
-        AddPrim(OT[CurrentScreen] + 1,(u_long *)&shieldPoly); //Plus 1 to prevent hud from being affected
-        */
-    }
-    DrawnShieldBefore = 1;
 }
 
 void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids)

@@ -18,19 +18,17 @@ void InitEffects(Effect* effects, Skeleton* camPos, Texture** effectTextures)
 {
     /*TODO effects
        int i, j;
-       TIMlist        *timPtr;
-       short          loc;
+       int tablePos;
 
-       loc = TextureTableCount;
+       tablePos = TextureTableCount;
 
-       timPtr = LoadCompressedTextureSequence( "wipeout\\common\\effects.cmp" );
-       LoadCmpFiles( timPtr );
-       effectTextures[FX_FIRE]       = TextureTable[loc++];
-       effectTextures[FX_FIRE_WHITE] = TextureTable[loc++];
-       effectTextures[FX_SMOKE]      = TextureTable[loc++];
-       effectTextures[FX_EBOLT]      = TextureTable[loc++];
-       effectTextures[FX_HALO]       = TextureTable[loc++];
-       effectTextures[FX_GREENY]     = TextureTable[loc++];
+       LoadCompressedTextureSequence( "wipeout\\common\\effects.cmp" );
+       effectTextures[FX_FIRE]       = TextureTable[tablePos++];
+       effectTextures[FX_FIRE_WHITE] = TextureTable[tablePos++];
+       effectTextures[FX_SMOKE]      = TextureTable[tablePos++];
+       effectTextures[FX_EBOLT]      = TextureTable[tablePos++];
+       effectTextures[FX_HALO]       = TextureTable[tablePos++];
+       effectTextures[FX_GREENY]     = TextureTable[tablePos++];
 
        for(i = 0; i < NO_OF_EFFECTS; i++)
        {
@@ -928,23 +926,19 @@ void DrawShadow(Object** shipShapes, ShipData* shipIndex, Shadow* shadow)
 
 void InitWeaponSprtIcons(Texture** weaponIconTextures)
 {
-    TIMlist* timPtr;
-    short loc;
+    int tablePos = TextureTableCount;
 
-    loc = TextureTableCount;
+    LoadCompressedTextureSequence("wipeout\\common\\wicons.cmp");
 
-    timPtr = LoadCompressedTextureSequence("wipeout\\common\\wicons.cmp");
-    LoadCmpFiles(timPtr);
-
-    weaponIconTextures[MINE - 1] = TextureTable[loc++];
-    weaponIconTextures[MISSILE - 1] = TextureTable[loc++];
-    weaponIconTextures[ROCKET - 1] = TextureTable[loc++];
-    weaponIconTextures[SPECIAL - 1] = TextureTable[loc++];
-    weaponIconTextures[ELEC_BOLT - 1] = TextureTable[loc++];
-    weaponIconTextures[FLARE - 1] = TextureTable[loc++];
-    weaponIconTextures[REV_CON - 1] = TextureTable[loc++];
-    weaponIconTextures[SHIELD - 1] = TextureTable[loc++];
-    weaponIconTextures[TURBO - 1] = TextureTable[loc++];
+    weaponIconTextures[MINE - 1] = TextureTable[tablePos++];
+    weaponIconTextures[MISSILE - 1] = TextureTable[tablePos++];
+    weaponIconTextures[ROCKET - 1] = TextureTable[tablePos++];
+    weaponIconTextures[SPECIAL - 1] = TextureTable[tablePos++];
+    weaponIconTextures[ELEC_BOLT - 1] = TextureTable[tablePos++];
+    weaponIconTextures[FLARE - 1] = TextureTable[tablePos++];
+    weaponIconTextures[REV_CON - 1] = TextureTable[tablePos++];
+    weaponIconTextures[SHIELD - 1] = TextureTable[tablePos++];
+    weaponIconTextures[TURBO - 1] = TextureTable[tablePos++];
 }
 
 void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip)
