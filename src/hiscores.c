@@ -364,16 +364,12 @@ void AddEntry2Table(ConfigData* gameData, int bestLap, char nameEntered[])
     char tablePos;
     int scoreTrack = 0;
 
-    // printf ("track number in add entry to table = %d \n", gameData->trackNum) ;
-
     if (gameData->gameType == TIME_TRIAL)
         scoreTrack = ((gameData->trackNum - 1) + HiScoreTracks);
     else if (gameData->gameType == CHAMPIONSHIP)
         scoreTrack = ((gameData->trackNum - 1) - gameData->trackInc);
     else
         scoreTrack = (gameData->trackNum - 1);
-
-    // printf ("Hiscore stored for track  %d \n", scoreTrack) ;
 
     for (i = 0; i < NumNames; i++)
     {
@@ -383,8 +379,6 @@ void AddEntry2Table(ConfigData* gameData, int bestLap, char nameEntered[])
 
             if (scoreTable[scoreTrack].position[i] == -1)
             {
-                //          printf ("Position -1 \n") ;
-
                 tablePos = i;
                 scoreTable[scoreTrack].position[i] = i;
                 scoreTable[scoreTrack].lapTimes[i] = bestLap;
@@ -721,9 +715,6 @@ int CheckHiScore(ConfigData* gameData, HiScoreData* hiScoreData)
             serialRaceTime += serialLapTimes[j];
         }
 
-        /*
-              printf ("ownRacetime = %d  serRaceTime = %d \n", ownRaceTime, serialRaceTime) ;
-        */
         if (ownRaceTime > serialRaceTime)
         {
             hiScoreData->bestLap = serialRaceTime;
@@ -733,10 +724,6 @@ int CheckHiScore(ConfigData* gameData, HiScoreData* hiScoreData)
         {
             hiScoreData->bestLap = ownRaceTime;
         }
-
-        /*
-              printf ("Best lap = %d \n", hiScoreData->bestLap) ;
-        */
 
         for (i = 0; i < NumNames; i++)
         {

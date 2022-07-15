@@ -303,28 +303,28 @@ int collideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
             switch (count)
             {
                 case 0:
-                    assign(&start_vec, b);
-                    assign(&pos_vec, BC);
+                    start_vec = b;
+                    pos_vec = BC;
                     break;
                 case 1:
-                    assign(&start_vec, a);
-                    assign(&pos_vec, AC);
+                    start_vec = a;
+                    pos_vec = AC;
                     break;
                 case 2:
-                    assign(&start_vec, d);
-                    assign(&pos_vec, DC);
+                    start_vec = d;
+                    pos_vec = DC;
                     break;
                 case 3:
-                    assign(&start_vec, a);
-                    assign(&pos_vec, AB);
+                    start_vec = a;
+                    pos_vec = AB;
                     break;
                 case 4:
-                    assign(&start_vec, a);
-                    assign(&pos_vec, AD);
+                    start_vec = a;
+                    pos_vec = AD;
                     break;
                 case 5:
-                    assign(&start_vec, b);
-                    assign(&pos_vec, BD);
+                    start_vec = b;
+                    pos_vec = BD;
                     break;
             }
 
@@ -370,14 +370,6 @@ int collideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
         }
     }
     return 0;
-}
-
-int assign(VECTOR* vec1, VECTOR vec2)
-{
-    vec1->vx = vec2.vx;
-    vec1->vy = vec2.vy;
-    vec1->vz = vec2.vz;
-    return (1); // PCwipeout
 }
 
 int PlaneLineCollision(VECTOR plane_point, VECTOR ship_pos, SVector normal)

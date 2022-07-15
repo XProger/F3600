@@ -124,7 +124,7 @@ void IntelShort(short* svalue)
     cvalue[1] = temp;
 }
 
-Object* LoadPrm(char* name, short textureStart)
+Object* LoadPrm(const char* name, short textureStart)
 {
     Object* object;
     Object* lastObject;

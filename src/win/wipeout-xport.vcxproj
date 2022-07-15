@@ -62,7 +62,6 @@
     <ClInclude Include="..\cone.h" />
     <ClInclude Include="..\control.h" />
     <ClInclude Include="..\credits.h" />
-    <ClInclude Include="..\decl.h" />
     <ClInclude Include="..\draw.h" />
     <ClInclude Include="..\droid.h" />
     <ClInclude Include="..\dynam.h" />

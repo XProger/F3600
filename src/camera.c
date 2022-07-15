@@ -253,44 +253,6 @@ void UpdateCameraDroidView(TrackCamera* camera, ShipData* camShip, RescueData* r
     camera->camPos->super->update = 1;
 }
 
-void UpdateCameraAttractInternal(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
-{
-    short sx, sy, sz;
-    short cx, cy, cz;
-    VECTOR unitFinVector;
-
-    if (target == 0)
-    {
-        target = 150;
-    }
-    target--;
-    if (target == 0)
-    {
-        CameraUpdate = UpdateCameraAttractMode;
-    }
-
-    camera->section = camShip->nearTrkSect;
-
-    sy = rsin(camShip->hdg);
-    sx = rsin(camShip->pitch);
-    sz = rsin(camShip->roll);
-    cy = rcos(camShip->hdg);
-    cx = rcos(camShip->pitch);
-    cz = rcos(camShip->roll);
-
-    unitFinVector.vx = ((cy * sz) >> 12) - ((((sy * sx) >> 12) * cz) >> 12);
-    unitFinVector.vy = (cx * cz) >> 12;
-    unitFinVector.vz = ((sy * sz) >> 12) + ((((cy * sx) >> 12) * cz) >> 12);
-
-    SetSkeletonPosition(camera->camPos, -(camShip->ppivot.vx - (unitFinVector.vx >> 5)), -(camShip->ppivot.vy - (unitFinVector.vy >> 5)), -(camShip->ppivot.vz - (unitFinVector.vz >> 5)));
-
-    camera->pitch = -camShip->pitch;
-    camera->hdg = -camShip->hdg;
-    SetSkeletonDirectionRPH(camera->camPos->super, -camShip->roll, -camShip->pitch, -camShip->hdg);
-
-    camera->camPos->super->update = 1;
-}
-
 void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
 {
     static VECTOR pos;

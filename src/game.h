@@ -21,7 +21,6 @@
 #include "hiscores.h"
 #include "hud.h"
 #include "global.h"
-#include "decl.h"
 #include "sfx.h"
 #include "card.h"
 #include "utils.h"

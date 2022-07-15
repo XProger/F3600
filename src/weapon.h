@@ -8,8 +8,8 @@
 #define NO_OF_SHIELDS   3
 #define NO_OF_EBOLTS    3
 
-#define MINE_OFFSET     4
 #define ROCKET_OFFSET   0
+#define MINE_OFFSET     4
 #define MISSILE_OFFSET  19
 #define SHIELD_OFFSET   23
 #define EBOLT_OFFSET    26

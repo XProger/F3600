@@ -13,7 +13,7 @@ void InitPadSettings(void)
     pCon.right  = IN_RIGHT;
 }
 
-void UpdatePad()
+void UpdatePad(void)
 {
     opad = pad;
     pad = gPad;

@@ -105,6 +105,7 @@ void LoadCmpFiles(TIMlist* timPtr, int numTex)
 void LoadCompressedTextureSequence(const char* fileName)
 {
     int texNum;
+    int numTex;
     char* fileBuffer;
     long fileSize;
     static TIMlist timList;
@@ -127,7 +128,7 @@ void LoadCompressedTextureSequence(const char* fileName)
         ASSERT(0);
     }
 
-    int numTex = *(long*)fileBuffer;
+    numTex = *(long*)fileBuffer;
 
     timTotalSize = 0;
 

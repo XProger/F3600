@@ -120,3 +120,8 @@ short AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR 
 short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCamera* camera);
 void AdjustEngineSound(ShipData*, TrackCamera*);
 void StopNotes(void);
+
+void CDRestart(void);
+void CDPlay(short int CurrTrackNo);
+void CDStop(void);
+void CdSetVol(long newVol);

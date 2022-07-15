@@ -4,6 +4,7 @@ extern short starttrack, endtrack;
 
 const char* const fulltrack[] = { "RANDOM", "CAIRODROME", "CARDINAL DANCER", "COLD COMFORT", "DOH T", "MESSIJ", "OPERATIQUE", "TENTATIVE", "TRANCEVAAL", "AFRO RIDE", "CHEMICAL BEATS", "WIPEOUT" };
 const char* const sometrack[] = { "RANDOM", "COLD COMFORT", "DOH T", "MESSIJ", "TENTATIVE", "WIPEOUT" };
+const char* const ingameMenu[] = { "CONTINUE", "RESTART", "QUIT", "CD TRACK" };
 
 const char* GetCdTrackName(int no)
 {
@@ -18,9 +19,6 @@ const char* GetCdTrackName(int no)
 void InGameReset(int choice, char machinePaused, ConfigData* gameData, int* cdPause)
 {
     int i;
-    char ingameMenu[4][9];
-    short yPos = 122, xPos[4];
-    char gap = 16;
 
     if (BLINK_SLOW)
     {
@@ -29,23 +27,14 @@ void InGameReset(int choice, char machinePaused, ConfigData* gameData, int* cdPa
 
     if (machinePaused == SINGLE || machinePaused == MASTER)
     {
-        strcpy(ingameMenu[0], "CONTINUE");
-        strcpy(ingameMenu[1], "RESTART");
-        strcpy(ingameMenu[2], "QUIT");
-        strcpy(ingameMenu[3], "CD TRACK");
-        xPos[0] = 120;
-        xPos[1] = 128;
-        xPos[2] = 140;
-        xPos[3] = 140;
-
         for (i = 0; i < 4; i++)
         {
-            CentreText(&(ingameMenu[i][0]), text_data(xPos[i], yPos + (gap * i), 8), (i == choice) ? BLINK_TEXT : WhiteText);
+            CentreText(ingameMenu[i], text_data(0, 122 + (16 * i), 8), (i == choice) ? BLINK_TEXT : WhiteText);
         }
 
         if (choice == 3)
         {
-            CentreText(GetCdTrackName(gameData->cdTrack - 1), text_data(0, yPos + (gap * 4), 8), RedText);
+            CentreText(GetCdTrackName(gameData->cdTrack - 1), text_data(0, 122 + (16 * 4), 8), RedText);
         }
     }
 }

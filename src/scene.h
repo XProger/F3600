@@ -4,7 +4,7 @@
 #define ToIntel 0
 #define ToUnix 1
 
-Object* LoadPrm(char* name, short textureStart);
+Object* LoadPrm(const char* name, short textureStart);
 
 void IntelShort(short* svalue);
 

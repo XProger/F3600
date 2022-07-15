@@ -17,7 +17,6 @@
     <ClCompile Include="..\hud.c" />
     <ClCompile Include="..\init.c" />
     <ClCompile Include="..\lzss.c" />
-    <ClCompile Include="..\object.c" />
     <ClCompile Include="..\options.c" />
     <ClCompile Include="..\pad.c" />
     <ClCompile Include="..\race.c" />
@@ -36,6 +35,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="render.c" />
     <ClCompile Include="..\menus.c" />
+    <ClCompile Include="..\object.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera.h" />
@@ -44,7 +44,6 @@
     <ClInclude Include="..\cone.h" />
     <ClInclude Include="..\control.h" />
     <ClInclude Include="..\credits.h" />
-    <ClInclude Include="..\decl.h" />
     <ClInclude Include="..\draw.h" />
     <ClInclude Include="..\droid.h" />
     <ClInclude Include="..\dynam.h" />
@@ -56,7 +55,6 @@
     <ClInclude Include="..\init.h" />
     <ClInclude Include="..\lzss.h" />
     <ClInclude Include="..\menus.h" />
-    <ClInclude Include="..\object.h" />
     <ClInclude Include="..\options.h" />
     <ClInclude Include="..\pad.h" />
     <ClInclude Include="..\race.h" />
@@ -76,5 +74,6 @@
     <ClInclude Include="..\weapon.h" />
     <ClInclude Include="..\render.h" />
     <ClInclude Include="..\game.h" />
+    <ClInclude Include="..\object.h" />
   </ItemGroup>
 </Project>

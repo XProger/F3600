@@ -2,7 +2,7 @@
 #define MENUS_H
 
 #define NORMAL_COMBAT_LINK 1
-#define MAX_OPTIONS 15
+#define MAX_OPTIONS 7
 #define MAX_MENUS 30
 #define VRAM 0
 #define SCREEN 1
@@ -243,14 +243,12 @@ typedef struct
 
 typedef struct
 {
-    short textX, textY;
-    char optionText[32];
+    const char* optionText;
 } MenuOptions;
 
 typedef struct menu
 {
-    char menuTitle[32];
-    short titleX, titleY;
+    const char* menuTitle;
     char numOptions;
     MenuOptions menuOptions[MAX_OPTIONS];
     signed char prevMenu;

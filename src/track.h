@@ -1,7 +1,3 @@
-
-
-#define NEW_TRACK 1
-
 typedef struct Normal
 {
     signed char vx;
@@ -49,10 +45,13 @@ typedef union
 } SectionPtr;
 
 /* TrackSection Flags */
-#define Jump 1
-#define JunctionEnd 8
-#define JunctionStart 16
+#define Jump            1
+#define JunctionEnd     8
+#define JunctionStart   16
 #define JunctionSection 32
+
+#define ObjectTableMax  512 // 464
+#define TrackTextures   24
 
 typedef struct TrackSection
 {

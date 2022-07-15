@@ -70,6 +70,8 @@ int ctrlgameOverTime;
 int ctrlcdPause;
 int ctrlnearShip;
 
+int TrackLoadHack;
+
 /**************************************************/
 /******           Stu additions               *****/
 /**************************************************/
@@ -347,12 +349,14 @@ void raceInit(ConfigData* gameData)
         shipSpline[6]->skeleton->super = ctrlcamera.camPos;
     }
 
+    getPath(trackPath, gameData->actTrackNum, "\\library.ttf");
+    ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
+
+    TrackLoadHack = 1;
     ctrllibraryTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\library.cmp");
     LoadCompressedTextureSequence(trackPath);
-
-    getPath(trackPath, gameData->actTrackNum, "\\library.ttf");
-    ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
+    TrackLoadHack = 0;
 
     ctrlsection = track->sections;
 
@@ -394,6 +398,7 @@ void raceInit(ConfigData* gameData)
     ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
 
     InitStartBoom(ctrlprm, ctrlprmCount);
+    ResetStartBoom();
 
     // ctrlstadCount = InitCrowdSound(ctrlprm, ctrlprmCount, ctrllostad, ctrlstadCount);
 
@@ -1218,7 +1223,6 @@ void raceCtrl(ConfigData* gameData)
                                         gameData->newLapRecord = 0;
                                         if (gameData->Position >= 1 && gameData->Position <= 3)
                                         {
-                                            //                                     printf ("Number of track = %d \n", gameData->NumTracks) ;
                                             QuitGame();
                                             ctrl_says_quit = 1;
                                             return;
@@ -1273,16 +1277,9 @@ void raceCtrl(ConfigData* gameData)
         }
     }
 
-    if (ctrlhiScoreData.displayHiScore == 1) { }
-
-    /*          else if((shipIndex[ownShip].attr & RACING) ||
-    (CameraUpdate == UpdateCameraAttractInternal))
-    */
+    if ((ctrlmode != ATTRACT))
     {
-        if ((ctrlmode != ATTRACT))
-        {
-            UpdateRaceHud(ctrlshipIndex, &ctrlspeedo, ctrlchoice, gameData);
-        }
+        UpdateRaceHud(ctrlshipIndex, &ctrlspeedo, ctrlchoice, gameData);
     }
 
     /*********************************************************************/
@@ -1319,7 +1316,6 @@ void raceCtrl(ConfigData* gameData)
 
         if (ctrlshipIndex[serialShip].haveFired == RETIRE)
         {
-            //          printf ("Am retiring \n") ;
             ctrlactivated = 0;
             ctrlmachinePaused = SINGLE;
             ctrlchoice = -1;

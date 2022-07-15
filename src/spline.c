@@ -23,8 +23,6 @@ short startIceText;
 short startFireText;
 short textY;
 
-#define ExtroMessages 0
-
 const char str_c1[] = "AWESOME";
 const char str_c2[] = " ";
 const char str_c3[] = "YOU HAVE BEATEN";
@@ -1503,6 +1501,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
 void InitFireCongratulations(void)
 {
+    /*TODO const array*/
     con[0].words = str_c1;
     con[0].colour = Red;
     con[0].size = 8;
@@ -1703,6 +1702,7 @@ void InitIceCongratulations(void)
     con[22].size = 8;
 }
 
+/*TODO ShowCongratulations(con, count)*/
 void ShowFireCongratulations(void)
 {
     short lineY;

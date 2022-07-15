@@ -348,179 +348,51 @@ void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShap
     renderTransparent(0);
 }
 
+void InitWeaponObj(WeaponShape* weaponShapes, int textures, const char* name, int offset, int count)
+{
+    long length;
+    int i;
+    char* start;
+    Prm prm;
+    Object* object;
+
+    length = FileLength(name);
+    weaponShapes[offset].shapePtr = LoadPrm(name, textures);
+    for (i = offset + 1; i < offset + count; i++)
+    {
+        start = (char*)malloc(length + 32);
+        prm.ptr = start;
+        weaponShapes[i].shapePtr = prm.object;
+        memcpy(start, weaponShapes[offset].shapePtr, length);
+        object = prm.object++;
+        object->skeleton = prm.skeleton++;
+        object->vertices = prm.svector;
+        prm.svector += object->vertexCount;
+        object->normals = prm.svector;
+        prm.svector += object->normalCount;
+        object->primitives = prm.primitive;
+    }
+}
+
 void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex)
 {
-    int i, j, k;
+    int i;
     Object* obj;
     int weaponTextures;
-    Poly poly;
-    int primitiveCount;
-    long length;
-    Prm prm;
-    char* start;
-    Object* object;
+
+    targetTexture = LoadTexture("wipeout\\textures\\target2.tim");
 
     weaponTextures = TextureTableCount;
     LoadCompressedTextureSequence("wipeout\\common\\mine.cmp");
 
-    length = FileLength("wipeout\\common\\rock.prm");
-    weaponShapes[ROCKET_OFFSET].shapePtr = LoadPrm("wipeout\\common\\rock.prm", weaponTextures);
-    for (i = 1; i < MINE_OFFSET; i++)
-    {
-        start = (char*)malloc(length + 32);
-        prm.ptr = start;
-        weaponShapes[i].shapePtr = prm.object;
-        memcpy(start, weaponShapes[ROCKET_OFFSET].shapePtr, length);
-        object = prm.object++;
-        object->skeleton = prm.skeleton++;
-        object->vertices = prm.svector;
-        prm.svector += object->vertexCount;
-        object->normals = prm.svector;
-        prm.svector += object->normalCount;
-        object->primitives = prm.primitive;
-    }
-
-    length = FileLength("wipeout\\common\\mine.prm");
-    weaponShapes[MINE_OFFSET].shapePtr = LoadPrm("wipeout\\common\\mine.prm", weaponTextures);
-    for (i = MINE_OFFSET + 1; i < MISSILE_OFFSET; i++)
-    {
-        start = (char*)malloc(length + 32);
-        prm.ptr = start;
-        weaponShapes[i].shapePtr = prm.object;
-        memcpy(start, weaponShapes[MINE_OFFSET].shapePtr, length);
-        object = prm.object++;
-        object->skeleton = prm.skeleton++;
-        object->vertices = prm.svector;
-        prm.svector += object->vertexCount;
-        object->normals = prm.svector;
-        prm.svector += object->normalCount;
-        object->primitives = prm.primitive;
-    }
-
-    length = FileLength("wipeout\\common\\miss.prm");
-    weaponShapes[MISSILE_OFFSET].shapePtr = LoadPrm("wipeout\\common\\miss.prm", weaponTextures);
-    for (i = MISSILE_OFFSET + 1; i < SHIELD_OFFSET; i++)
-    {
-        start = (char*)malloc(length + 32);
-        prm.ptr = start;
-        weaponShapes[i].shapePtr = prm.object;
-        memcpy(start, weaponShapes[MISSILE_OFFSET].shapePtr, length);
-        object = prm.object++;
-        object->skeleton = prm.skeleton++;
-        object->vertices = prm.svector;
-        prm.svector += object->vertexCount;
-        object->normals = prm.svector;
-        prm.svector += object->normalCount;
-        object->primitives = prm.primitive;
-    }
-
-    length = FileLength("wipeout\\common\\shld.prm");
-    weaponShapes[SHIELD_OFFSET].shapePtr = LoadPrm("wipeout\\common\\shld.prm", weaponTextures);
-    for (i = SHIELD_OFFSET + 1; i < SHIELD_OFFSET + NO_OF_SHIELDS; i++)
-    {
-        start = (char*)malloc(length + 32);
-        prm.ptr = start;
-        weaponShapes[i].shapePtr = prm.object;
-        memcpy(start, weaponShapes[SHIELD_OFFSET].shapePtr, length);
-        object = prm.object++;
-        object->skeleton = prm.skeleton++;
-        object->vertices = prm.svector;
-        prm.svector += object->vertexCount;
-        object->normals = prm.svector;
-        prm.svector += object->normalCount;
-        object->primitives = prm.primitive;
-    }
-
-    length = FileLength("wipeout\\common\\ebolt.prm");
-    weaponShapes[EBOLT_OFFSET].shapePtr = LoadPrm("wipeout\\common\\ebolt.prm", weaponTextures);
-    for (i = EBOLT_OFFSET + 1; i < EBOLT_OFFSET + NO_OF_EBOLTS; i++)
-    {
-        start = (char*)malloc(length + 32);
-        prm.ptr = start;
-        weaponShapes[i].shapePtr = prm.object;
-        memcpy(start, weaponShapes[EBOLT_OFFSET].shapePtr, length);
-        object = prm.object++;
-        object->skeleton = prm.skeleton++;
-        object->vertices = prm.svector;
-        prm.svector += object->vertexCount;
-        object->normals = prm.svector;
-        prm.svector += object->normalCount;
-        object->primitives = prm.primitive;
-    }
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\rock.prm", ROCKET_OFFSET, MINE_OFFSET - ROCKET_OFFSET);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\mine.prm", MINE_OFFSET, MISSILE_OFFSET - MINE_OFFSET);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\miss.prm", MISSILE_OFFSET, SHIELD_OFFSET - MISSILE_OFFSET);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\shld.prm", SHIELD_OFFSET, NO_OF_SHIELDS);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\ebolt.prm", EBOLT_OFFSET, NO_OF_EBOLTS);
 
     for (i = 0; i < NO_OF_WEAPONS; i++)
     {
-        if ((i >= SHIELD_OFFSET) && (i < EBOLT_OFFSET)) // previously we had this at <=EBOLT_OFFSET - but PSX version doesn't
-        {
-            poly.prim = weaponShapes[i].shapePtr->primitives;
-            primitiveCount = weaponShapes[i].shapePtr->primitiveCount;
-
-            for (k = 0; k < primitiveCount; k++)
-            {
-                switch (poly.prim->type)
-                {
-                    case TypeG3:
-                        for (j = 0; j < 2; j++)
-                        {
-                            /* prim.g3 = poly.g3->tri + j;*/
-                            poly.g3->colour[0].r = 230;
-                            poly.g3->colour[0].g = 0;
-                            switch (i) // PCwipeout
-                            {
-                                case MISSILE_OFFSET:
-                                    poly.g4->colour[0].b = BLACK_NOT_DRAWN;
-                                    break;
-                                case ROCKET_OFFSET:
-                                    poly.g4->colour[0].b = BLACK_NOT_DRAWN;
-                                    break;
-                                case EBOLT_OFFSET:
-                                    poly.g4->colour[0].b = BLACK_NOT_DRAWN;
-                                    break;
-                                default:
-                                    poly.g4->colour[0].b = BLACK_NOT_DRAWN;
-                                    break;
-                            }
-
-                            poly.g3->colour[1].b = 255;
-                            poly.g3->colour[2].b = 255;
-                            /* SetSemiTrans(prim.g3, 1);  */
-                        }
-                        poly.g3 += 1;
-                        break;
-
-                    case TypeG4:
-                        for (j = 0; j < 2; j++)
-                        {
-                            /*                   prim.g4 = poly.g4->quad + j; */
-                            poly.g4->colour[0].r = 230;
-                            poly.g4->colour[0].g = 0;
-                            switch (i) // PCwipeout
-                            {
-                                case MISSILE_OFFSET:
-                                    poly.g4->colour[0].b = BLACK_NOT_DRAWN;
-                                    break;
-                                case ROCKET_OFFSET:
-                                    poly.g4->colour[0].b = BLACK_NOT_DRAWN;
-                                    break;
-                                case EBOLT_OFFSET:
-                                    poly.g4->colour[0].b = BLACK_NOT_DRAWN;
-                                    break;
-                                default:
-                                    poly.g4->colour[0].b = BLACK_NOT_DRAWN;
-                                    break;
-                            }
-
-                            poly.g4->colour[1].b = 255;
-                            poly.g4->colour[2].b = 255;
-                            poly.g4->colour[3].b = 255;
-                            /*                   SetSemiTrans(prim.g4, 1); */
-                        }
-                        poly.g4 += 1;
-                        break;
-                }
-            }
-        }
-
         weaponShapes[i].used = 0;
         obj = weaponShapes[i].shapePtr;
         while (obj)
@@ -529,14 +401,13 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapon
             obj = obj->next;
         }
     }
+
     for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
         weaponIndex[i].count = 0;
         weaponIndex[i].availible = 0;
         weaponIndex[i].type = NO_WEAPON;
     }
-
-    targetTexture = LoadTexture("wipeout\\textures\\target2.tim");
 }
 
 void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)

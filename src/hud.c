@@ -1478,11 +1478,7 @@ void DrawHud(ShipData* shipIndex, Speedo* speedo, int choice, ConfigData* gameDa
 
     if (shipIndex[ownShip].attr & RACING)
     {
-        if (CameraUpdate == UpdateCameraAttractInternal)
-            fill_speedo(speedo, shipIndex[ownShip].speed * 7, shipIndex[ownShip].thrust_mag);
-        else
-            fill_speedo(speedo, shipIndex[ownShip].speed, shipIndex[ownShip].thrust_mag);
-
+        fill_speedo(speedo, shipIndex[ownShip].speed, shipIndex[ownShip].thrust_mag);
         AddGlyph(speedo_x, speedo_y, SPEEDO_WIDTH, SPEEDO_HEIGHT, 0, 0, speedoTex);
     }
 }

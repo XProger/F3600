@@ -183,7 +183,7 @@ void menuLoop(ConfigData* gameData)
             gCurrMenu = PADCONFIG_MENU;
 
         menuSystem[OPTION_MENU].menu2Model = joypadShapes;
-        menuSystem[17].menuModel = joypadShapes;
+        menuSystem[PADCONFIG_MENU].menuModel = joypadShapes;
         menuSystem[PADCONFIG_MENU].displayMenu = MenuPlayPad;
         menuSystem[PADCONFIG_MENU].displayObject = DrawPlayPad;
         menuSystem[PADCONFIG_MENU].prevMenu = OPTION_MENU;
@@ -1210,7 +1210,6 @@ void CallMenuActivator(ConfigData* gameData, int* currMenu, int* currOption, Men
 void CallMenuSelector(Menus* menuSystem, int* currMenu, int* currOption, Object** shipShapes, ConfigData* gameData, MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData* selectData, char loadGames[][9])
 {
     int offSet = 12, i;
-    int textX, textY;
     int startOption = 0, menuOffset = 0, dispOption = 0;
 
     if (GetMenuKey(M_UP))
@@ -1296,26 +1295,19 @@ void CallMenuSelector(Menus* menuSystem, int* currMenu, int* currOption, Object*
         if (dispOption >= NumTracks)
             dispOption = NumTracks;
 
-        CentreText(menuSystem[(*currMenu)].menuTitle, text_data(menuSystem[(*currMenu)].titleX, menuSystem[(*currMenu)].titleY, 8), RedText);
+        CentreText(menuSystem[(*currMenu)].menuTitle, text_data(0, 21, 8), RedText);
 
         for (i = startOption; i < (startOption + dispOption); i++)
         {
-            if (i == (*currOption))
-            {
-                CentreText(menuSystem[(*currMenu)].menuOptions[i].optionText, text_data(menuSystem[(*currMenu)].menuOptions[i].textX, menuSystem[(*currMenu)].menuOptions[i].textY + (offSet * menuOffset), 8), ((gFrameIndex & 3) < 2) ? RedText : WhiteText);
-            }
-            else
-            {
-                CentreText(menuSystem[(*currMenu)].menuOptions[i].optionText, text_data(menuSystem[(*currMenu)].menuOptions[i].textX, menuSystem[(*currMenu)].menuOptions[i].textY + (offSet * menuOffset), 8), WhiteText);
-            }
-
+            CentreText(menuSystem[(*currMenu)].menuOptions[i].optionText, text_data(0, 127 + (offSet * menuOffset), 8), ((i == (*currOption)) && ((gFrameIndex & 3) < 2)) ? RedText : WhiteText);
             menuOffset++;
         }
 
-        textX = menuSystem[(*currMenu)].menuOptions[(*currOption)].textX;
-        textY = menuSystem[(*currMenu)].menuOptions[(*currOption)].textY;
 
         /*TODO options
+        textX = 0;
+        textY = 130;
+
         menuPointer = (Texture *)FontTextureTable [DRTEXT_8+1] ;
 
         SetPolyFT4(&(musicPrims->pointer));
@@ -1400,8 +1392,7 @@ void InitMenuSystem(Menus* menuSystem)
     {
         menuSystem[i].updateCount = 0;
         menuSystem[i].errorFlag = 0;
-        menuSystem[i].menuTitle[0] = 0;
-        menuSystem[i].titleY = 21;
+        menuSystem[i].menuTitle = "";
     }
 
     /******************/
@@ -1410,26 +1401,18 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[0].titleX = 85;
-    strcpy(menuSystem[0].menuTitle, "WIPEOUT MAIN MENU");
+    menuSystem[0].menuTitle = "WIPEOUT MAIN MENU";
 
     /* Option details */
 
-    menuSystem[0].menuOptions[0].textY = 130;
-    strcpy(menuSystem[0].menuOptions[0].optionText, "START GAME");
+    menuSystem[0].menuOptions[0].optionText = "START GAME";
 
-    // menuSystem[0].menuOptions[1].textY = 130 ;
-    // strcpy (menuSystem[0].menuOptions[1].optionText,"MULTI PLAYER") ;
+    // menuSystem[0].menuOptions[1].optionText = "MULTI PLAYER";
 
-    menuSystem[0].menuOptions[1].textY = 130;
-    strcpy(menuSystem[0].menuOptions[1].optionText, "OPTIONS");
+    menuSystem[0].menuOptions[1].optionText = "OPTIONS";
 
-    menuSystem[0].menuOptions[2].textY = 130; // PCwipeout (ditto)
-#if 0
-   strcpy (menuSystem[0].menuOptions[2].optionText,"QUIT TO WINDOWS") ; // PCwipeout
-#else
-    strcpy(menuSystem[0].menuOptions[2].optionText, "QUIT"); // PCwipeout
-#endif
+    menuSystem[0].menuOptions[2].optionText = "QUIT";
+
     /* Menu details */
 
     menuSystem[0].numOptions = 3;
@@ -1443,31 +1426,23 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[1].titleX = 75;
-    strcpy(menuSystem[1].menuTitle, "SELECT RACING CIRCUIT");
+    menuSystem[1].menuTitle = "SELECT RACING CIRCUIT";
 
     /* Option details */
 
-    menuSystem[1].menuOptions[0].textY = 127;
-    strcpy(menuSystem[1].menuOptions[0].optionText, "ALTIMA VII");
+    menuSystem[1].menuOptions[0].optionText = "ALTIMA VII";
 
-    menuSystem[1].menuOptions[1].textY = 127;
-    strcpy(menuSystem[1].menuOptions[1].optionText, "KARBONIS V");
+    menuSystem[1].menuOptions[1].optionText = "KARBONIS V";
 
-    menuSystem[1].menuOptions[2].textY = 127;
-    strcpy(menuSystem[1].menuOptions[2].optionText, "TERRAMAX");
+    menuSystem[1].menuOptions[2].optionText = "TERRAMAX";
 
-    menuSystem[1].menuOptions[3].textY = 127;
-    strcpy(menuSystem[1].menuOptions[3].optionText, "KORODERA");
+    menuSystem[1].menuOptions[3].optionText = "KORODERA";
 
-    menuSystem[1].menuOptions[4].textY = 127;
-    strcpy(menuSystem[1].menuOptions[4].optionText, "ARRIDOS IV");
+    menuSystem[1].menuOptions[4].optionText = "ARRIDOS IV";
 
-    menuSystem[1].menuOptions[5].textY = 127;
-    strcpy(menuSystem[1].menuOptions[5].optionText, "SILVERSTREAM");
+    menuSystem[1].menuOptions[5].optionText = "SILVERSTREAM";
 
-    menuSystem[1].menuOptions[6].textY = 127;
-    strcpy(menuSystem[1].menuOptions[6].optionText, "FIRESTAR");
+    menuSystem[1].menuOptions[6].optionText = "FIRESTAR";
 
     /* Menu details */
 
@@ -1481,16 +1456,13 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[2].titleX = 55;
-    strcpy(menuSystem[2].menuTitle, "SELECT TWO PLAYER GAME");
+    menuSystem[2].menuTitle = "SELECT TWO PLAYER GAME";
 
     /* Option details */
 
-    menuSystem[2].menuOptions[0].textY = 130;
-    strcpy(menuSystem[2].menuOptions[0].optionText, "MASTER");
+    menuSystem[2].menuOptions[0].optionText = "MASTER";
 
-    menuSystem[2].menuOptions[1].textY = 130;
-    strcpy(menuSystem[2].menuOptions[1].optionText, "SLAVE");
+    menuSystem[2].menuOptions[1].optionText = "SLAVE";
 
     /* Menu details */
 
@@ -1509,28 +1481,21 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[4].titleX = 60;
-    strcpy(menuSystem[4].menuTitle, "GAME CONFIGURATION");
+    menuSystem[4].menuTitle = "GAME CONFIGURATION";
 
     /* Option details */
 
-    menuSystem[4].menuOptions[0].textY = 130;
-    strcpy(menuSystem[4].menuOptions[0].optionText, "LOAD DATA");
+    menuSystem[4].menuOptions[0].optionText = "LOAD DATA";
 
-    menuSystem[4].menuOptions[1].textY = 130;
-    strcpy(menuSystem[4].menuOptions[1].optionText, "SAVE DATA");
+    menuSystem[4].menuOptions[1].optionText = "SAVE DATA";
 
-    menuSystem[4].menuOptions[2].textY = 130;
-    strcpy(menuSystem[4].menuOptions[2].optionText, "CONTROLLER CONFIG");
+    menuSystem[4].menuOptions[2].optionText = "CONTROLLER CONFIG";
 
-    menuSystem[4].menuOptions[3].textY = 130;
-    strcpy(menuSystem[4].menuOptions[3].optionText, "GRAPHICS DETAIL");
+    menuSystem[4].menuOptions[3].optionText = "GRAPHICS DETAIL";
 
-    // menuSystem[4].menuOptions[4].textY = 130 ;
-    // strcpy (menuSystem[4].menuOptions[4].optionText,"AUDIO CONFIG") ;
+    // menuSystem[4].menuOptions[4].optionText = "AUDIO CONFIG";
 
-    menuSystem[4].menuOptions[4].textY = 130;
-    strcpy(menuSystem[4].menuOptions[4].optionText, "VIEW BEST TIMES");
+    menuSystem[4].menuOptions[4].optionText = "VIEW BEST TIMES";
 
     /* Menu details */
 
@@ -1545,16 +1510,13 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[5].titleX = 75;
-    strcpy(menuSystem[5].menuTitle, "SELECT RACING CLASS");
+    menuSystem[5].menuTitle = "SELECT RACING CLASS";
 
     /* Option details */
 
-    menuSystem[5].menuOptions[0].textY = 130;
-    strcpy(menuSystem[5].menuOptions[0].optionText, "VENOM CLASS");
+    menuSystem[5].menuOptions[0].optionText = "VENOM CLASS";
 
-    menuSystem[5].menuOptions[1].textY = 130;
-    strcpy(menuSystem[5].menuOptions[1].optionText, "RAPIER CLASS");
+    menuSystem[5].menuOptions[1].optionText = "RAPIER CLASS";
 
     /* Menu details */
 
@@ -1569,22 +1531,17 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[6].titleX = 75;
-    strcpy(menuSystem[6].menuTitle, "SELECT YOUR TEAM");
+    menuSystem[6].menuTitle = "SELECT YOUR TEAM";
 
     /* Option details */
 
-    menuSystem[6].menuOptions[0].textY = 130;
-    strcpy(menuSystem[6].menuOptions[0].optionText, "AG SYSTEMS");
+    menuSystem[6].menuOptions[0].optionText = "AG SYSTEMS";
 
-    menuSystem[6].menuOptions[1].textY = 130;
-    strcpy(menuSystem[6].menuOptions[1].optionText, "AURICOM");
+    menuSystem[6].menuOptions[1].optionText = "AURICOM";
 
-    menuSystem[6].menuOptions[2].textY = 130;
-    strcpy(menuSystem[6].menuOptions[2].optionText, "QIREX");
+    menuSystem[6].menuOptions[2].optionText = "QIREX";
 
-    menuSystem[6].menuOptions[3].textY = 130;
-    strcpy(menuSystem[6].menuOptions[3].optionText, "FEISAR");
+    menuSystem[6].menuOptions[3].optionText = "FEISAR";
 
     /* Menu details */
 
@@ -1599,16 +1556,9 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[7].titleX = 75;
-    strcpy(menuSystem[7].menuTitle, "CHOOSE YOUR PILOT");
+    menuSystem[7].menuTitle = "CHOOSE YOUR PILOT";
 
     /* Option details */
-
-    menuSystem[7].menuOptions[0].textX = 50;
-    menuSystem[7].menuOptions[0].textY = 130;
-
-    menuSystem[7].menuOptions[1].textX = 50;
-    menuSystem[7].menuOptions[1].textY = 130;
 
     /* Menu details */
 
@@ -1623,19 +1573,15 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[8].titleX = 75;
-    strcpy(menuSystem[8].menuTitle, "SELECT RACE TYPE");
+    menuSystem[8].menuTitle = "SELECT RACE TYPE";
 
     /* Option details */
 
-    menuSystem[8].menuOptions[0].textY = 130;
-    strcpy(menuSystem[8].menuOptions[0].optionText, "CHAMPIONSHIP RACE");
+    menuSystem[8].menuOptions[0].optionText = "CHAMPIONSHIP RACE";
 
-    menuSystem[8].menuOptions[1].textY = 130;
-    strcpy(menuSystem[8].menuOptions[1].optionText, "SINGLE RACE");
+    menuSystem[8].menuOptions[1].optionText = "SINGLE RACE";
 
-    menuSystem[8].menuOptions[2].textY = 130;
-    strcpy(menuSystem[8].menuOptions[2].optionText, "TIME TRIAL");
+    menuSystem[8].menuOptions[2].optionText = "TIME TRIAL";
 
     /* Menu details */
 
@@ -1728,16 +1674,13 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[15].titleX = 75;
-    strcpy(menuSystem[15].menuTitle, "SELECT RACE TYPE");
+    menuSystem[15].menuTitle = "SELECT RACE TYPE";
 
     /* Option details */
 
-    menuSystem[15].menuOptions[0].textY = 130;
-    strcpy(menuSystem[15].menuOptions[0].optionText, "MULTI PLAYER RACE");
+    menuSystem[15].menuOptions[0].optionText = "MULTI PLAYER RACE";
 
-    menuSystem[15].menuOptions[1].textY = 130;
-    strcpy(menuSystem[15].menuOptions[1].optionText, "HEAD TO HEAD");
+    menuSystem[15].menuOptions[1].optionText = "HEAD TO HEAD";
 
     /* Menu details */
 
@@ -1791,16 +1734,13 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[19].titleX = 75;
-    strcpy(menuSystem[19].menuTitle, "CONFIGURE NEGCON");
+    menuSystem[19].menuTitle = "CONFIGURE NEGCON";
 
     /* Option details */
 
-    menuSystem[19].menuOptions[0].textY = 130;
-    strcpy(menuSystem[19].menuOptions[0].optionText, "DEFINE BUTTON PRESETS");
+    menuSystem[19].menuOptions[0].optionText = "DEFINE BUTTON PRESETS";
 
-    menuSystem[19].menuOptions[1].textY = 130;
-    strcpy(menuSystem[19].menuOptions[1].optionText, "DEFINE NEGCON TWIST");
+    menuSystem[19].menuOptions[1].optionText = "DEFINE NEGCON TWIST";
 
     /* Menu details */
 
@@ -1828,16 +1768,13 @@ void InitMenuSystem(Menus* menuSystem)
 
     /* Menu title details */
 
-    menuSystem[21].titleX = 75;
-    strcpy(menuSystem[21].menuTitle, "VIEW BEST TIMES");
+    menuSystem[21].menuTitle = "VIEW BEST TIMES";
 
     /* Option details */
 
-    menuSystem[21].menuOptions[0].textY = 130;
-    strcpy(menuSystem[21].menuOptions[0].optionText, "VIEW BEST RACE TIMES");
+    menuSystem[21].menuOptions[0].optionText = "VIEW BEST RACE TIMES";
 
-    menuSystem[21].menuOptions[1].textY = 130;
-    strcpy(menuSystem[21].menuOptions[1].optionText, "VIEW BEST TIME TRIAL TIMES");
+    menuSystem[21].menuOptions[1].optionText = "VIEW BEST TIME TRIAL TIMES";
 
     /* Menu details */
 
@@ -1901,16 +1838,13 @@ void InitMenuSystem(Menus* menuSystem)
     /***** Menu 28 *****/
     /*******************/
 
-    menuSystem[27].titleX = 85;
-    strcpy(menuSystem[27].menuTitle, "MULTI PLAYER OPTIONS");
+    menuSystem[27].menuTitle = "MULTI PLAYER OPTIONS";
 
     /* Option details */
 
-    menuSystem[27].menuOptions[0].textY = 130;
-    strcpy(menuSystem[27].menuOptions[0].optionText, "TWO PLAYER SERIAL LINK");
+    menuSystem[27].menuOptions[0].optionText = "TWO PLAYER SERIAL LINK";
 
-    menuSystem[27].menuOptions[1].textY = 130;
-    strcpy(menuSystem[27].menuOptions[1].optionText, "NETWORK");
+    menuSystem[27].menuOptions[1].optionText = "NETWORK";
 
     menuSystem[27].numOptions = 2;
     menuSystem[27].displayObject = 0;
@@ -2587,14 +2521,7 @@ void ShowHiScores(MusicPrims* musicPrims, SlideTextures* musicTex, SelectionData
             DisplayButtons(20, 116, ARROWL);
     }
 
-    if (gameData->trackNum <= NumTracks)
-    {
-        CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX, selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY - 70, 12), RedText);
-    }
-    else
-    {
-        CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX, selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY - 70, 12), RedText);
-    }
+    CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(0, 127 - 70, 12), RedText);
 
     if (BLINK_SLOW)
     {
@@ -2688,14 +2615,7 @@ void ShowTimeTrialScores(MusicPrims* musicPrims, SlideTextures* musicTex, Select
             DisplayButtons(20, 116, ARROWL);
     }
 
-    if (gameData->trackNum <= NumTracks)
-    {
-        CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX, selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY - 70, 12), RedText);
-    }
-    else
-    {
-        CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textX, selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].textY - 70, 12), RedText);
-    }
+    CentreText(selectData->menuSystem[TRACK_MENU].menuOptions[actualTrack].optionText, text_data(0, 127 - 70, 12), RedText);
 
     if (BLINK_SLOW)
     {
@@ -2779,26 +2699,26 @@ void SetUpPilots(int teamNum, Menus* menuSystem)
 
     if (teamNum == AG_SYSTEMS)
     {
-        strcpy(menuSystem[7].menuOptions[0].optionText, "JOHN DEKKA");
-        strcpy(menuSystem[7].menuOptions[1].optionText, "DANIEL CHANG");
+        menuSystem[7].menuOptions[0].optionText = "JOHN DEKKA";
+        menuSystem[7].menuOptions[1].optionText = "DANIEL CHANG";
     }
 
     if (teamNum == AURICOM)
     {
-        strcpy(menuSystem[7].menuOptions[0].optionText, "ARIAL TETSUO");
-        strcpy(menuSystem[7].menuOptions[1].optionText, "ANASTASIA CHEROVOSKI");
+        menuSystem[7].menuOptions[0].optionText = "ARIAL TETSUO";
+        menuSystem[7].menuOptions[1].optionText = "ANASTASIA CHEROVOSKI";
     }
 
     if (teamNum == QIREX)
     {
-        strcpy(menuSystem[7].menuOptions[0].optionText, "KEL SOLAAR");
-        strcpy(menuSystem[7].menuOptions[1].optionText, "ARIAN TETSUO");
+        menuSystem[7].menuOptions[0].optionText = "KEL SOLAAR";
+        menuSystem[7].menuOptions[1].optionText = "ARIAN TETSUO";
     }
 
     if (teamNum == FEISAR)
     {
-        strcpy(menuSystem[7].menuOptions[0].optionText, "SOFIA DE LA RENTE");
-        strcpy(menuSystem[7].menuOptions[1].optionText, "PAUL JACKSON");
+        menuSystem[7].menuOptions[0].optionText = "SOFIA DE LA RENTE";
+        menuSystem[7].menuOptions[1].optionText = "PAUL JACKSON";
     }
 }
 

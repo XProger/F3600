@@ -356,97 +356,49 @@ void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextur
 #endif
 }
 
+const uint8 gStartBoomColors[4][3] = {
+    { 0x1C, 0x22, 0x2F }, // grey
+    { 0xFF, 0x00, 0x00 }, // red
+    { 0xFF, 0x80, 0x00 }, // orange
+    { 0x00, 0xFF, 0x00 }  // green
+};
+
 void ColourStartBoom(int noToLight)
 {
     int i, j;
-    char r, g, b;
-
-    Prm libPoly;
-    Object* obj;
+    Prm prm;
 
     for (i = 0; i < startBoomCount; i++)
     {
-        obj = startBoom[i];
+        prm.primitive = startBoom[i]->primitives;
 
-        libPoly.primitive = obj->primitives;
-
-        if (noToLight > 1)
+        for (j = 1; j < noToLight; j++)
         {
-            for (j = 1; j < noToLight; j++)
-            {
-                libPoly.gt4 += 1;
-            }
+            prm.gt4 += 1;
         }
 
-        if (noToLight == 1)
-        {
-            r = 0xff;
-            g = 0x00;
-            b = 0x00;
-        }
-        else if (noToLight == 2)
-        {
-            r = 0xff;
-            g = 0x80;
-            b = 0x00;
-        }
-        else
-        {
-            r = 0x00;
-            g = 0xff;
-            b = 0x00;
-        }
-
-        libPoly.gt4->colour[0].r = r;
-        libPoly.gt4->colour[0].g = g;
-        libPoly.gt4->colour[0].b = b;
-
-        libPoly.gt4->colour[1].r = r;
-        libPoly.gt4->colour[1].g = g;
-        libPoly.gt4->colour[1].b = b;
-
-        libPoly.gt4->colour[2].r = r;
-        libPoly.gt4->colour[2].g = g;
-        libPoly.gt4->colour[2].b = b;
-
-        libPoly.gt4->colour[3].r = r;
-        libPoly.gt4->colour[3].g = g;
-        libPoly.gt4->colour[3].b = b;
+        prm.gt4->colour[0].r = prm.gt4->colour[1].r = prm.gt4->colour[2].r = prm.gt4->colour[3].r = gStartBoomColors[noToLight][0];
+        prm.gt4->colour[0].g = prm.gt4->colour[1].g = prm.gt4->colour[2].g = prm.gt4->colour[3].g = gStartBoomColors[noToLight][1];
+        prm.gt4->colour[0].b = prm.gt4->colour[1].b = prm.gt4->colour[2].b = prm.gt4->colour[3].b = gStartBoomColors[noToLight][2];
     }
 }
 
 void ResetStartBoom(void)
 {
-    Object* obj;
     int i, j;
-
-    Prm libPoly;
+    Prm prm;
 
     for (i = 0; i < startBoomCount; i++)
     {
-        obj = startBoom[i];
-
-        libPoly.primitive = obj->primitives; // may have to be libpoly.primitives
+        prm.primitive = startBoom[i]->primitives;
 
         for (j = 0; j < 3; j++)
         {
-            libPoly.gt4->colour[0].r = 0;
-            libPoly.gt4->colour[0].g = 0;
-            libPoly.gt4->colour[0].b = 0;
+            prm.gt4->colour[0].r = prm.gt4->colour[1].r = prm.gt4->colour[2].r = prm.gt4->colour[3].r = gStartBoomColors[0][0];
+            prm.gt4->colour[0].g = prm.gt4->colour[1].g = prm.gt4->colour[2].g = prm.gt4->colour[3].g = gStartBoomColors[0][1];
+            prm.gt4->colour[0].b = prm.gt4->colour[1].b = prm.gt4->colour[2].b = prm.gt4->colour[3].b = gStartBoomColors[0][2];
 
-            libPoly.gt4->colour[1].r = 0;
-            libPoly.gt4->colour[1].g = 0;
-            libPoly.gt4->colour[1].b = 0;
-
-            libPoly.gt4->colour[2].r = 0;
-            libPoly.gt4->colour[2].g = 0;
-            libPoly.gt4->colour[2].b = 0;
-
-            libPoly.gt4->colour[3].r = 0;
-            libPoly.gt4->colour[3].g = 0;
-            libPoly.gt4->colour[3].b = 0;
-
-            libPoly.gt4++;
+            prm.gt4++;
         }
     }
 }

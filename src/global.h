@@ -49,14 +49,10 @@ extern Object* startBoom[4];
 extern short startBoomCount;
 extern int crossedLine;
 
-#define ObjectTableMax 512 // 464
-
 extern Texture* FontTextureTable[];
 extern Texture* TextureTable[];
 extern short TextureTableCount;
 extern Object* objectTable[ObjectTableMax];
-
-#define TrackTextures 24
 
 /* spline stuff */
 extern Object* camSpline[];

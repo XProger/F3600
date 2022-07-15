@@ -122,7 +122,6 @@ void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShape
 {
     int shipTextures, droidTextures, colTextures;
     Object* obj;
-    char shipFile[64];
     int count = 0;
 
     /******************************************************/
@@ -130,10 +129,8 @@ void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShape
     /** temporary memory to be allocated                 **/
     /******************************************************/
 
-    strcpy(shipFile, "wipeout\\common\\allsh");
-    strcat(shipFile, ".cmp");
     shipTextures = TextureTableCount;
-    LoadCompressedTextureSequence(shipFile);
+    LoadCompressedTextureSequence("wipeout\\common\\allsh.cmp");
 
     colTextures = TextureTableCount;
     LoadCompressedTextureSequence("wipeout\\common\\alcol.cmp");
@@ -141,59 +138,33 @@ void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShape
     droidTextures = TextureTableCount;
     LoadCompressedTextureSequence("wipeout\\common\\rescu.cmp");
 
-    strcpy(shipFile, "wipeout\\common\\allsh");
-    strcat(shipFile, ".prm");
-
-    shipShapes[0] = LoadPrm(shipFile, shipTextures);
+    shipShapes[0] = LoadPrm("wipeout\\common\\allsh.prm", shipTextures);
 
     obj = shipShapes[0];
 
     while (obj)
     {
         shipIndex[count].highResTableIndex = shipShapeOrder[count];
-
-        obj->skeleton->super = camPos;
-
         shipShapes[count] = obj;
 
         count += 1;
 
+        obj->skeleton->super = camPos;
         obj = obj->next;
     }
-    strcpy(shipFile, "wipeout\\common\\alcol");
-    strcat(shipFile, ".prm");
 
-    shipShapes[NO_OF_SHIPS] = LoadPrm(shipFile, colTextures);
+    shipShapes[NO_OF_SHIPS] = LoadPrm("wipeout\\common\\alcol.prm", colTextures);
     obj = shipShapes[NO_OF_SHIPS];
 
     while (obj)
     {
         shipIndex[count - NO_OF_SHIPS].lowResTableIndex = count;
-
-        obj->skeleton->super = camPos;
-
         shipShapes[count] = obj;
-
         count += 1;
 
+        obj->skeleton->super = camPos;
         obj = obj->next;
     }
-#if 0
-   for(i = 0; i < NO_OF_SHIPS; i++)
-   {
-      strcpy( colFile, "wipeout\\common\\shp" );
-      sprintf( No, "%1d", i+1 );
-      strcat( shipFile, No);
-      strcat( colFile, No);
-      strcat( colFile, "c.prm");
-
-      shipIndex[i].lowResTableIndex = NO_OF_SHIPS+i;
-      shipShapes[NO_OF_SHIPS+i] = LoadPrm( colFile, shipTextures );
-
-      obj = shipShapes[ NO_OF_SHIPS+i ];
-      obj->skeleton = shipShapes[ i ]->skeleton;
-   }
-#endif
 
     shipShapes[RESCUE_DROID] = LoadPrm("wipeout\\common\\rescu.prm", droidTextures);
 

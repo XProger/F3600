@@ -213,8 +213,52 @@ void renderQuad(const Quad* q)
     glEnd();
 }
 
+#define MAX_TRACK_TEX   22
+TextureGL gTrackTex[MAX_TRACK_TEX];
+uint16 gTrackTexData[MAX_TRACK_TEX][128 * 128];
+
+extern TrackData* track;
+extern TexTemplate* ctrltexTemplate;
+extern short ctrllibraryTextures;
+extern short ctrlnumLib;
+extern int TrackLoadHack;
+
 void prepareTrack(void)
 {
+    int i, j, x, y;
+
+    ASSERT(ctrlnumLib <= MAX_TRACK_TEX);
+    for (i = 0; i < ctrlnumLib; i++)
+    {
+        glGenTextures(1, &gTrackTex[i].id);
+        glBindTexture(GL_TEXTURE_2D, gTrackTex[i].id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, gTrackTexData[i]);
+        setTexFilter();
+    }
+}
+
+void FillTrackTex(uint16* data)
+{
+    int id, i, j, k, x, y;
+
+    id = TextureTableCount - ctrllibraryTextures;
+
+    for (i = 0; i < ctrlnumLib; i++)
+    {
+        for (j = 0; j < 16; j++)
+        {
+            if (ctrltexTemplate[i].tex16[j] != id)
+                continue;
+
+            x = (j % 4) * 32;
+            y = (j / 4) * 32;
+
+            for (k = 0; k < 32; k++)
+            {
+                memcpy(gTrackTexData[i] + (k + y) * 128 + x, data + k * 32, 32 * sizeof(uint16));
+            }
+        }
+    }
 }
 
 void renderPrepare(void)
@@ -252,17 +296,21 @@ void setMatrix(Skeleton* skeleton, int x, int y, int z)
 
 void renderTrack(void)
 {
-    extern TrackData* track;
-    extern TexTemplate* ctrltexTemplate;
-
     const VECTOR* vertices = track->vertices;
     const Face* face = track->faces;
-    int i, j;
+    int i, j, id;
     int cx, cy, cz;
 
-    cx = ctrlcamera.camPos->absolute.t[0]; // - ctrlcamera.camPos->absolute.t[0] / 8;
-    cy = ctrlcamera.camPos->absolute.t[1]; // - ctrlcamera.camPos->absolute.t[1] / 8;
-    cz = ctrlcamera.camPos->absolute.t[2]; // - ctrlcamera.camPos->absolute.t[2] / 8;
+//    #define CHECK_UNUSED_TEX
+
+#ifdef CHECK_UNUSED_TEX
+    uint8 texUsed[MAX_TRACK_TEX];
+    memset(texUsed, 0, MAX_TRACK_TEX);
+#endif
+
+    cx = ctrlcamera.camPos->absolute.t[0];
+    cy = ctrlcamera.camPos->absolute.t[1];
+    cz = ctrlcamera.camPos->absolute.t[2];
 
     setMatrix(ctrlcamera.camPos->super, cx, cy, cz);
 
@@ -272,9 +320,13 @@ void renderTrack(void)
 
         for (i = section->faceStart; i < section->faceStart + section->faceCount; i++, face++)
         {
-            const TextureGL* t = (TextureGL*)TextureTable[ctrltexTemplate[face->texture].tex1[0]];
+            ASSERT(face->texture < ctrlnumLib);
 
-            setTexture(t);
+        #ifdef CHECK_UNUSED_TEX
+            texUsed[face->texture] = 1;
+        #endif
+
+            setTexture(gTrackTex + face->texture);
 
             glColor3ub(face->red, face->green, face->blue);
 
@@ -304,6 +356,13 @@ void renderTrack(void)
             glEnd();
         }
     }
+
+#ifdef CHECK_UNUSED_TEX
+    for (i = 0; i < ctrlnumLib; i++)
+    {
+        ASSERT(texUsed[i]);
+    }
+#endif
 }
 
 void renderObject(const Object* object)
@@ -323,14 +382,7 @@ void renderObject(const Object* object)
     cx = matrix->t[0];
     cy = matrix->t[1];
     cz = matrix->t[2];
-    /*
-    if (ctrlcamera.camPos)
-    {
-       cx -= ctrlcamera.camPos->absolute.t[0] / 8;
-       cy -= ctrlcamera.camPos->absolute.t[1] / 8;
-       cz -= ctrlcamera.camPos->absolute.t[2] / 8;
-    }
-    */
+
     setMatrix(object->skeleton, cx, cy, cz);
 
     vertices = object->vertices;
@@ -719,7 +771,7 @@ Texture* renderCreateTexture(Tim* tim)
 
         for (i = 0; i < 256; i++)
         {
-            t->clut[i] = RGB555(t->clut[i]);
+            t->clut[i] = RGB5551(t->clut[i]);
         }
 
         for (i = 0; i < h; i++)
@@ -751,16 +803,26 @@ Texture* renderCreateTexture(Tim* tim)
         ASSERT(0);
     }
 
-    tex = (TextureGL*)malloc(sizeof(TextureGL));
-    tex->width = w;
-    tex->height = h;
-    tex->iw = 1.0f / w;
-    tex->ih = 1.0f / h;
+    if (TrackLoadHack)
+    {
+        ASSERT(w == 32);
+        ASSERT(h == 32);
+        FillTrackTex(tempData);
+        return NULL;
+    }
+    else
+    {
+        tex = (TextureGL*)malloc(sizeof(TextureGL));
+        tex->width = w;
+        tex->height = h;
+        tex->iw = 1.0f / w;
+        tex->ih = 1.0f / h;
 
-    glGenTextures(1, &tex->id);
-    glBindTexture(GL_TEXTURE_2D, tex->id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
-    setTexFilter();
+        glGenTextures(1, &tex->id);
+        glBindTexture(GL_TEXTURE_2D, tex->id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
+        setTexFilter();
 
-    return (Texture*)tex;
+        return (Texture*)tex;
+    }
 }
