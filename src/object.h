@@ -169,24 +169,6 @@ typedef struct Spline
 #define ShipEngine      0x0002
 #define Translucent     0x0004
 
-typedef union Poly
-{
-    char* ptr;
-    Primitive* prim;
-
-    F3* f3;
-    FT3* ft3;
-    F4* f4;
-    FT4* ft4;
-    G3* g3;
-    GT3* gt3;
-    G4* g4;
-    GT4* gt4;
-    SPR* spr;
-
-    Spline* spline;
-} Poly;
-
 #define TypeF3      1
 #define TypeFT3     2
 #define TypeF4      3

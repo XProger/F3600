@@ -201,7 +201,7 @@ void renderQuad(const Quad* q)
     setTexture(t);
 
     glColor3ub(128, 128, 128);
-    glBegin(GL_TRIANGLE_FAN);
+    glBegin(GL_QUADS);
         glTexCoord2f(u0, v0);
         glVertex2s(x0, y0);
         glTexCoord2f(u1, v0);
@@ -210,6 +210,22 @@ void renderQuad(const Quad* q)
         glVertex2s(x1, y1);
         glTexCoord2f(u0, v1);
         glVertex2s(x0, y1);
+    glEnd();
+}
+
+void renderColorQuad(const ColorQuad* q)
+{
+    setTexture(NULL);
+
+    glBegin(GL_QUADS);
+        glColor3ubv((GLubyte*)&q->r0);
+        glVertex2sv((GLshort*)&q->x0);
+        glColor3ubv((GLubyte*)&q->r1);
+        glVertex2sv((GLshort*)&q->x1);
+        glColor3ubv((GLubyte*)&q->r2);
+        glVertex2sv((GLshort*)&q->x2);
+        glColor3ubv((GLubyte*)&q->r3);
+        glVertex2sv((GLshort*)&q->x3);
     glEnd();
 }
 
@@ -368,7 +384,7 @@ void renderTrack(void)
 void renderObject(const Object* object)
 {
     const MATRIX* matrix;
-    Poly poly;
+    Prm poly;
     const SVECTOR* vertices;
     short tpage;
     int i;
@@ -386,11 +402,11 @@ void renderObject(const Object* object)
     setMatrix(object->skeleton, cx, cy, cz);
 
     vertices = object->vertices;
-    poly.prim = object->primitives;
+    poly.primitive = object->primitives;
 
     for (i = 0; i < object->primitiveCount; i++)
     {
-        switch (poly.prim->type)
+        switch (poly.primitive->type)
         {
             case TypeF3:
             {

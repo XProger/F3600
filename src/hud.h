@@ -15,27 +15,6 @@
 
 typedef struct
 {
-    short topx;
-    short topy;
-    short bottomx;
-    short bottomy;
-} Points;
-
-typedef struct
-{
-    Points Left, Right;
-    char r0; // PCwipeout
-    char r1, g1, b1;
-    char r2, g2, b2;
-} BarPos;
-
-typedef struct
-{
-    BarPos barInfo[NUM_BARS];
-} Speedo;
-
-typedef struct
-{
     int start_pos_x;
     int start_pos_y;
     int size;
@@ -56,13 +35,13 @@ typedef struct
 } PilotData;
 
 void InitText(void);
-void InitSpeedo(Speedo*);
-void fill_speedo(Speedo*, int, int);
+void InitSpeedo(void);
+void fill_speedo(int, int);
 void AddNumber(int, TEXT_DATA*, int);
 void AddTime(int, TEXT_DATA*, int);
 void AddText(const char*, TEXT_DATA*, int);
 TEXT_DATA* text_data(int, int, int);
-void UpdateRaceHud(ShipData*, Speedo*, int, ConfigData*);
+void UpdateRaceHud(ShipData*, int, ConfigData*);
 void SetCharTextures(char);
 void AddDelEnd(char, TEXT_DATA*, int);
 void CentreText(const char*, TEXT_DATA*, int);
@@ -79,5 +58,5 @@ void DisplayAllVenomComplete(void);
 void InitTrackTex(Texture** trackTex);
 void BackPoly(short, short, short, short);
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData);
-void DrawHud(ShipData* shipIndex, Speedo* speedo, int choice, ConfigData* gameData);
+void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData);
 void AddGlyph(int x, int y, int w, int h, int u, int v, const Texture* tex);

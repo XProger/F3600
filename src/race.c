@@ -75,7 +75,6 @@ int TrackLoadHack;
 /**************************************************/
 /******           Stu additions               *****/
 /**************************************************/
-Speedo ctrlspeedo;
 int ctrlframe_cnt;
 char ctrlshowMenu;
 char ctrlconfirm;
@@ -392,7 +391,7 @@ void raceInit(ConfigData* gameData)
             ctrlcheck = 0;
     }
 
-    InitSpeedo(&ctrlspeedo);
+    InitSpeedo();
 
     loadShipData(track->sections, ctrlshipIndex, ctrlshipShapes, ctrlcamera.camPos);
     ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
@@ -1279,7 +1278,7 @@ void raceCtrl(ConfigData* gameData)
 
     if ((ctrlmode != ATTRACT))
     {
-        UpdateRaceHud(ctrlshipIndex, &ctrlspeedo, ctrlchoice, gameData);
+        UpdateRaceHud(ctrlshipIndex, ctrlchoice, gameData);
     }
 
     /*********************************************************************/
@@ -1541,7 +1540,7 @@ void raceLoop(ConfigData* gameData)
             DisplayLives(gameData);
 
         DrawWeaponSprtIcons(ctrlweaponIconTextures, &(ctrlshipIndex[ownShip]));
-        DrawHud(ctrlshipIndex, &ctrlspeedo, ctrlchoice, gameData);
+        DrawHud(ctrlshipIndex, ctrlchoice, gameData);
     }
 }
 

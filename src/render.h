@@ -6,15 +6,24 @@
 
 typedef struct Quad
 {
-    signed short x, y;
-
-    unsigned short w, h;
-
-    unsigned short u0, v0;
-    unsigned short u1, v1;
-
+    int16 x, y;
+    uint16 w, h;
+    uint16 u0, v0;
+    uint16 u1, v1;
     const Texture* texture;
 } Quad;
+
+typedef struct
+{
+    int16 x0, y0;
+    int16 x1, y1;
+    int16 x2, y2;
+    int16 x3, y3;
+    uint8 r0, g0, b0;
+    uint8 r1, g1, b1;
+    uint8 r2, g2, b2;
+    uint8 r3, g3, b3;
+} ColorQuad;
 
 extern int gFrameIndex;
 extern int gLastFrameIndex;
@@ -27,7 +36,8 @@ void renderSwap(void);
 void renderResize(int width, int height);
 void renderOffset(int x, int y);
 void renderClear(void);
-void renderQuad(const Quad* spr);
+void renderQuad(const Quad* q);
+void renderColorQuad(const ColorQuad* q);
 
 void renderPrepare(void);
 void renderTrack(void);

@@ -12,9 +12,7 @@ extern int gBorder;
 #define speedo_y    (195)
 
 const uint16 Text16[] = { 25, 24, 17, 24, 24, 17, 25, 18, 7, 17, 117, 117, 128, 117, 124, 124, 126, 124, 118, 117, 217, 217, 229, 224, 217, 218, 224, 210, 218, 217, 218, 318, 318, 318, 322, 325, 307, 307 };
-
 const uint16 Text12[] = { 19, 19, 14, 19, 19, 13, 19, 14, 6, 13, 14, 14, 122, 114, 119, 118, 120, 119, 115, 114, 113, 113, 122, 219, 213, 214, 219, 208, 215, 213, 214, 215, 214, 215, 218, 219, 205, 205 };
-
 const uint16 Text8[] = { 13, 13, 10, 13, 13, 9, 13, 10, 4, 9, 10, 10, 16, 10, 13, 13, 14, 113, 110, 109, 109, 109, 116, 114, 109, 110, 113, 106, 111, 110, 110, 111, 110, 110, 112, 114, 104, 104 };
 
 extern HiScores scoreTable[];
@@ -66,92 +64,132 @@ void InitText(void)
     FontLoadHack = 0;
 }
 
-void InitSpeedo(Speedo* speedo)
+typedef struct 
+{
+    uint8 tx, ty;
+    uint8 bx, by;
+    uint8 r, g, b, unused;
+} BarPoint;
+
+const BarPoint gBarPoint[NUM_BARS + 1] = { 
+    {   6, 18,      1, 27,     52,  17,  46, 0 },
+    {  13, 18,      8, 27,    111,  31,  71, 0 },
+    {  20, 18,     15, 27,    140,  46, 144, 0 },
+    {  27, 18,     22, 27,    110,  84, 199, 0 },
+    {  34, 18,     29, 27,     77, 137, 187, 0 },
+    {  42, 17,     37, 27,     69, 173, 136, 0 },
+    {  50, 16,     45, 27,     71, 195,  61, 0 },
+    {  60, 13,     55, 25,    181, 218,  48, 0 },
+    {  70, 10,     64, 23,    240, 134,  32, 0 },
+    {  82,  8,     74, 22,    255, 193,  44, 0 },
+    {  95,  7,     87, 22,    255, 215, 107, 0 },
+    { 110,  7,    102, 22,    255, 234, 170, 0 },
+    { 125,  7,    118, 22,    255, 255, 255, 0 }
+};
+
+void InitSpeedo(void)
 {
     speedoTex = LoadTexture("wipeout\\textures\\speedo.tim");
-
-    speedo->barInfo[0].Left.topx = 3;
-    speedo->barInfo[0].Right.topx = 10;
-
-    speedo->barInfo[1].Left.topx = 11;
-    speedo->barInfo[1].Right.topx = 17;
-
-    speedo->barInfo[2].Left.topx = 18;
-    speedo->barInfo[2].Right.topx = 24;
-
-    speedo->barInfo[3].Left.topx = 25;
-    speedo->barInfo[3].Right.topx = 31;
-
-    speedo->barInfo[4].Left.topx = 32;
-    speedo->barInfo[4].Right.topx = 38;
-
-    speedo->barInfo[5].Left.topx = 39;
-    speedo->barInfo[5].Right.topx = 46;
-
-    speedo->barInfo[6].Left.topx = 47;
-    speedo->barInfo[6].Right.topx = 57;
-
-    speedo->barInfo[7].Left.topx = 57;
-    speedo->barInfo[7].Right.topx = 65;
-
-    speedo->barInfo[8].Left.topx = 66;
-    speedo->barInfo[8].Right.topx = 76;
-
-    speedo->barInfo[9].Left.topx = 77;
-    speedo->barInfo[9].Right.topx = 89;
-
-    speedo->barInfo[10].Left.topx = 90;
-    speedo->barInfo[10].Right.topx = 104;
-
-    speedo->barInfo[11].Left.topx = 105;
-    speedo->barInfo[11].Right.topx = 124;
 }
 
-void fill_speedo(Speedo* speedo, int speed, int thrust)
+#define BAR_THRUST      64
+#define BAR_SPEED       2000
+#define LERP_16(a,b,t)  a + ((b - a) * t >> 16)
+
+void fill_speedo(int speed, int thrust)
 {
-    int target;
-    int width, barIntervalXTop;
-    int andy = 0;
+    ColorQuad q;
+    const BarPoint* p;
+    int i, t;
+    int sx, sy;
 
-    target = speed / 2000;
-    if (target > NUM_BARS)
-        target = NUM_BARS;
+    sx = speedo_x;
+    sy = speedo_y;
 
-    andy = speed / 2000;
-    if (andy > NUM_BARS)
-        andy = NUM_BARS;
-
-    if (andy == NUM_BARS)
+    if (thrust)
     {
-        width = SPEEDO_WIDTH;
-    }
-    else
-    {
-        target = speed % 2000;
-        width = speedo->barInfo[andy].Right.topx - speedo->barInfo[andy].Left.topx;
-        barIntervalXTop = (width * target) / 2000;
-        width = speedo->barInfo[andy].Left.topx + barIntervalXTop;
-    }
-    /*TODO speedo*/
-    //AddGlyph(speedo_x, speedo_y, width, SPEEDO_HEIGHT, speedoTex->u0 + 128, speedoTex->v0, speedoTex->cba);
+        renderTransparent(1);
 
-    andy = thrust / 70;
-    if (andy > NUM_BARS)
-        andy = NUM_BARS;
+        q.r0 = q.r1 = q.r2 = q.r3 = 128;
+        q.g0 = q.g1 = q.g2 = q.g3 = 0;
+        q.b0 = q.b1 = q.b2 = q.b3 = 0;
 
-    if (andy == NUM_BARS)
-    {
-        width = SPEEDO_WIDTH;
+        for (i = 0; i < NUM_BARS; i++)
+        {
+            p = gBarPoint + i;
+
+            q.x0 = sx + p[0].tx;
+            q.y0 = sy + p[0].ty;
+            q.x3 = sx + p[0].bx;
+            q.y3 = sy + p[0].by;
+
+            if (thrust < BAR_THRUST)
+            {
+                t = thrust * ((1 << 16) / BAR_THRUST);
+                q.x1 = sx + LERP_16(p[0].tx, p[1].tx, t);
+                q.y1 = sy + LERP_16(p[0].ty, p[1].ty, t);
+                q.x2 = sx + LERP_16(p[0].bx, p[1].bx, t);
+                q.y2 = sy + LERP_16(p[0].by, p[1].by, t);
+            }
+            else
+            {
+                q.x1 = sx + p[1].tx;
+                q.y1 = sy + p[1].ty;
+                q.x2 = sx + p[1].bx;
+                q.y2 = sy + p[1].by;
+            }
+       
+            renderColorQuad(&q);
+
+            thrust -= BAR_THRUST;
+            if (thrust <= 0)
+                break;
+        }
+
+        renderTransparent(0);
     }
-    else
+
+    if (speed)
     {
-        target = thrust % 70;
-        width = speedo->barInfo[andy].Right.topx - speedo->barInfo[andy].Left.topx;
-        barIntervalXTop = (width * target) / 70;
-        width = speedo->barInfo[andy].Left.topx + barIntervalXTop;
+        for (i = 0; i < NUM_BARS; i++)
+        {
+            p = gBarPoint + i;
+
+            q.r0 = q.r3 = p[0].r;
+            q.g0 = q.g3 = p[0].g;
+            q.b0 = q.b3 = p[0].b;
+            q.r1 = q.r2 = p[1].r;
+            q.g1 = q.g2 = p[1].g;
+            q.b1 = q.b2 = p[1].b;
+
+            q.x0 = sx + p[0].tx;
+            q.y0 = sy + p[0].ty;
+            q.x3 = sx + p[0].bx;
+            q.y3 = sy + p[0].by;
+
+            if (speed < BAR_SPEED)
+            {
+                t = speed * ((1 << 16) / BAR_SPEED);
+                q.x1 = sx + LERP_16(p[0].tx, p[1].tx, t);
+                q.y1 = sy + LERP_16(p[0].ty, p[1].ty, t);
+                q.x2 = sx + LERP_16(p[0].bx, p[1].bx, t);
+                q.y2 = sy + LERP_16(p[0].by, p[1].by, t);
+            }
+            else
+            {
+                q.x1 = sx + p[1].tx;
+                q.y1 = sy + p[1].ty;
+                q.x2 = sx + p[1].bx;
+                q.y2 = sy + p[1].by;
+            }
+
+            renderColorQuad(&q);
+
+            speed -= BAR_SPEED;
+            if (speed <= 0)
+                break;
+        }
     }
-    /*TODO speedo*/
-    //AddGlyph(speedo_x, speedo_y, width, SPEEDO_HEIGHT, speedoTex->u0 + 128, speedoTex->v0 - 30, speedoTex->cba);
 }
 
 void AddTime(int time, TEXT_DATA* pos_data, int colour)
@@ -492,7 +530,7 @@ TEXT_DATA* text_data(int start_pos_x, int start_pos_y, int size)
 
 extern int short startLinePos[];
 
-void UpdateRaceHud(ShipData* shipIndex, Speedo* speedo, int choice, ConfigData* gameData)
+void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 {
     int i, j;
     int position = NO_OF_SHIPS;
@@ -1139,7 +1177,7 @@ void DisplayLives(ConfigData* gameData)
 
     for (i = 0; i < gameData->Lives; i++)
     {
-        AddGlyph(speedo_x + 115 - (13 * i) + gBorder, speedo_y - 5, 11, 9, 0, 0, *livesTex);
+        AddGlyph(speedo_x + 115 - (13 * i), speedo_y - 5, 11, 9, 0, 0, *livesTex);
     }
 }
 
@@ -1410,7 +1448,7 @@ void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)
     }
 }
 
-void DrawHud(ShipData* shipIndex, Speedo* speedo, int choice, ConfigData* gameData)
+void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 {
     int i;
     int width;
@@ -1478,7 +1516,7 @@ void DrawHud(ShipData* shipIndex, Speedo* speedo, int choice, ConfigData* gameDa
 
     if (shipIndex[ownShip].attr & RACING)
     {
-        fill_speedo(speedo, shipIndex[ownShip].speed, shipIndex[ownShip].thrust_mag);
+        fill_speedo(shipIndex[ownShip].speed, shipIndex[ownShip].thrust_mag);
         AddGlyph(speedo_x, speedo_y, SPEEDO_WIDTH, SPEEDO_HEIGHT, 0, 0, speedoTex);
     }
 }

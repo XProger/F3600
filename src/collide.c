@@ -178,7 +178,7 @@ int collideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
 {
     int i; /* index count (planes) */
     int count; /* index count (lines) */
-    Poly poly;
+    Prm poly;
     short* coords;
     short primitiveCount;
 
@@ -233,12 +233,12 @@ int collideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
     MinusVector(b, d, &BD);
     MinusVector(a, d, &AD);
 
-    poly.prim = shipShapes[low2]->primitives;
+    poly.primitive = shipShapes[low2]->primitives;
     primitiveCount = shipShapes[low2]->primitiveCount;
 
     for (i = 0; i < primitiveCount; i++) /* for all 4 planes of the enemy ship */
     {
-        switch (poly.prim->type)
+        switch (poly.primitive->type)
         {
             case TypeF3:
                 coords = poly.f3->coords;

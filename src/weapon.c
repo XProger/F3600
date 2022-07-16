@@ -782,7 +782,7 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     VECTOR distance;
     int ossilation;
     int i, mag;
-    Poly poly;
+    Prm poly;
     short r;
 
     weapon->count--;
@@ -797,27 +797,22 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     ossilation = sar(rsin((weapon->currentWeapon * 400) + (weapon->count * 40)), 9);
 
     weapon->pos.vx += ossilation;
-
     weapon->hdg += 128;
 
-    poly.prim = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
+    poly.primitive = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
+
     r = (rsin(weapon->count * 140) >> 6) + 230;
     if (r > 255)
         r = 255;
+
     for (i = 0; i < 8; i++)
     {
-        switch (poly.prim->type)
+        switch (poly.primitive->type)
         {
             case TypeGT3:
-                poly.gt3->colour[0].r = (char)r;
-                poly.gt3->colour[1].r = (char)r;
-                poly.gt3->colour[2].r = (char)r;
-                poly.gt3->colour[0].g = 0x40;
-                poly.gt3->colour[1].g = 0x40;
-                poly.gt3->colour[2].g = 0x40;
-                poly.gt3->colour[0].b = 0;
-                poly.gt3->colour[1].b = 0;
-                poly.gt3->colour[2].b = 0;
+                poly.gt3->colour[0].r = poly.gt3->colour[1].r = poly.gt3->colour[2].r = (uint8)r;
+                poly.gt3->colour[0].g = poly.gt3->colour[1].g = poly.gt3->colour[2].g = 0x40;
+                poly.gt3->colour[0].b = poly.gt3->colour[1].b = poly.gt3->colour[2].b = 0;
                 poly.gt3 += 1;
                 break;
         }
@@ -1463,7 +1458,7 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
     int k;
-    Poly poly;
+    Prm poly;
     short primitiveCount;
     short* coords;
     short col0, col1, col2, col3;
@@ -1503,12 +1498,12 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
         SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), shipIndex[weapon->fireShip].hdg, shipIndex[weapon->fireShip].pitch, shipIndex[weapon->fireShip].roll);
 
-        poly.prim = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
+        poly.primitive = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
         primitiveCount = weaponShapes[weapon->currentWeapon].shapePtr->primitiveCount;
 
         for (k = 0; k < primitiveCount; k++)
         {
-            switch (poly.prim->type)
+            switch (poly.primitive->type)
             {
                 case TypeG3:
                     coords = poly.g3->coords;

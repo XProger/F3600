@@ -455,27 +455,18 @@ void ColourRedLight(Object* redLight)
     short r;
     short count;
 
-    Prm libPoly;
+    Prm prm;
 
     count = gFrameIndex * 140;
     r = (rsin(count) >> 5) + 128;
     if (r > 255)
         r = 255;
 
-    libPoly.primitive = redLight->primitives;
+    prm.primitive = redLight->primitives;
 
-    libPoly.gt4->colour[0].r = (char)r;
-    libPoly.gt4->colour[1].r = (char)r;
-    libPoly.gt4->colour[2].r = (char)r;
-    libPoly.gt4->colour[3].r = (char)r;
-    libPoly.gt4->colour[0].g = 0x00;
-    libPoly.gt4->colour[1].g = 0x00;
-    libPoly.gt4->colour[2].g = 0x00;
-    libPoly.gt4->colour[3].g = 0x00;
-    libPoly.gt4->colour[0].b = 0x00;
-    libPoly.gt4->colour[1].b = 0x00;
-    libPoly.gt4->colour[2].b = 0x00;
-    libPoly.gt4->colour[3].b = 0x00;
+    prm.gt4->colour[0].r = prm.gt4->colour[1].r = prm.gt4->colour[2].r = prm.gt4->colour[3].r = (uint8)r;
+    prm.gt4->colour[0].g = prm.gt4->colour[1].g = prm.gt4->colour[2].g = prm.gt4->colour[3].g = 0x00;
+    prm.gt4->colour[0].b = prm.gt4->colour[1].b = prm.gt4->colour[2].b = prm.gt4->colour[3].b = 0x00;
 }
 
 void ColourDroidLights(Object* droid)
@@ -483,7 +474,7 @@ void ColourDroidLights(Object* droid)
     short r, g, b;
     short rf, gf, bf;
     int i;
-    Poly libPoly;
+    Prm prm;
     short primitiveCount;
     short count = gFrameIndex * 70;
 
@@ -499,7 +490,7 @@ void ColourDroidLights(Object* droid)
     if (bf > 255)
         bf = 255;
 
-    libPoly.prim = droid->primitives;
+    prm.primitive = droid->primitives;
 
     for (i = 0; i < 11; i++)
     {
@@ -522,41 +513,20 @@ void ColourDroidLights(Object* droid)
             g = 40;
         }
 
-        switch (libPoly.prim->type)
+        switch (prm.primitive->type)
         {
             case TypeGT3:
-                libPoly.gt3->colour[0].r = r;
-                libPoly.gt3->colour[0].g = g;
-                libPoly.gt3->colour[0].b = b;
-
-                libPoly.gt3->colour[1].r = r;
-                libPoly.gt3->colour[1].g = g;
-                libPoly.gt3->colour[1].b = b;
-
-                libPoly.gt3->colour[2].r = r;
-                libPoly.gt3->colour[2].g = g;
-                libPoly.gt3->colour[2].b = b;
-                libPoly.gt3++;
+                prm.gt3->colour[0].r = prm.gt3->colour[1].r = prm.gt3->colour[2].r = r;
+                prm.gt3->colour[0].g = prm.gt3->colour[1].g = prm.gt3->colour[2].g = g;
+                prm.gt3->colour[0].b = prm.gt3->colour[1].b = prm.gt3->colour[2].b = b;
+                prm.gt3++;
                 break;
 
             case TypeGT4:
-                libPoly.gt4->colour[0].r = r;
-                libPoly.gt4->colour[0].g = g;
-                libPoly.gt4->colour[0].b = b;
-
-                libPoly.gt4->colour[1].r = r;
-                libPoly.gt4->colour[1].g = g;
-                libPoly.gt4->colour[1].b = b;
-
-                libPoly.gt4->colour[2].r = r;
-                libPoly.gt4->colour[2].g = g;
-                libPoly.gt4->colour[2].b = b;
-
-                libPoly.gt4->colour[3].r = r;
-                libPoly.gt4->colour[3].g = g;
-                libPoly.gt4->colour[3].b = b;
-
-                libPoly.gt4++;
+                prm.gt4->colour[0].r = prm.gt4->colour[1].r = prm.gt4->colour[2].r = prm.gt4->colour[3].r = r;
+                prm.gt4->colour[0].g = prm.gt4->colour[1].g = prm.gt4->colour[2].g = prm.gt4->colour[3].g = g;
+                prm.gt4->colour[0].b = prm.gt4->colour[1].b = prm.gt4->colour[2].b = prm.gt4->colour[3].b = b;
+                prm.gt4++;
                 break;
         }
     }
@@ -935,14 +905,14 @@ signed short greyCoords[80];
 void InitAuroraBorialis(Object* object)
 {
     int i;
-    Poly poly;
+    Prm poly;
     short primitiveCount;
     short* coords;
     int count = 0;
     short y;
     SVECTOR* vertex;
 
-    poly.prim = object->primitives;
+    poly.primitive = object->primitives;
     primitiveCount = object->primitiveCount;
     vertex = object->vertices;
 
@@ -953,7 +923,7 @@ void InitAuroraBorialis(Object* object)
 
     for (i = 0; i < primitiveCount; i++)
     {
-        switch (poly.prim->type)
+        switch (poly.primitive->type)
         {
             case TypeGT3:
                 poly.gt3 += 1;
@@ -990,13 +960,13 @@ void AuroraBorialis(Object* object)
 {
     int i;
 
-    Poly poly;
+    Prm poly;
     short* coords;
     static int count = 0;
 
     count++;
 
-    poly.prim = object->primitives;
+    poly.primitive = object->primitives;
 
     for (i = 0; i < 80; i++)
     {
