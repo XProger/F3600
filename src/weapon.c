@@ -333,12 +333,13 @@ void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShap
     SVECTOR* vertex;
     DVECTOR sxy;
     long flag;
+    const MATRIX* matrix;
 
     shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton->update = 1;
-    SetSkeletonTransform(shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton);
     vertex = shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->vertices;
+    matrix = GetSkeletonMatrix(shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton);
 
-    RotTransPers(vertex, &sxy, &flag);
+    RotTransPers(matrix, vertex, &sxy, &flag);
 
     if ((flag & (CrtClipped | ZNegative | ZLarge | ZSmall)))
         return;

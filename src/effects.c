@@ -4,6 +4,7 @@
 Shadow shipShadow[NO_OF_SHIPS];
 
 extern int gFrameIndex;
+extern Texture* ctrleffectTextures[NO_OF_EFFECT_TEXTURES];
 
 const char tranny_table[] = {
     YELLOW_WHITE_TRANSL,    // MISSILE/ROCKET EXPLODE HIT NOTHING
@@ -16,45 +17,37 @@ const char tranny_table[] = {
 
 void InitEffects(Effect* effects, Skeleton* camPos, Texture** effectTextures)
 {
-    /*TODO effects
-       int i, j;
-       int tablePos;
+    int i, j;
+    int tablePos;
 
-       tablePos = TextureTableCount;
+    tablePos = TextureTableCount;
 
-       LoadCompressedTextureSequence( "wipeout\\common\\effects.cmp" );
-       effectTextures[FX_FIRE]       = TextureTable[tablePos++];
-       effectTextures[FX_FIRE_WHITE] = TextureTable[tablePos++];
-       effectTextures[FX_SMOKE]      = TextureTable[tablePos++];
-       effectTextures[FX_EBOLT]      = TextureTable[tablePos++];
-       effectTextures[FX_HALO]       = TextureTable[tablePos++];
-       effectTextures[FX_GREENY]     = TextureTable[tablePos++];
+    LoadCompressedTextureSequence("wipeout\\common\\effects.cmp");
+    effectTextures[FX_FIRE] = TextureTable[tablePos++];
+    effectTextures[FX_FIRE_WHITE] = TextureTable[tablePos++];
+    effectTextures[FX_SMOKE] = TextureTable[tablePos++];
+    effectTextures[FX_EBOLT] = TextureTable[tablePos++];
+    effectTextures[FX_HALO] = TextureTable[tablePos++];
+    effectTextures[FX_GREENY] = TextureTable[tablePos++];
 
-       for(i = 0; i < NO_OF_EFFECTS; i++)
-       {
-          effects[i].count = 0;
+    for (i = 0; i < NO_OF_EFFECTS; i++)
+    {
+        effects[i].count = 0;
+        /*
+        for (j = 0; j < 2; j++)
+        {
+            SetPolyFT4(&(effects[i].sprite[j]));
+            SetSemiTrans((P_TAG*)&(effects[i].sprite[j]), 1);
+            SetShadeTex((P_TAG*)&(effects[i].sprite[j]), 1);
 
-          for(j = 0; j < 2; j++)
-          {
-             SetPolyFT4(&(effects[i].sprite[j]));
-             SetSemiTrans((P_TAG *)&(effects[i].sprite[j]), 1);
-             SetShadeTex((P_TAG *)&(effects[i].sprite[j]), 1);
-
-             effects[i].sprite[j].r0 = 230;   // PCwipeout
-             effects[i].sprite[j].g0 = 0;
-             effects[i].sprite[j].b0 = tranny_table[FX_SMOKE];  //Default is smoke
-             setTPage(&(effects[i].sprite[j]),0,3,
-                effectTextures[FX_SMOKE]->textureX,
-                effectTextures[FX_SMOKE]->textureY);
-             effects[i].sprite[j].clut = effectTextures[FX_SMOKE]->cba;
-             setUV4(&(effects[i].sprite[j]),
-                effectTextures[FX_SMOKE]->u0, effectTextures[FX_SMOKE]->v0,
-                effectTextures[FX_SMOKE]->u1, effectTextures[FX_SMOKE]->v1,
-                effectTextures[FX_SMOKE]->u2, effectTextures[FX_SMOKE]->v2,
-                effectTextures[FX_SMOKE]->u3, effectTextures[FX_SMOKE]->v3) ;
-          }
-       }
-       */
+            effects[i].sprite[j].r0 = 230; // PCwipeout
+            effects[i].sprite[j].g0 = 0;
+            effects[i].sprite[j].b0 = tranny_table[FX_SMOKE]; // Default is smoke
+            setTPage(&(effects[i].sprite[j]), 0, 3, effectTextures[FX_SMOKE]->textureX, effectTextures[FX_SMOKE]->textureY);
+            effects[i].sprite[j].clut = effectTextures[FX_SMOKE]->cba;
+            setUV4(&(effects[i].sprite[j]), effectTextures[FX_SMOKE]->u0, effectTextures[FX_SMOKE]->v0, effectTextures[FX_SMOKE]->u1, effectTextures[FX_SMOKE]->v1, effectTextures[FX_SMOKE]->u2, effectTextures[FX_SMOKE]->v2, effectTextures[FX_SMOKE]->u3, effectTextures[FX_SMOKE]->v3);
+        }*/
+    }
 }
 
 void UpdateEffects(Effect* effects)
@@ -92,268 +85,266 @@ void UpdateEffects(Effect* effects)
 
 void DrawEffects(Effect* effects)
 {
-    /*TODO effects
-    int         i;
-    SVECTOR     vertex;
-    DVECTOR     sxy;
-    long        p, flag;
-    int         x, y;
-    long        depth;
-    short       size;
-    VECTOR      camPos;
+    int i;
+    SVECTOR vertex;
+    DVECTOR sxy;
+    long flag;
+    int x, y;
+    long depth;
+    short size;
+    VECTOR camPos;
+    Quad q;
+    const MATRIX* matrix;
 
-    camPos.vx = cameraPtr->camPos->relative.t[0] ;
-    camPos.vy = cameraPtr->camPos->relative.t[1] ;
-    camPos.vz = cameraPtr->camPos->relative.t[2] ;
+    camPos.vx = cameraPtr->camPos->relative.t[0];
+    camPos.vy = cameraPtr->camPos->relative.t[1];
+    camPos.vz = cameraPtr->camPos->relative.t[2];
 
     cameraPtr->camPos->super->update = 1;
-    SetSkeletonTransform( cameraPtr->camPos->super );
+    matrix = GetSkeletonMatrix(cameraPtr->camPos->super);
 
-    for(i = 0; i < NO_OF_EFFECTS; i++)
+    for (i = 0; i < NO_OF_EFFECTS; i++)
     {
-       if(effects[i].count > 0)
-       {
- #if 0
+        if (effects[i].count > 0)
+        {
+#if 0
           effects[i].pos.vx += effects[i].vel.vx;
           effects[i].pos.vy += effects[i].vel.vy;
           effects[i].pos.vz += effects[i].vel.vz;
 
           effects[i].count--;
- #endif
+#endif
 
-          vertex.vx = effects[i].pos.vx + camPos.vx ;
-          vertex.vy = effects[i].pos.vy + camPos.vy ;
-          vertex.vz = effects[i].pos.vz + camPos.vz ;
+            vertex.vx = effects[i].pos.vx + camPos.vx;
+            vertex.vy = effects[i].pos.vy + camPos.vy;
+            vertex.vz = effects[i].pos.vz + camPos.vz;
 
-          depth = RotTransPers(&(vertex),
-             &sxy,
-             &p,
-             &flag);
+            depth = RotTransPers(matrix, &vertex, &sxy, &flag);
 
-          x = sxy.vx;
-          y = sxy.vy;
+            x = sxy.vx;
+            y = sxy.vy;
 
-          if(!(flag & (CrtClipped | ZNegative | ZLarge | ZSmall)))
-          {
+            if (!(flag & (CrtClipped | ZNegative | ZLarge | ZSmall)))
+            {
 
-             // effects[i].size is the shift right
-             // The bit mask is to set the maximum
-             // screen size to avoid framing out
+                // effects[i].size is the shift right
+                // The bit mask is to set the maximum
+                // screen size to avoid framing out
 
-             size = ( 160 << effects[i].size ) / depth;
+                size = (160 << effects[i].size) / depth;
+                if (size > 32)
+                    size = 32;
 
-             if(size > 32 ) size = 32;
-             x = x - (size >> 1);
-             y = y - (size >> 1);
+                q.x = x;
+                q.y = y;
+                q.w = size;
+                q.h = size;
+                q.u0 = 0;
+                q.v0 = 0;
+                q.u1 = 32;
+                q.v1 = 32;
+                q.texture = ctrleffectTextures[effects[i].type];
 
+                renderQuad(&q);
+                /*
+                x = x - (size >> 1);
+                y = y - (size >> 1);
 
-             effects[i].sprite[ CurrentScreen ].x0 = x;
-             effects[i].sprite[ CurrentScreen ].y0 = y;
-             effects[i].sprite[ CurrentScreen ].x1 = x + size;
-             effects[i].sprite[ CurrentScreen ].y1 = y;
-             effects[i].sprite[ CurrentScreen ].x2 = x;
-             effects[i].sprite[ CurrentScreen ].y2 = y + size;
-             effects[i].sprite[ CurrentScreen ].x3 = x + size;
-             effects[i].sprite[ CurrentScreen ].y3 = y + size;
-             effects[i].sprite[ CurrentScreen ].z0 = vertex.vz;
-             effects[i].sprite[ CurrentScreen ].z1 = vertex.vz;
-             effects[i].sprite[ CurrentScreen ].z2 = vertex.vz;
-             effects[i].sprite[ CurrentScreen ].z3 = vertex.vz;
-             effects[i].sprite[ CurrentScreen ].pad4 = 0;
-             effects[i].sprite[ CurrentScreen ].pad5 = 0;
-             effects[i].sprite[ CurrentScreen ].pad6 = 0;
-             effects[i].sprite[ CurrentScreen ].pad7 = 0;
+                effects[i].sprite[CurrentScreen].x0 = x;
+                effects[i].sprite[CurrentScreen].y0 = y;
+                effects[i].sprite[CurrentScreen].x1 = x + size;
+                effects[i].sprite[CurrentScreen].y1 = y;
+                effects[i].sprite[CurrentScreen].x2 = x;
+                effects[i].sprite[CurrentScreen].y2 = y + size;
+                effects[i].sprite[CurrentScreen].x3 = x + size;
+                effects[i].sprite[CurrentScreen].y3 = y + size;
+                effects[i].sprite[CurrentScreen].z0 = vertex.vz;
+                effects[i].sprite[CurrentScreen].z1 = vertex.vz;
+                effects[i].sprite[CurrentScreen].z2 = vertex.vz;
+                effects[i].sprite[CurrentScreen].z3 = vertex.vz;
+                effects[i].sprite[CurrentScreen].pad4 = 0;
+                effects[i].sprite[CurrentScreen].pad5 = 0;
+                effects[i].sprite[CurrentScreen].pad6 = 0;
+                effects[i].sprite[CurrentScreen].pad7 = 0;
 
-             AddPrim( OT[ CurrentScreen ] + (depth) , ( ulong* ) &(effects[i].sprite[ CurrentScreen ]) );
-          }
-       }
+                AddPrim(OT[CurrentScreen] + (depth), (ulong*)&(effects[i].sprite[CurrentScreen]));
+                */
+            }
+        }
     }
-    */
 }
 
 void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextures, ShipData* shipIndex)
 {
-#if 0 /*TODO effects*/
-   int i, j, k;
-   int exploType;
-   short noToRelease = 0;
+    int i, j, k;
+    int exploType;
+    short noToRelease = 0;
 
-   for(i = 0; i < NO_ACTIVE_WEAPONS; i++)
-   {
-      /***********************************************************************/
-      /****          Add Fire + Smoke Trails for Missiles & Rockets       ****/
-      /***********************************************************************/
+    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
+    {
+        /***********************************************************************/
+        /****          Add Fire + Smoke Trails for Missiles & Rockets       ****/
+        /***********************************************************************/
 
-      if((weaponIndex[i].type == ROCKET) || (weaponIndex[i].type == MISSILE) || (weaponIndex[i].type == ELEC_BOLT) ||
-         (weaponIndex[i].type == REV_CON))
-      {
-         if(weaponIndex[i].type == ELEC_BOLT)
-            exploType = FX_EBOLT;
-         else if(weaponIndex[i].type == REV_CON)
-            exploType = FX_GREENY;
-         else
-            exploType = FX_SMOKE;
+        if ((weaponIndex[i].type == ROCKET) || (weaponIndex[i].type == MISSILE) || (weaponIndex[i].type == ELEC_BOLT) || (weaponIndex[i].type == REV_CON))
+        {
+            if (weaponIndex[i].type == ELEC_BOLT)
+                exploType = FX_EBOLT;
+            else if (weaponIndex[i].type == REV_CON)
+                exploType = FX_GREENY;
+            else
+                exploType = FX_SMOKE;
 
-         if(weaponIndex[i].count > 0)
-         {
-            for(j = 0; j < NO_OF_EFFECTS; j++)
+            if (weaponIndex[i].count > 0)
             {
-               if(effects[j].count == 0)
-               {
-                  if(noToRelease == 0)
-                  {
-                     effects[j].pos.vx = weaponIndex[i].pos.vx;
-                     effects[j].pos.vy = weaponIndex[i].pos.vy;
-                     effects[j].pos.vz = weaponIndex[i].pos.vz;
-                     effects[j].vel.vx = (signed char)randy()>>4;
-                     effects[j].vel.vy = (signed char)randy()>>4;
-                     effects[j].vel.vz = (signed char)randy()>>4;
-                     effects[j].count = 20 + (randy() % 10);
-                     for(k = 0; k < 2; k++)
-                     {
-                        effects[j].size = 7;
-                        effects[j].sprite[k].b0 = tranny_table[exploType];  //Set the colour
-                        effects[j].sprite[k].clut = effectTextures[exploType]->cba;
-                        setUV4(&(effects[j].sprite[k]),
-                           effectTextures[exploType]->u0, effectTextures[exploType]->v0,
-                           effectTextures[exploType]->u1, effectTextures[exploType]->v1,
-                           effectTextures[exploType]->u2, effectTextures[exploType]->v2,
-                           effectTextures[exploType]->u3, effectTextures[exploType]->v3) ;
-                     }
-                  }
-                  else if(noToRelease == 1)
-                  {
-                     effects[j].pos.vx = weaponIndex[i].pos.vx - (weaponIndex[i].vel.vx>>1);
-                     effects[j].pos.vy = weaponIndex[i].pos.vy - (weaponIndex[i].vel.vy>>1);
-                     effects[j].pos.vz = weaponIndex[i].pos.vz - (weaponIndex[i].vel.vz>>1);
-                     effects[j].vel.vx = 0;
-                     effects[j].vel.vy = 0;
-                     effects[j].vel.vz = 0;
-                     effects[j].count = 5;
-                     for(k = 0; k < 2; k++)
-                     {
-                        effects[j].size = 7;
-                        if(weaponIndex[i].type == ELEC_BOLT)
+                for (j = 0; j < NO_OF_EFFECTS; j++)
+                {
+                    if (effects[j].count == 0)
+                    {
+                        if (noToRelease == 0)
                         {
-                           effects[j].sprite[k].clut = effectTextures[FX_EBOLT]->cba;
+                            effects[j].pos.vx = weaponIndex[i].pos.vx;
+                            effects[j].pos.vy = weaponIndex[i].pos.vy;
+                            effects[j].pos.vz = weaponIndex[i].pos.vz;
+                            effects[j].vel.vx = (signed char)randy() >> 4;
+                            effects[j].vel.vy = (signed char)randy() >> 4;
+                            effects[j].vel.vz = (signed char)randy() >> 4;
+                            effects[j].count = 20 + (randy() % 10);
+                            for (k = 0; k < 2; k++)
+                            {
+                                effects[j].size = 7;
+                                //TODO
+                                //effects[j].sprite[k].b0 = tranny_table[exploType]; // Set the colour
+                                //effects[j].sprite[k].clut = effectTextures[exploType]->cba;
+                                //setUV4(&(effects[j].sprite[k]), effectTextures[exploType]->u0, effectTextures[exploType]->v0, effectTextures[exploType]->u1, effectTextures[exploType]->v1, effectTextures[exploType]->u2, effectTextures[exploType]->v2, effectTextures[exploType]->u3, effectTextures[exploType]->v3);
+                            }
                         }
-                        else if(weaponIndex[i].type == REV_CON)
+                        else if (noToRelease == 1)
                         {
-                           effects[j].sprite[k].clut = effectTextures[FX_GREENY]->cba;
+                            effects[j].pos.vx = weaponIndex[i].pos.vx - (weaponIndex[i].vel.vx >> 1);
+                            effects[j].pos.vy = weaponIndex[i].pos.vy - (weaponIndex[i].vel.vy >> 1);
+                            effects[j].pos.vz = weaponIndex[i].pos.vz - (weaponIndex[i].vel.vz >> 1);
+                            effects[j].vel.vx = 0;
+                            effects[j].vel.vy = 0;
+                            effects[j].vel.vz = 0;
+                            effects[j].count = 5;
+                            for (k = 0; k < 2; k++)
+                            {
+                                effects[j].size = 7;
+                                /*TODO
+                                if (weaponIndex[i].type == ELEC_BOLT)
+                                {
+                                    effects[j].sprite[k].clut = effectTextures[FX_EBOLT]->cba;
+                                }
+                                else if (weaponIndex[i].type == REV_CON)
+                                {
+                                    effects[j].sprite[k].clut = effectTextures[FX_GREENY]->cba;
+                                }
+                                else
+                                {
+                                    effects[j].sprite[k].clut = effectTextures[FX_FIRE]->cba;
+                                }
+                                effects[j].sprite[k].b0 = tranny_table[exploType]; // Set the colour
+                                setUV4(&(effects[j].sprite[k]), effectTextures[exploType]->u0, effectTextures[exploType]->v0, effectTextures[exploType]->u1, effectTextures[exploType]->v1, effectTextures[exploType]->u2, effectTextures[exploType]->v2, effectTextures[exploType]->u3, effectTextures[exploType]->v3);
+                                */
+                            }
                         }
-                        else
+                        else if (noToRelease == 2)
                         {
-                           effects[j].sprite[k].clut = effectTextures[FX_FIRE]->cba;
+                            effects[j].pos.vx = weaponIndex[i].pos.vx - (weaponIndex[i].vel.vx >> 2);
+                            effects[j].pos.vy = weaponIndex[i].pos.vy - (weaponIndex[i].vel.vy >> 2);
+                            effects[j].pos.vz = weaponIndex[i].pos.vz - (weaponIndex[i].vel.vz >> 2);
+                            effects[j].vel.vx = (signed char)randy() >> 4;
+                            effects[j].vel.vy = (signed char)randy() >> 4;
+                            effects[j].vel.vz = (signed char)randy() >> 4;
+                            effects[j].count = 20 + (randy() % 10);
+                            for (k = 0; k < 2; k++)
+                            {
+                                effects[j].size = 7;
+                                /*TODO
+                                effects[j].sprite[k].clut = effectTextures[exploType]->cba;
+                                effects[j].sprite[k].b0 = tranny_table[exploType]; // Set the colour
+                                setUV4(&(effects[j].sprite[k]), effectTextures[exploType]->u0, effectTextures[exploType]->v0, effectTextures[exploType]->u1, effectTextures[exploType]->v1, effectTextures[exploType]->u2, effectTextures[exploType]->v2, effectTextures[exploType]->u3, effectTextures[exploType]->v3);
+                                */
+                            }
                         }
-                        effects[j].sprite[k].b0 = tranny_table[exploType];  //Set the colour
-                        setUV4(&(effects[j].sprite[k]),
-                           effectTextures[exploType]->u0, effectTextures[exploType]->v0,
-                           effectTextures[exploType]->u1, effectTextures[exploType]->v1,
-                           effectTextures[exploType]->u2, effectTextures[exploType]->v2,
-                           effectTextures[exploType]->u3, effectTextures[exploType]->v3) ;
-                     }
-                  }
-                  else if(noToRelease == 2)
-                  {
-                     effects[j].pos.vx = weaponIndex[i].pos.vx - (weaponIndex[i].vel.vx>>2);
-                     effects[j].pos.vy = weaponIndex[i].pos.vy - (weaponIndex[i].vel.vy>>2);
-                     effects[j].pos.vz = weaponIndex[i].pos.vz - (weaponIndex[i].vel.vz>>2);
-                     effects[j].vel.vx = (signed char)randy()>>4;
-                     effects[j].vel.vy = (signed char)randy()>>4;
-                     effects[j].vel.vz = (signed char)randy()>>4;
-                     effects[j].count = 20 + (randy() % 10);
-                     for(k = 0; k < 2; k++)
-                     {
-                        effects[j].size = 7;
-                        effects[j].sprite[k].clut = effectTextures[exploType]->cba;
-                        effects[j].sprite[k].b0 = tranny_table[exploType];  //Set the colour
-                        setUV4(&(effects[j].sprite[k]),
-                           effectTextures[exploType]->u0, effectTextures[exploType]->v0,
-                           effectTextures[exploType]->u1, effectTextures[exploType]->v1,
-                           effectTextures[exploType]->u2, effectTextures[exploType]->v2,
-                           effectTextures[exploType]->u3, effectTextures[exploType]->v3) ;
-                     }
-                  }
-                  noToRelease++;
-                  if(noToRelease == 3) break;
-               }
+                        noToRelease++;
+                        if (noToRelease == 3)
+                            break;
+                    }
+                }
             }
-         }
-      }
+        }
 
-      noToRelease = 0;
+        noToRelease = 0;
 
-      if((weaponIndex[i].count == SHIP_EXPLODE) ||
-         (weaponIndex[i].count == TRACK_EXPLODE)   )
-      {
-         if(weaponIndex[i].count == SHIP_EXPLODE)
-         {
-            if(weaponIndex[i].type == ELEC_BOLT)
+        if ((weaponIndex[i].count == SHIP_EXPLODE) || (weaponIndex[i].count == TRACK_EXPLODE))
+        {
+            if (weaponIndex[i].count == SHIP_EXPLODE)
             {
-               exploType = FX_GREENY; // PCwipeout NOW PURPLE
-            }
-            else if(weaponIndex[i].type == REV_CON)
-            {
-               exploType = FX_GREENY;
+                if (weaponIndex[i].type == ELEC_BOLT)
+                {
+                    exploType = FX_GREENY; // PCwipeout NOW PURPLE
+                }
+                else if (weaponIndex[i].type == REV_CON)
+                {
+                    exploType = FX_GREENY;
+                }
+                else
+                    exploType = FX_FIRE_WHITE;
             }
             else
-               exploType = FX_FIRE_WHITE;
-         }
-         else
-         {
-            if(weaponIndex[i].type == ELEC_BOLT)
             {
-               exploType = FX_EBOLT;
+                if (weaponIndex[i].type == ELEC_BOLT)
+                {
+                    exploType = FX_EBOLT;
+                }
+                else if (weaponIndex[i].type == REV_CON)
+                {
+                    exploType = FX_GREENY;
+                }
+                else
+                    exploType = FX_FIRE;
             }
-            else if(weaponIndex[i].type == REV_CON)
+
+            for (j = 0; j < NO_OF_EFFECTS; j++)
             {
-               exploType = FX_GREENY;
+                if (effects[j].count == 0)
+                {
+                    effects[j].pos.vx = weaponIndex[i].pos.vx;
+                    effects[j].pos.vy = weaponIndex[i].pos.vy;
+                    effects[j].pos.vz = weaponIndex[i].pos.vz;
+
+                    effects[j].vel.vx = (signed char)randy() >> 2;
+                    effects[j].vel.vy = (signed char)randy() >> 2;
+                    effects[j].vel.vz = (signed char)randy() >> 2;
+
+                    if (weaponIndex[i].count == SHIP_EXPLODE)
+                    {
+                        effects[j].vel.vx += (short)(shipIndex[weaponIndex[i].targetShip].vpivot.vx >> 6);
+                        effects[j].vel.vy += (short)(shipIndex[weaponIndex[i].targetShip].vpivot.vy >> 6);
+                        effects[j].vel.vz += (short)(shipIndex[weaponIndex[i].targetShip].vpivot.vz >> 6);
+                    }
+
+                    effects[j].count = -((((char)randy()) >> 4) + 8);
+
+                    for (k = 0; k < 2; k++)
+                    {
+                        effects[j].size = 8;
+                        /*TODO
+                        effects[j].sprite[k].b0 = tranny_table[exploType]; // Set the colour
+                        setUV4(&(effects[j].sprite[k]), effectTextures[FX_EBOLT]->u0, effectTextures[FX_EBOLT]->v0, effectTextures[FX_EBOLT]->u1, effectTextures[FX_EBOLT]->v1, effectTextures[FX_EBOLT]->u2, effectTextures[FX_EBOLT]->v2, effectTextures[FX_EBOLT]->u3, effectTextures[FX_EBOLT]->v3);
+                        effects[j].sprite[k].clut = effectTextures[exploType]->cba;
+                        */
+                    }
+                    noToRelease++;
+                    if (noToRelease == 30)
+                        return;
+                }
             }
-            else
-               exploType = FX_FIRE;
-         }
-
-         for(j = 0; j < NO_OF_EFFECTS; j++)
-         {
-            if(effects[j].count == 0)
-            {
-               effects[j].pos.vx = weaponIndex[i].pos.vx;
-               effects[j].pos.vy = weaponIndex[i].pos.vy;
-               effects[j].pos.vz = weaponIndex[i].pos.vz;
-
-               effects[j].vel.vx = (signed char)randy()>>2;
-               effects[j].vel.vy = (signed char)randy()>>2;
-               effects[j].vel.vz = (signed char)randy()>>2;
-
-               if(weaponIndex[i].count == SHIP_EXPLODE)
-               {
-                  effects[j].vel.vx += (short)(shipIndex[weaponIndex[i].targetShip].vpivot.vx >> 6);
-                  effects[j].vel.vy += (short)(shipIndex[weaponIndex[i].targetShip].vpivot.vy >> 6);
-                  effects[j].vel.vz += (short)(shipIndex[weaponIndex[i].targetShip].vpivot.vz >> 6);
-               }
-
-               effects[j].count = -((((char)randy())>>4) + 8);
-
-               for(k = 0; k < 2; k++)
-               {
-                  effects[j].size = 8;
-                  effects[j].sprite[k].b0 = tranny_table[exploType];  //Set the colour
-                  setUV4(&(effects[j].sprite[k]),
-                     effectTextures[FX_EBOLT]->u0, effectTextures[FX_EBOLT]->v0,
-                     effectTextures[FX_EBOLT]->u1, effectTextures[FX_EBOLT]->v1,
-                     effectTextures[FX_EBOLT]->u2, effectTextures[FX_EBOLT]->v2,
-                     effectTextures[FX_EBOLT]->u3, effectTextures[FX_EBOLT]->v3) ;
-                  effects[j].sprite[k].clut = effectTextures[exploType]->cba;
-               }
-               noToRelease++;
-               if(noToRelease == 30) return;
-
-            }
-         }
-         weaponIndex[i].count = NON_ACTIVE;
-      }
-   }
-#endif
+            weaponIndex[i].count = NON_ACTIVE;
+        }
+    }
 }
 
 const uint8 gStartBoomColors[4][3] = {
@@ -874,9 +865,12 @@ void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip)
     }
 }
 
-static int shakeCount = 0;
+int shakeCount = 0;
 
-void SetShake(int duration) { shakeCount = duration; }
+void SetShake(int duration)
+{
+    shakeCount = duration;
+}
 
 void ShakeScreen(void)
 {
@@ -901,7 +895,7 @@ GT4* abPtr[80];
 short* abCoords[80];
 signed short greyCoords[80];
 
-#if 1
+#if 1 // TODO WTF is Aurora?
 void InitAuroraBorialis(Object* object)
 {
     int i;
@@ -999,5 +993,4 @@ void AuroraBorialis(Object* object)
         }
     }
 }
-
 #endif

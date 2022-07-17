@@ -4761,7 +4761,7 @@ long SquareRoot0(long a)
 
 #define SHIFT 12 /* number of bits to shift for 4096 */
 
-void MulMatrix0(MATRIX* m0, MATRIX* m1, MATRIX* ret)
+void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret)
 {
     ret->m[0][0] = (((long)m0->m[0][0] * (long)m1->m[0][0]) + ((long)m0->m[0][1] * (long)m1->m[1][0]) + ((long)m0->m[0][2] * (long)m1->m[2][0])) >> SHIFT;
     ret->m[0][1] = (((long)m0->m[0][0] * (long)m1->m[0][1]) + ((long)m0->m[0][1] * (long)m1->m[1][1]) + ((long)m0->m[0][2] * (long)m1->m[2][1])) >> SHIFT;
@@ -4776,9 +4776,13 @@ void MulMatrix0(MATRIX* m0, MATRIX* m1, MATRIX* ret)
     ret->m[2][2] = (((long)m0->m[2][0] * (long)m1->m[0][2]) + ((long)m0->m[2][1] * (long)m1->m[1][2]) + ((long)m0->m[2][2] * (long)m1->m[2][2])) >> SHIFT;
 }
 
-MATRIX RTM; // 1 current rotation matrix
+extern int gWidth;
+extern int gHeight;
+extern int gBorder;
 
-void ApplyMatrix(MATRIX* m, SVECTOR* v0, VECTOR* v1)
+#define SCREEN_Z 160
+
+void ApplyMatrix(const MATRIX* m, const SVECTOR* v0, VECTOR* v1)
 {
     long xt, yt, zt;
     long stage1, stage2, stage3;
@@ -4803,52 +4807,158 @@ void ApplyMatrix(MATRIX* m, SVECTOR* v0, VECTOR* v1)
     v1->vz = stage1 + stage2 + stage3 + m->t[2];
 }
 
-void RotTrans(SVECTOR* v0, VECTOR* v1, long* flag)
+void RotTrans(const MATRIX* m, const SVECTOR* v0, VECTOR* v1, long* flag)
 {
-    /*TODO RotTrans*/
-    v1->vx = 0;
-    v1->vy = 0;
-    v1->vz = 256;
+    VECTOR r0;
+    long x, y, z, f = 0;
 
-    /*TODO frustum clipping
-       register long z;
+    ApplyMatrix(m, v0, v1);
 
-       ApplyMatrix(&RTM, v0, v1);
+    x = v1->vx;
+    y = v1->vy;
+    z = v1->vz;
 
-       z = v1->vz;
-       if (z < 0) { *flag |= 0x00040000; }
-       if (z > 32768) { *flag |= 0x00400000; }
-       //if (z < SCR2) { *flag |= 0x00020000; z = SCR2; }
-       if (z > 65536) { z = 65536; }
-       //if( (z < FNEAR) || (z > FFAR) )      {  *flag |= 0x00001000;             }
-       if (v1->vx > 32767) { *flag |= 0x81000000; v1->vx = 32767; }
-       if (v1->vy > 32767) { *flag |= 0x80800000; v1->vy = 32767; }
-       if (v1->vx < -32767) { *flag |= 0x81000000; v1->vx = -32767; }
-       if (v1->vy < -32767) { *flag |= 0x80800000; v1->vy = -32767; }
-    */
-}
-
-extern int gWidth;
-extern int gHeight;
-extern int gBorder;
-
-long RotTransPers(SVECTOR* v0, DVECTOR* sxy, long* flag)
-{
-    /*TODO RotTransPers*/
-    //VECTOR r0;
-    //ApplyMatrix(&RTM, v0, &r0);
-    //DLSRotTransPers(sxy, &r0, flag);
-    sxy->vx = 160;
-    sxy->vy = 120;
-
-    *flag = 0;
-
-    if (sxy->vx < -(gBorder + 32) || sxy->vx > (320 + gBorder + 32) || sxy->vx < -(32) || sxy->vx > (240 + 32))
+    if (z < 0)
     {
-        *flag |= CrtClipped;
+        f |= ZNegative;
     }
 
-//        ( | ZNegative | ZLarge | ZSmall)
+    if (z > 0x8000)
+    {
+        f |= ZLarge;
+    }
 
-    return 1;//r0.vz >> 2;
+    if (z < (SCREEN_Z >> 1))
+    {
+        z = (SCREEN_Z >> 1);
+        f |= ZSmall;
+    }
+
+    if (z > 0xFFFF)
+    {
+        z = 0xFFFF;
+    }
+
+    if (x >= 0x7FFF)
+    {
+        x = 0x7FFF;
+        f |= CrtClipped | XLarge;
+    }
+
+    if (y >= 0x7FFF)
+    {
+        y = 0x7FFF;
+        f |= CrtClipped | YLarge;
+    }
+
+    if (x <= -0x7FFF)
+    {
+        x = -0x7FFF;
+        f |= CrtClipped | XLarge;
+    }
+
+    if (y <= -0x7FFF)
+    {
+        y = -0x7FFF;
+        f |= CrtClipped | YLarge;
+    }
+
+    v1->vx = x;
+    v1->vy = y;
+    *flag = f;
+}
+
+void DLSRotTransPers(DVECTOR* sxy, const VECTOR* r0, long* flag)
+{
+    long x, y, z, f = 0;
+
+    x = r0->vx;
+    y = r0->vy;
+    z = r0->vz;
+
+    if (z < 0)
+    {
+        f |= ZNegative;
+    }
+
+    if (z > 0x8000)
+    {
+        f |= ZLarge;
+    }
+
+    if (z < (SCREEN_Z >> 1))
+    {
+        z = (SCREEN_Z >> 1);
+        f |= ZSmall;
+    }
+
+    if (z > 0xFFFF)
+    {
+        z = 0xFFFF;
+    }
+
+    if (x >= 0x7FFF)
+    {
+        x = 0x7FFF;
+        f |= CrtClipped | XLarge;
+    }
+
+    if (y >= 0x7FFF)
+    {
+        y = 0x7FFF;
+        f |= CrtClipped | YLarge;
+    }
+
+    if (x <= -0x7FFF)
+    {
+        x = -0x7FFF;
+        f |= CrtClipped | XLarge;
+    }
+
+    if (y <= -0x7FFF)
+    {
+        y = -0x7FFF;
+        f |= CrtClipped | YLarge;
+    }
+
+    x = (SCREEN_Z * x) / z + 160;
+    y = (SCREEN_Z * y) / z + 120;
+
+    if (x < -1024)
+    {
+        x = -1024;
+        f |= CrtClipped | XClipped;
+    }
+
+    if (x > 1024)
+    {
+        x = 1024;
+        f |= CrtClipped | XClipped;
+    }
+
+    if (y < -1024)
+    {
+        y = -1024;
+        f |= CrtClipped | YClipped;
+    }
+
+    if (y > 1024)
+    {
+        y = 1024;
+        f |= CrtClipped | YClipped;
+    }
+
+    sxy->vx = x;
+    sxy->vy = y;
+    *flag = f;
+}
+
+long RotTransPers(const MATRIX* m, const SVECTOR* v0, DVECTOR* sxy, long* flag)
+{
+    VECTOR r0;
+
+    ApplyMatrix(m, v0, &r0);
+    DLSRotTransPers(sxy, &r0, flag);
+
+    return r0.vz >> 2;
 }

@@ -71,8 +71,7 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
         toCentre.vx = (shipIndex[i].ppivot.vx + ctrlcamera.camPos->relative.t[0]);
         toCentre.vy = (shipIndex[i].ppivot.vy + ctrlcamera.camPos->relative.t[1]);
         toCentre.vz = (shipIndex[i].ppivot.vz + ctrlcamera.camPos->relative.t[2]);
-        SetSkeletonTransform(ctrlcamera.camPos->super); // AJY
-        RotTrans(&toCentre, &v2, &flag);
+        RotTrans(ctrlcamera.camPos->super, &toCentre, &v2, &flag);
 
         if (mag < 2000)
             shipIndex[i].attr |= VISIBLE;

@@ -332,13 +332,13 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
 void getWorldPoint(VECTOR* output, Object* object, Object* objectCollide, int pointNo)
 {
     long flag;
-    SVECTOR* vertex;
-
-    SetSkeletonTransform(object->skeleton);
+    const SVECTOR* vertex;
+    const MATRIX* matrix;
 
     vertex = objectCollide->vertices;
+    matrix = GetSkeletonMatrix(object->skeleton);
 
-    RotTrans(vertex + pointNo, output, &flag);
+    RotTrans(matrix, vertex + pointNo, output, &flag);
 }
 
 void GetTargetPos(VECTOR* result, VECTOR pos, Vector cent1, Vector cent2)

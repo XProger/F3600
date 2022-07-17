@@ -42,6 +42,7 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
     long extent;
     SVECTOR centre;
     Object* obj; // = objectTable[0];
+    MATRIX* matrix;
 
     section = camera->section;
 
@@ -53,14 +54,14 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
             obj = objectTable[section->objects[i]];
 
             obj->skeleton->update = 1;
-            SetSkeletonTransform(obj->skeleton);
+            matrix = GetSkeletonMatrix(obj->skeleton);
             extent = obj->extent;
 
             centre.vx = 0;
             centre.vy = 0;
             centre.vz = 0;
 
-            RotTrans(&centre, &result, &flag);
+            RotTrans(matrix, &centre, &result, &flag);
 
             result.vz += extent;
 
