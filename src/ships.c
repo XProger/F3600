@@ -59,6 +59,9 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
     SVECTOR toCentre;
     VECTOR v2;
     long flag;
+    MATRIX* matrix;
+
+    matrix = GetSkeletonMatrix(ctrlcamera.camPos->super);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
@@ -66,12 +69,12 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
         distance.vy = (shipIndex[i].ppivot.vy + ctrlcamera.camPos->relative.t[1]) >> 3;
         distance.vz = (shipIndex[i].ppivot.vz + ctrlcamera.camPos->relative.t[2]) >> 3;
 
-        mag = GetMagnitude(distance);
+        mag = GetMagnitude(&distance);
 
         toCentre.vx = (shipIndex[i].ppivot.vx + ctrlcamera.camPos->relative.t[0]);
         toCentre.vy = (shipIndex[i].ppivot.vy + ctrlcamera.camPos->relative.t[1]);
         toCentre.vz = (shipIndex[i].ppivot.vz + ctrlcamera.camPos->relative.t[2]);
-        RotTrans(ctrlcamera.camPos->super, &toCentre, &v2, &flag);
+        RotTrans(matrix, &toCentre, &v2, &flag);
 
         if (mag < 2000)
             shipIndex[i].attr |= VISIBLE;

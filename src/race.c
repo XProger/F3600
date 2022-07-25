@@ -52,11 +52,8 @@ short ctrlsky;
 int ctrlchoice;
 TrackSection* ctrlsection;
 Face* ctrlfacePtr;
-Effect ctrleffects[NO_OF_EFFECTS];
-Texture* ctrleffectTextures[NO_OF_EFFECT_TEXTURES];
 int ctrlcdTrack;
 int ctrlnoCdTracks;
-Shadow* ctrlShadow;
 Object* ctrllostad[20]; /* It wouldn`t suprise me ! */
 int ctrlstadCount;
 short ctrlsectCount;
@@ -134,7 +131,7 @@ const char* const PILOT_NAMES[] =
     "paul"
 };
 
-void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex, WeaponShape* weaponShapes, Effect* effects, RescueData* rescueDroid, Object** shipShapes)
+void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex, WeaponShape* weaponShapes, RescueData* rescueDroid, Object** shipShapes)
 {
     int i;
 
@@ -153,10 +150,8 @@ void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex,
     {
         weaponShapes[i].used = 0;
     }
-    for (i = 0; i < NO_OF_EFFECTS; i++)
-    {
-        effects[i].count = 0;
-    }
+
+    ResetEffects();
 
     /*TODO audio*/
     // r_attr.depth.left = 2000;
@@ -413,7 +408,7 @@ void raceInit(ConfigData* gameData)
 
     InitCamera(&ctrlcamera, track->sections);
 
-    ctrlShadow = InitShadow(ctrlcamera.camPos, ctrleffectTextures);
+    InitShadow(ctrlcamera.camPos);
 
     if (trackNo == 13)
         InitAuroraBorialis(ctrlprm[ctrlsky]);
@@ -427,7 +422,7 @@ void raceInit(ConfigData* gameData)
 
     initWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
 
-    InitEffects(ctrleffects, ctrlcamera.camPos, ctrleffectTextures);
+    InitEffects(ctrlcamera.camPos);
 
     CameraUpdate = UpdateCameraRaceStart;
 
@@ -492,7 +487,7 @@ void raceInit(ConfigData* gameData)
         InitFireCongratulations();
     }
 
-    UpdateEffects(ctrleffects);
+    UpdateEffects();
 
     /*TODO audio*/
     // CdControlB(CdlStop, 0, 0);
@@ -526,9 +521,10 @@ void raceCtrl(ConfigData* gameData)
     ctrlNeedInSingleGameConfirm = 0;
     ctrlNeedTargetIcon = 0;
 
+    //ctrlshipIndex[ownShip].weaponType = ROCKET; // fx debug
+
     UpdatePad();
 
-    //    AJSVSync(2);
     if (ctrlfirsttime)
     {
         PlayNote(CROWD, 0, -1);
@@ -664,7 +660,7 @@ void raceCtrl(ConfigData* gameData)
                             break;
                         }
                     }
-                    Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, ctrleffects, &ctrlrescueDroid, ctrlshipShapes);
+                    Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
 
                     PlayNote(CROWD, 0, -1);
                     PlayNote(CROWD2, 0, -1);
@@ -776,7 +772,7 @@ void raceCtrl(ConfigData* gameData)
         // AdjustCrowdSound(ctrllostad, ctrlstadCount);
         // AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes, &ctrlcamera );
 
-        UpdateEffects(ctrleffects);
+        UpdateEffects();
 
         if (raceType != TIME_TRIAL)
         {
@@ -900,7 +896,7 @@ void raceCtrl(ConfigData* gameData)
                             ctrlNeedDeSelectScreen = 0;
                             InitHiScoreData(&ctrlhiScoreData);
 
-                            Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, ctrleffects, &ctrlrescueDroid, ctrlshipShapes);
+                            Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                             PlayNote(CROWD, 0, -1);
                             PlayNote(CROWD2, 0, -1);
                         }
@@ -986,7 +982,7 @@ void raceCtrl(ConfigData* gameData)
                                 ctrlhiScoreData.lConfirm = 0;
                                 CDRestartNeeded = 1;
                                 InitHiScoreData(&ctrlhiScoreData);
-                                Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, ctrleffects, &ctrlrescueDroid, ctrlshipShapes);
+                                Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                                 PlayNote(CROWD, 0, -1);
                                 PlayNote(CROWD2, 0, -1);
                             }
@@ -1261,7 +1257,7 @@ void raceCtrl(ConfigData* gameData)
                                                 attractDelay = 0;
                                                 ctrlhiScoreData.confirm = 2;
                                                 ctrlhiScoreData.lConfirm = 0;
-                                                Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, ctrleffects, &ctrlrescueDroid, ctrlshipShapes);
+                                                Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                                                 PlayNote(CROWD, 0, -1);
                                                 PlayNote(CROWD2, 0, -1);
                                             }
@@ -1320,7 +1316,7 @@ void raceCtrl(ConfigData* gameData)
             ctrlchoice = -1;
             gameData->Lives--;
 
-            Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, ctrleffects, &ctrlrescueDroid, ctrlshipShapes);
+            Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
             PlayNote(CROWD, 0, -1);
             PlayNote(CROWD2, 0, -1);
         }
@@ -1401,6 +1397,7 @@ void raceLoop(ConfigData* gameData)
     }
 #endif
 
+    renderFrameBegin();
     renderClear();
 
     //if (trackNo == 13)
@@ -1435,7 +1432,7 @@ void raceLoop(ConfigData* gameData)
 
     // SHADOW
     if (ctrlshipIndex[ownShip].attr & RACING) /* TODO enable for cinematics? */
-        DrawShadow(ctrlshipShapes, ctrlshipIndex, ctrlShadow);
+        DrawShadow(ctrlshipShapes, ctrlshipIndex);
 
     // DROID
     SetSkeletonPosition(ctrlshipShapes[RESCUE_DROID]->skeleton, ctrlrescueDroid.pos.vx, ctrlrescueDroid.pos.vy, ctrlrescueDroid.pos.vz);
@@ -1449,8 +1446,8 @@ void raceLoop(ConfigData* gameData)
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
 
     // Effects
-    AddEffects(ctrleffects, ctrlweaponIndex, ctrleffectTextures, ctrlshipIndex);
-    DrawEffects(ctrleffects);
+    AddEffects(ctrlweaponIndex, ctrlshipIndex);
+    DrawEffects();
 
     renderEnd3D();
 
@@ -1542,6 +1539,8 @@ void raceLoop(ConfigData* gameData)
         DrawWeaponSprtIcons(ctrlweaponIconTextures, &(ctrlshipIndex[ownShip]));
         DrawHud(ctrlshipIndex, ctrlchoice, gameData);
     }
+
+    renderFrameEnd();
 }
 
 void raceDemo(ConfigData* gameData)

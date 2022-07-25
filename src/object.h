@@ -203,6 +203,7 @@ typedef struct Object
     short vertexCount; /* Number of Vertices */
     SVECTOR* vertices; /* Pointer to 3D Points */
 
+    /*TODO unused*/
     short normalCount; /* Number of Normals */
     SVECTOR* normals; /* Pointer to 3D Normals */
 

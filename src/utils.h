@@ -2,11 +2,11 @@
 #define _UTILS_H_INCLUDED_
 
 int sar(int a, int n);
-int GetMagnitude(VECTOR vec1);
-void MinusVector(VECTOR v1, VECTOR v2, VECTOR* result);
-void CrossProduct(VECTOR* result, VECTOR A, VECTOR B);
-int ScalarProduct(VECTOR vec1, VECTOR vec2);
-int GetAng(VECTOR vec1, VECTOR vec2);
+int GetMagnitude(const VECTOR* vec1);
+void MinusVector(const VECTOR* v1, const VECTOR* v2, VECTOR* result);
+void CrossProduct(VECTOR* result, const VECTOR* A, const VECTOR* B);
+int ScalarProduct(const VECTOR* vec1, const VECTOR* vec2);
+int GetAng(const VECTOR* vec1, const VECTOR* vec2);
 int ang(int a);
 int arccos(int value);
 

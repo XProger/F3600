@@ -92,7 +92,7 @@ void InitSpeedo(void)
     speedoTex = LoadTexture("wipeout\\textures\\speedo.tim");
 }
 
-#define BAR_THRUST      64
+#define BAR_THRUST      70
 #define BAR_SPEED       2000
 #define LERP_16(a,b,t)  a + ((b - a) * t >> 16)
 
@@ -992,10 +992,10 @@ int CalcPosition(ShipData* shipIndex)
                             trackVect.vy = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vy - shipIndex[i].nearTrkSect->centre.vy;
                             trackVect.vz = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vz - shipIndex[i].nearTrkSect->centre.vz;
 
-                            angleB = GetAng(AB, trackVect);
-                            angleC = GetAng(AC, trackVect);
-                            distanceB = (rcos(angleB >> 3) * GetMagnitude(AB)) >> 12;
-                            distanceC = (rcos(angleC >> 3) * GetMagnitude(AC)) >> 12;
+                            angleB = GetAng(&AB, &trackVect);
+                            angleC = GetAng(&AC, &trackVect);
+                            distanceB = (rcos(angleB >> 3) * GetMagnitude(&AB)) >> 12;
+                            distanceC = (rcos(angleC >> 3) * GetMagnitude(&AC)) >> 12;
 
                             if ((distanceB == distanceC) && (i > j))
                                 tempPosition++;

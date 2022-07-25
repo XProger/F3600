@@ -85,7 +85,7 @@ void UpdateRescueDroid(ShipData* shipIndex, Object** shipShapes, int shipNo, Wea
     playerShip->roll -= playerShip->roll >> 5;
 
     /**** Needs PAL ****/
-    if ((playerShip->attr & IN_TOW) && (GetMagnitude(distance) < 800))
+    if ((playerShip->attr & IN_TOW) && (GetMagnitude(&distance) < 800))
     {
         playerShip->update = UpdatePlayerShipNorm;
         playerShip->updateCount = 0;
@@ -286,7 +286,7 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         rescueDroid->pos.vz = target.vz;
     }
 
-    if ((GetMagnitude(distance) < 1) && ((shipIndex->attr & IN_TOW) == 0))
+    if ((GetMagnitude(&distance) < 1) && ((shipIndex->attr & IN_TOW) == 0))
     {
         shipIndex->attr |= IN_TOW;
 

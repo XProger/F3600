@@ -11,11 +11,10 @@
 
 typedef struct Effect
 {
-    VECTOR pos;
-    SVECTOR vel;
+    int x, y, z;
+    int vx, vy, vz;
     short count;
     short type;
-    char u, v;
     short size;
 } Effect;
 
@@ -25,14 +24,15 @@ typedef struct Shadow
     int TODO;
 } Shadow;
 
-void InitEffects(Effect* effects, Skeleton* camPos, Texture** effectTextures);
-void UpdateEffects(Effect* effects);
-void AddEffects(Effect* effects, WeaponData* weaponIndex, Texture** effectTextures, ShipData* shipIndex);
+void InitEffects(Skeleton* camPos);
+void ResetEffects(void);
+void UpdateEffects();
+void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex);
 void ColourStartBoom(int noToLight);
 void ResetStartBoom(void);
 void InitStartBoom(Object** prm, short prmCount);
-Shadow* InitShadow(Skeleton* camPos, Texture** effectTextures);
-void DrawShadow(Object** shipShapes, ShipData* shipIndex, Shadow* shadow);
+void InitShadow(Skeleton* camPos);
+void DrawShadow(Object** shipShapes, ShipData* shipIndex);
 void SetShake(int duration);
 void ShakeScreen(void);
 void InitAuroraBorialis(Object* object);
@@ -40,7 +40,7 @@ void AuroraBorialis(Object* object);
 void ColourRedLight(Object* redLight);
 void ColourDroidLights(Object* droid);
 void MoveDonkey(Object** donkey);
-void DrawEffects(Effect* effects);
+void DrawEffects();
 void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip);
 void InitRedLight(Object** prm, short prmCount, Object** redLight);
 void InitDonkey(Object** prm, short prmCount, Object** donkey);

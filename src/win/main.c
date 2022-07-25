@@ -248,7 +248,7 @@ void inputUpdate()
     }
 }
 
-void setKey(char code, char KeyDown)
+void setKey(uint8 code, uint8 KeyDown)
 {
     int p = 0;
 
@@ -370,7 +370,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 }
             }
 
-            setKey((char)wParam, (msg == WM_KEYDOWN) || (msg == WM_SYSKEYDOWN));
+            setKey(wParam, (msg == WM_KEYDOWN) || (msg == WM_SYSKEYDOWN));
             break;
 
         case WM_DEVICECHANGE:

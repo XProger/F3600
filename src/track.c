@@ -76,12 +76,6 @@ void IntelSection(void)
             IntelShort(&section->allViewCount[j]);
         }
 
-        for (j = 0; j < 4; j++)
-        {
-            IntelShort(&section->unused_high[j]);
-            IntelShort(&section->unused_med[j]);
-        }
-
         IntelShort(&section->faceStart);
         IntelShort(&section->faceCount);
 
@@ -232,7 +226,7 @@ void InitViewList(char* file)
     long length;
     TrackSection* section;
     long total;
-    short i, j;
+    short i, j, k;
     int viewListCount;
 
     length = FileLength(file);

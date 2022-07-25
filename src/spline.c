@@ -244,7 +244,7 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
             targetVector.vz = nextSection->centre.vz - section->centre.vz;
         }
 
-        gap_mag = GetMagnitude(targetVector);
+        gap_mag = GetMagnitude(&targetVector);
 
         targetVector.vx = (targetVector.vx * remoteShip->speed) / gap_mag;
         targetVector.vy = (targetVector.vy * remoteShip->speed) / gap_mag;
@@ -258,7 +258,7 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
         path2.vy = nextSection->centre.vy + offSetVector.vy;
         path2.vz = nextSection->centre.vz + offSetVector.vz;
 
-        GetTargetPos(&bestPath, remoteShip->ppivot, path2, path1);
+        GetTargetPos(&bestPath, &remoteShip->ppivot, &path2, &path1);
 
         remoteShip->apivot.vx = (targetVector.vx + ((bestPath.vx - remoteShip->ppivot.vx) >> 1));
         remoteShip->apivot.vy = (targetVector.vy + ((bestPath.vy - remoteShip->ppivot.vy) >> 1));
@@ -278,7 +278,7 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
         facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
         facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
         facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-        alpha = PlaneLineCollision(facePoint, remoteShip->ppivot, facePtr->normal);
+        alpha = PlaneLineCollision(&facePoint, &remoteShip->ppivot, &facePtr->normal);
 
         if (alpha < 50)
             alpha = 50;
@@ -351,7 +351,7 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
         targetVector.vy = nextSection->centre.vy - section->centre.vy;
         targetVector.vz = nextSection->centre.vz - section->centre.vz;
 
-        gap_mag = GetMagnitude(targetVector);
+        gap_mag = GetMagnitude(&targetVector);
 
         targetVector.vx = (targetVector.vx * remoteShip->speed) / gap_mag;
         /*    targetVector.vy = (targetVector.vy*remoteShip->speed)/gap_mag;*/
@@ -359,7 +359,7 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
 
         targetVector.vy = 500;
 
-        GetTargetPos(&bestPath, remoteShip->ppivot, nextSection->centre, remoteShip->nearTrkSect->centre);
+        GetTargetPos(&bestPath, &remoteShip->ppivot, &nextSection->centre, &remoteShip->nearTrkSect->centre);
 
         remoteShip->apivot.vx = (targetVector.vx + ((bestPath.vx - remoteShip->ppivot.vx) >> 1));
         remoteShip->apivot.vy = targetVector.vy;

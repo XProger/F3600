@@ -4,10 +4,10 @@
 #include "standard.h"
 #include "tim.h"
 
-typedef struct Quad
+typedef struct
 {
-    int16 x, y;
-    uint16 w, h;
+    int32 x, y;
+    int32 w, h;
     uint16 u0, v0;
     uint16 u1, v1;
     const Texture* texture;
@@ -25,6 +25,13 @@ typedef struct
     uint8 r3, g3, b3;
 } ColorQuad;
 
+typedef struct
+{
+    int32 x, y, z;
+    int32 size;
+    const Texture* texture;
+} Billboard;
+
 extern int gFrameIndex;
 extern int gLastFrameIndex;
 
@@ -38,14 +45,19 @@ void renderOffset(int x, int y);
 void renderClear(void);
 void renderQuad(const Quad* q);
 void renderColorQuad(const ColorQuad* q);
+void renderBillboard(const Billboard* b);
 
 void renderPrepare(void);
+void renderFrameBegin(void);
+void renderFrameEnd(void);
+void renderSetMatrix(Skeleton* skeleton, int x, int y, int z);
 void renderTrack(void);
 void renderObject(const Object* object);
 void renderSky(const Object* object);
 void renderBegin3D(void);
 void renderEnd3D(void);
 void renderTransparent(int enable);
+void renderDepthWrite(int enable);
 Texture* renderCreateTexture(Tim* tim);
 
 #endif

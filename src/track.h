@@ -20,12 +20,12 @@ typedef struct SVector
 } SVector;
 
 /* Face flags */
-#define TRACK_BASE 1
-#define WEAPON_GRID_LEFT 2
-#define FLIP_TEXTURE 4
-#define WEAPON_GRID_RIGHT 8
-#define START_GRID 16
-#define SPEED_UP 32
+#define TRACK_BASE          1
+#define WEAPON_GRID_LEFT    2
+#define FLIP_TEXTURE        4
+#define WEAPON_GRID_RIGHT   8
+#define START_GRID          16
+#define SPEED_UP            32
 
 typedef struct Face
 {
@@ -79,9 +79,7 @@ typedef struct TrackSection
     short westViewCount[3];
     short allViewCount[3];
 
-    /*TODO unused*/
-    short unused_high[4];
-    short unused_med[4];
+    short unused[8];
 
     short faceStart;
     short faceCount;

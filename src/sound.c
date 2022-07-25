@@ -609,7 +609,7 @@ short PlayDirectionalNote(short vagID, short priority, short duration, VECTOR po
     distance.vy = (pos.vy + cameraPtr->camPos->relative.t[1]) >> 3;
     distance.vz = (pos.vz + cameraPtr->camPos->relative.t[2]) >> 3;
 
-    mag = GetMagnitude(distance);
+    mag = GetMagnitude(&distance);
 
     voll = 0x2fff - (mag);
     if (voll < 0)
@@ -721,7 +721,7 @@ short AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR 
     distance.vy = (pos.vy + cameraPtr->camPos->relative.t[1]) >> 3;
     distance.vz = (pos.vz + cameraPtr->camPos->relative.t[2]) >> 3;
 
-    mag = GetMagnitude(distance);
+    mag = GetMagnitude(&distance);
     mag = mag << 2;
 
     voll = 0x2fff - (mag); /* No Scaling */
@@ -781,7 +781,7 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
             distance.vy = (shipIndex[i].ppivot.vy + camera->camPos->relative.t[1]) >> 3;
             distance.vz = (shipIndex[i].ppivot.vz + camera->camPos->relative.t[2]) >> 3;
 
-            mag = GetMagnitude(distance);
+            mag = GetMagnitude(&distance);
 
             if (mag < smallestMag[0])
             {
@@ -809,7 +809,7 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
             distance.vy = (shipIndex[ident[i]].ppivot.vy + camera->camPos->relative.t[1]) >> 3;
             distance.vz = (shipIndex[ident[i]].ppivot.vz + camera->camPos->relative.t[2]) >> 3;
 
-            mag = GetMagnitude(distance);
+            mag = GetMagnitude(&distance);
 
             if (mag > 1000)
                 voll = 0x2fff - ((mag - 1000) << 2);
@@ -847,7 +847,7 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
             dopler.vy += distance.vy;
             dopler.vz += distance.vz;
 
-            doplerMag = mag - GetMagnitude(dopler);
+            doplerMag = mag - GetMagnitude(&dopler);
 
             SetPitch(REMOTE + i, 0x0800 + doplerMag);
             SetVolume(REMOTE + i, voll, volr);
@@ -976,7 +976,7 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
         distance.vy = (lostad[i]->skeleton->relative.t[1] + cameraPtr->camPos->relative.t[1]) >> 3;
         distance.vz = (lostad[i]->skeleton->relative.t[2] + cameraPtr->camPos->relative.t[2]) >> 3;
 
-        mag = GetMagnitude(distance);
+        mag = GetMagnitude(&distance);
 
         if (mag < smallestMag[0])
         {

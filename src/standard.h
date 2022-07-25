@@ -114,10 +114,14 @@ unsigned short GetKeyNoBlock(void);
 void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
 
-#define ShipForwards    1
-#define ShipBackwards   2
-#define ShipRight       4
-#define ShipLeft        8
+enum ViewDir
+{
+    VIEW_DIR_NORTH,
+    VIEW_DIR_SOUTH,
+    VIEW_DIR_WEST,
+    VIEW_DIR_EAST,
+    VIEW_DIR_ALL
+};
 
 enum GameLoop
 {

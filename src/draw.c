@@ -1,10 +1,10 @@
 #include "game.h"
 
-char TrackDirection(TrackCamera* camera)
+char TrackDirection(const TrackCamera* camera)
 {
     SVECTOR reference;
     long angle;
-    TrackSection* nextSection;
+    const TrackSection* nextSection;
 
     nextSection = camera->section->nextSection.ptr;
 
@@ -17,19 +17,19 @@ char TrackDirection(TrackCamera* camera)
 
     if ((angle >= -512) && (angle < 512))
     {
-        return (ShipForwards);
+        return VIEW_DIR_NORTH;
     }
     else if ((angle >= 512) && (angle < 1536))
     {
-        return (ShipRight);
+        return VIEW_DIR_WEST;
     }
     else if ((angle >= 1536) || (angle < -1536))
     {
-        return (ShipBackwards);
+        return VIEW_DIR_SOUTH;
     }
     else
     {
-        return (ShipLeft);
+        return VIEW_DIR_EAST;
     }
 }
 

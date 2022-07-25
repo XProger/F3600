@@ -4,21 +4,6 @@
 
 #include "game.h"
 
-uint16 tempData[320 * 240];
-
-extern Texture* TextureTable[];
-
-extern HWND hWnd;
-HDC hDC;
-HGLRC hRC;
-
-extern const TrackCamera ctrlcamera;
-
-long xOffset;
-long yOffset;
-
-int gWidth, gHeight, gBorder;
-
 #ifndef GL_UNSIGNED_SHORT_5_6_5
     #define GL_UNSIGNED_SHORT_5_6_5 0x8363
 #endif
@@ -35,13 +20,19 @@ int gWidth, gHeight, gBorder;
     #define GL_CLAMP_TO_EDGE 0x812F
 #endif
 
-extern HWND hWnd;
-HDC hDC;
-HGLRC hRC;
+#define GL_COMBINE      0x8570
+#define GL_COMBINE_RGB  0x8571
+#define GL_SOURCE0_RGB  0x8580
+#define GL_SOURCE1_RGB  0x8581
+#define GL_PREVIOUS     0x8578
+#define GL_RGB_SCALE    0x8573
 
-short texpage = -1;
-
-extern short trackNum;
+#define i32     (1.0f / 32.0f)
+#define i64     (1.0f / 64.0f)
+#define i256    (1.0f / 256.0f)
+#define i212    (1.0f / 212.0f)
+#define i4096   (1.0f / 4096.0f)
+#define IDEG    (360.0f / 4096.0f)
 
 typedef struct TextureGL
 {
@@ -52,12 +43,39 @@ typedef struct TextureGL
     float ih;
 } TextureGL;
 
-#define GL_COMBINE      0x8570
-#define GL_COMBINE_RGB  0x8571
-#define GL_SOURCE0_RGB  0x8580
-#define GL_SOURCE1_RGB  0x8581
-#define GL_PREVIOUS     0x8578
-#define GL_RGB_SCALE    0x8573
+uint16 tempData[320 * 240];
+
+extern Texture* TextureTable[];
+const TextureGL* gTexture;
+
+extern HWND hWnd;
+HDC hDC;
+HGLRC hRC;
+
+extern const TrackCamera ctrlcamera;
+
+int in3D;
+
+long xOffset;
+long yOffset;
+
+int gWidth, gHeight, gBorder;
+
+int gCylX, gCylZ;
+
+int dbg_trackPolys;
+int dbg_objectPolys;
+int dbg_texSwitch;
+
+#define MAX_TRACK_TEX   22
+TextureGL gTrackTex[MAX_TRACK_TEX];
+uint16 gTrackTexData[MAX_TRACK_TEX][128 * 128];
+
+extern TrackData* track;
+extern TexTemplate* ctrltexTemplate;
+extern short ctrllibraryTextures;
+extern short ctrlnumLib;
+extern int TrackLoadHack;
 
 void setTexFilter()
 {
@@ -113,8 +131,6 @@ void renderInit(void)
 
     wglMakeCurrent(hDC, hRC);
 
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-
     glClearColor(0, 0, 0, 1);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
@@ -134,7 +150,9 @@ void renderInit(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glEnable(GL_TEXTURE_2D);
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void renderFree(void)
@@ -146,6 +164,11 @@ void renderFree(void)
 
 void renderSwap(void)
 {
+    char buf[64];
+    sprintf(buf, "t:%d, o:%d, ts:%d\n", dbg_trackPolys, dbg_objectPolys, dbg_texSwitch);
+    dbg_trackPolys = dbg_objectPolys = dbg_texSwitch = 0;
+    OutputDebugString(buf);
+
     SwapBuffers(hDC);
 }
 
@@ -166,25 +189,29 @@ void renderClear(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
+void renderFlush()
+{
+
+}
+
 void setTexture(const TextureGL* tex)
 {
+    if (gTexture == tex)
+        return;
+
+    gTexture = tex;
+    renderFlush();
+
+    dbg_texSwitch++;
     if (tex)
     {
-        glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, tex->id);
     }
     else
     {
-        glDisable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 }
-
-#define i32     (1.0f / 32.0f)
-#define i64     (1.0f / 64.0f)
-#define i256    (1.0f / 256.0f)
-#define i212    (1.0f / 212.0f)
-#define i4096   (1.0f / 4096.0f)
-#define IDEG    (360.0f / 4096.0f)
 
 void renderQuad(const Quad* q)
 {
@@ -193,10 +220,10 @@ void renderQuad(const Quad* q)
     float v0 = q->v0 * t->ih;
     float u1 = q->u1 * t->iw;
     float v1 = q->v1 * t->ih;
-    short x0 = q->x;
-    short y0 = q->y;
-    short x1 = q->x + q->w;
-    short y1 = q->y + q->h;
+    int x0 = q->x;
+    int y0 = q->y;
+    int x1 = q->x + q->w;
+    int y1 = q->y + q->h;
 
     setTexture(t);
 
@@ -229,15 +256,30 @@ void renderColorQuad(const ColorQuad* q)
     glEnd();
 }
 
-#define MAX_TRACK_TEX   22
-TextureGL gTrackTex[MAX_TRACK_TEX];
-uint16 gTrackTexData[MAX_TRACK_TEX][128 * 128];
+void renderBillboard(const Billboard* b)
+{
+    int sx, sy, sz, size;
+    TextureGL* t = (TextureGL*)b->texture;
 
-extern TrackData* track;
-extern TexTemplate* ctrltexTemplate;
-extern short ctrllibraryTextures;
-extern short ctrlnumLib;
-extern int TrackLoadHack;
+    size = b->size * 8;
+    sx = size * gCylX >> 12;
+    sy = size;
+    sz = size * gCylZ >> 12;
+
+    setTexture(t);
+
+    glColor3ub(128, 128, 128);
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex3i(b->x - sx, b->y - sy, b->z - sz);
+        glTexCoord2f(1, 0);
+        glVertex3i(b->x + sx, b->y - sy, b->z + sz);
+        glTexCoord2f(1, 1);
+        glVertex3i(b->x + sx, b->y + sy, b->z + sz);
+        glTexCoord2f(0, 1);
+        glVertex3i(b->x - sx, b->y + sy, b->z - sz);
+    glEnd();
+}
 
 void prepareTrack(void)
 {
@@ -282,7 +324,18 @@ void renderPrepare(void)
     prepareTrack();
 }
 
-void setMatrix(Skeleton* skeleton, int x, int y, int z)
+void renderFrameBegin(void)
+{
+    gCylX = rcos(-ctrlcamera.hdg);
+    gCylZ = rsin(-ctrlcamera.hdg);
+}
+
+void renderFrameEnd(void)
+{
+    //
+}
+
+void renderSetMatrix(Skeleton* skeleton, int x, int y, int z)
 {
     float m[4][4];
     const MATRIX* matrix = GetSkeletonMatrix(skeleton);
@@ -313,9 +366,13 @@ void setMatrix(Skeleton* skeleton, int x, int y, int z)
 void renderTrack(void)
 {
     const VECTOR* vertices = track->vertices;
-    const Face* face = track->faces;
-    int i, j, id;
+    const Face* face;
+    int i, j, s, k, id;
     int cx, cy, cz;
+    int dir;
+    short* counts;
+    const short** sections;
+    TrackSection* section;
 
 //    #define CHECK_UNUSED_TEX
 
@@ -324,52 +381,85 @@ void renderTrack(void)
     memset(texUsed, 0, MAX_TRACK_TEX);
 #endif
 
+    dir = TrackDirection(&ctrlcamera);
+
     cx = ctrlcamera.camPos->absolute.t[0];
     cy = ctrlcamera.camPos->absolute.t[1];
     cz = ctrlcamera.camPos->absolute.t[2];
 
-    setMatrix(ctrlcamera.camPos->super, cx, cy, cz);
+    renderSetMatrix(ctrlcamera.camPos->super, cx, cy, cz);
 
-    for (j = 0; j < track->sectionCount; j++)
+    switch (dir)
     {
-        const TrackSection* section = track->sections + j;
+        case VIEW_DIR_NORTH:
+            counts = ctrlcamera.section->northViewCount;
+            sections = ctrlcamera.section->northViewSection;
+            break;
+        case VIEW_DIR_SOUTH:
+            counts = ctrlcamera.section->southViewCount;
+            sections = ctrlcamera.section->southViewSection;
+            break;
+        case VIEW_DIR_WEST:
+            counts = ctrlcamera.section->westViewCount;
+            sections = ctrlcamera.section->westViewSection;
+            break;
+        default: // VIEW_DIR_EAST
+            counts = ctrlcamera.section->eastViewCount;
+            sections = ctrlcamera.section->eastViewSection;
+    }
 
-        for (i = section->faceStart; i < section->faceStart + section->faceCount; i++, face++)
+    for (k = 0; k < 3; k++)
+    {
+        for (j = 0; j < counts[k]; j += 2)
         {
-            ASSERT(face->texture < ctrlnumLib);
+            section = track->sections + sections[k][j];
 
-        #ifdef CHECK_UNUSED_TEX
-            texUsed[face->texture] = 1;
-        #endif
-
-            setTexture(gTrackTex + face->texture);
-
-            glColor3ub(face->red, face->green, face->blue);
-
-            glBegin(GL_QUADS);
-            if (face->flags & FLIP_TEXTURE)
+            for (s = 0; s < sections[k][j + 1]; s++)
             {
-                glTexCoord2f(0, 1);
-                glVertex3iv((GLint*)(vertices + face->vertex[3]));
-                glTexCoord2f(1, 1);
-                glVertex3iv((GLint*)(vertices + face->vertex[2]));
-                glTexCoord2f(1, 0);
-                glVertex3iv((GLint*)(vertices + face->vertex[1]));
-                glTexCoord2f(0, 0);
-                glVertex3iv((GLint*)(vertices + face->vertex[0]));
+                face = track->faces + section->faceStart;
+
+                for (i = 0; i < section->faceCount; i++, face++)
+                {
+                    ASSERT(face->texture < ctrlnumLib);
+
+                #ifdef CHECK_UNUSED_TEX
+                    texUsed[face->texture] = 1;
+                #endif
+
+                    setTexture(gTrackTex + face->texture);
+
+                    glColor3ub(face->red, face->green, face->blue);
+
+                    glBegin(GL_QUADS);
+                    if (face->flags & FLIP_TEXTURE)
+                    {
+                        glTexCoord2f(0, 1);
+                        glVertex3iv((GLint*)(vertices + face->vertex[3]));
+                        glTexCoord2f(1, 1);
+                        glVertex3iv((GLint*)(vertices + face->vertex[2]));
+                        glTexCoord2f(1, 0);
+                        glVertex3iv((GLint*)(vertices + face->vertex[1]));
+                        glTexCoord2f(0, 0);
+                        glVertex3iv((GLint*)(vertices + face->vertex[0]));
+                    }
+                    else
+                    {
+                        glTexCoord2f(1, 1);
+                        glVertex3iv((GLint*)(vertices + face->vertex[3]));
+                        glTexCoord2f(0, 1);
+                        glVertex3iv((GLint*)(vertices + face->vertex[2]));
+                        glTexCoord2f(0, 0);
+                        glVertex3iv((GLint*)(vertices + face->vertex[1]));
+                        glTexCoord2f(1, 0);
+                        glVertex3iv((GLint*)(vertices + face->vertex[0]));
+                    }
+                    glEnd();
+
+                    dbg_trackPolys++;
+                }
+
+                section = section->nextSection.ptr;
             }
-            else
-            {
-                glTexCoord2f(1, 1);
-                glVertex3iv((GLint*)(vertices + face->vertex[3]));
-                glTexCoord2f(0, 1);
-                glVertex3iv((GLint*)(vertices + face->vertex[2]));
-                glTexCoord2f(0, 0);
-                glVertex3iv((GLint*)(vertices + face->vertex[1]));
-                glTexCoord2f(1, 0);
-                glVertex3iv((GLint*)(vertices + face->vertex[0]));
-            }
-            glEnd();
         }
     }
 
@@ -399,10 +489,12 @@ void renderObject(const Object* object)
     cy = matrix->t[1];
     cz = matrix->t[2];
 
-    setMatrix(object->skeleton, cx, cy, cz);
+    renderSetMatrix(object->skeleton, cx, cy, cz);
 
     vertices = object->vertices;
     poly.primitive = object->primitives;
+
+    dbg_objectPolys += object->primitiveCount;
 
     for (i = 0; i < object->primitiveCount; i++)
     {
@@ -622,6 +714,7 @@ void renderObject(const Object* object)
                 break;
             }
 
+            case TypeTSPR:
             case TypeBSPR:
             {
                 const SPR* f = poly.spr;
@@ -631,8 +724,8 @@ void renderObject(const Object* object)
                 int sx, sz;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
-                sx = rcos(-ctrlcamera.hdg) * w >> 12;
-                sz = rsin(-ctrlcamera.hdg) * w >> 12;
+                sx = gCylX * w >> 12;
+                sz = gCylZ * w >> 12;
 
                 setTexture(t);
 
@@ -657,6 +750,7 @@ void renderObject(const Object* object)
             }
 
             default:
+                ASSERT(0);
                 break;
         }
     }
@@ -670,8 +764,6 @@ void renderSky(const Object* object)
     renderObject(object);
     glEnable(GL_DEPTH_TEST);
 }
-
-int in3D = 0;
 
 void renderBegin3D(void)
 {
@@ -717,6 +809,11 @@ void renderTransparent(int enable)
     {
         glDisable(GL_BLEND);
     }
+}
+
+void renderDepthWrite(int enable)
+{
+    glDepthMask(enable ? GL_TRUE : GL_FALSE);
 }
 
 uint16 RGB5551(uint16 c)

@@ -26,7 +26,7 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
     playerShip->thrust.vy = (playerShip->thrust_mag * playerShip->unitVecNose.vy) >> 6;
     playerShip->thrust.vz = (playerShip->thrust_mag * playerShip->unitVecNose.vz) >> 6;
 
-    velMag = GetMagnitude(playerShip->vpivot);
+    velMag = GetMagnitude(&playerShip->vpivot);
 
     playerShip->speed = velMag;
 
@@ -47,7 +47,7 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
         facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
         facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
 
-        alpha = PlaneLineCollision(facePoint, playerShip->ppivot, facePtr->normal);
+        alpha = PlaneLineCollision(&facePoint, &playerShip->ppivot, &facePtr->normal);
 
         planePoint.vx = playerShip->ppivot.vx - ((facePtr->normal.vx * alpha) >> 12);
         planePoint.vy = playerShip->ppivot.vy - ((facePtr->normal.vy * alpha) >> 12);
@@ -71,10 +71,11 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
         vec3.vy = planePoint.vy - track->vertices[(facePtr->vertex[3])].vy;
         vec3.vz = planePoint.vz - track->vertices[(facePtr->vertex[3])].vz;
 
-        angle = GetAng(vec0, vec2);
-        angle += GetAng(vec2, vec3);
-        angle += GetAng(vec3, vec1);
-        angle += GetAng(vec1, vec0);
+        /*TODO optimize this school math shit*/
+        angle = GetAng(&vec0, &vec2);
+        angle += GetAng(&vec2, &vec3);
+        angle += GetAng(&vec3, &vec1);
+        angle += GetAng(&vec1, &vec0);
 
         if ((angle <= 30000))
         {
@@ -124,7 +125,7 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
         facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
         facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
         facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-        alpha = PlaneLineCollision(facePoint, playerShip->ppivot, facePtr->normal);
+        alpha = PlaneLineCollision(&facePoint, &playerShip->ppivot, &facePtr->normal);
         noseAlpha = alpha;
 
         /******************************************************************/
@@ -134,7 +135,7 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
         {
             PlayDirectionalNote(SHIP_2_TRACK, 1, 20, playerShip->ppivot);
 
-            Reflection(&(playerShip->vpivot), facePtr->normal);
+            Reflection(&(playerShip->vpivot), &facePtr->normal);
 
             playerShip->vpivot.vx -= (playerShip->vpivot.vx) >> 3;
             playerShip->vpivot.vy -= (playerShip->vpivot.vy) >> 3;
@@ -200,7 +201,7 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
         nosePos.vy = (playerShip->unitVecNose.vy >> 5) + playerShip->ppivot.vy;
         nosePos.vz = (playerShip->unitVecNose.vz >> 5) + playerShip->ppivot.vz;
 
-        alpha = PlaneLineCollision(facePoint, nosePos, facePtr->normal);
+        alpha = PlaneLineCollision(&facePoint, &nosePos, &facePtr->normal);
 
         noseAlpha -= alpha;
 
@@ -233,7 +234,7 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
 
         nextSection = playerShip->nearTrkSect->nextSection.ptr;
 
-        GetTargetPos(&bestPath, playerShip->ppivot, nextSection->centre, playerShip->nearTrkSect->centre);
+        GetTargetPos(&bestPath, &playerShip->ppivot, &nextSection->centre, &playerShip->nearTrkSect->centre);
 
         distance.vx = (bestPath.vx - playerShip->ppivot.vx);
         distance.vy = (bestPath.vy - playerShip->ppivot.vy);
@@ -248,7 +249,7 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
             distance.vz = distance.vz << 3;
         }
 
-        if (GetMagnitude(distance) > 4000)
+        if (GetMagnitude(&distance) > 4000)
         {
             playerShip->update = UpdateRescueDroid;
             playerShip->updateCount = 500;
@@ -329,7 +330,7 @@ void shipTrkReaction(register ShipData* playerShip, Object** shipShapes)
 /**                        the camera                    **/
 /**********************************************************/
 
-void getWorldPoint(VECTOR* output, Object* object, Object* objectCollide, int pointNo)
+void GetWorldPoint(VECTOR* output, Object* object, Object* objectCollide, int pointNo)
 {
     long flag;
     const SVECTOR* vertex;
@@ -341,7 +342,7 @@ void getWorldPoint(VECTOR* output, Object* object, Object* objectCollide, int po
     RotTrans(matrix, vertex + pointNo, output, &flag);
 }
 
-void GetTargetPos(VECTOR* result, VECTOR pos, Vector cent1, Vector cent2)
+void GetTargetPos(VECTOR* result, const VECTOR* pos, const Vector* cent1, const Vector* cent2)
 {
     register int a_mag, b_mag, c_mag;
     VECTOR a, b, c;
@@ -349,21 +350,21 @@ void GetTargetPos(VECTOR* result, VECTOR pos, Vector cent1, Vector cent2)
     int cos_alpha;
     int angle;
 
-    a.vx = pos.vx - cent1.vx;
-    a.vy = pos.vy - cent1.vy;
-    a.vz = pos.vz - cent1.vz;
+    a.vx = pos->vx - cent1->vx;
+    a.vy = pos->vy - cent1->vy;
+    a.vz = pos->vz - cent1->vz;
 
-    b.vx = cent2.vx - cent1.vx;
-    b.vy = cent2.vy - cent1.vy;
-    b.vz = cent2.vz - cent1.vz;
+    b.vx = cent2->vx - cent1->vx;
+    b.vy = cent2->vy - cent1->vy;
+    b.vz = cent2->vz - cent1->vz;
 
-    c.vx = pos.vx - cent2.vx;
-    c.vy = pos.vy - cent2.vy;
-    c.vz = pos.vz - cent2.vz;
+    c.vx = pos->vx - cent2->vx;
+    c.vy = pos->vy - cent2->vy;
+    c.vz = pos->vz - cent2->vz;
 
-    a_mag = GetMagnitude(a);
-    b_mag = GetMagnitude(b);
-    c_mag = GetMagnitude(c);
+    a_mag = GetMagnitude(&a);
+    b_mag = GetMagnitude(&b);
+    c_mag = GetMagnitude(&c);
 
     a_sq = (a_mag * a_mag);
     b_sq = (b_mag * b_mag);
@@ -374,9 +375,9 @@ void GetTargetPos(VECTOR* result, VECTOR pos, Vector cent1, Vector cent2)
         cos_alpha = ((-b_sq - (a_sq + c_sq)) << 12) / ((a_mag * b_mag) << 1);
         angle = arccos(cos_alpha) >> 2;
         c_mag = ((rcos(angle) * a_mag) >> 12);
-        result->vx = cent1.vx - ((b.vx * c_mag) / b_mag);
-        result->vy = cent1.vy - ((b.vy * c_mag) / b_mag);
-        result->vz = cent1.vz - ((b.vz * c_mag) / b_mag);
+        result->vx = cent1->vx - ((b.vx * c_mag) / b_mag);
+        result->vy = cent1->vy - ((b.vy * c_mag) / b_mag);
+        result->vz = cent1->vz - ((b.vz * c_mag) / b_mag);
     }
 }
 

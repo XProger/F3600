@@ -444,7 +444,7 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
     facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
 
-    alpha = PlaneLineCollision(facePoint, weapon->pos, facePtr->normal);
+    alpha = PlaneLineCollision(&facePoint, &weapon->pos, &facePtr->normal);
 
     if (alpha < 2000)
     {
@@ -477,7 +477,7 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             distance.vy = (shipIndex[i].ppivot.vy - weapon->pos.vy) >> 2;
             distance.vz = (shipIndex[i].ppivot.vz - weapon->pos.vz) >> 2;
 
-            mag = GetMagnitude(distance);
+            mag = GetMagnitude(&distance);
 
             if (mag < 100)
             {
@@ -533,7 +533,7 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
             facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
             facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-            mag = PlaneLineCollision(facePoint, weapon->pos, facePtr->normal);
+            mag = PlaneLineCollision(&facePoint, &weapon->pos, &facePtr->normal);
             if (mag <= 0)
             {
                 weapon->count = TRACK_EXPLODE;
@@ -622,7 +622,7 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
     facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
     facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
 
-    alpha = PlaneLineCollision(facePoint, weapon->pos, facePtr->normal);
+    alpha = PlaneLineCollision(&facePoint, &weapon->pos, &facePtr->normal);
 
     if (alpha < 2000)
     {
@@ -657,7 +657,7 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
             distance.vy = (shipIndex[i].ppivot.vy - weapon->pos.vy) >> 3;
             distance.vz = (shipIndex[i].ppivot.vz - weapon->pos.vz) >> 3;
 
-            mag = GetMagnitude(distance);
+            mag = GetMagnitude(&distance);
 
             if (mag < 100)
             {
@@ -700,7 +700,7 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
         facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
         facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
         facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-        mag = PlaneLineCollision(facePoint, weapon->pos, facePtr->normal);
+        mag = PlaneLineCollision(&facePoint, &weapon->pos, &facePtr->normal);
         if (mag <= 0)
         {
             weapon->count = TRACK_EXPLODE;
@@ -841,7 +841,7 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
             distance.vy = (shipIndex[i].ppivot.vy - weapon->pos.vy) >> 2;
             distance.vz = (shipIndex[i].ppivot.vz - weapon->pos.vz) >> 2;
 
-            mag = GetMagnitude(distance);
+            mag = GetMagnitude(&distance);
 
             if (mag < 100)
             {
@@ -1006,7 +1006,7 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
     facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
 
-    alpha = PlaneLineCollision(facePoint, weapon->pos, facePtr->normal);
+    alpha = PlaneLineCollision(&facePoint, &weapon->pos, &facePtr->normal);
 
     if (alpha < 2000)
     {
@@ -1045,22 +1045,14 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
             distance.vy = (shipIndex[i].ppivot.vy - weapon->pos.vy) >> 3;
             distance.vz = (shipIndex[i].ppivot.vz - weapon->pos.vz) >> 3;
 
-            mag = GetMagnitude(distance);
+            mag = GetMagnitude(&distance);
 
             if (mag < 100)
             {
                 if ((shipIndex[i].attr & SHIELDED) == 0)
                 {
-                    if (i != ownShip)
-                    {
-                        shipIndex[i].attr |= ELECTROED;
-                        shipIndex[i].electroCount = ELEC_DURATION;
-                    }
-                    else
-                    {
-                        shipIndex[i].attr |= ELECTROED;
-                        shipIndex[i].electroCount = ELEC_DURATION;
-                    }
+                    shipIndex[i].attr |= ELECTROED;
+                    shipIndex[i].electroCount = ELEC_DURATION;
                 }
                 weapon->count = SHIP_EXPLODE;
                 weapon->targetShip = i;
@@ -1082,7 +1074,7 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
         facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
         facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
         facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-        mag = PlaneLineCollision(facePoint, weapon->pos, facePtr->normal);
+        mag = PlaneLineCollision(&facePoint, &weapon->pos, &facePtr->normal);
         if (mag <= 0)
         {
             weapon->count = TRACK_EXPLODE;
@@ -1299,7 +1291,7 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
     facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
 
-    alpha = PlaneLineCollision(facePoint, weapon->pos, facePtr->normal);
+    alpha = PlaneLineCollision(&facePoint, &weapon->pos, &facePtr->normal);
 
     if (alpha < 2000)
     {
@@ -1338,7 +1330,7 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             distance.vy = (shipIndex[i].ppivot.vy - weapon->pos.vy) >> 3;
             distance.vz = (shipIndex[i].ppivot.vz - weapon->pos.vz) >> 3;
 
-            mag = GetMagnitude(distance);
+            mag = GetMagnitude(&distance);
 
             if (mag < 100)
             {
@@ -1375,7 +1367,7 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
         facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
         facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-        mag = PlaneLineCollision(facePoint, weapon->pos, facePtr->normal);
+        mag = PlaneLineCollision(&facePoint, &weapon->pos, &facePtr->normal);
         if (mag <= 0)
         {
             weapon->count = TRACK_EXPLODE;
@@ -1520,9 +1512,9 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
                     if (col2 > 255)
                         col2 = 255;
 
-                    poly.g3->colour[0].r = (char)(col0 >> 1);
-                    poly.g3->colour[1].r = (char)(col1 >> 1);
-                    poly.g3->colour[2].r = (char)(col2 >> 1);
+                    poly.g3->colour[0].r = (uint8)(col0 >> 1);
+                    poly.g3->colour[1].r = (uint8)(col1 >> 1);
+                    poly.g3->colour[2].r = (uint8)(col2 >> 1);
                     poly.g3->colour[0].g = 64;
                     poly.g3->colour[1].g = 64;
                     poly.g3->colour[2].g = 64;
@@ -1550,10 +1542,10 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
                     if (col3 > 255)
                         col2 = 255;
 
-                    poly.g4->colour[0].r = (char)(col0 >> 1);
-                    poly.g4->colour[1].r = (char)(col1 >> 1);
-                    poly.g4->colour[2].r = (char)(col2 >> 1);
-                    poly.g4->colour[3].r = (char)(col3 >> 1);
+                    poly.g4->colour[0].r = (uint8)(col0 >> 1);
+                    poly.g4->colour[1].r = (uint8)(col1 >> 1);
+                    poly.g4->colour[2].r = (uint8)(col2 >> 1);
+                    poly.g4->colour[3].r = (uint8)(col3 >> 1);
                     poly.g4->colour[0].g = 64;
                     poly.g4->colour[1].g = 64;
                     poly.g4->colour[2].g = 64;
@@ -1686,8 +1678,8 @@ void GetFireVector(VECTOR* result, VECTOR target, Face* facePtr, VECTOR shipPos)
     target.vy = shipPos.vy + (target.vy >> 6);
     target.vz = shipPos.vz + (target.vz >> 6);
 
-    alpha = PlaneLineCollision(facePoint, target, facePtr->normal);
-    origAlpha = PlaneLineCollision(facePoint, shipPos, facePtr->normal);
+    alpha = PlaneLineCollision(&facePoint, &target, &facePtr->normal);
+    origAlpha = PlaneLineCollision(&facePoint, &shipPos, &facePtr->normal);
 
     alpha = (alpha * 31) >> 5;
 
@@ -1716,7 +1708,7 @@ void Weapon2Mine(WeaponData* weapon, WeaponData* weaponIndex, WeaponShape* weapo
             distance.vy = (weaponIndex[i].pos.vy - weapon->pos.vy) >> 2;
             distance.vz = (weaponIndex[i].pos.vz - weapon->pos.vz) >> 2;
 
-            mag = GetMagnitude(distance);
+            mag = GetMagnitude(&distance);
 
             if (mag < 30)
             {

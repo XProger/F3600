@@ -45,7 +45,7 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
 
     nextSection = camera->section->nextSection.ptr;
 
-    GetTargetPos(&bestPath, pos, nextSection->centre, camera->section->centre);
+    GetTargetPos(&bestPath, &pos, &nextSection->centre, &camera->section->centre);
 
     distance.vx = pos.vx - bestPath.vx;
     distance.vy = pos.vy - bestPath.vy;
@@ -71,7 +71,7 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
     pos.vy += camera->vel.vy;
     pos.vz += camera->vel.vz;
 
-    mag = GetMagnitude(distance);
+    mag = GetMagnitude(&distance);
 
     vel += (mag >> 7);
     vel -= vel >> 4;
