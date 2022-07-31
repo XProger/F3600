@@ -23,9 +23,11 @@ void UpdateShips(ShipData* shipIndex, WeaponData* weaponIndex)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (i != serialShip)
+        (shipIndex[i].update)(shipIndex, i, weaponIndex);
+
+        if (shipIndex[i].attr & VISIBLE)
         {
-            (shipIndex[i].update)(shipIndex, i, weaponIndex);
+            ShipCalcAmbient(shipIndex + i);
         }
     }
 }
@@ -107,7 +109,7 @@ void GeneralStartProcs(ShipData* playerShip)
 /****             Start control routine for normal pad                 ****/
 /**************************************************************************/
 
-void UpdatePlayerShipNormStart(ShipData* shipIndex,int shipNo, WeaponData* weaponIndex)
+void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 {
     ShipData* playerShip;
     static int startPos;

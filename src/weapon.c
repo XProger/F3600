@@ -86,7 +86,7 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     weaponIndex[i].updateWeapon = InitMine;
                     count += MINE_RELEASE_RATE;
                     weaponIndex[i].fireShip = shipNo;
-                    if ((weaponIndex[i].fireShip != ownShip) && (weaponIndex[i].fireShip != serialShip))
+                    if (weaponIndex[i].fireShip != ownShip)
                     {
                         weaponIndex[i].count = (count + WEAPON_DELAY);
                     }
@@ -651,7 +651,7 @@ void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
     int i;
     Face* facePtr;
 
-    if ((weapon->fireShip != ownShip) && (weapon->fireShip != serialShip))
+    if (weapon->fireShip != ownShip)
     {
         if (weapon->count > 1)
         {
@@ -807,7 +807,7 @@ void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     int i;
     Face* facePtr;
 
-    if ((weapon->fireShip != ownShip) && (weapon->fireShip != serialShip))
+    if (weapon->fireShip != ownShip)
     {
         if (weapon->count > 1)
         {
@@ -1019,7 +1019,7 @@ void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 {
     int i;
 
-    if ((weapon->fireShip != ownShip) && (weapon->fireShip != serialShip))
+    if (weapon->fireShip != ownShip)
     {
         if (weapon->count > 1)
         {
@@ -1092,7 +1092,7 @@ void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 {
     int i;
 
-    if ((weapon->fireShip != ownShip) && (weapon->fireShip != serialShip))
+    if (weapon->fireShip != ownShip)
     {
         if (weapon->count > 1)
         {

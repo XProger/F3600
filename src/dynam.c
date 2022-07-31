@@ -3,6 +3,20 @@
 /************************************************************/
 #include "game.h"
 
+void ShipCalcAmbient(ShipData* playerShip)
+{
+    Face* facePtr;
+
+    facePtr = track->faces + playerShip->nearTrkSect->faceStart;
+
+    while (facePtr->flags != TRACK_BASE) // base track only (no speedups, weapons etc)
+    {
+        facePtr++;
+    }
+
+    playerShip->color = facePtr->red | (facePtr->green << 8) | (facePtr->blue << 16);
+}
+
 void ShipTrkReaction(ShipData* playerShip)
 {
     int alpha, noseAlpha;
@@ -218,9 +232,6 @@ void ShipTrkReaction(ShipData* playerShip)
 
         playerShip->vroll += sar(playerShip->vhdg, 5);
         playerShip->vroll -= playerShip->vroll >> 1;
-
-        //TODO use track poly color as diffuse comp
-        //playerShip->color = facePtr->red | (facePtr->green << 8) | (facePtr->blue << 16);
     }
 
     /***************************************************************************/
@@ -381,8 +392,6 @@ void GetTargetPos(VECTOR* result, const VECTOR* pos, const Vector* cent1, const 
     }
 }
 
-extern short startLinePos[];
-
 void SetUnitVectors(ShipData* shipIndex)
 {
     short sx, sy, sz;
@@ -395,29 +404,26 @@ void SetUnitVectors(ShipData* shipIndex)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (i != serialShip)
-        {
-            sy = rsin(shipIndex[i].hdg);
-            cy = rcos(shipIndex[i].hdg);
-            sx = rsin(shipIndex[i].pitch);
-            cx = rcos(shipIndex[i].pitch);
-            sz = rsin(shipIndex[i].roll);
-            cz = rcos(shipIndex[i].roll);
+        sy = rsin(shipIndex[i].hdg);
+        cy = rcos(shipIndex[i].hdg);
+        sx = rsin(shipIndex[i].pitch);
+        cx = rcos(shipIndex[i].pitch);
+        sz = rsin(shipIndex[i].roll);
+        cz = rcos(shipIndex[i].roll);
 
-            shipIndex[i].unitVecNose.vx = -frac(sy, cx);
-            shipIndex[i].unitVecNose.vy = -sx;
-            shipIndex[i].unitVecNose.vz = frac(cy, cx);
+        shipIndex[i].unitVecNose.vx = -frac(sy, cx);
+        shipIndex[i].unitVecNose.vy = -sx;
+        shipIndex[i].unitVecNose.vz = frac(cy, cx);
 
-            shipIndex[i].unitVecWing.vx = ((cy * cz) >> 12) + ((((sy * sz) >> 12) * sx) >> 12);
-            shipIndex[i].unitVecWing.vy = -(sz * cx) >> 12;
-            shipIndex[i].unitVecWing.vz = ((sy * cz) >> 12) - ((((cy * sx) >> 12) * sz) >> 12);
+        shipIndex[i].unitVecWing.vx = ((cy * cz) >> 12) + ((((sy * sz) >> 12) * sx) >> 12);
+        shipIndex[i].unitVecWing.vy = -(sz * cx) >> 12;
+        shipIndex[i].unitVecWing.vz = ((sy * cz) >> 12) - ((((cy * sx) >> 12) * sz) >> 12);
 
-            shipIndex[i].prevShipSect = shipIndex[i].nearTrkSect;
-            SectionSearch(&(shipIndex[i]));
+        shipIndex[i].prevShipSect = shipIndex[i].nearTrkSect;
+        SectionSearch(&(shipIndex[i]));
 
-            shipIndex[i].prevSecNo = shipIndex[i].prevShipSect->secNo;
-            shipIndex[i].nearSecNo = shipIndex[i].nearTrkSect->secNo;
-        }
+        shipIndex[i].prevSecNo = shipIndex[i].prevShipSect->secNo;
+        shipIndex[i].nearSecNo = shipIndex[i].nearTrkSect->secNo;
 
         facePtr = track->faces + shipIndex[i].nearTrkSect->faceStart;
 

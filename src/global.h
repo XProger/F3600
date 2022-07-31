@@ -32,7 +32,6 @@ extern int HACK_LOAD_SHADOW;
 
 extern TrackData* track;
 extern int ownShip;
-extern int serialShip;
 extern void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
 extern TrackCamera* cameraPtr;
 extern int NoOfMainSections;

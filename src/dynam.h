@@ -9,6 +9,7 @@
 #define COLLIDE 0x1
 #define frac(x, y) (((x) * (y)) >> 12) /* 9 */
 
+void ShipCalcAmbient(ShipData* playerShip);
 void ShipTrkReaction(ShipData* playerShip);
 void GetWorldPoint(VECTOR* output, Object* object, Object* objectCollide, int pointNo);
 void GetTargetPos(VECTOR* result, const VECTOR* pos, const Vector* cent1, const Vector* cent2);

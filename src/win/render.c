@@ -63,6 +63,8 @@ int gWidth, gHeight, gBorder;
 
 int gCylX, gCylZ;
 
+float gR, gG, gB;
+
 #ifdef DEBUG_RENDER
     int dbg_trackPolys;
     int dbg_objectPolys;
@@ -345,6 +347,7 @@ void renderFrameBegin(void)
 
     gRenderMode = RENDER_MODE_3D;
     renderSetMode(RENDER_MODE_2D);
+    renderSetColor(0xFFFFFFFF);
 }
 
 void renderFrameEnd(void)
@@ -503,9 +506,6 @@ void renderObject(const Object* object)
     short tpage;
     int i;
     int cx, cy, cz;
-    const CVECTOR* c;
-
-    const CVECTOR colorWhite3[] = { { 255, 255, 255, 0 }, { 255, 255, 255, 0 }, { 255, 255, 255, 0 } };
 
     matrix = GetSkeletonMatrix(object->skeleton);
 
@@ -532,7 +532,7 @@ void renderObject(const Object* object)
 
                 setTexture(NULL);
 
-                glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+                glColor3f(gR * f->colour.r, gG * f->colour.g, gB * f->colour.b);
                 glBegin(GL_TRIANGLES);
                     glVertex3sv((GLshort*)(vertices + f->coords[0]));
 
@@ -559,7 +559,7 @@ void renderObject(const Object* object)
                 }
                 else
                 {
-                    glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+                    glColor3f(gR * f->colour.r, gG * f->colour.g, gB * f->colour.b);
                 }
 
                 glBegin(GL_TRIANGLES);
@@ -588,7 +588,7 @@ void renderObject(const Object* object)
 
                 setTexture(NULL);
 
-                glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+                glColor3f(gR * f->colour.r, gG * f->colour.g, gB * f->colour.b);
                 glBegin(GL_QUADS);
                     glVertex3sv((GLshort*)(vertices + f->coords[0]));
 
@@ -610,7 +610,7 @@ void renderObject(const Object* object)
 
                 setTexture(t);
 
-                glColor3ub(f->colour.r, f->colour.g, f->colour.b);
+                glColor3f(gR * f->colour.r, gG * f->colour.g, gB * f->colour.b);
                 glBegin(GL_QUADS);
                     glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
                     glVertex3sv((GLshort*)(vertices + f->coords[0]));
@@ -636,13 +636,13 @@ void renderObject(const Object* object)
                 setTexture(NULL);
 
                 glBegin(GL_TRIANGLES);
-                    glColor3ub(f->colour[0].r, f->colour[0].g, f->colour[0].b);
+                    glColor3f(gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[0]));
 
-                    glColor3ub(f->colour[1].r, f->colour[1].g, f->colour[1].b);
+                    glColor3f(gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[1]));
 
-                    glColor3ub(f->colour[2].r, f->colour[2].g, f->colour[2].b);
+                    glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
 
@@ -654,33 +654,42 @@ void renderObject(const Object* object)
             {
                 const GT3* f = poly.gt3;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
-                c = f->colour;
 
                 setTexture(t);
 
                 if (f->flag & ShipEngine)
                 {
                     renderSetBlend(BLEND_ADD);
-                    c = &colorWhite3[0];
-                }
 
-                glBegin(GL_TRIANGLES);
-                    glColor3ubv((GLubyte*)(c + 0));
-                    glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
-                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+                    glColor3ub(255, 255, 255);
+                    glBegin(GL_TRIANGLES);
+                        glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
+                        glVertex3sv((GLshort*)(vertices + f->coords[0]));
 
-                    glColor3ubv((GLubyte*)(c + 1));
-                    glTexCoord2f(f->u1 * t->iw, f->v1 * t->ih);
-                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+                        glTexCoord2f(f->u1 * t->iw, f->v1 * t->ih);
+                        glVertex3sv((GLshort*)(vertices + f->coords[1]));
 
-                    glColor3ubv((GLubyte*)(c + 2));
-                    glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
-                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
-                glEnd();
+                        glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
+                        glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                    glEnd();
 
-                if (f->flag & ShipEngine)
-                {
                     renderSetBlend(BLEND_NONE);
+                }
+                else
+                {
+                    glBegin(GL_TRIANGLES);
+                        glColor3f(gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b);
+                        glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
+                        glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                        glColor3f(gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b);
+                        glTexCoord2f(f->u1 * t->iw, f->v1 * t->ih);
+                        glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                        glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
+                        glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
+                        glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                    glEnd();
                 }
 
                 poly.gt3++;
@@ -694,16 +703,16 @@ void renderObject(const Object* object)
                 setTexture(NULL);
 
                 glBegin(GL_QUADS);
-                    glColor3ub(f->colour[0].r, f->colour[0].g, f->colour[0].b);
+                    glColor3f(gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[0]));
 
-                    glColor3ub(f->colour[1].r, f->colour[1].g, f->colour[1].b);
+                    glColor3f(gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[1]));
 
-                    glColor3ub(f->colour[3].r, f->colour[3].g, f->colour[3].b);
+                    glColor3f(gR * f->colour[3].r, gG * f->colour[3].g, gB * f->colour[3].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[3]));
 
-                    glColor3ub(f->colour[2].r, f->colour[2].g, f->colour[2].b);
+                    glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
 
@@ -719,19 +728,19 @@ void renderObject(const Object* object)
                 setTexture(t);
 
                 glBegin(GL_QUADS);
-                    glColor3ub(f->colour[0].r, f->colour[0].g, f->colour[0].b);
+                    glColor3f(gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b);
                     glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
                     glVertex3sv((GLshort*)(vertices + f->coords[0]));
 
-                    glColor3ub(f->colour[1].r, f->colour[1].g, f->colour[1].b);
+                    glColor3f(gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b);
                     glTexCoord2f(f->u1 * t->iw, f->v1 * t->ih);
                     glVertex3sv((GLshort*)(vertices + f->coords[1]));
 
-                    glColor3ub(f->colour[3].r, f->colour[3].g, f->colour[3].b);
+                    glColor3f(gR * f->colour[3].r, gG * f->colour[3].g, gB * f->colour[3].b);
                     glTexCoord2f(f->u3 * t->iw, f->v3 * t->ih);
                     glVertex3sv((GLshort*)(vertices + f->coords[3]));
 
-                    glColor3ub(f->colour[2].r, f->colour[2].g, f->colour[2].b);
+                    glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
                     glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
@@ -846,7 +855,15 @@ void renderDepthWrite(int enable)
 
 void renderSetColor(uint32 color)
 {
-    glColor3ubv((GLubyte*)&color);
+    gR = 0.1f + 2.0f * i256 * (0xFF & (color));
+    gG = 0.1f + 2.0f * i256 * (0xFF & (color >> 8));
+    gB = 0.1f + 2.0f * i256 * (0xFF & (color >> 16));
+    if (gR > 1.0f) gR = 1.0f;
+    if (gG > 1.0f) gG = 1.0f;
+    if (gB > 1.0f) gB = 1.0f;
+    gR *= i256;
+    gG *= i256;
+    gB *= i256;
 }
 
 uint16 RGB5551(uint16 c)

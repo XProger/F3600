@@ -1264,7 +1264,7 @@ void raceCtrl(ConfigData* gameData)
     /**** Draw, Mesh, AutoMesh, Reject, Don`t reject, Nurse, Bend Over  **/
     /**** Abuse & Call a Naughty boy  TRACK CODE                        **/
     /*********************************************************************/
-    if ((ctrlshipIndex[serialShip].haveFired == QUIT) || (ctrlshipIndex[ownShip].haveFired == QUIT))
+    if (ctrlshipIndex[ownShip].haveFired == QUIT)
     {
         ctrlquitTwoPlayer = 0;
         ctrlactivated = 0;
@@ -1352,8 +1352,8 @@ void raceLoop(ConfigData* gameData)
     renderFrameBegin();
     renderClear();
 
-    //if (trackNo == 13)
-    //    AuroraBorialis(ctrlprm[ctrlsky]);
+    if (trackNo == 13)
+        AuroraBorialis(ctrlprm[ctrlsky]);
 
     if ((trackNo == 8) || (trackNo == 11))
     {
@@ -1487,7 +1487,6 @@ void raceDemo(ConfigData* gameData)
 {
     ctrlmode = ATTRACT;
     ownShip = randy() % 8;
-    serialShip = -1;
 
     switch (randy() % 6)
     {

@@ -631,14 +631,6 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
             if ((shipIndex[i].lapNo > END_LAP) && (shipIndex[i].attr & RACING))
             {
                 shipIndex[i].attr &= ~RACING;
-                if (i == serialShip)
-                {
-                    serialLapTimes[0] = shipIndex[serialShip].lapTimes[0];
-                    serialLapTimes[1] = shipIndex[serialShip].lapTimes[1];
-                    serialLapTimes[2] = shipIndex[serialShip].lapTimes[2];
-                    serialLapTimes[3] = shipIndex[serialShip].lapTimes[3];
-                    serialLapTimes[4] = shipIndex[serialShip].lapTimes[4];
-                }
             }
         }
     }

@@ -599,11 +599,14 @@ void ShakeScreen(void)
     osJoyVibrate(0, shakeCount, shakeCount);
 }
 
-GT4* abPtr[80];
-short* abCoords[80];
-signed short greyCoords[80];
+/*TODO optimize this shit!*/
+#define MAX_AURORA_PRIMS 80
 
-#if 1 // TODO WTF is Aurora?
+GT4* abPtr[MAX_AURORA_PRIMS];
+short* abCoords[MAX_AURORA_PRIMS];
+signed short greyCoords[MAX_AURORA_PRIMS];
+int abPhase;
+
 void InitAuroraBorialis(Object* object)
 {
     int i;
@@ -618,11 +621,6 @@ void InitAuroraBorialis(Object* object)
     primitiveCount = object->primitiveCount;
     vertex = object->vertices;
 
-    for (i = 0; i < 80; i++)
-    {
-        greyCoords[i] = 0;
-    }
-
     for (i = 0; i < primitiveCount; i++)
     {
         switch (poly.primitive->type)
@@ -632,11 +630,11 @@ void InitAuroraBorialis(Object* object)
                 break;
 
             case TypeGT4:
-
                 coords = poly.gt4->coords;
                 y = vertex[coords[0]].vy;
                 if (y < -6000) /* -8000 */
                 {
+                    ASSERT(count < MAX_AURORA_PRIMS);
                     abPtr[count] = poly.gt4;
                     if (y > -6800)
                     {
@@ -649,7 +647,10 @@ void InitAuroraBorialis(Object* object)
                         greyCoords[count] = -2;
                     }
                     else
+                    {
                         abCoords[count] = poly.gt4->coords;
+                        greyCoords[count] = 0;
+                    }
                     count++;
                 }
                 poly.gt4 += 1;
@@ -664,37 +665,36 @@ void AuroraBorialis(Object* object)
 
     Prm poly;
     short* coords;
-    static int count = 0;
 
-    count++;
+    abPhase++;
 
     poly.primitive = object->primitives;
 
-    for (i = 0; i < 80; i++)
+    for (i = 0; i < MAX_AURORA_PRIMS; i++)
     {
         coords = abCoords[i];
 
         if (greyCoords[i] != -2)
         {
-            abPtr[i]->colour[0].r = (rsin(coords[0] * count) >> 6) + 190;
-            abPtr[i]->colour[0].g = (rsin(coords[0] * (count + 54)) >> 6) + 190;
-            abPtr[i]->colour[0].b = (rsin(coords[0] * (count + 39)) >> 6) + 190;
+            abPtr[i]->colour[0].r = (rsin(coords[0] * abPhase) >> 6) + 190;
+            abPtr[i]->colour[0].g = (rsin(coords[0] * (abPhase + 54)) >> 6) + 190;
+            abPtr[i]->colour[0].b = (rsin(coords[0] * (abPhase + 39)) >> 6) + 190;
 
-            abPtr[i]->colour[1].r = (rsin(coords[1] * count) >> 6) + 190;
-            abPtr[i]->colour[1].g = (rsin(coords[1] * (count + 54)) >> 6) + 190;
-            abPtr[i]->colour[1].b = (rsin(coords[1] * (count + 39)) >> 6) + 190;
+            abPtr[i]->colour[1].r = (rsin(coords[1] * abPhase) >> 6) + 190;
+            abPtr[i]->colour[1].g = (rsin(coords[1] * (abPhase + 54)) >> 6) + 190;
+            abPtr[i]->colour[1].b = (rsin(coords[1] * (abPhase + 39)) >> 6) + 190;
         }
 
         if (greyCoords[i] != -1)
         {
-            abPtr[i]->colour[2].r = (rsin(coords[2] * count) >> 6) + 190;
-            abPtr[i]->colour[2].g = (rsin(coords[2] * (count + 54)) >> 6) + 190;
-            abPtr[i]->colour[2].b = (rsin(coords[2] * (count + 39)) >> 6) + 190;
+            abPtr[i]->colour[2].r = (rsin(coords[2] * abPhase) >> 6) + 190;
+            abPtr[i]->colour[2].g = (rsin(coords[2] * (abPhase + 54)) >> 6) + 190;
+            abPtr[i]->colour[2].b = (rsin(coords[2] * (abPhase + 39)) >> 6) + 190;
 
-            abPtr[i]->colour[3].r = (rsin(coords[3] * count) >> 6) + 190;
-            abPtr[i]->colour[3].g = (rsin(coords[3] * (count + 54)) >> 6) + 190;
-            abPtr[i]->colour[3].b = (rsin(coords[3] * (count + 39)) >> 6) + 190;
+            abPtr[i]->colour[3].r = (rsin(coords[3] * abPhase) >> 6) + 190;
+            abPtr[i]->colour[3].g = (rsin(coords[3] * (abPhase + 54)) >> 6) + 190;
+            abPtr[i]->colour[3].b = (rsin(coords[3] * (abPhase + 39)) >> 6) + 190;
         }
     }
 }
-#endif
+

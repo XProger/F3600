@@ -273,6 +273,10 @@ Object* LoadPrm(const char* name, short textureStart)
                     prm.spr += 1;
                     break;
 
+                case TypeSpline:
+                    prm.spline += 1;
+                    break;
+
                 default:
                     ASSERT(0);
                     break;

@@ -1,7 +1,6 @@
 #include "game.h"
 
 int ownShip;
-int serialShip;
 void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
 TrackCamera* cameraPtr;
 int NoOfMainSections;

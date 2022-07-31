@@ -468,7 +468,6 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
             gameData->newLapRecord = 0;
             gameData->shipNum = (gameData->team * 2) + gCurrOption;
             ownShip = gameData->shipNum;
-            serialShip = -1;
 
             if (gameData->gameType == CHAMPIONSHIP)
             {
