@@ -78,10 +78,6 @@ typedef struct
     short vx, vy;
 } DVECTOR;
 
-#define MASTER  0
-#define SLAVE   1
-#define SINGLE  2
-
 #define PAUSE       0x30
 #define CONT        0x31
 #define RETIRE      0x32

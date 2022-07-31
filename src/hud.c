@@ -6,8 +6,6 @@ TexChar CharSet16[40];
 TexChar CharSet12[40];
 TexChar CharSet8[40];
 
-extern int gBorder;
-
 #define speedo_x    (179 + gBorder)
 #define speedo_y    (195)
 
@@ -19,6 +17,8 @@ extern HiScores scoreTable[];
 extern ChampionShip winTable[];
 
 Texture* speedoTex;
+
+Texture* gWeaponIconTextures[NO_OF_WEAPON_TYPES];
 
 void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, const Texture* tex)
 {
@@ -108,7 +108,7 @@ void fill_speedo(int speed, int thrust)
 
     if (thrust)
     {
-        renderTransparent(1);
+        renderSetBlend(BLEND_ADD);
 
         q.r0 = q.r1 = q.r2 = q.r3 = 128;
         q.g0 = q.g1 = q.g2 = q.g3 = 0;
@@ -146,7 +146,7 @@ void fill_speedo(int speed, int thrust)
                 break;
         }
 
-        renderTransparent(0);
+        renderSetBlend(BLEND_NONE);
     }
 
     if (speed)
@@ -541,129 +541,62 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
     char tempShip;
     char tempPoints;
 
-    if (raceType == HEAD_TO_HEAD)
+    for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        for (i = 0; i < NO_OF_SHIPS; i++)
+        if (i == ownShip)
         {
-            if ((i == ownShip) || (i == serialShip))
+            if ((shipIndex[i].prevSecNo == (startLinePos[trackNo] + 1)) && (shipIndex[i].nearSecNo <= startLinePos[trackNo]))
             {
-                if (i == ownShip)
-                {
-                    if ((shipIndex[i].prevSecNo == (startLinePos[trackNo] + 1)) && (shipIndex[i].nearSecNo <= startLinePos[trackNo]))
-                    {
-                        crossedLine--;
-                    }
-                }
-
-                if ((shipIndex[i].prevSecNo == startLinePos[trackNo]) && ((shipIndex[i].nearSecNo > startLinePos[trackNo]) && (shipIndex[i].nearSecNo < (startLinePos[trackNo] + 10))))
-                {
-                    if (i == ownShip)
-                    {
-                        if (shipIndex[i].lapNo == crossedLine)
-                            shipIndex[i].lapNo++;
-
-                        crossedLine++;
-                    }
-                    else
-                    {
-                        shipIndex[i].lapNo++;
-                    }
-                }
+                crossedLine--;
             }
         }
 
-        for (i = 0; i < NO_OF_SHIPS; i++)
-        {
-            if ((i == ownShip) || (i == serialShip))
-            {
-
-                secNo = shipIndex[i].nearSecNo - (startLinePos[trackNo] + 1);
-
-                if (i == ownShip)
-                {
-                    if (secNo < 0)
-                    {
-                        secNo = secNo + (crossedLine * NoOfMainSections);
-                    }
-                    else
-                    {
-                        secNo = secNo + ((crossedLine - 1) * NoOfMainSections);
-                    }
-                }
-                else
-                {
-                    if (secNo < 0)
-                    {
-                        secNo = secNo + (shipIndex[i].lapNo * NoOfMainSections);
-                    }
-                    else
-                    {
-                        secNo = secNo + ((shipIndex[i].lapNo - 1) * NoOfMainSections);
-                    }
-                }
-
-                shipIndex[i].DPASectDiff = secNo;
-            }
-        }
-    }
-    else
-    {
-        for (i = 0; i < NO_OF_SHIPS; i++)
+        if ((shipIndex[i].prevSecNo == startLinePos[trackNo]) && ((shipIndex[i].nearSecNo > startLinePos[trackNo]) && (shipIndex[i].nearSecNo < (startLinePos[trackNo] + 10))))
         {
             if (i == ownShip)
             {
-                if ((shipIndex[i].prevSecNo == (startLinePos[trackNo] + 1)) && (shipIndex[i].nearSecNo <= startLinePos[trackNo]))
-                {
-                    crossedLine--;
-                }
-            }
-
-            if ((shipIndex[i].prevSecNo == startLinePos[trackNo]) && ((shipIndex[i].nearSecNo > startLinePos[trackNo]) && (shipIndex[i].nearSecNo < (startLinePos[trackNo] + 10))))
-            {
-                if (i == ownShip)
-                {
-                    if (shipIndex[i].lapNo == crossedLine)
-                        shipIndex[i].lapNo++;
-
-                    crossedLine++;
-                    if (raceType == TIME_TRIAL)
-                        shipIndex[i].weaponType = TURBO;
-                }
-                else
-                {
+                if (shipIndex[i].lapNo == crossedLine)
                     shipIndex[i].lapNo++;
-                }
-            }
-        }
-        for (i = 0; i < NO_OF_SHIPS; i++)
-        {
-            secNo = shipIndex[i].nearSecNo - (startLinePos[trackNo] + 1);
 
-            if (i == ownShip)
-            {
-                if (secNo < 0)
-                {
-                    secNo = secNo + (crossedLine * NoOfMainSections);
-                }
-                else
-                {
-                    secNo = secNo + ((crossedLine - 1) * NoOfMainSections);
-                }
+                crossedLine++;
+                if (raceType == TIME_TRIAL)
+                    shipIndex[i].weaponType = TURBO;
             }
             else
             {
-                if (secNo < 0)
-                {
-                    secNo = secNo + (shipIndex[i].lapNo * NoOfMainSections);
-                }
-                else
-                {
-                    secNo = secNo + ((shipIndex[i].lapNo - 1) * NoOfMainSections);
-                }
+                shipIndex[i].lapNo++;
             }
-
-            shipIndex[i].DPASectDiff = secNo;
         }
+    }
+
+    for (i = 0; i < NO_OF_SHIPS; i++)
+    {
+        secNo = shipIndex[i].nearSecNo - (startLinePos[trackNo] + 1);
+
+        if (i == ownShip)
+        {
+            if (secNo < 0)
+            {
+                secNo = secNo + (crossedLine * NoOfMainSections);
+            }
+            else
+            {
+                secNo = secNo + ((crossedLine - 1) * NoOfMainSections);
+            }
+        }
+        else
+        {
+            if (secNo < 0)
+            {
+                secNo = secNo + (shipIndex[i].lapNo * NoOfMainSections);
+            }
+            else
+            {
+                secNo = secNo + ((shipIndex[i].lapNo - 1) * NoOfMainSections);
+            }
+        }
+
+        shipIndex[i].DPASectDiff = secNo;
     }
 
     if (shipIndex[ownShip].nearSecNo <= startLinePos[trackNo])
@@ -671,26 +604,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
     else
         ownSecNo = shipIndex[ownShip].nearSecNo;
 
-    if (gameType != SINGLE)
-    {
-        if (shipIndex[serialShip].nearSecNo <= startLinePos[trackNo])
-            serialSecNo = shipIndex[serialShip].nearSecNo + track->sectionCount;
-        else
-            serialSecNo = shipIndex[serialShip].nearSecNo;
-    }
-
     position = CalcPosition(shipIndex);
-
-    if ((raceType == TWO_PLAYER_RACE) || (raceType == HEAD_TO_HEAD))
-    {
-        if (shipIndex[serialShip].lapNo > 0)
-        {
-            if ((choice == -1) && (shipIndex[serialShip].lapNo < END_LAP + 1))
-            {
-                shipIndex[serialShip].lapTimes[(shipIndex[serialShip].lapNo - 1)] += 2;
-            }
-        }
-    }
 
     if (shipIndex[ownShip].lapNo > 0)
     {
@@ -700,41 +614,14 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
         }
     }
 
-    if (gameType == SINGLE)
+    if ((shipIndex[ownShip].lapNo != shipIndex[ownShip].prevLapNo) && (shipIndex[ownShip].lapNo > 1) && (shipIndex[ownShip].lapNo <= END_LAP + 1))
     {
-        if ((shipIndex[ownShip].lapNo != shipIndex[ownShip].prevLapNo) && (shipIndex[ownShip].lapNo > 1) && (shipIndex[ownShip].lapNo <= END_LAP + 1))
+        if ((CheckLapRecord(gameData, &(shipIndex[0]), ownShip)))
         {
-            if ((CheckLapRecord(gameData, &(shipIndex[0]), ownShip)))
-            {
-                gameData->newLapRecord = 1;
-            }
+            gameData->newLapRecord = 1;
         }
-        shipIndex[ownShip].prevLapNo = shipIndex[ownShip].lapNo;
     }
-    else
-    {
-        if (((shipIndex[ownShip].lapNo != shipIndex[ownShip].prevLapNo) && (shipIndex[ownShip].lapNo > 1) && (shipIndex[ownShip].lapNo <= END_LAP + 1)))
-        {
-            if (gameType != SINGLE)
-                gameData->newLapRecord = CheckLapRecord(gameData, &(shipIndex[0]), ownShip);
-            else if (CheckLapRecord(gameData, &(shipIndex[0]), ownShip))
-            {
-                gameData->newLapRecord = 1;
-            }
-        }
-        else if (((shipIndex[serialShip].lapNo != shipIndex[serialShip].prevLapNo) && (shipIndex[serialShip].lapNo > 1) && (shipIndex[serialShip].lapNo <= END_LAP + 1)))
-        {
-            if (gameType != SINGLE)
-                gameData->newLapRecord = CheckLapRecord(gameData, &(shipIndex[0]), serialShip);
-            else if (CheckLapRecord(gameData, &(shipIndex[0]), serialShip))
-            {
-                gameData->newLapRecord = 1;
-            }
-        }
-
-        shipIndex[ownShip].prevLapNo = shipIndex[ownShip].lapNo;
-        shipIndex[serialShip].prevLapNo = shipIndex[serialShip].lapNo;
-    }
+    shipIndex[ownShip].prevLapNo = shipIndex[ownShip].lapNo;
 
     /************ HAVE FINISHED RACE *****************/
     for (i = 0; i < NO_OF_SHIPS; i++)
@@ -766,8 +653,6 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
         {
             gameData->showPilotCount = 120;
         }
-
-        if (raceType == HEAD_TO_HEAD || raceType == TWO_PLAYER_RACE) { }
 
         if (gameData->gameType == CHAMPIONSHIP)
         {
@@ -936,9 +821,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
         tempLapTimes[3] = shipIndex[ownShip].lapTimes[3];
         tempLapTimes[4] = shipIndex[ownShip].lapTimes[4];
 
-        if (gameType != SINGLE)
-            attractDelay = 1;
-        else if (gameData->gameType == CHAMPIONSHIP)
+        if (gameData->gameType == CHAMPIONSHIP)
             attractDelay = 1;
         else
             attractDelay = 300;
@@ -957,60 +840,53 @@ int CalcPosition(ShipData* shipIndex)
     {
         tempPosition = 1;
 
-        if ((raceType != HEAD_TO_HEAD) || ((raceType == HEAD_TO_HEAD) && ((i == ownShip) || (i == serialShip))))
+        for (j = 0; j < NO_OF_SHIPS; j++)
         {
-            for (j = 0; j < NO_OF_SHIPS; j++)
+            if (i == j)
+                continue;
+
+            if (((shipIndex[j].attr & RACING) == 0))
+                tempPosition++;
+
+            else if (shipIndex[i].DPASectDiff == shipIndex[j].DPASectDiff)
             {
-                if ((raceType != HEAD_TO_HEAD) || ((raceType == HEAD_TO_HEAD) && ((j == ownShip) || (j == serialShip))))
-                {
+                B.vx = shipIndex[i].pos.vx;
+                B.vy = shipIndex[i].pos.vy;
+                B.vz = shipIndex[i].pos.vz;
 
-                    if (i != j)
-                    {
+                C.vx = shipIndex[j].pos.vx;
+                C.vy = shipIndex[j].pos.vy;
+                C.vz = shipIndex[j].pos.vz;
 
-                        if (((shipIndex[j].attr & RACING) == 0))
-                            tempPosition++;
+                AB.vx = B.vx - shipIndex[i].nearTrkSect->centre.vx;
+                AB.vy = B.vy - shipIndex[i].nearTrkSect->centre.vy;
+                AB.vz = B.vz - shipIndex[i].nearTrkSect->centre.vz;
 
-                        else if (shipIndex[i].DPASectDiff == shipIndex[j].DPASectDiff)
-                        {
-                            B.vx = shipIndex[i].ppivot.vx;
-                            B.vy = shipIndex[i].ppivot.vy;
-                            B.vz = shipIndex[i].ppivot.vz;
+                AC.vx = C.vx - shipIndex[j].nearTrkSect->centre.vx;
+                AC.vy = C.vy - shipIndex[j].nearTrkSect->centre.vy;
+                AC.vz = C.vz - shipIndex[j].nearTrkSect->centre.vz;
 
-                            C.vx = shipIndex[j].ppivot.vx;
-                            C.vy = shipIndex[j].ppivot.vy;
-                            C.vz = shipIndex[j].ppivot.vz;
+                trackVect.vx = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vx - shipIndex[i].nearTrkSect->centre.vx;
+                trackVect.vy = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vy - shipIndex[i].nearTrkSect->centre.vy;
+                trackVect.vz = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vz - shipIndex[i].nearTrkSect->centre.vz;
 
-                            AB.vx = B.vx - shipIndex[i].nearTrkSect->centre.vx;
-                            AB.vy = B.vy - shipIndex[i].nearTrkSect->centre.vy;
-                            AB.vz = B.vz - shipIndex[i].nearTrkSect->centre.vz;
+                angleB = GetAng(&AB, &trackVect);
+                angleC = GetAng(&AC, &trackVect);
+                distanceB = (rcos(angleB >> 3) * GetMagnitude(&AB)) >> 12;
+                distanceC = (rcos(angleC >> 3) * GetMagnitude(&AC)) >> 12;
 
-                            AC.vx = C.vx - shipIndex[j].nearTrkSect->centre.vx;
-                            AC.vy = C.vy - shipIndex[j].nearTrkSect->centre.vy;
-                            AC.vz = C.vz - shipIndex[j].nearTrkSect->centre.vz;
+                if ((distanceB == distanceC) && (i > j))
+                    tempPosition++;
 
-                            trackVect.vx = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vx - shipIndex[i].nearTrkSect->centre.vx;
-                            trackVect.vy = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vy - shipIndex[i].nearTrkSect->centre.vy;
-                            trackVect.vz = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vz - shipIndex[i].nearTrkSect->centre.vz;
-
-                            angleB = GetAng(&AB, &trackVect);
-                            angleC = GetAng(&AC, &trackVect);
-                            distanceB = (rcos(angleB >> 3) * GetMagnitude(&AB)) >> 12;
-                            distanceC = (rcos(angleC >> 3) * GetMagnitude(&AC)) >> 12;
-
-                            if ((distanceB == distanceC) && (i > j))
-                                tempPosition++;
-
-                            else if (distanceB < distanceC)
-                                tempPosition++;
-                        }
-                        else if (shipIndex[i].DPASectDiff < shipIndex[j].DPASectDiff)
-                        {
-                            tempPosition++;
-                        }
-                    }
-                }
+                else if (distanceB < distanceC)
+                    tempPosition++;
+            }
+            else if (shipIndex[i].DPASectDiff < shipIndex[j].DPASectDiff)
+            {
+                tempPosition++;
             }
         }
+
         if (i == ownShip)
             position = tempPosition;
 
@@ -1183,6 +1059,14 @@ void DisplayLives(ConfigData* gameData)
 
 void InitChampTable(void)
 {
+    int i;
+
+    for (i = 0; i < NO_OF_SHIPS; i++)
+    {
+        winTable[i].points = 0;
+        winTable[i].position = 1;
+    }
+
     strcpy(winTable[0].pilot, "JOHN DEKKA");
     strcpy(winTable[1].pilot, "DANIEL CHANG");
     strcpy(winTable[2].pilot, "ARIAL TETSUO");
@@ -1244,32 +1128,37 @@ void InitScreenTex(Texture** screenTex, const char* fileName)
     screenTex[1] = TextureTable[tablePos++];
 }
 
+void InitWeaponSprtIcons()
+{
+    int tablePos = TextureTableCount;
+
+    LoadCompressedTextureSequence("wipeout\\common\\wicons.cmp");
+
+    gWeaponIconTextures[MINE - 1] = TextureTable[tablePos++];
+    gWeaponIconTextures[MISSILE - 1] = TextureTable[tablePos++];
+    gWeaponIconTextures[ROCKET - 1] = TextureTable[tablePos++];
+    gWeaponIconTextures[SPECIAL - 1] = TextureTable[tablePos++];
+    gWeaponIconTextures[ELEC_BOLT - 1] = TextureTable[tablePos++];
+    gWeaponIconTextures[FLARE - 1] = TextureTable[tablePos++];
+    gWeaponIconTextures[REV_CON - 1] = TextureTable[tablePos++];
+    gWeaponIconTextures[SHIELD - 1] = TextureTable[tablePos++];
+    gWeaponIconTextures[TURBO - 1] = TextureTable[tablePos++];
+}
+
+void DrawWeaponSprtIcons(ShipData* playerShip)
+{
+    int icon = playerShip->weaponType;
+
+    if (icon != NO_WEAPON)
+    {
+        icon -= 1;
+        AddGlyph(144, 20, 32, 32, 0, 0, gWeaponIconTextures[icon]);
+    }
+}
+
 void DisplayPicture(Texture* pic, short x, short y, short width, short height)
 {
     AddQuad(x, y, width, height, 0, 0, width, height, pic);
-}
-
-void BackPoly(short x, short y, short w, short h)
-{
-    /*TODO back poly
-       SetPolyF4(&(selectBox[CurrentScreen]));
-       selectBox[CurrentScreen].r0=230; // PCwipeout
-       selectBox[CurrentScreen].g0=0;
-       selectBox[CurrentScreen].b0=BLACK3_TRANSL;
-
-       setXY4(&(selectBox[CurrentScreen]),x , y,
-                              x+w , y,
-                              x , y+h,
-                              x+w , y+h);
-
-       SetSemiTrans((P_TAG *)&(selectBox[CurrentScreen]), 1);
-
-       SetDrawMode(&(selectTrans[CurrentScreen]), 1, 1, FONT_TPAGE, 0);
-
-
-       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(selectBox[CurrentScreen]) );
-       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(selectTrans[CurrentScreen]) );
-       */
 }
 
 void DisplayVenomComplete(void)
@@ -1452,44 +1341,43 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 {
     int i;
     int width;
+    ShipData* playerShip = shipIndex + ownShip;
 
-    if (shipIndex[ownShip].lapNo > 0) // gone past start line
+    if (gameData->gameType == CHAMPIONSHIP)
+        DisplayLives(gameData);
+
+    DrawWeaponSprtIcons(playerShip);
+
+    if (playerShip->lapNo > 0) // gone past start line
     {
-        if (shipIndex[ownShip].attr & RACING) // in race mode
+        if (playerShip->attr & RACING) // in race mode
         {
-            if (shipIndex[ownShip].lapNo < END_LAP + 1) // not the last lap
-                AddTime(shipIndex[ownShip].lapTimes[shipIndex[ownShip].lapNo - 1], text_data(16 - gBorder, 210, 16), WhiteText);
+            if (playerShip->lapNo < END_LAP + 1) // not the last lap
+                AddTime(playerShip->lapTimes[playerShip->lapNo - 1], text_data(16 - gBorder, 210, 16), WhiteText);
             else
-                AddTime(shipIndex[ownShip].lapTimes[2], text_data(16 - gBorder, 210, 16), WhiteText);
+                AddTime(playerShip->lapTimes[2], text_data(16 - gBorder, 210, 16), WhiteText);
         }
     }
-    if (shipIndex[ownShip].attr & RACING)
+    if (playerShip->attr & RACING)
     {
-        if (shipIndex[ownShip].lapNo > 1)
+        if (playerShip->lapNo > 1)
         {
-            for (i = 1; i < shipIndex[ownShip].lapNo; i++)
+            for (i = 1; i < playerShip->lapNo; i++)
             {
                 if (i < END_LAP)
                 {
-                    AddTime(shipIndex[ownShip].lapTimes[i - 1], text_data(16 - gBorder, 205 - (10 * i), 8), RedText);
+                    AddTime(playerShip->lapTimes[i - 1], text_data(16 - gBorder, 205 - (10 * i), 8), RedText);
                 }
             }
         }
     }
 
-    if (shipIndex[ownShip].attr & RACING)
+    if (playerShip->attr & RACING)
     {
-        if (gameType == MASTER || gameType == SLAVE)
-        {
-            AddText("P", text_data(260 + gBorder, 50, 8), RedText);
-            AddNumber(2, text_data(274 + gBorder, 50, 8), RedText);
-            AddNumber(winTable[serialShip].racePosition, text_data(290, 50, 8), WhiteText);
-        }
-
         AddText("LAP", text_data(15 - gBorder, 8, 8), RedText); // PCwipeout
-        AddNumber(shipIndex[ownShip].lapNo, text_data(10 - gBorder, 19, 16), WhiteText); // PCwipeout
+        AddNumber(playerShip->lapNo, text_data(10 - gBorder, 19, 16), WhiteText); // PCwipeout
 
-        width = Text16[(shipIndex[ownShip].lapNo + 26)] % 100;
+        width = Text16[(playerShip->lapNo + 26)] % 100;
 
         AddText("OF", text_data((10 + width) - gBorder, 27, 8), RedText);
 
@@ -1508,15 +1396,15 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
             AddTime(scoreTable[((gameData->trackNum - 1) + HiScoreTracks)].lapRecord, text_data(15 - gBorder, 55, 8), WhiteText);
         else
             AddTime(scoreTable[(gameData->trackNum - 1)].lapRecord, text_data(15 - gBorder, 55, 8), WhiteText);
-        if ((shipIndex[ownShip].attr & DIRECTION) == 0)
+        if ((playerShip->attr & DIRECTION) == 0)
         {
             CentreText("WRONG WAY", text_data(0, 110, 16), RedText);
         }
     }
 
-    if (shipIndex[ownShip].attr & RACING)
+    if (playerShip->attr & RACING)
     {
-        fill_speedo(shipIndex[ownShip].speed, shipIndex[ownShip].thrust_mag);
+        fill_speedo(playerShip->speed, playerShip->thrust_mag);
         AddGlyph(speedo_x, speedo_y, SPEEDO_WIDTH, SPEEDO_HEIGHT, 0, 0, speedoTex);
     }
 }

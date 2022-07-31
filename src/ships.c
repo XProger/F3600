@@ -65,15 +65,15 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        distance.vx = (shipIndex[i].ppivot.vx + ctrlcamera.camPos->relative.t[0]) >> 3;
-        distance.vy = (shipIndex[i].ppivot.vy + ctrlcamera.camPos->relative.t[1]) >> 3;
-        distance.vz = (shipIndex[i].ppivot.vz + ctrlcamera.camPos->relative.t[2]) >> 3;
+        distance.vx = (shipIndex[i].pos.vx + ctrlcamera.camPos->relative.t[0]) >> 3;
+        distance.vy = (shipIndex[i].pos.vy + ctrlcamera.camPos->relative.t[1]) >> 3;
+        distance.vz = (shipIndex[i].pos.vz + ctrlcamera.camPos->relative.t[2]) >> 3;
 
         mag = GetMagnitude(&distance);
 
-        toCentre.vx = (shipIndex[i].ppivot.vx + ctrlcamera.camPos->relative.t[0]);
-        toCentre.vy = (shipIndex[i].ppivot.vy + ctrlcamera.camPos->relative.t[1]);
-        toCentre.vz = (shipIndex[i].ppivot.vz + ctrlcamera.camPos->relative.t[2]);
+        toCentre.vx = (shipIndex[i].pos.vx + ctrlcamera.camPos->relative.t[0]);
+        toCentre.vy = (shipIndex[i].pos.vy + ctrlcamera.camPos->relative.t[1]);
+        toCentre.vz = (shipIndex[i].pos.vz + ctrlcamera.camPos->relative.t[2]);
         RotTrans(matrix, &toCentre, &v2, &flag);
 
         if (mag < 2000)
@@ -93,20 +93,17 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
                 obj = shipShapes[shipIndex[i].highResTableIndex];
             }
 
-            SetSkeletonPosition(obj->skeleton, shipIndex[i].ppivot.vx, shipIndex[i].ppivot.vy, shipIndex[i].ppivot.vz);
+            SetSkeletonPosition(obj->skeleton, shipIndex[i].pos.vx, shipIndex[i].pos.vy, shipIndex[i].pos.vz);
 
             SetSkeletonDirectionHPR(obj->skeleton, shipIndex[i].hdg, shipIndex[i].pitch, shipIndex[i].roll);
 
+            renderSetColor(shipIndex[i].color);
+
             if (((shipIndex[i].attr & VIEW_IN) == 0) || (shipIndex[i].attr & REMOTE_VIEW))
             {
-                if (raceType == HEAD_TO_HEAD)
+                if (raceType == TIME_TRIAL)
                 {
-                    if ((i == serialShip) || (i == ownShip))
-                        renderObject(obj);
-                }
-                else if (raceType == TIME_TRIAL)
-                {
-                    if ((i == ownShip))
+                    if (i == ownShip)
                         renderObject(obj);
                 }
                 else
@@ -118,6 +115,8 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
             shipIndex[i].attr &= ~VISIBLE;
         }
     }
+
+    renderSetColor(0xFFFFFFFF);
 }
 
 void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
@@ -187,7 +186,6 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
     VECTOR facePoint;
     TrackSection* startSection[8];
     short position = 1;
-    short tempPos = 1;
     short used[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     int index;
     int count;
@@ -246,109 +244,77 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 #endif
 
     crossedLine = 0;
-    if (gameType == SINGLE)
+
+    if (((gameData->gameType == CHAMPIONSHIP) && (gameData->trackNum == 1)) || ((gameData->gameType == CHAMPIONSHIP) && (gameData->trackNum == 8)) || (gameData->gameType != CHAMPIONSHIP))
     {
-        if (((gameData->gameType == CHAMPIONSHIP) && (gameData->trackNum == 1)) || ((gameData->gameType == CHAMPIONSHIP) && (gameData->trackNum == 8)) || (gameData->gameType != CHAMPIONSHIP))
-
+        for (i = 0; i < NO_OF_SHIPS; i++)
         {
-            for (i = 0; i < NO_OF_SHIPS; i++)
-            {
-                if (i != ownShip)
-                {
-                    while (1)
-                    {
-                        index = randy() % 8;
-                        if (index != 0)
-                        {
-                            if (used[index] == 0)
-                            {
-                                championOrder[index] = i;
-                                raceOrder[index] = i;
-                                shipOrder[i] = index;
-                                used[index] = 1;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            championOrder[0] = ownShip;
-            raceOrder[0] = ownShip;
-            shipOrder[ownShip] = 0;
-        }
-        else if (gameData->gameType == CHAMPIONSHIP)
-        {
-            raceOrder[7] = championOrder[7];
-            shipOrder[raceOrder[7]] = 7;
-
-            if ((randy() % 2) == 0)
-            {
-                raceOrder[5] = championOrder[5];
-                raceOrder[6] = championOrder[6];
-            }
-            else
-            {
-                raceOrder[6] = championOrder[5];
-                raceOrder[5] = championOrder[6];
-            }
-
-            shipOrder[raceOrder[5]] = 5;
-            shipOrder[raceOrder[6]] = 6;
-
-            for (i = 1; i < 5; i++)
+            if (i != ownShip)
             {
                 while (1)
                 {
-                    index = (randy() % 4) + 1;
+                    index = randy() % 8;
+                    if (index != 0)
                     {
                         if (used[index] == 0)
                         {
+                            championOrder[index] = i;
+                            raceOrder[index] = i;
+                            shipOrder[i] = index;
                             used[index] = 1;
-                            raceOrder[i] = championOrder[index];
                             break;
                         }
                     }
                 }
             }
-            shipOrder[raceOrder[4]] = 4;
-            shipOrder[raceOrder[3]] = 3;
-            shipOrder[raceOrder[2]] = 2;
-            shipOrder[raceOrder[1]] = 1;
-
-            shipOrder[ownShip] = 0;
-            raceOrder[0] = ownShip;
         }
+
+        championOrder[0] = ownShip;
+        raceOrder[0] = ownShip;
+        shipOrder[ownShip] = 0;
     }
-    else
+    else if (gameData->gameType == CHAMPIONSHIP)
     {
-        count = 2;
-        for (i = 0; i < NO_OF_SHIPS; i++)
+        raceOrder[7] = championOrder[7];
+        shipOrder[raceOrder[7]] = 7;
+
+        if ((randy() % 2) == 0)
         {
-            if ((i != ownShip) && (i != serialShip))
+            raceOrder[5] = championOrder[5];
+            raceOrder[6] = championOrder[6];
+        }
+        else
+        {
+            raceOrder[6] = championOrder[5];
+            raceOrder[5] = championOrder[6];
+        }
+
+        shipOrder[raceOrder[5]] = 5;
+        shipOrder[raceOrder[6]] = 6;
+
+        for (i = 1; i < 5; i++)
+        {
+            while (1)
             {
-                shipOrder[i] = count;
-                count++;
+                index = (randy() % 4) + 1;
+                {
+                    if (used[index] == 0)
+                    {
+                        used[index] = 1;
+                        raceOrder[i] = championOrder[index];
+                        break;
+                    }
+                }
             }
         }
-        if (gameType == MASTER)
-        {
-            shipOrder[ownShip] = 0;
-            shipOrder[serialShip] = 1;
-        }
-        if (gameType == SLAVE)
-        {
-            shipOrder[ownShip] = 1;
-            shipOrder[serialShip] = 0;
-        }
-    }
+        shipOrder[raceOrder[4]] = 4;
+        shipOrder[raceOrder[3]] = 3;
+        shipOrder[raceOrder[2]] = 2;
+        shipOrder[raceOrder[1]] = 1;
 
-    if (gameType == SINGLE)
-    {
-        tempPos = 1;
+        shipOrder[ownShip] = 0;
+        raceOrder[0] = ownShip;
     }
-    else
-        tempPos = 2;
 
     for (i = 0; i < startLinePos[gameData->actTrackNum] - 15; i++)
     {
@@ -363,20 +329,14 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
             section = section->nextSection.ptr;
     }
 
-    if (gameType == SLAVE)
-    {
-        startSection[1] = startSection[1]->prevSection.ptr;
-        startSection[1] = startSection[1]->prevSection.ptr;
-    }
-
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        shipIndex[i].vpivot.vx = 0;
-        shipIndex[i].vpivot.vy = 0;
-        shipIndex[i].vpivot.vz = 0;
-        shipIndex[i].apivot.vx = 0;
-        shipIndex[i].apivot.vy = 0;
-        shipIndex[i].apivot.vz = 0;
+        shipIndex[i].vel.vx = 0;
+        shipIndex[i].vel.vy = 0;
+        shipIndex[i].vel.vz = 0;
+        shipIndex[i].acc.vx = 0;
+        shipIndex[i].acc.vy = 0;
+        shipIndex[i].acc.vz = 0;
         shipIndex[i].hdg = 0;
         shipIndex[i].pitch = 0;
         shipIndex[i].roll = 0;
@@ -447,123 +407,36 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         else
             shipIndex[i].update = UpdateRemoteShipStart;
 
-        if (gameType == SINGLE)
+        if (i == ownShip)
         {
-            if (i == ownShip)
-            {
-                position = 0;
-                shipIndex[i].position = position;
-                shipIndex[i].remoteMaxThrust = 2900;
-                shipIndex[i].remoteThrustMag = 46;
-                shipIndex[i].fightBack = 0;
-            }
-            else
-            {
-                position = shipOrder[i];
-                tempPos++;
-                shipIndex[i].position = position;
-
-                if (gameData->Class == 0)
-                {
-                    shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position - 1];
-                    shipIndex[i].remoteThrustMag = RThrustMagBeg[position - 1];
-                    shipIndex[i].fightBack = fightBackBeg[position - 1];
-                }
-                else
-                {
-                    shipIndex[i].remoteMaxThrust = RMaxThrustPro[position - 1];
-                    shipIndex[i].remoteThrustMag = RThrustMagPro[position - 1];
-                    shipIndex[i].fightBack = fightBackPro[position - 1];
-                }
-            }
-
-            shipIndex[i].nearTrkSect = startSection[position];
-            shipIndex[i].prevShipSect = startSection[position];
-            SetSpread(shipIndex, gameData, position, i);
-        }
-        else if (gameType == MASTER)
-        {
-            if (i == ownShip)
-            {
-                position = 0;
-                shipIndex[i].position = position;
-                shipIndex[i].remoteMaxThrust = 2900;
-                shipIndex[i].remoteThrustMag = 46;
-                shipIndex[i].fightBack = 0;
-            }
-            else if (i == serialShip)
-            {
-                position = 1;
-                shipIndex[i].position = position;
-                shipIndex[i].remoteMaxThrust = 2900;
-                shipIndex[i].remoteThrustMag = 46;
-                shipIndex[i].fightBack = 0;
-            }
-            else
-            {
-                position = shipOrder[i];
-                tempPos++;
-                shipIndex[i].position = position;
-
-                if (gameData->Class == 0)
-                {
-                    shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position - 1];
-                    shipIndex[i].remoteThrustMag = RThrustMagBeg[position - 1];
-                    shipIndex[i].fightBack = fightBackBeg[position - 1];
-                }
-                else
-                {
-                    shipIndex[i].remoteMaxThrust = RMaxThrustPro[position - 1];
-                    shipIndex[i].remoteThrustMag = RThrustMagPro[position - 1];
-                    shipIndex[i].fightBack = fightBackPro[position - 1];
-                }
-            }
-
-            shipIndex[i].nearTrkSect = startSection[position];
-            shipIndex[i].prevShipSect = startSection[position];
-            SetSpread(shipIndex, gameData, position, i);
+            position = 0;
+            shipIndex[i].position = position;
+            shipIndex[i].remoteMaxThrust = 2900;
+            shipIndex[i].remoteThrustMag = 46;
+            shipIndex[i].fightBack = 0;
         }
         else
         {
-            if (i == ownShip)
+            position = shipOrder[i];
+            shipIndex[i].position = position;
+
+            if (gameData->Class == 0)
             {
-                position = 1;
-                shipIndex[i].position = position;
-                shipIndex[i].remoteMaxThrust = 2900;
-                shipIndex[i].remoteThrustMag = 46;
-                shipIndex[i].fightBack = 0;
-            }
-            else if (i == serialShip)
-            {
-                position = 0;
-                shipIndex[i].position = position;
-                shipIndex[i].remoteMaxThrust = 2900;
-                shipIndex[i].remoteThrustMag = 46;
-                shipIndex[i].fightBack = 0;
+                shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position - 1];
+                shipIndex[i].remoteThrustMag = RThrustMagBeg[position - 1];
+                shipIndex[i].fightBack = fightBackBeg[position - 1];
             }
             else
             {
-                position = shipOrder[i];
-                tempPos++;
-                shipIndex[i].position = position;
-                if (gameData->Class == 0)
-                {
-                    shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position - 1];
-                    shipIndex[i].remoteThrustMag = RThrustMagBeg[position - 1];
-                    shipIndex[i].fightBack = fightBackBeg[position - 1];
-                }
-                else
-                {
-                    shipIndex[i].remoteMaxThrust = RMaxThrustPro[position - 1];
-                    shipIndex[i].remoteThrustMag = RThrustMagPro[position - 1];
-                    shipIndex[i].fightBack = fightBackPro[position - 1];
-                }
+                shipIndex[i].remoteMaxThrust = RMaxThrustPro[position - 1];
+                shipIndex[i].remoteThrustMag = RThrustMagPro[position - 1];
+                shipIndex[i].fightBack = fightBackPro[position - 1];
             }
-
-            shipIndex[i].nearTrkSect = startSection[position];
-            shipIndex[i].prevShipSect = startSection[position];
-            SetSpread(shipIndex, gameData, position, i);
         }
+
+        shipIndex[i].nearTrkSect = startSection[position];
+        shipIndex[i].prevShipSect = startSection[position];
+        SetSpread(shipIndex, gameData, position, i);
 
         face = track->faces + startSection[position]->faceStart;
         face++;
@@ -573,9 +446,9 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         facePoint.vx = (track->vertices[(face->vertex[0])].vx + track->vertices[(face->vertex[2])].vx) >> 1;
         facePoint.vy = (track->vertices[(face->vertex[0])].vy + track->vertices[(face->vertex[2])].vy) >> 1;
         facePoint.vz = (track->vertices[(face->vertex[0])].vz + track->vertices[(face->vertex[2])].vz) >> 1;
-        shipIndex[i].ppivot.vx = facePoint.vx + ((face->normal.vx * 200) >> 12);
-        shipIndex[i].ppivot.vy = facePoint.vy + ((face->normal.vy * 200) >> 12);
-        shipIndex[i].ppivot.vz = facePoint.vz + ((face->normal.vz * 200) >> 12);
+        shipIndex[i].pos.vx = facePoint.vx + ((face->normal.vx * 200) >> 12);
+        shipIndex[i].pos.vy = facePoint.vy + ((face->normal.vy * 200) >> 12);
+        shipIndex[i].pos.vz = facePoint.vz + ((face->normal.vz * 200) >> 12);
 
         shipIndex[i].nearSecNo = startSection[position]->secNo;
         shipIndex[i].prevSecNo = startSection[position]->secNo;

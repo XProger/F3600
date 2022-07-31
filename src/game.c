@@ -25,7 +25,9 @@ void titleLoop()
     int i;
     UpdatePad();
 
-    renderClear(); // TODO if gBorder != 0
+    renderFrameBegin();
+    renderClear();
+    renderSetMode(RENDER_MODE_2D);
 
     AddGlyph(0, 0, 320, 240, 0, 0, titleScreen);
     CentreText("PRESS START", text_data(0, 200, 8), WhiteText);
@@ -46,6 +48,8 @@ void titleLoop()
     {
         raceDemo(&ctrlConfigData);
     }
+
+    renderFrameEnd();
 }
 
 void gameInit(void)
@@ -68,18 +72,17 @@ void gameInit(void)
        LoadCardData(lfilename, 0, &ctrlConfigData, (SelectionData *) 0);
     */
 
-    gameType = SINGLE;
-
     ctrlConfigData.Lives = 3;
     ctrlConfigData.EndOfGame = 0;
     ctrlConfigData.Position = 8;
 
     /*TODO cheats*/
-    /* Enable cheat permanently */
-    // gameData.RapierClass = 1 ;
-    // totalTracks = 14 ;
-    // NumTracks = 7 ;
-    // gameData.showBonusTrack = 1 ; //SJR
+#if 1
+    ctrlConfigData.RapierClass = 1;
+    totalTracks = 14;
+    NumTracks = 7;
+    ctrlConfigData.showBonusTrack = 1;
+#endif
 
     SfxSetVolume((char)((0x3fff - (75 * ctrlConfigData.currSliderPos)) >> 6));
 

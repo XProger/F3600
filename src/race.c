@@ -6,7 +6,6 @@
 
 #define PrmMax 64
 #define AJSDELAY 60 * 30 // arbitrary number - linked to frame rate ? HOPE SO !
-//#define   AJSDELAY     20 // arbitrary number - linked to frame rate ? HOPE SO !
 
 extern long fr;
 extern ChampionShip winTable[];
@@ -46,7 +45,6 @@ WeaponData ctrlweaponIndex[NO_ACTIVE_WEAPONS];
 WeaponGrid ctrlweaponGrid[64];
 
 int ctrlnoWeaponGrids;
-Texture* ctrlweaponIconTextures[NO_OF_WEAPON_TYPES];
 
 short ctrlsky;
 int ctrlchoice;
@@ -67,7 +65,8 @@ int ctrlgameOverTime;
 int ctrlcdPause;
 int ctrlnearShip;
 
-int TrackLoadHack;
+int HACK_LOAD_TRACK;
+int HACK_LOAD_SHADOW;
 
 /**************************************************/
 /******           Stu additions               *****/
@@ -78,7 +77,6 @@ char ctrlconfirm;
 char ctrllConfirm;
 HiScoreData ctrlhiScoreData;
 char ctrlrec[8];
-char ctrlmachinePaused;
 char ctrlactivated;
 int ctrlchoiceData;
 char ctrlquitFlag;
@@ -247,7 +245,6 @@ void raceInit(ConfigData* gameData)
     ctrlshowMenu = 1;
     ctrlconfirm = 0;
     ctrllConfirm = 0;
-    ctrlmachinePaused = SINGLE;
     ctrlactivated = 0;
     ctrlchoiceData = -1;
     ctrlquitFlag = 0;
@@ -346,11 +343,11 @@ void raceInit(ConfigData* gameData)
     getPath(trackPath, gameData->actTrackNum, "\\library.ttf");
     ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
 
-    TrackLoadHack = 1;
+    HACK_LOAD_TRACK = 1;
     ctrllibraryTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\library.cmp");
     LoadCompressedTextureSequence(trackPath);
-    TrackLoadHack = 0;
+    HACK_LOAD_TRACK = 0;
 
     ctrlsection = track->sections;
 
@@ -413,7 +410,7 @@ void raceInit(ConfigData* gameData)
     if (trackNo == 13)
         InitAuroraBorialis(ctrlprm[ctrlsky]);
 
-    InitWeaponSprtIcons(ctrlweaponIconTextures);
+    InitWeaponSprtIcons();
 
     InitScreenTex(ctrlwinLose, PILOT_NAMES[gameData->shipNum]);
 
@@ -471,9 +468,6 @@ void raceInit(ConfigData* gameData)
     ctrlnextSection = ctrlcamera.section;
 
     ctrlshipIndex[ownShip].haveFired = NON_ACTIVE;
-
-    if (gameType != SINGLE)
-        ctrlshipIndex[serialShip].haveFired = NON_ACTIVE;
 
     SetNormPadPresets(gameData);
 
@@ -632,8 +626,7 @@ void raceCtrl(ConfigData* gameData)
             ctrlchoice = 0;
         }
 
-        //        if( ((GetMenuKey(M_SELECT)) || (GetMenuKey(M_START))) && (!ctrlshowMenu) && (ctrlconfirm == 1) && (ctrlmachinePaused != SLAVE))
-        if (GetMenuKey(M_SELECT) && (!ctrlshowMenu) && (ctrlconfirm == 1) && (ctrlmachinePaused != SLAVE))
+        if (GetMenuKey(M_SELECT) && (!ctrlshowMenu) && (ctrlconfirm == 1))
         {
             ctrlshowMenu = 1;
             ctrlconfirm = 2;
@@ -669,20 +662,14 @@ void raceCtrl(ConfigData* gameData)
                 case 2:
                     ctrlchoice = -1;
                     ctrlchoiceData = 2;
-                    if (ctrlmachinePaused == SINGLE)
-                    {
-                        QuitGame();
-                        gameData->gameType = NO_GAME_SET;
-                        ctrl_says_quit = 1;
-                        return;
-                    }
-                    break;
-
+                    QuitGame();
+                    gameData->gameType = NO_GAME_SET;
+                    ctrl_says_quit = 1;
+                    return;
             } /*end switch*/
         } /*end if (load a bollox*/
 
-        //          if ( ((GetMenuKey(M_SELECT)) || (GetMenuKey(M_START))) && (ctrlshowMenu) && ctrlmachinePaused != SLAVE)
-        if (GetMenuKey(M_SELECT) && (ctrlshowMenu) && ctrlmachinePaused != SLAVE)
+        if (GetMenuKey(M_SELECT) && (ctrlshowMenu))
         {
             PlayNote(MENU_SELECT, 0, 20);
             if (ctrlchoice == 1 || ctrlchoice == 2)
@@ -737,7 +724,7 @@ void raceCtrl(ConfigData* gameData)
                 ctrlbuttonPressed = 0;
         }
 
-        UpdateShips(ctrlshipIndex, ctrlweaponShapes, ctrlshipShapes, ctrlweaponIndex);
+        UpdateShips(ctrlshipIndex, ctrlweaponIndex);
 
         (ctrlrescueDroid.droidUpdate)(&ctrlrescueDroid, &(ctrlshipIndex[ownShip]), ctrlshipShapes);
 
@@ -764,8 +751,7 @@ void raceCtrl(ConfigData* gameData)
 
         UpdateWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
 
-        if (gameType == SINGLE)
-            CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
+        CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
 
         // AdjustEngineSound(&(ctrlshipIndex[ownShip]), &ctrlcamera);
 
@@ -794,35 +780,126 @@ void raceCtrl(ConfigData* gameData)
 
     else if (attractDelay > 0)
     {
-        if (gameType == SINGLE)
-        {
-            attractDelay--;
+        attractDelay--;
 
-            if (attractDelay == 0 && gameData->gameType == SINGLE_RACE)
+        if (attractDelay == 0 && gameData->gameType == SINGLE_RACE)
+        {
+            attractDelay = 1;
+            if (gameData->showPilotCount != 0)
             {
-                attractDelay = 1;
-                if (gameData->showPilotCount != 0)
+                if (gameData->Position == 1)
+                {
+                    ctrlNeedWinLose = 1;
+                    ctrlNeedEndText = 1;
+                    ctrlNeedBackPoly = 1;
+                    ctrlNeedRaceInfo = 1;
+                    ctrlNeedDeSelectScreen = 1;
+                    ctrlNeedEndTextVar = 1;
+                    ctrlNeedWinLoseVar = 1;
+                }
+                else
+                {
+                    ctrlNeedWinLose = 1;
+                    ctrlNeedEndText = 1;
+                    ctrlNeedBackPoly = 1;
+                    ctrlNeedRaceInfo = 1;
+                    ctrlNeedDeSelectScreen = 1;
+                    ctrlNeedEndTextVar = 2;
+                    ctrlNeedWinLoseVar = 0;
+                }
+
+                ajscount++;
+                if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
+                {
+                    gameData->showPilotCount = 0;
+                    ajscount = 0;
+                }
+            }
+            else
+            {
+                gameData->newLapRecord = 0;
+
+                if (gameData->EndOfGame)
                 {
                     if (gameData->Position == 1)
                     {
-                        ctrlNeedWinLose = 1;
-                        ctrlNeedEndText = 1;
-                        ctrlNeedBackPoly = 1;
-                        ctrlNeedRaceInfo = 1;
-                        ctrlNeedDeSelectScreen = 1;
-                        ctrlNeedEndTextVar = 1;
-                        ctrlNeedWinLoseVar = 1;
+                        ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
                     }
-                    else
+                }
+
+                if (ctrlhiScoreData.highScore)
+                {
+                    ctrlhiScoreData.displayHiScore = 1;
+                    ctrlhiScoreData.highScore = 0;
+                }
+                if (ctrlhiScoreData.displayHiScore)
+                {
+                    ctrlNeedNewHighScores = 1;
+                    NewHighScore(gameData, &ctrlhiScoreData);
+                    ctrlNeedDeSelectScreen = 1;
+                    gameData->EndOfGame = 0;
+                }
+                else
+                {
+                    ajscount++;
+
+                    ctrlNeedInSingleGameConfirm = 1;
+                    if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
                     {
-                        ctrlNeedWinLose = 1;
-                        ctrlNeedEndText = 1;
-                        ctrlNeedBackPoly = 1;
-                        ctrlNeedRaceInfo = 1;
-                        ctrlNeedDeSelectScreen = 1;
-                        ctrlNeedEndTextVar = 2;
-                        ctrlNeedWinLoseVar = 0;
+                        ctrlhiScoreData.lConfirm ^= 1;
+                        PlayNote(MENU_MOVE, 1, 20);
                     }
+                    ajscount++;
+                    if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
+                    {
+                        if (ajscount > AJSDELAY)
+                            ctrlhiScoreData.lConfirm = 1;
+                        ctrlhiScoreData.confirm = ctrlhiScoreData.lConfirm;
+                        ajscount = 0;
+                    }
+
+                    ctrlNeedDeSelectScreen = 1;
+
+                    if (ctrlhiScoreData.confirm == 1)
+                    {
+                        ctrlhiScoreData.confirm = 2;
+                        ctrlhiScoreData.lConfirm = 0;
+                        attractDelay = 0;
+                        gameData->gameType = NO_GAME_SET;
+                        QuitGame();
+                        ctrl_says_quit = 1;
+                        return;
+                    }
+
+                    if (ctrlhiScoreData.confirm == 0)
+                    {
+                        attractDelay = 0;
+                        ctrlhiScoreData.confirm = 2;
+                        ctrlhiScoreData.lConfirm = 0;
+                        CDRestartNeeded = 1;
+                        ctrlNeedDeSelectScreen = 0;
+                        InitHiScoreData(&ctrlhiScoreData);
+
+                        Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                        PlayNote(CROWD, 0, -1);
+                        PlayNote(CROWD2, 0, -1);
+                    }
+                }
+            }
+        }
+
+        if (attractDelay == 0 && gameData->gameType == TIME_TRIAL)
+        {
+            attractDelay = 1;
+
+            if (gameData->gameType == TIME_TRIAL)
+            {
+
+                if (gameData->showPilotCount != 0)
+                {
+
+                    ctrlNeedRaceInfo = 1;
+                    ctrlNeedDeSelectScreen = 1;
 
                     ajscount++;
                     if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
@@ -834,20 +911,15 @@ void raceCtrl(ConfigData* gameData)
                 else
                 {
                     gameData->newLapRecord = 0;
-
                     if (gameData->EndOfGame)
-                    {
-                        if (gameData->Position == 1)
-                        {
-                            ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
-                        }
-                    }
+                        ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
 
                     if (ctrlhiScoreData.highScore)
                     {
                         ctrlhiScoreData.displayHiScore = 1;
                         ctrlhiScoreData.highScore = 0;
                     }
+
                     if (ctrlhiScoreData.displayHiScore)
                     {
                         ctrlNeedNewHighScores = 1;
@@ -893,9 +965,7 @@ void raceCtrl(ConfigData* gameData)
                             ctrlhiScoreData.confirm = 2;
                             ctrlhiScoreData.lConfirm = 0;
                             CDRestartNeeded = 1;
-                            ctrlNeedDeSelectScreen = 0;
                             InitHiScoreData(&ctrlhiScoreData);
-
                             Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                             PlayNote(CROWD, 0, -1);
                             PlayNote(CROWD2, 0, -1);
@@ -903,32 +973,146 @@ void raceCtrl(ConfigData* gameData)
                     }
                 }
             }
+        }
 
-            if (attractDelay == 0 && gameData->gameType == TIME_TRIAL)
+        /****************** Do Extro ******************/
+        if (attractDelay == 0 && gameData->gameType == CHAMPIONSHIP)
+        {
+            attractDelay = 1;
+
+            if (gameData->gameType == CHAMPIONSHIP)
             {
-                attractDelay = 1;
 
-                if (gameData->gameType == TIME_TRIAL)
+                if (gameData->Lives == 0) /*0*/
                 {
-
-                    if (gameData->showPilotCount != 0)
+                    if (gameData->gameOverCount != 0)
                     {
-
+                        ctrlNeedWinLose = 1;
+                        ctrlNeedEndText = 1;
+                        ctrlNeedBackPoly = 1;
                         ctrlNeedRaceInfo = 1;
                         ctrlNeedDeSelectScreen = 1;
+                        ctrlNeedEndTextVar = 3;
+                        ctrlNeedWinLoseVar = 0;
 
                         ajscount++;
                         if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                         {
-                            gameData->showPilotCount = 0;
                             ajscount = 0;
+                            gameData->showGameOver = 1;
+                            ctrlgameOverTime = 90; // 3 seconds
+                            gameData->gameOverCount = 0;
+                            gameData->newLapRecord = 0;
+                        }
+                    }
+                    else if (gameData->gotoMenu == 1)
+                    {
+                        gameData->gotoMenu = 0;
+                        gameData->gameType = NO_GAME_SET;
+                        gameData->newLapRecord = 0;
+                        QuitGame();
+                        ctrl_says_quit = 1;
+                        return;
+                    }
+                    else
+
+                        if (gameData->showGameOver == 1)
+                    {
+
+                        ajscount++;
+                        if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
+                        {
+                            ajscount = 0;
+                            gameData->gotoMenu = 1;
+                            gameData->showGameOver = 0;
+                            gameData->newLapRecord = 0;
+                        }
+                    }
+                }
+                else
+                {
+                    if (gameData->showPilotCount != 0)
+                    {
+                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                        {
+                            ctrlNeedWinLose = 1;
+                            ctrlNeedEndText = 1;
+                            ctrlNeedBackPoly = 1;
+                            ctrlNeedRaceInfo = 1;
+                            ctrlNeedDeSelectScreen = 1;
+                            ctrlNeedEndTextVar = 1;
+                            ctrlNeedWinLoseVar = 1;
+                        }
+                        else
+                        {
+                            ctrlNeedWinLose = 1;
+                            ctrlNeedEndText = 1;
+                            ctrlNeedBackPoly = 1;
+                            ctrlNeedRaceInfo = 1;
+                            ctrlNeedDeSelectScreen = 1;
+                            ctrlNeedEndTextVar = 3;
+                            ctrlNeedWinLoseVar = 0;
+                        }
+
+                        ajscount++;
+                        if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
+                        {
+                            ajscount = 0;
+                            gameData->showPilotCount = 0;
+                            gameData->newLapRecord = 0;
+                        }
+                    }
+                    else if (gameData->showPointCount != 0)
+                    {
+                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                        {
+                            ctrlNeedRacePoints = 1;
+                            ctrlNeedDeSelectScreen = 1;
+                        }
+                        ajscount++;
+                        if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
+                        {
+                            ajscount = 0;
+                            gameData->showPointCount = 0;
+                        }
+                    }
+                    else if (gameData->showChampCount != 0)
+                    {
+                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                        {
+                            ctrlNeedChampTable = 1;
+                            ctrlNeedDeSelectScreen = 1;
+                        }
+                        ajscount++;
+                        if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
+                        {
+                            ajscount = 0;
+                            gameData->showChampCount = 0;
+                        }
+                    }
+                    else if (gameData->venomComplete != 0)
+                    {
+                        if (gameData->showBonusTrack == 1)
+                            ctrlNeedAllVenomComplete = 1;
+                        else
+                            ctrlNeedVenomComplete = 1;
+
+                        ctrlNeedDeSelectScreen = 1;
+
+                        ajscount++;
+                        if ((ajscount > (AJSDELAY / 2)))
+                        {
+                            ajscount = 0;
+                            gameData->venomComplete = 0;
                         }
                     }
                     else
                     {
-                        gameData->newLapRecord = 0;
-                        if (gameData->EndOfGame)
-                            ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
+                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                        {
+                            if (gameData->EndOfGame)
+                                ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
+                        }
 
                         if (ctrlhiScoreData.highScore)
                         {
@@ -941,326 +1125,125 @@ void raceCtrl(ConfigData* gameData)
                             ctrlNeedNewHighScores = 1;
                             NewHighScore(gameData, &ctrlhiScoreData);
                             ctrlNeedDeSelectScreen = 1;
+
                             gameData->EndOfGame = 0;
                         }
                         else
                         {
-                            ajscount++;
+                            if (gameData->lostGame == 1)
+                            {
 
-                            ctrlNeedInSingleGameConfirm = 1;
-                            if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
-                            {
-                                ctrlhiScoreData.lConfirm ^= 1;
-                                PlayNote(MENU_MOVE, 1, 20);
-                            }
-                            ajscount++;
-                            if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
-                            {
-                                if (ajscount > AJSDELAY)
-                                    ctrlhiScoreData.lConfirm = 1;
-                                ctrlhiScoreData.confirm = ctrlhiScoreData.lConfirm;
-                                ajscount = 0;
-                            }
-
-                            ctrlNeedDeSelectScreen = 1;
-
-                            if (ctrlhiScoreData.confirm == 1)
-                            {
-                                ctrlhiScoreData.confirm = 2;
-                                ctrlhiScoreData.lConfirm = 0;
-                                attractDelay = 0;
-                                gameData->gameType = NO_GAME_SET;
-                                QuitGame();
-                                ctrl_says_quit = 1;
-                                return;
-                            }
-
-                            if (ctrlhiScoreData.confirm == 0)
-                            {
-                                attractDelay = 0;
-                                ctrlhiScoreData.confirm = 2;
-                                ctrlhiScoreData.lConfirm = 0;
-                                CDRestartNeeded = 1;
-                                InitHiScoreData(&ctrlhiScoreData);
-                                Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
-                                PlayNote(CROWD, 0, -1);
-                                PlayNote(CROWD2, 0, -1);
-                            }
-                        }
-                    }
-                }
-            }
-
-            /****************** Do Extro ******************/
-            if (attractDelay == 0 && gameData->gameType == CHAMPIONSHIP)
-            {
-                attractDelay = 1;
-
-                if (gameData->gameType == CHAMPIONSHIP)
-                {
-
-                    if (gameData->Lives == 0) /*0*/
-                    {
-                        if (gameData->gameOverCount != 0)
-                        {
-                            ctrlNeedWinLose = 1;
-                            ctrlNeedEndText = 1;
-                            ctrlNeedBackPoly = 1;
-                            ctrlNeedRaceInfo = 1;
-                            ctrlNeedDeSelectScreen = 1;
-                            ctrlNeedEndTextVar = 3;
-                            ctrlNeedWinLoseVar = 0;
-
-                            ajscount++;
-                            if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
-                            {
-                                ajscount = 0;
-                                gameData->showGameOver = 1;
-                                ctrlgameOverTime = 90; // 3 seconds
-                                gameData->gameOverCount = 0;
-                                gameData->newLapRecord = 0;
-                            }
-                        }
-                        else if (gameData->gotoMenu == 1)
-                        {
-                            gameData->gotoMenu = 0;
-                            gameData->gameType = NO_GAME_SET;
-                            gameData->newLapRecord = 0;
-                            QuitGame();
-                            ctrl_says_quit = 1;
-                            return;
-                        }
-                        else
-
-                            if (gameData->showGameOver == 1)
-                        {
-
-                            ajscount++;
-                            if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
-                            {
-                                ajscount = 0;
-                                gameData->gotoMenu = 1;
-                                gameData->showGameOver = 0;
-                                gameData->newLapRecord = 0;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (gameData->showPilotCount != 0)
-                        {
-                            if (gameData->Position >= 1 && gameData->Position <= 3)
-                            {
-                                ctrlNeedWinLose = 1;
-                                ctrlNeedEndText = 1;
-                                ctrlNeedBackPoly = 1;
-                                ctrlNeedRaceInfo = 1;
-                                ctrlNeedDeSelectScreen = 1;
-                                ctrlNeedEndTextVar = 1;
-                                ctrlNeedWinLoseVar = 1;
-                            }
-                            else
-                            {
-                                ctrlNeedWinLose = 1;
-                                ctrlNeedEndText = 1;
-                                ctrlNeedBackPoly = 1;
-                                ctrlNeedRaceInfo = 1;
-                                ctrlNeedDeSelectScreen = 1;
-                                ctrlNeedEndTextVar = 3;
-                                ctrlNeedWinLoseVar = 0;
-                            }
-
-                            ajscount++;
-                            if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
-                            {
-                                ajscount = 0;
-                                gameData->showPilotCount = 0;
-                                gameData->newLapRecord = 0;
-                            }
-                        }
-                        else if (gameData->showPointCount != 0)
-                        {
-                            if (gameData->Position >= 1 && gameData->Position <= 3)
-                            {
-                                ctrlNeedRacePoints = 1;
-                                ctrlNeedDeSelectScreen = 1;
-                            }
-                            ajscount++;
-                            if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
-                            {
-                                ajscount = 0;
-                                gameData->showPointCount = 0;
-                            }
-                        }
-                        else if (gameData->showChampCount != 0)
-                        {
-                            if (gameData->Position >= 1 && gameData->Position <= 3)
-                            {
-                                ctrlNeedChampTable = 1;
-                                ctrlNeedDeSelectScreen = 1;
-                            }
-                            ajscount++;
-                            if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
-                            {
-                                ajscount = 0;
-                                gameData->showChampCount = 0;
-                            }
-                        }
-                        else if (gameData->venomComplete != 0)
-                        {
-                            if (gameData->showBonusTrack == 1)
-                                ctrlNeedAllVenomComplete = 1;
-                            else
-                                ctrlNeedVenomComplete = 1;
-
-                            ctrlNeedDeSelectScreen = 1;
-
-                            ajscount++;
-                            if ((ajscount > (AJSDELAY / 2)))
-                            {
-                                ajscount = 0;
-                                gameData->venomComplete = 0;
-                            }
-                        }
-                        else
-                        {
-                            if (gameData->Position >= 1 && gameData->Position <= 3)
-                            {
-                                if (gameData->EndOfGame)
-                                    ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
-                            }
-
-                            if (ctrlhiScoreData.highScore)
-                            {
-                                ctrlhiScoreData.displayHiScore = 1;
-                                ctrlhiScoreData.highScore = 0;
-                            }
-
-                            if (ctrlhiScoreData.displayHiScore)
-                            {
-                                ctrlNeedNewHighScores = 1;
-                                NewHighScore(gameData, &ctrlhiScoreData);
-                                ctrlNeedDeSelectScreen = 1;
-
-                                gameData->EndOfGame = 0;
-                            }
-                            else
-                            {
-                                if (gameData->lostGame == 1)
+                                ajscount++;
+                                if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                                 {
+                                    ajscount = 0;
+                                    gameData->lostGame = 0;
+                                    gameData->gotoMenu = 1;
+                                }
+                            }
+                            else
+                            {
 
-                                    ajscount++;
-                                    if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
+                                if (gameData->gameComplete == 1)
+                                {
+                                    if (ctrldoneExtro == START_EXTRO)
                                     {
-                                        ajscount = 0;
-                                        gameData->lostGame = 0;
-                                        gameData->gotoMenu = 1;
+                                        int i;
+                                        CameraUpdate = UpdateCameraExtroAttract;
+                                        for (i = 0; i < NO_OF_SHIPS; i++)
+                                        {
+                                            ctrlshipIndex[i].remoteMaxThrust = 3160;
+                                            ctrlshipIndex[i].remoteThrustMag = 32;
+                                            ctrlshipIndex[i].speed = 3160;
+                                        }
+                                        ctrldoneExtro = UPDATE_EXTRO;
+                                    }
+
+                                    if (ctrldoneExtro == UPDATE_EXTRO)
+                                    {
+                                        ajscount++;
+                                        if (GetMenuKey(M_SELECT) || GetMenuKey(M_START) || (ajscount > AJSDELAY))
+                                        {
+                                            ajscount = 0;
+                                            finishedExtro = 1;
+                                        }
+                                    }
+
+                                    if (finishedExtro)
+                                    {
+                                        gameData->gameType = NO_GAME_SET;
+                                        gameData->gotoMenu = 0;
+                                        InitChampionship();
+                                        gameData->gameComplete = 0;
+                                        QuitGame();
+                                        ctrl_says_quit = 1;
+                                        return;
+
+                                        /* gameData->gameComplete = 0;
+                                        gameData->gotoMenu = 1;  */
                                     }
                                 }
                                 else
                                 {
 
-                                    if (gameData->gameComplete == 1)
+                                    if (gameData->gotoMenu != 0)
                                     {
-                                        if (ctrldoneExtro == START_EXTRO)
-                                        {
-                                            int i;
-                                            CameraUpdate = UpdateCameraExtroAttract;
-                                            for (i = 0; i < NO_OF_SHIPS; i++)
-                                            {
-                                                ctrlshipIndex[i].remoteMaxThrust = 3160;
-                                                ctrlshipIndex[i].remoteThrustMag = 32;
-                                                ctrlshipIndex[i].speed = 3160;
-                                            }
-                                            ctrldoneExtro = UPDATE_EXTRO;
-                                        }
+                                        gameData->gameType = NO_GAME_SET;
+                                        gameData->gotoMenu = 0;
+                                        InitChampionship();
+                                        gameData->gameComplete = 0;
+                                        QuitGame();
+                                        ctrl_says_quit = 1;
+                                        return;
+                                    }
 
-                                        if (ctrldoneExtro == UPDATE_EXTRO)
-                                        {
-                                            ajscount++;
-                                            if (GetMenuKey(M_SELECT) || GetMenuKey(M_START) || (ajscount > AJSDELAY))
-                                            {
-                                                ajscount = 0;
-                                                finishedExtro = 1;
-                                            }
-                                        }
-
-                                        if (finishedExtro)
-                                        {
-                                            gameData->gameType = NO_GAME_SET;
-                                            gameData->gotoMenu = 0;
-                                            InitChampionship();
-                                            gameData->gameComplete = 0;
-                                            QuitGame();
-                                            ctrl_says_quit = 1;
-                                            return;
-
-                                            /* gameData->gameComplete = 0;
-                                            gameData->gotoMenu = 1;  */
-                                        }
+                                    gameData->EndOfGame = 0;
+                                    InitHiScoreData(&ctrlhiScoreData);
+                                    gameData->newLapRecord = 0;
+                                    if (gameData->Position >= 1 && gameData->Position <= 3)
+                                    {
+                                        QuitGame();
+                                        ctrl_says_quit = 1;
+                                        return;
                                     }
                                     else
                                     {
-
-                                        if (gameData->gotoMenu != 0)
+                                        ctrlNeedContinueGameConfirm = 1;
+                                        if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
                                         {
+                                            ctrlhiScoreData.lConfirm ^= 1;
+                                            PlayNote(MENU_MOVE, 1, 20);
+                                        }
+                                        ajscount++;
+                                        if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
+                                        {
+                                            if (ajscount > AJSDELAY)
+                                                ctrlhiScoreData.lConfirm = 1;
+                                            ctrlhiScoreData.confirm = ctrlhiScoreData.lConfirm;
+                                            ajscount = 0;
+                                        }
+
+                                        ctrlNeedDeSelectScreen = 1;
+
+                                        if (ctrlhiScoreData.confirm == 1)
+                                        {
+                                            ctrlhiScoreData.confirm = 2;
+                                            ctrlhiScoreData.lConfirm = 0;
+                                            attractDelay = 0;
                                             gameData->gameType = NO_GAME_SET;
-                                            gameData->gotoMenu = 0;
-                                            InitChampionship();
-                                            gameData->gameComplete = 0;
                                             QuitGame();
                                             ctrl_says_quit = 1;
                                             return;
                                         }
 
-                                        gameData->EndOfGame = 0;
-                                        InitHiScoreData(&ctrlhiScoreData);
-                                        gameData->newLapRecord = 0;
-                                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                                        if (ctrlhiScoreData.confirm == 0)
                                         {
-                                            QuitGame();
-                                            ctrl_says_quit = 1;
-                                            return;
-                                        }
-                                        else
-                                        {
-                                            ctrlNeedContinueGameConfirm = 1;
-                                            if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
-                                            {
-                                                ctrlhiScoreData.lConfirm ^= 1;
-                                                PlayNote(MENU_MOVE, 1, 20);
-                                            }
-                                            ajscount++;
-                                            if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
-                                            {
-                                                if (ajscount > AJSDELAY)
-                                                    ctrlhiScoreData.lConfirm = 1;
-                                                ctrlhiScoreData.confirm = ctrlhiScoreData.lConfirm;
-                                                ajscount = 0;
-                                            }
-
-                                            ctrlNeedDeSelectScreen = 1;
-
-                                            if (ctrlhiScoreData.confirm == 1)
-                                            {
-                                                ctrlhiScoreData.confirm = 2;
-                                                ctrlhiScoreData.lConfirm = 0;
-                                                attractDelay = 0;
-                                                gameData->gameType = NO_GAME_SET;
-                                                QuitGame();
-                                                ctrl_says_quit = 1;
-                                                return;
-                                            }
-
-                                            if (ctrlhiScoreData.confirm == 0)
-                                            {
-                                                attractDelay = 0;
-                                                ctrlhiScoreData.confirm = 2;
-                                                ctrlhiScoreData.lConfirm = 0;
-                                                Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
-                                                PlayNote(CROWD, 0, -1);
-                                                PlayNote(CROWD2, 0, -1);
-                                            }
+                                            attractDelay = 0;
+                                            ctrlhiScoreData.confirm = 2;
+                                            ctrlhiScoreData.lConfirm = 0;
+                                            Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                                            PlayNote(CROWD, 0, -1);
+                                            PlayNote(CROWD2, 0, -1);
                                         }
                                     }
                                 }
@@ -1281,68 +1264,37 @@ void raceCtrl(ConfigData* gameData)
     /**** Draw, Mesh, AutoMesh, Reject, Don`t reject, Nurse, Bend Over  **/
     /**** Abuse & Call a Naughty boy  TRACK CODE                        **/
     /*********************************************************************/
-    if (ctrlshipIndex[serialShip].haveFired == PAUSE && !ctrlactivated)
-    {
-        ctrlmachinePaused = SLAVE;
-        ctrlactivated = 1;
-        ctrlchoice = 0;
-    }
-
     if ((ctrlshipIndex[serialShip].haveFired == QUIT) || (ctrlshipIndex[ownShip].haveFired == QUIT))
     {
         ctrlquitTwoPlayer = 0;
         ctrlactivated = 0;
-        ctrlmachinePaused = SINGLE;
         ctrlchoice = -1;
-        QuitGame();
-        ctrl_says_quit = 1;
-        return;
-    }
-
-    if (ctrlactivated && ctrlmachinePaused == SLAVE)
-    {
-
-        if (ctrlshipIndex[serialShip].haveFired == CONT)
-        {
-            ctrlactivated = 0;
-            ctrlmachinePaused = SINGLE;
-            ctrlchoice = -1;
-        }
-
-        if (ctrlshipIndex[serialShip].haveFired == RETIRE)
-        {
-            ctrlactivated = 0;
-            ctrlmachinePaused = SINGLE;
-            ctrlchoice = -1;
-            gameData->Lives--;
-
-            Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
-            PlayNote(CROWD, 0, -1);
-            PlayNote(CROWD2, 0, -1);
-        }
-
-        if (ctrlshipIndex[serialShip].haveFired == QUIT)
-        {
-            ctrlactivated = 0;
-            ctrlmachinePaused = SINGLE;
-            ctrlchoice = -1;
-            QuitGame();
-            ctrl_says_quit = 1;
-            return;
-        }
-    }
-
-    if (ctrlmachinePaused == MASTER && ctrlchoiceData == 2)
-    {
-        ctrlactivated = 0;
-        ctrlmachinePaused = SINGLE;
-        ctrlchoiceData = -1;
         QuitGame();
         ctrl_says_quit = 1;
         return;
     }
 }
 
+void BackPoly(int x, int y, int w, int h)
+{
+    ColorQuad q;
+    q.x0 = x;
+    q.y0 = y;
+    q.x1 = x + w;
+    q.y1 = y;
+    q.x2 = x + w;
+    q.y2 = y + h;
+    q.x3 = x;
+    q.y3 = y + h;
+    q.r0 = q.g0 = q.b0 =
+    q.r1 = q.g1 = q.b1 =
+    q.r2 = q.g2 = q.b2 =
+    q.r3 = q.g3 = q.b3 = 128;
+
+    renderSetBlend(BLEND_MUL);
+    renderColorQuad(&q);
+    renderSetBlend(BLEND_NONE);
+}
 
 void raceLoop(ConfigData* gameData)
 {
@@ -1415,7 +1367,7 @@ void raceLoop(ConfigData* gameData)
     
     ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
 
-    renderBegin3D();
+    renderSetMode(RENDER_MODE_3D);
 
     // The Sky
     ctrlprm[ctrlsky]->skeleton->update = 1;
@@ -1427,20 +1379,16 @@ void raceLoop(ConfigData* gameData)
     // TRACK
     renderTrack();
 
+    DrawShadows(ctrlshipIndex);
+
     // SHIPS
     DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip, ctrlcamera);
 
-    // SHADOW
-    if (ctrlshipIndex[ownShip].attr & RACING) /* TODO enable for cinematics? */
-        DrawShadow(ctrlshipShapes, ctrlshipIndex);
-
     // DROID
     SetSkeletonPosition(ctrlshipShapes[RESCUE_DROID]->skeleton, ctrlrescueDroid.pos.vx, ctrlrescueDroid.pos.vy, ctrlrescueDroid.pos.vz);
-
     SetSkeletonDirectionHPR(ctrlshipShapes[RESCUE_DROID]->skeleton, ctrlrescueDroid.hdg, ctrlrescueDroid.pitch, ctrlrescueDroid.roll);
-
     ctrlshipShapes[RESCUE_DROID]->skeleton->update = 1;
-    TransformStaticObject(ctrlshipShapes[RESCUE_DROID]);
+    renderObject(ctrlshipShapes[RESCUE_DROID]);
 
     // WEAPONS
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
@@ -1449,11 +1397,22 @@ void raceLoop(ConfigData* gameData)
     AddEffects(ctrlweaponIndex, ctrlshipIndex);
     DrawEffects();
 
-    renderEnd3D();
+    renderSetMode(RENDER_MODE_2D);
 
     if (ctrlNeedTargetIcon == 1)
         DrawTargetIcon(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
 
+    if (ctrlshipIndex[ownShip].attr & RACING)
+    {
+        DrawHud(ctrlshipIndex, ctrlchoice, gameData);
+    }
+
+    if (ctrlNeedDeSelectScreen)
+        BackPoly(-gBorder, 0, 320 + gBorder * 2, 240);
+
+    if (ctrlNeedBackPoly)
+        BackPoly(180, 50, 128, 140);
+    
     if (ctrlmode == ATTRACT)
     {
         if (ctrlplayCredits == 1)
@@ -1508,13 +1467,10 @@ void raceLoop(ConfigData* gameData)
     if (ctrlNeedInSingleGameConfirm)
         RestartGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm));
     if (ctrlNeedInGameReset)
-        InGameReset(ctrlchoice, ctrlmachinePaused, gameData, &ctrlcdPause);
+        InGameReset(ctrlchoice, gameData, &ctrlcdPause);
     if (ctrlNeedInGameConfirm)
         InGameConfirm(&ctrlconfirm, ctrlchoice, xpad, &ctrllConfirm);
-    /*TODO deselect screen?
-    if (ctrlNeedDeSelectScreen)
-        DeSelectScreen (ctrlselectBox, ctrlselectTrans) ;
-        */
+
     if (startIceText)
     {
         ShowIceCongratulations();
@@ -1524,29 +1480,12 @@ void raceLoop(ConfigData* gameData)
         ShowFireCongratulations();
     }
 
-    // Semi trans bit.
-    /*TODO back poly (end race?)
-    if (ctrlNeedBackPoly)
-        BackPoly (&(ctrlbackFrame[0]), &(ctrlbackFrameTrans[0]), 180, 50, 128, 140) ;
-        */
-
-    // HUD display
-    if (ctrlshipIndex[ownShip].attr & RACING)
-    {
-        if (gameData->gameType == CHAMPIONSHIP)
-            DisplayLives(gameData);
-
-        DrawWeaponSprtIcons(ctrlweaponIconTextures, &(ctrlshipIndex[ownShip]));
-        DrawHud(ctrlshipIndex, ctrlchoice, gameData);
-    }
-
     renderFrameEnd();
 }
 
 void raceDemo(ConfigData* gameData)
 {
     ctrlmode = ATTRACT;
-    gameType = SINGLE;
     ownShip = randy() % 8;
     serialShip = -1;
 

@@ -15,13 +15,13 @@
 
 #define STALL -1
 
-void UpdateShips(ShipData* shipIndex, WeaponShape* weaponShapes, Object** shipShapes, WeaponData*);
+void UpdateShips(ShipData* shipIndex, WeaponData* weaponIndex);
 void GeneralStartProcs(ShipData* playerShip);
 
-void UpdatePlayerShipNorm(ShipData*, Object**, int, WeaponData*);
-void UpdateRemoteShip(ShipData*, Object**, int, WeaponData*);
-void UpdatePlayerShipNormStart(ShipData*, Object**, int, WeaponData*);
-void UpdateRemoteShipStart(ShipData*, Object**, int, WeaponData*);
+void UpdatePlayerShipNorm(ShipData*, int, WeaponData*);
+void UpdateRemoteShip(ShipData*, int, WeaponData*);
+void UpdatePlayerShipNormStart(ShipData*, int, WeaponData*);
+void UpdateRemoteShipStart(ShipData*, int, WeaponData*);
 
 void HoldCentre(VECTOR* result, ShipData* shipIndex, Face* facePtr, int);
 void HoldRight(VECTOR* result, ShipData* shipIndex, Face* facePtr, int);

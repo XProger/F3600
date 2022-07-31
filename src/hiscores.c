@@ -424,34 +424,15 @@ char CheckLapRecord(ConfigData* gameData, ShipData* shipInfo, int shipNo)
     // printf ("lap number = %d \n", shipInfo[ownShip].lapNo) ;
     // printf ("lap time = %d \n",shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo)-2)]) ;
 
-    if ((raceType == TWO_PLAYER_RACE) || (raceType == HEAD_TO_HEAD))
+    if (shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo) - 2)] < scoreTable[scoreTrack].lapRecord)
     {
-        check = gameData->newLapRecord;
+        scoreTable[scoreTrack].lapRecord = shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo) - 2)];
+        scoreTable[scoreTrack].lapRecordPilot = gameData->shipNum;
 
-        if (shipInfo[shipNo].lapTimes[((shipInfo[shipNo].lapNo) - 2)] < scoreTable[scoreTrack].lapRecord)
-        {
-            scoreTable[scoreTrack].lapRecord = shipInfo[shipNo].lapTimes[((shipInfo[shipNo].lapNo) - 2)];
-            scoreTable[scoreTrack].lapRecordPilot = gameData->shipNum;
-            if (shipNo == ownShip)
-                check = 1;
-            else if (shipNo == serialShip)
-                check = 0;
-        }
-
-        return (check);
+        return 1;
     }
-    else
-    {
-        if (shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo) - 2)] < scoreTable[scoreTrack].lapRecord)
-        {
-            scoreTable[scoreTrack].lapRecord = shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo) - 2)];
-            scoreTable[scoreTrack].lapRecordPilot = gameData->shipNum;
 
-            return (1);
-        }
-
-        return (0);
-    }
+    return 0;
 }
 
 void DisplayHiScore(char trackNum)
@@ -691,47 +672,16 @@ int CheckHiScore(ConfigData* gameData, HiScoreData* hiScoreData)
     highScore = 0;
     hiScoreData->bestLap = 0;
 
-    if (gameType == SINGLE)
+    for (j = 0; j < 3; j++)
     {
-        for (j = 0; j < 3; j++)
-        {
-            hiScoreData->bestLap += tempLapTimes[j];
-        }
-
-        for (i = 0; i < NumNames; i++)
-        {
-            if (hiScoreData->bestLap < scoreTable[scoreTrack].lapTimes[i])
-            {
-                highScore = 1;
-            }
-        }
+        hiScoreData->bestLap += tempLapTimes[j];
     }
-    else if ((gameType == MASTER) || (gameType == SLAVE))
+
+    for (i = 0; i < NumNames; i++)
     {
-
-        for (j = 0; j < 3; j++)
+        if (hiScoreData->bestLap < scoreTable[scoreTrack].lapTimes[i])
         {
-            ownRaceTime += tempLapTimes[j];
-            serialRaceTime += serialLapTimes[j];
-        }
-
-        if (ownRaceTime > serialRaceTime)
-        {
-            hiScoreData->bestLap = serialRaceTime;
-            whichRecord = 1;
-        }
-        else
-        {
-            hiScoreData->bestLap = ownRaceTime;
-        }
-
-        for (i = 0; i < NumNames; i++)
-        {
-            if (hiScoreData->bestLap < scoreTable[scoreTrack].lapTimes[i])
-            {
-                if (whichRecord == 0)
-                    highScore = 1;
-            }
+            highScore = 1;
         }
     }
 

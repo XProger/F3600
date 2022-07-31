@@ -36,9 +36,9 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
 
     TrackSection* nextSection;
 
-    pos.vx = camShip->ppivot.vx - (camShip->unitVecNose.vx >> 2);
-    pos.vy = camShip->ppivot.vy - (camShip->unitVecNose.vy >> 2);
-    pos.vz = camShip->ppivot.vz - (camShip->unitVecNose.vz >> 2);
+    pos.vx = camShip->pos.vx - (camShip->unitVecNose.vx >> 2);
+    pos.vy = camShip->pos.vy - (camShip->unitVecNose.vy >> 2);
+    pos.vz = camShip->pos.vz - (camShip->unitVecNose.vz >> 2);
     pos.vy -= 200;
 
     camera->section = (TrackSection*)FindNearestSection(camera->section, pos);
@@ -107,7 +107,7 @@ void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData
     unitFinVector.vy = (cx * cz) >> 12;
     unitFinVector.vz = ((sy * sz) >> 12) + ((((cy * sx) >> 12) * cz) >> 12);
 
-    SetSkeletonPosition(camera->camPos, -(camShip->ppivot.vx - (unitFinVector.vx >> 5)), -(camShip->ppivot.vy - (unitFinVector.vy >> 5)), -(camShip->ppivot.vz - (unitFinVector.vz >> 5)));
+    SetSkeletonPosition(camera->camPos, -(camShip->pos.vx - (unitFinVector.vx >> 5)), -(camShip->pos.vy - (unitFinVector.vy >> 5)), -(camShip->pos.vz - (unitFinVector.vz >> 5)));
 
     camera->pitch = -camShip->pitch;
     camera->hdg = -camShip->hdg;
@@ -123,9 +123,9 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
     VECTOR targetVector;
 
     /*** Set to final position ***/
-    pos.vx = camShip->ppivot.vx - (camShip->unitVecNose.vx >> 2);
-    pos.vy = camShip->ppivot.vy - (camShip->unitVecNose.vy >> 2);
-    pos.vz = camShip->ppivot.vz - (camShip->unitVecNose.vz >> 2);
+    pos.vx = camShip->pos.vx - (camShip->unitVecNose.vx >> 2);
+    pos.vy = camShip->pos.vy - (camShip->unitVecNose.vy >> 2);
+    pos.vz = camShip->pos.vz - (camShip->unitVecNose.vz >> 2);
 
     pos.vx += ((rsin((camShip->updateCount - SWITCH_TO_RACE_VIEW) * 3)));
     pos.vy -= (2 * (camShip->updateCount - SWITCH_TO_RACE_VIEW)) + 200;
@@ -144,9 +144,9 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
 
     camera->pitch = -sar(camShip->pitch, 1);
 
-    targetVector.vx = camShip->ppivot.vx - pos.vx;
-    targetVector.vy = camShip->ppivot.vy - pos.vy;
-    targetVector.vz = camShip->ppivot.vz - pos.vz;
+    targetVector.vx = camShip->pos.vx - pos.vx;
+    targetVector.vy = camShip->pos.vy - pos.vy;
+    targetVector.vz = camShip->pos.vz - pos.vz;
 
     camera->hdg = ratan2(targetVector.vx, targetVector.vz);
 
@@ -196,9 +196,9 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
     unitFinVector.vy = (cx * cz) >> 12;
     unitFinVector.vz = ((sy * sz) >> 12) + ((((cy * sx) >> 12) * cz) >> 12);
 
-    pos.vx = camShip->ppivot.vx + (rsin(camShip->hdg) / 6);
-    pos.vy = camShip->ppivot.vy + ((camShip->pitch >> 2) - 200);
-    pos.vz = camShip->ppivot.vz - (rcos(camShip->hdg) / 6);
+    pos.vx = camShip->pos.vx + (rsin(camShip->hdg) / 6);
+    pos.vy = camShip->pos.vy + ((camShip->pitch >> 2) - 200);
+    pos.vz = camShip->pos.vz - (rcos(camShip->hdg) / 6);
 
     pos.vx += rsin(target << 3) >> 3;
     pos.vy -= 200;
@@ -208,9 +208,9 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
     pos.vy -= unitFinVector.vy >> 4;
     pos.vz -= unitFinVector.vz >> 4;
 
-    targetVector.vx = camShip->ppivot.vx - pos.vx;
-    targetVector.vy = camShip->ppivot.vy - pos.vy;
-    targetVector.vz = camShip->ppivot.vz - pos.vz;
+    targetVector.vx = camShip->pos.vx - pos.vx;
+    targetVector.vy = camShip->pos.vy - pos.vy;
+    targetVector.vz = camShip->pos.vz - pos.vz;
 
     temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -281,9 +281,9 @@ void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData
     {
         CameraUpdate = UpdateCameraAttractMode;
     }
-    targetVector.vx = camShip->ppivot.vx - pos.vx;
-    targetVector.vy = camShip->ppivot.vy - pos.vy;
-    targetVector.vz = camShip->ppivot.vz - pos.vz;
+    targetVector.vx = camShip->pos.vx - pos.vx;
+    targetVector.vy = camShip->pos.vy - pos.vy;
+    targetVector.vz = camShip->pos.vz - pos.vz;
 
     temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 

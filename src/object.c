@@ -38,35 +38,3 @@ void InitGameDisplay(void)
 {
     SetGeomOffset(160, 120);
 }
-
-void TransformStaticObject(Object* object)
-{
-    renderBegin3D();
-    renderObject(object);
-    renderEnd3D();
-}
-
-void TransformStaticMenuObject(Object* object)
-{
-    renderBegin3D();
-    renderObject(object);
-    renderEnd3D();
-}
-
-void TransformStaticObjectBodge(Object* object)
-{
-    renderBegin3D();
-    renderTransparent(1);
-    renderObject(object);
-    renderTransparent(0);
-    renderEnd3D();
-}
-
-void SetSkeletonTransform(Skeleton* skeleton)
-{
-    MATRIX* matrix;
-    matrix = GetSkeletonMatrix(skeleton);
-
-    //   SetTransMatrix(matrix);
-    //   SetRotMatrix(matrix);
-}

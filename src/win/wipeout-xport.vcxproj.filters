@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\camera.c" />
-    <ClCompile Include="..\card.c" />
     <ClCompile Include="..\collide.c" />
     <ClCompile Include="..\cone.c" />
     <ClCompile Include="..\control.c" />
@@ -39,7 +38,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera.h" />
-    <ClInclude Include="..\card.h" />
     <ClInclude Include="..\collide.h" />
     <ClInclude Include="..\cone.h" />
     <ClInclude Include="..\control.h" />

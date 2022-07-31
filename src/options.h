@@ -3,6 +3,5 @@
 #define FADE_COMPLETE 2
 #define FADE_OUT      3
 
-void InGameReset(int choice, char, ConfigData*, int*);
+void InGameReset(int choice, ConfigData*, int*);
 void InGameConfirm(char* confirm, int choice, short xpad, char* lConfirm);
-void DeSelectScreen(void);

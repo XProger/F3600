@@ -12,35 +12,13 @@ void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
 {
     int i, j;
 
-    if (gameType == SLAVE)
+    if (raceType != TIME_TRIAL)
     {
-        if (raceType == HEAD_TO_HEAD)
+        for (j = 0; j < (NO_OF_SHIPS - 1); j++)
         {
-            Ship2ShipCollision(shipIndex, shipShapes, serialShip, ownShip);
-        }
-        else
-        {
-            for (i = 0; i < NO_OF_SHIPS; i++)
+            for (i = j + 1; i < NO_OF_SHIPS; i++)
             {
-                if (i != ownShip)
-                    Ship2ShipCollision(shipIndex, shipShapes, i, ownShip);
-            }
-        }
-    }
-    else /****** May have to cancel reaction of serial ship ******/
-    {
-        if (raceType == HEAD_TO_HEAD)
-        {
-            Ship2ShipCollision(shipIndex, shipShapes, serialShip, ownShip);
-        }
-        else if (raceType != TIME_TRIAL)
-        {
-            for (j = 0; j < (NO_OF_SHIPS - 1); j++)
-            {
-                for (i = j + 1; i < NO_OF_SHIPS; i++)
-                {
-                    Ship2ShipCollision(shipIndex, shipShapes, i, j);
-                }
+                Ship2ShipCollision(shipIndex, shipShapes, i, j);
             }
         }
     }
@@ -57,9 +35,9 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
     VECTOR ship1React, ship2React;
     VECTOR soundPos;
 
-    distance.vx = (shipIndex[i].ppivot.vx - shipIndex[j].ppivot.vx) >> 3;
-    distance.vy = (shipIndex[i].ppivot.vy - shipIndex[j].ppivot.vy) >> 3;
-    distance.vz = (shipIndex[i].ppivot.vz - shipIndex[j].ppivot.vz) >> 3;
+    distance.vx = (shipIndex[i].pos.vx - shipIndex[j].pos.vx) >> 3;
+    distance.vy = (shipIndex[i].pos.vy - shipIndex[j].pos.vy) >> 3;
+    distance.vz = (shipIndex[i].pos.vz - shipIndex[j].pos.vz) >> 3;
 
     mag = GetMagnitude(&distance);
 
@@ -80,71 +58,71 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
             ownMass = shipIndex[j].mass;
             remMass = shipIndex[i].mass;
 
-            vc.vx = ((shipIndex[j].vpivot.vx * ownMass) + (shipIndex[i].vpivot.vx * remMass)) / (ownMass + remMass);
-            vc.vy = ((shipIndex[j].vpivot.vy * ownMass) + (shipIndex[i].vpivot.vy * remMass)) / (ownMass + remMass);
-            vc.vz = ((shipIndex[j].vpivot.vz * ownMass) + (shipIndex[i].vpivot.vz * remMass)) / (ownMass + remMass);
+            vc.vx = ((shipIndex[j].vel.vx * ownMass) + (shipIndex[i].vel.vx * remMass)) / (ownMass + remMass);
+            vc.vy = ((shipIndex[j].vel.vy * ownMass) + (shipIndex[i].vel.vy * remMass)) / (ownMass + remMass);
+            vc.vz = ((shipIndex[j].vel.vz * ownMass) + (shipIndex[i].vel.vz * remMass)) / (ownMass + remMass);
 
-            ship1React.vx = (vc.vx - shipIndex[j].vpivot.vx) >> 1;
-            ship1React.vy = (vc.vy - shipIndex[j].vpivot.vy) >> 1;
-            ship1React.vz = (vc.vz - shipIndex[j].vpivot.vz) >> 1;
+            ship1React.vx = (vc.vx - shipIndex[j].vel.vx) >> 1;
+            ship1React.vy = (vc.vy - shipIndex[j].vel.vy) >> 1;
+            ship1React.vz = (vc.vz - shipIndex[j].vel.vz) >> 1;
 
-            ship2React.vx = (vc.vx - shipIndex[i].vpivot.vx) >> 1;
-            ship2React.vy = (vc.vy - shipIndex[i].vpivot.vy) >> 1;
-            ship2React.vz = (vc.vz - shipIndex[i].vpivot.vz) >> 1;
+            ship2React.vx = (vc.vx - shipIndex[i].vel.vx) >> 1;
+            ship2React.vy = (vc.vy - shipIndex[i].vel.vy) >> 1;
+            ship2React.vz = (vc.vz - shipIndex[i].vel.vz) >> 1;
 
-            shipIndex[j].ppivot.vx -= sar(shipIndex[j].vpivot.vx, 6);
-            shipIndex[j].ppivot.vy -= sar(shipIndex[j].vpivot.vy, 6);
-            shipIndex[j].ppivot.vz -= sar(shipIndex[j].vpivot.vz, 6);
+            shipIndex[j].pos.vx -= sar(shipIndex[j].vel.vx, 6);
+            shipIndex[j].pos.vy -= sar(shipIndex[j].vel.vy, 6);
+            shipIndex[j].pos.vz -= sar(shipIndex[j].vel.vz, 6);
 
-            shipIndex[i].ppivot.vx -= sar(shipIndex[i].vpivot.vx, 6);
-            shipIndex[i].ppivot.vy -= sar(shipIndex[i].vpivot.vy, 6);
-            shipIndex[i].ppivot.vz -= sar(shipIndex[i].vpivot.vz, 6);
+            shipIndex[i].pos.vx -= sar(shipIndex[i].vel.vx, 6);
+            shipIndex[i].pos.vy -= sar(shipIndex[i].vel.vy, 6);
+            shipIndex[i].pos.vz -= sar(shipIndex[i].vel.vz, 6);
 
             /**************** YOUR CRAFT REACTION *********************/
-            shipIndex[j].vpivot.vx = vc.vx + ship1React.vx;
-            shipIndex[j].vpivot.vy = vc.vy + ship1React.vy;
-            shipIndex[j].vpivot.vz = vc.vz + ship1React.vz;
+            shipIndex[j].vel.vx = vc.vx + ship1React.vx;
+            shipIndex[j].vel.vy = vc.vy + ship1React.vy;
+            shipIndex[j].vel.vz = vc.vz + ship1React.vz;
 
             /*************** REMOTE CRAFT REACTION ********************/
-            shipIndex[i].vpivot.vx = vc.vx + ship2React.vx;
-            shipIndex[i].vpivot.vy = vc.vy + ship2React.vy;
-            shipIndex[i].vpivot.vz = vc.vz + ship2React.vz;
+            shipIndex[i].vel.vx = vc.vx + ship2React.vx;
+            shipIndex[i].vel.vy = vc.vy + ship2React.vy;
+            shipIndex[i].vel.vz = vc.vz + ship2React.vz;
 
-            ship2ship.vx = shipIndex[i].ppivot.vx - shipIndex[j].ppivot.vx;
-            ship2ship.vy = shipIndex[i].ppivot.vy - shipIndex[j].ppivot.vy;
-            ship2ship.vz = shipIndex[i].ppivot.vz - shipIndex[j].ppivot.vz;
+            ship2ship.vx = shipIndex[i].pos.vx - shipIndex[j].pos.vx;
+            ship2ship.vy = shipIndex[i].pos.vy - shipIndex[j].pos.vy;
+            ship2ship.vz = shipIndex[i].pos.vz - shipIndex[j].pos.vz;
 
-            shipIndex[i].vpivot.vx += ship2ship.vx << 2;
-            shipIndex[i].vpivot.vy += ship2ship.vy << 2;
-            shipIndex[i].vpivot.vz += ship2ship.vz << 2;
+            shipIndex[i].vel.vx += ship2ship.vx << 2;
+            shipIndex[i].vel.vy += ship2ship.vy << 2;
+            shipIndex[i].vel.vz += ship2ship.vz << 2;
 
-            shipIndex[j].vpivot.vx -= ship2ship.vx << 2;
-            shipIndex[j].vpivot.vy -= ship2ship.vy << 2;
-            shipIndex[j].vpivot.vz -= ship2ship.vz << 2;
+            shipIndex[j].vel.vx -= ship2ship.vx << 2;
+            shipIndex[j].vel.vy -= ship2ship.vy << 2;
+            shipIndex[j].vel.vz -= ship2ship.vz << 2;
 
-            shipIndex[j].vpivot.vx = (shipIndex[j].vpivot.vx * 60) / FR60;
-            shipIndex[j].vpivot.vy = (shipIndex[j].vpivot.vy * 60) / FR60;
-            shipIndex[j].vpivot.vz = (shipIndex[j].vpivot.vz * 60) / FR60;
+            shipIndex[j].vel.vx = (shipIndex[j].vel.vx * 60) / FR60;
+            shipIndex[j].vel.vy = (shipIndex[j].vel.vy * 60) / FR60;
+            shipIndex[j].vel.vz = (shipIndex[j].vel.vz * 60) / FR60;
 
-            shipIndex[i].vpivot.vx = (shipIndex[i].vpivot.vx * 60) / FR60;
-            shipIndex[i].vpivot.vy = (shipIndex[i].vpivot.vy * 60) / FR60;
-            shipIndex[i].vpivot.vz = (shipIndex[i].vpivot.vz * 60) / FR60;
+            shipIndex[i].vel.vx = (shipIndex[i].vel.vx * 60) / FR60;
+            shipIndex[i].vel.vy = (shipIndex[i].vel.vy * 60) / FR60;
+            shipIndex[i].vel.vz = (shipIndex[i].vel.vz * 60) / FR60;
 
-            shipIndex[j].ppivot.vx += sar(shipIndex[j].vpivot.vx, 6);
-            shipIndex[j].ppivot.vy += sar(shipIndex[j].vpivot.vy, 6);
-            shipIndex[j].ppivot.vz += sar(shipIndex[j].vpivot.vz, 6);
+            shipIndex[j].pos.vx += sar(shipIndex[j].vel.vx, 6);
+            shipIndex[j].pos.vy += sar(shipIndex[j].vel.vy, 6);
+            shipIndex[j].pos.vz += sar(shipIndex[j].vel.vz, 6);
 
-            shipIndex[i].ppivot.vx += sar(shipIndex[i].vpivot.vx, 6);
-            shipIndex[i].ppivot.vy += sar(shipIndex[i].vpivot.vy, 6);
-            shipIndex[i].ppivot.vz += sar(shipIndex[i].vpivot.vz, 6);
+            shipIndex[i].pos.vx += sar(shipIndex[i].vel.vx, 6);
+            shipIndex[i].pos.vy += sar(shipIndex[i].vel.vy, 6);
+            shipIndex[i].pos.vz += sar(shipIndex[i].vel.vz, 6);
 
             if ((shipIndex[i].attr & SHIP_COLL) == 0)
             {
                 if ((shipIndex[j].attr & SHIP_COLL) == 0)
                 {
-                    soundPos.vx = (shipIndex[i].ppivot.vx + shipIndex[j].ppivot.vx) >> 1;
-                    soundPos.vy = (shipIndex[i].ppivot.vy + shipIndex[j].ppivot.vy) >> 1;
-                    soundPos.vz = (shipIndex[i].ppivot.vz + shipIndex[j].ppivot.vz) >> 1;
+                    soundPos.vx = (shipIndex[i].pos.vx + shipIndex[j].pos.vx) >> 1;
+                    soundPos.vy = (shipIndex[i].pos.vy + shipIndex[j].pos.vy) >> 1;
+                    soundPos.vz = (shipIndex[i].pos.vz + shipIndex[j].pos.vz) >> 1;
                     PlayDirectionalNote(SHIP_2_SHIP, 0, 30, soundPos);
 
                     if (j == ownShip)
@@ -343,20 +321,17 @@ int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
 int PlaneLineCollision(const VECTOR* plane_point, const VECTOR* ship_pos, const SVector* normal)
 {
     int dot_product, norm_dot_product;
-    int coll_data;
 
-    dot_product = (plane_point->vx - ship_pos->vx) * normal->vx;
-    dot_product += (plane_point->vy - ship_pos->vy) * normal->vy;
-    dot_product += (plane_point->vz - ship_pos->vz) * normal->vz;
+    dot_product = (ship_pos->vx - plane_point->vx) * normal->vx +
+                  (ship_pos->vy - plane_point->vy) * normal->vy +
+                  (ship_pos->vz - plane_point->vz) * normal->vz;
 
-    norm_dot_product = (((-normal->vx) * normal->vx) >> 12) + (((-normal->vy) * normal->vy) >> 12) + (((-normal->vz) * normal->vz) >> 12);
+    norm_dot_product = ((normal->vx * normal->vx) + (normal->vy * normal->vy) + (normal->vz * normal->vz)) >> 12;
 
-    coll_data = dot_product / norm_dot_product;
-
-    return (coll_data);
+    return dot_product / norm_dot_product;
 }
 
-void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
+void Ship2Track(ShipData* playerShip, Face* facePtr)
 {
     VECTOR nosePos, wingPos;
     int alpha;
@@ -365,17 +340,17 @@ void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
     TrackSection* trackPtr;
     int toFace;
     VECTOR toFaceVector;
-    VECTOR facePoint;
+    const VECTOR* facePoint;
     int collide;
     Face* facePtr2;
 
-    nosePos.vx = playerShip->ppivot.vx + (playerShip->unitVecNose.vx >> 3);
-    nosePos.vy = playerShip->ppivot.vy + (playerShip->unitVecNose.vy >> 3);
-    nosePos.vz = playerShip->ppivot.vz + (playerShip->unitVecNose.vz >> 3);
+    nosePos.vx = playerShip->pos.vx + (playerShip->unitVecNose.vx >> 3);
+    nosePos.vy = playerShip->pos.vy + (playerShip->unitVecNose.vy >> 3);
+    nosePos.vz = playerShip->pos.vz + (playerShip->unitVecNose.vz >> 3);
 
-    wingPos.vx = playerShip->ppivot.vx - (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-    wingPos.vy = playerShip->ppivot.vy - (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-    wingPos.vz = playerShip->ppivot.vz - (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+    wingPos.vx = playerShip->pos.vx - (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
+    wingPos.vy = playerShip->pos.vy - (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
+    wingPos.vz = playerShip->pos.vz - (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
 
     trackPtr = playerShip->nearTrkSect->nextSection.ptr;
 
@@ -394,9 +369,9 @@ void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
     toFaceVector.vy = track->vertices[(facePtr->vertex[0])].vy - track->vertices[(facePtr->vertex[1])].vy;
     toFaceVector.vz = track->vertices[(facePtr->vertex[0])].vz - track->vertices[(facePtr->vertex[1])].vz;
 
-    direction.vx = playerShip->nearTrkSect->centre.vx - playerShip->ppivot.vx;
-    direction.vy = playerShip->nearTrkSect->centre.vy - playerShip->ppivot.vy;
-    direction.vz = playerShip->nearTrkSect->centre.vz - playerShip->ppivot.vz;
+    direction.vx = playerShip->nearTrkSect->centre.vx - playerShip->pos.vx;
+    direction.vy = playerShip->nearTrkSect->centre.vy - playerShip->pos.vy;
+    direction.vz = playerShip->nearTrkSect->centre.vz - playerShip->pos.vz;
 
     toFace = ((direction.vx * toFaceVector.vx) + (direction.vy * toFaceVector.vy) + (direction.vz * toFaceVector.vz));
 
@@ -409,11 +384,9 @@ void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
         playerShip->attr |= LSIDE;
         if ((facePtr == (track->faces + playerShip->nearTrkSect->faceStart)) || (playerShip->nearTrkSect->junction.index != 0))
         {
-            facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
-            facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
-            facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
+            facePoint = track->vertices + facePtr->vertex[0];
 
-            alpha = PlaneLineCollision(&facePoint, &nosePos, &facePtr->normal);
+            alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
 
             if (alpha <= 0)
             {
@@ -456,7 +429,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
                 return;
             }
 
-            alpha = PlaneLineCollision(&facePoint, &wingPos, &facePtr->normal);
+            alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
 
             if (alpha <= 0)
             {
@@ -473,11 +446,11 @@ void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
                 return;
             }
 
-            wingPos.vx = playerShip->ppivot.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-            wingPos.vy = playerShip->ppivot.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-            wingPos.vz = playerShip->ppivot.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+            wingPos.vx = playerShip->pos.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
+            wingPos.vy = playerShip->pos.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
+            wingPos.vz = playerShip->pos.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
 
-            alpha = PlaneLineCollision(&facePoint, &wingPos, &facePtr->normal);
+            alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
                 if ((playerShip->nearTrkSect->flags & JunctionStart) || (playerShip->nearTrkSect->flags & JunctionEnd))
@@ -510,10 +483,9 @@ void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
         if ((playerShip->nearTrkSect->faceCount > 3) || (playerShip->nearTrkSect->junction.index != 0))
         {
 
-            facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
-            facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
-            facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-            alpha = PlaneLineCollision(&facePoint, &nosePos, &facePtr->normal);
+            facePoint = track->vertices + facePtr->vertex[0];
+
+            alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
             if (alpha <= 0)
             {
                 if (playerShip->nearTrkSect->flags & JunctionStart)
@@ -556,7 +528,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
                     NoseCollision(playerShip, facePtr, downTrack, alpha);
                 return;
             }
-            alpha = PlaneLineCollision(&facePoint, &wingPos, &facePtr->normal);
+            alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
                 if ((playerShip->nearTrkSect->flags & JunctionStart) || (playerShip->nearTrkSect->flags & JunctionEnd))
@@ -572,10 +544,10 @@ void Ship2Track(ShipData* playerShip, Face* facePtr, Object** shipShapes)
                 return;
             }
 
-            wingPos.vx = playerShip->ppivot.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-            wingPos.vy = playerShip->ppivot.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-            wingPos.vz = playerShip->ppivot.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
-            alpha = PlaneLineCollision(&facePoint, &wingPos, &facePtr->normal);
+            wingPos.vx = playerShip->pos.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
+            wingPos.vy = playerShip->pos.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
+            wingPos.vz = playerShip->pos.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+            alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
                 if ((playerShip->nearTrkSect->flags & JunctionStart) || (playerShip->nearTrkSect->flags & JunctionEnd))
@@ -647,20 +619,20 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
     angle = AngleOfCollision(&collisionVector, &playerShip->unitVecNose);
 
-    Reflection(&(playerShip->vpivot), &facePtr->normal);
+    Reflection(&(playerShip->vel), &facePtr->normal);
 
-    playerShip->ppivot.vx -= playerShip->vpivot.vx >> 6;
-    playerShip->ppivot.vy -= playerShip->vpivot.vy >> 6;
-    playerShip->ppivot.vz -= playerShip->vpivot.vz >> 6;
+    playerShip->pos.vx -= playerShip->vel.vx >> 6;
+    playerShip->pos.vy -= playerShip->vel.vy >> 6;
+    playerShip->pos.vz -= playerShip->vel.vz >> 6;
 
     /*TODO no slowdown by side collision*/
-    playerShip->vpivot.vx -= playerShip->vpivot.vx >> 1;
-    playerShip->vpivot.vy -= playerShip->vpivot.vy >> 1;
-    playerShip->vpivot.vz -= playerShip->vpivot.vz >> 1;
+    playerShip->vel.vx -= playerShip->vel.vx >> 1;
+    playerShip->vel.vy -= playerShip->vel.vy >> 1;
+    playerShip->vel.vz -= playerShip->vel.vz >> 1;
 
-    playerShip->vpivot.vx += (facePtr->normal.vx);
-    playerShip->vpivot.vy += (facePtr->normal.vy);
-    playerShip->vpivot.vz += (facePtr->normal.vz);
+    playerShip->vel.vx += (facePtr->normal.vx);
+    playerShip->vel.vy += (facePtr->normal.vy);
+    playerShip->vel.vz += (facePtr->normal.vz);
 
     magnitude = (abs(angle) * playerShip->speed) >> 16;
 
@@ -671,15 +643,15 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
     if (direction > 0)
     {
-        wingPos.vx = playerShip->ppivot.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-        wingPos.vy = playerShip->ppivot.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-        wingPos.vz = playerShip->ppivot.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+        wingPos.vx = playerShip->pos.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
+        wingPos.vy = playerShip->pos.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
+        wingPos.vz = playerShip->pos.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
     }
     else
     {
-        wingPos.vx = playerShip->ppivot.vx - (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-        wingPos.vy = playerShip->ppivot.vy - (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-        wingPos.vz = playerShip->ppivot.vz - (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+        wingPos.vx = playerShip->pos.vx - (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
+        wingPos.vy = playerShip->pos.vy - (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
+        wingPos.vz = playerShip->pos.vz - (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
     }
 
     PlayDirectionalNote(SHIP_2_TRACK, 1, 20, wingPos);
@@ -710,7 +682,7 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
     angle = abs(AngleOfCollision(&collisionVector, &playerShip->unitVecNose));
 
-    Reflection(&(playerShip->vpivot), &facePtr->normal);
+    Reflection(&(playerShip->vel), &facePtr->normal);
 
     magnitude = (playerShip->speed >> 4) + 400;
     if (direction > 0)
@@ -718,21 +690,21 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     else
         playerShip->vhdg -= magnitude;
 
-    playerShip->ppivot.vx -= playerShip->vpivot.vx >> 6;
-    playerShip->ppivot.vy -= playerShip->vpivot.vy >> 6;
-    playerShip->ppivot.vz -= playerShip->vpivot.vz >> 6;
+    playerShip->pos.vx -= playerShip->vel.vx >> 6;
+    playerShip->pos.vy -= playerShip->vel.vy >> 6;
+    playerShip->pos.vz -= playerShip->vel.vz >> 6;
 
-    playerShip->vpivot.vx -= playerShip->vpivot.vx >> 1;
-    playerShip->vpivot.vy -= playerShip->vpivot.vy >> 1;
-    playerShip->vpivot.vz -= playerShip->vpivot.vz >> 1;
+    playerShip->vel.vx -= playerShip->vel.vx >> 1;
+    playerShip->vel.vy -= playerShip->vel.vy >> 1;
+    playerShip->vel.vz -= playerShip->vel.vz >> 1;
 
-    playerShip->vpivot.vx += facePtr->normal.vx;
-    playerShip->vpivot.vy += facePtr->normal.vy;
-    playerShip->vpivot.vz += facePtr->normal.vz;
+    playerShip->vel.vx += facePtr->normal.vx;
+    playerShip->vel.vy += facePtr->normal.vy;
+    playerShip->vel.vz += facePtr->normal.vz;
 
-    nosePos.vx = playerShip->ppivot.vx + (playerShip->unitVecNose.vx >> 3);
-    nosePos.vy = playerShip->ppivot.vy + (playerShip->unitVecNose.vy >> 3);
-    nosePos.vz = playerShip->ppivot.vz + (playerShip->unitVecNose.vz >> 3);
+    nosePos.vx = playerShip->pos.vx + (playerShip->unitVecNose.vx >> 3);
+    nosePos.vy = playerShip->pos.vy + (playerShip->unitVecNose.vy >> 3);
+    nosePos.vz = playerShip->pos.vz + (playerShip->unitVecNose.vz >> 3);
 
     PlayDirectionalNote(SHIP_2_TRACK, 1, 20, nosePos);
 

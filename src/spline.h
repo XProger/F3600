@@ -2,8 +2,8 @@
 
 TrackSection* FindAllNearestSection(VECTOR pos);
 
-void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex);
-void UpdateShipLinearInterpolateSpline(register ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex);
+void UpdateShipRemote(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex);
+void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex);
 
 void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, RescueData* rescueDroid);
 void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueDroid);

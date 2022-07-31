@@ -15,24 +15,17 @@ extern int gPadStickY;
 /**********************************************************************/
 /***              Call update routine for each ship                 ***/
 /**********************************************************************/
-void UpdateShips(ShipData* shipIndex, WeaponShape* weaponShapes, Object** shipShapes, WeaponData* weaponIndex)
+void UpdateShips(ShipData* shipIndex, WeaponData* weaponIndex)
 {
     int i;
 
     SetUnitVectors(shipIndex);
 
-    if (raceType == HEAD_TO_HEAD)
+    for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        (shipIndex[ownShip].update)(shipIndex, shipShapes, ownShip, weaponIndex);
-    }
-    else
-    {
-        for (i = 0; i < NO_OF_SHIPS; i++)
+        if (i != serialShip)
         {
-            if (i != serialShip)
-            {
-                (shipIndex[i].update)(shipIndex, shipShapes, i, weaponIndex);
-            }
+            (shipIndex[i].update)(shipIndex, i, weaponIndex);
         }
     }
 }
@@ -114,7 +107,7 @@ void GeneralStartProcs(ShipData* playerShip)
 /****             Start control routine for normal pad                 ****/
 /**************************************************************************/
 
-void UpdatePlayerShipNormStart(ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
+void UpdatePlayerShipNormStart(ShipData* shipIndex,int shipNo, WeaponData* weaponIndex)
 {
     ShipData* playerShip;
     static int startPos;
@@ -124,9 +117,9 @@ void UpdatePlayerShipNormStart(ShipData* shipIndex, Object** shipShapes, int shi
     GeneralStartProcs(playerShip);
 
     if (playerShip->updateCount == START_TIME - 1)
-        startPos = playerShip->ppivot.vy;
+        startPos = playerShip->pos.vy;
 
-    playerShip->ppivot.vy = startPos + (rsin(playerShip->updateCount * 80) >> 7);
+    playerShip->pos.vy = startPos + (rsin(playerShip->updateCount * 80) >> 7);
 
     if (playerShip->updateCount == 0)
     {
@@ -156,7 +149,7 @@ void UpdatePlayerShipNormStart(ShipData* shipIndex, Object** shipShapes, int shi
 /**************************************************************************/
 /****             Race control update routine for normal pad           ****/
 /**************************************************************************/
-void UpdatePlayerShipNorm(ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
+void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 {
     ShipData* playerShip;
     int headingInc;
@@ -235,9 +228,7 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, Object** shipShapes, int shipNo, 
 
     if (playerShip->attr & ELECTROED)
     {
-        if (playerShip->attr & VIEW_IN)
-            SetShake(2);
-
+        SetShake(4);
         playerShip->vhdg += (randy() % 600) - 300;
     }
 
@@ -287,7 +278,7 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, Object** shipShapes, int shipNo, 
     SetBrake(playerShip, pCon.lBrake, pCon.rBrake);
     SetView(playerShip, pCon.view);
     SetFire(playerShip, pCon.fire, weaponIndex, shipNo);
-    shipTrkReaction(playerShip, shipShapes);
+    ShipTrkReaction(playerShip);
 }
 
 /***************************************************************/
@@ -296,7 +287,7 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, Object** shipShapes, int shipNo, 
 /***************************************************************/
 /***************************************************************/
 
-void UpdateRemoteShipStart(ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
+void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 {
     static startPos;
 
@@ -307,10 +298,10 @@ void UpdateRemoteShipStart(ShipData* shipIndex, Object** shipShapes, int shipNo,
 
     if (shipIndex->updateCount == START_TIME)
     {
-        startPos = shipIndex->ppivot.vy;
+        startPos = shipIndex->pos.vy;
     }
 
-    shipIndex->ppivot.vy = startPos + (rsin(shipIndex->updateCount * (80 + shipNo * 3)) >> 7);
+    shipIndex->pos.vy = startPos + (rsin(shipIndex->updateCount * (80 + shipNo * 3)) >> 7);
 
     shipIndex->updateCount--;
     if (shipIndex->updateCount == 0)
@@ -422,14 +413,14 @@ void ZigZagShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int shi
 #define SLOW_DOWN 1
 #define SHIP_MESS 0
 
-void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
+void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 {
     ShipData *myShip, *remoteShip;
     Face* facePtr = NULL;
     TrackSection *nextSection, *section;
     int i;
     VECTOR targetVector, bestPath;
-    VECTOR facePoint;
+    const VECTOR* facePoint;
     int temp, alpha;
     VECTOR offSetVector;
     Vector path1, path2;
@@ -457,22 +448,8 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
             facePtr++;
         }
 
-        if (gameType == SINGLE)
-            DPASectDiff = remoteShip->DPASectDiff - myShip->DPASectDiff;
+        DPASectDiff = remoteShip->DPASectDiff - myShip->DPASectDiff;
 
-        else /* if(gameType == MASTER)*/
-        {
-            if (shipIndex[ownShip].DPASectDiff > shipIndex[serialShip].DPASectDiff)
-            {
-                DPASectDiff = remoteShip->DPASectDiff - shipIndex[ownShip].DPASectDiff;
-                myShip = &(shipIndex[ownShip]);
-            }
-            else
-            {
-                DPASectDiff = remoteShip->DPASectDiff - shipIndex[serialShip].DPASectDiff;
-                myShip = &(shipIndex[serialShip]);
-            }
-        }
         remoteShip->attr &= ~JUST_IN_FRONT;
 
         if (remoteShip == myShip)
@@ -547,19 +524,9 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
                             remoteShip->updateControl = BlockShip;
                             if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                             {
-                                if (gameType == MASTER)
-                                {
-                                    if (shipIndex[ownShip].DPASectDiff > shipIndex[serialShip].DPASectDiff)
-                                    {
-                                        PlayNote(SP_MINES, 1, 70);
-                                        SetPitch(SP_MINES, 0x1000);
-                                    }
-                                }
-                                else
-                                {
-                                    PlayNote(SP_MINES, 1, 70);
-                                    SetPitch(SP_MINES, 0x1000);
-                                }
+                                PlayNote(SP_MINES, 1, 70);
+                                SetPitch(SP_MINES, 0x1000);
+
                                 remoteShip->weaponType = MINE;
                                 FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
                             }
@@ -628,19 +595,9 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
                                 remoteShip->attr &= ~OVERTAKE;
                                 if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                                 {
-                                    if (gameType == MASTER)
-                                    {
-                                        if (shipIndex[ownShip].DPASectDiff > shipIndex[serialShip].DPASectDiff)
-                                        {
-                                            PlayNote(SP_ROCKET, 1, 70);
-                                            SetPitch(SP_ROCKET, 0x1000);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        PlayNote(SP_ROCKET, 1, 70);
-                                        SetPitch(SP_ROCKET, 0x1000);
-                                    }
+                                    PlayNote(SP_ROCKET, 1, 70);
+                                    SetPitch(SP_ROCKET, 0x1000);
+
                                     remoteShip->weaponType = ROCKET;
                                     FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
                                 }
@@ -651,19 +608,9 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
                                 remoteShip->attr &= ~OVERTAKE;
                                 if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                                 {
-                                    if (gameType == MASTER)
-                                    {
-                                        if (shipIndex[ownShip].DPASectDiff > shipIndex[serialShip].DPASectDiff)
-                                        {
-                                            PlayNote(SP_MISSILE, 1, 70);
-                                            SetPitch(SP_MISSILE, 0x1000);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        PlayNote(SP_MISSILE, 1, 70);
-                                        SetPitch(SP_MISSILE, 0x1000);
-                                    }
+                                    PlayNote(SP_MISSILE, 1, 70);
+                                    SetPitch(SP_MISSILE, 0x1000);
+
                                     remoteShip->weaponType = MISSILE;
                                     remoteShip->targetShip = ownShip;
                                     FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
@@ -675,19 +622,9 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
                                 remoteShip->attr &= ~OVERTAKE;
                                 if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                                 {
-                                    if (gameType == MASTER)
-                                    {
-                                        if (shipIndex[ownShip].DPASectDiff > shipIndex[serialShip].DPASectDiff)
-                                        {
-                                            PlayNote(SP_SHOCKWAVE, 1, 70);
-                                            SetPitch(SP_SHOCKWAVE, 0x1000);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        PlayNote(SP_SHOCKWAVE, 1, 70);
-                                        SetPitch(SP_SHOCKWAVE, 0x1000);
-                                    }
+                                    PlayNote(SP_SHOCKWAVE, 1, 70);
+                                    SetPitch(SP_SHOCKWAVE, 0x1000);
+
                                     remoteShip->weaponType = ELEC_BOLT;
                                     remoteShip->targetShip = ownShip;
                                     FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
@@ -910,19 +847,19 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
         path2.vy = nextSection->centre.vy + offSetVector.vy;
         path2.vz = nextSection->centre.vz + offSetVector.vz;
 
-        GetTargetPos(&bestPath, &remoteShip->ppivot, &path2, &path1);
+        GetTargetPos(&bestPath, &remoteShip->pos, &path2, &path1);
 
-        remoteShip->apivot.vx = (targetVector.vx + ((bestPath.vx - remoteShip->ppivot.vx) >> 1));
-        remoteShip->apivot.vy = (targetVector.vy + ((bestPath.vy - remoteShip->ppivot.vy) >> 1));
-        remoteShip->apivot.vz = (targetVector.vz + ((bestPath.vz - remoteShip->ppivot.vz) >> 1));
+        remoteShip->acc.vx = (targetVector.vx + ((bestPath.vx - remoteShip->pos.vx) >> 1));
+        remoteShip->acc.vy = (targetVector.vy + ((bestPath.vy - remoteShip->pos.vy) >> 1));
+        remoteShip->acc.vz = (targetVector.vz + ((bestPath.vz - remoteShip->pos.vz) >> 1));
 
-        remoteShip->apivot.vx = (remoteShip->apivot.vx * 60) / FR60;
-        remoteShip->apivot.vy = (remoteShip->apivot.vy * 60) / FR60;
-        remoteShip->apivot.vz = (remoteShip->apivot.vz * 60) / FR60;
+        remoteShip->acc.vx = (remoteShip->acc.vx * 60) / FR60;
+        remoteShip->acc.vy = (remoteShip->acc.vy * 60) / FR60;
+        remoteShip->acc.vz = (remoteShip->acc.vz * 60) / FR60;
 
-        remoteShip->vpivot.vx += remoteShip->apivot.vx;
-        remoteShip->vpivot.vy += remoteShip->apivot.vy;
-        remoteShip->vpivot.vz += remoteShip->apivot.vz;
+        remoteShip->vel.vx += remoteShip->acc.vx;
+        remoteShip->vel.vy += remoteShip->acc.vy;
+        remoteShip->vel.vz += remoteShip->acc.vz;
         /***** If remote has gone over speed-up *****/
 
         /***** Can use control routine to determine position now *****/
@@ -941,21 +878,19 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
 
         /****** Speed Test, should not make much difference ******/
         /****** to overall lap times of opposition          ******/
-        facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
-        facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
-        facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-        alpha = PlaneLineCollision(&facePoint, &remoteShip->ppivot, &facePtr->normal);
+        facePoint = track->vertices + facePtr->vertex[0];
+        alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
         if (alpha < 50)
             alpha = 50;
 
-        remoteShip->apivot.vx = (((facePtr->normal.vx * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vx * TRACK_MAGNET)) >> 8;
-        remoteShip->apivot.vy = (((facePtr->normal.vy * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vy * TRACK_MAGNET)) >> 8;
-        remoteShip->apivot.vz = (((facePtr->normal.vz * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vz * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.vx = (((facePtr->normal.vx * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vx * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.vy = (((facePtr->normal.vy * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vy * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.vz = (((facePtr->normal.vz * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vz * TRACK_MAGNET)) >> 8;
 
-        remoteShip->vpivot.vx += remoteShip->apivot.vx;
-        remoteShip->vpivot.vy += remoteShip->apivot.vy;
-        remoteShip->vpivot.vz += remoteShip->apivot.vz;
+        remoteShip->vel.vx += remoteShip->acc.vx;
+        remoteShip->vel.vy += remoteShip->acc.vy;
+        remoteShip->vel.vz += remoteShip->acc.vz;
 
         temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -1014,19 +949,19 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
 
         targetVector.vy = 500;
 
-        GetTargetPos(&bestPath, &remoteShip->ppivot, &nextSection->centre, &remoteShip->nearTrkSect->centre);
+        GetTargetPos(&bestPath, &remoteShip->pos, &nextSection->centre, &remoteShip->nearTrkSect->centre);
 
-        remoteShip->apivot.vx = (targetVector.vx + ((bestPath.vx - remoteShip->ppivot.vx) >> 1));
-        remoteShip->apivot.vy = targetVector.vy;
-        remoteShip->apivot.vz = (targetVector.vz + ((bestPath.vz - remoteShip->ppivot.vz) >> 1));
+        remoteShip->acc.vx = (targetVector.vx + ((bestPath.vx - remoteShip->pos.vx) >> 1));
+        remoteShip->acc.vy = targetVector.vy;
+        remoteShip->acc.vz = (targetVector.vz + ((bestPath.vz - remoteShip->pos.vz) >> 1));
 
-        remoteShip->apivot.vx = (remoteShip->apivot.vx * 60) / FR60;
-        remoteShip->apivot.vy = (remoteShip->apivot.vy * 60) / FR60;
-        remoteShip->apivot.vz = (remoteShip->apivot.vz * 60) / FR60;
+        remoteShip->acc.vx = (remoteShip->acc.vx * 60) / FR60;
+        remoteShip->acc.vy = (remoteShip->acc.vy * 60) / FR60;
+        remoteShip->acc.vz = (remoteShip->acc.vz * 60) / FR60;
 
-        remoteShip->vpivot.vx += remoteShip->apivot.vx;
-        remoteShip->vpivot.vy += remoteShip->apivot.vy;
-        remoteShip->vpivot.vz += remoteShip->apivot.vz;
+        remoteShip->vel.vx += remoteShip->acc.vx;
+        remoteShip->vel.vy += remoteShip->acc.vy;
+        remoteShip->vel.vz += remoteShip->acc.vz;
         remoteShip->vpitch = -200 - remoteShip->pitch;
         remoteShip->pitch += remoteShip->vpitch >> 4;
         remoteShip->vhdg = -ratan2(targetVector.vx, targetVector.vz) - remoteShip->hdg;
@@ -1039,19 +974,19 @@ void UpdateRemoteShip(register ShipData* shipIndex, Object** shipShapes, int shi
         remoteShip->hdg += remoteShip->vhdg >> 4;
     }
 
-    remoteShip->vpivot.vx -= remoteShip->vpivot.vx >> 3;
-    remoteShip->vpivot.vy -= remoteShip->vpivot.vy >> 3;
-    remoteShip->vpivot.vz -= remoteShip->vpivot.vz >> 3;
+    remoteShip->vel.vx -= remoteShip->vel.vx >> 3;
+    remoteShip->vel.vy -= remoteShip->vel.vy >> 3;
+    remoteShip->vel.vz -= remoteShip->vel.vz >> 3;
 
-    remoteShip->ppivot.vx += remoteShip->vpivot.vx >> 6;
-    remoteShip->ppivot.vy += remoteShip->vpivot.vy >> 6;
-    remoteShip->ppivot.vz += remoteShip->vpivot.vz >> 6;
+    remoteShip->pos.vx += remoteShip->vel.vx >> 6;
+    remoteShip->pos.vy += remoteShip->vel.vy >> 6;
+    remoteShip->pos.vz += remoteShip->vel.vz >> 6;
 
     if (remoteShip->attr & ELECTROED)
     {
-        remoteShip->ppivot.vx += (randy() - 16384) % 20;
-        remoteShip->ppivot.vy += (randy() - 16384) % 20;
-        remoteShip->ppivot.vz += (randy() - 16384) % 20;
+        remoteShip->pos.vx += (randy() - 16384) % 20;
+        remoteShip->pos.vy += (randy() - 16384) % 20;
+        remoteShip->pos.vz += (randy() - 16384) % 20;
 
         if ((randy() % 50) == 0)
             remoteShip->speed -= remoteShip->speed >> 1;

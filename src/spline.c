@@ -124,14 +124,14 @@ TrackSection* FindAllNearestSection(VECTOR pos)
     return (nearSection);
 }
 
-void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
+void UpdateShipRemote(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 {
     ShipData *myShip, *remoteShip;
     Face* facePtr = NULL;
     TrackSection *nextSection, *section;
     int i;
     VECTOR targetVector, bestPath;
-    VECTOR facePoint;
+    const VECTOR* facePoint;
     int temp, alpha;
     VECTOR offSetVector;
     Vector path1, path2;
@@ -154,8 +154,7 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
             facePtr++;
         }
 
-        if (gameType == SINGLE)
-            DPASectDiff = remoteShip->DPASectDiff - myShip->DPASectDiff;
+        DPASectDiff = remoteShip->DPASectDiff - myShip->DPASectDiff;
 
         remoteShip->updateControl = HoldCentre;
 
@@ -258,42 +257,41 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
         path2.vy = nextSection->centre.vy + offSetVector.vy;
         path2.vz = nextSection->centre.vz + offSetVector.vz;
 
-        GetTargetPos(&bestPath, &remoteShip->ppivot, &path2, &path1);
+        GetTargetPos(&bestPath, &remoteShip->pos, &path2, &path1);
 
-        remoteShip->apivot.vx = (targetVector.vx + ((bestPath.vx - remoteShip->ppivot.vx) >> 1));
-        remoteShip->apivot.vy = (targetVector.vy + ((bestPath.vy - remoteShip->ppivot.vy) >> 1));
-        remoteShip->apivot.vz = (targetVector.vz + ((bestPath.vz - remoteShip->ppivot.vz) >> 1));
+        remoteShip->acc.vx = (targetVector.vx + ((bestPath.vx - remoteShip->pos.vx) >> 1));
+        remoteShip->acc.vy = (targetVector.vy + ((bestPath.vy - remoteShip->pos.vy) >> 1));
+        remoteShip->acc.vz = (targetVector.vz + ((bestPath.vz - remoteShip->pos.vz) >> 1));
 
-        remoteShip->apivot.vx = (remoteShip->apivot.vx * 60) / FR60;
-        remoteShip->apivot.vy = (remoteShip->apivot.vy * 60) / FR60;
-        remoteShip->apivot.vz = (remoteShip->apivot.vz * 60) / FR60;
+        remoteShip->acc.vx = (remoteShip->acc.vx * 60) / FR60;
+        remoteShip->acc.vy = (remoteShip->acc.vy * 60) / FR60;
+        remoteShip->acc.vz = (remoteShip->acc.vz * 60) / FR60;
 
-        remoteShip->vpivot.vx += remoteShip->apivot.vx;
-        remoteShip->vpivot.vy += remoteShip->apivot.vy;
-        remoteShip->vpivot.vz += remoteShip->apivot.vz;
+        remoteShip->vel.vx += remoteShip->acc.vx;
+        remoteShip->vel.vy += remoteShip->acc.vy;
+        remoteShip->vel.vz += remoteShip->acc.vz;
         /***** If remote has gone over speed-up *****/
 
         /****** Speed Test, should not make much difference ******/
         /****** to overall lap times of opposition          ******/
-        facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
-        facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
-        facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
-        alpha = PlaneLineCollision(&facePoint, &remoteShip->ppivot, &facePtr->normal);
+        facePoint = track->vertices + facePtr->vertex[0];
+
+        alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
         if (alpha < 50)
             alpha = 50;
 
-        remoteShip->apivot.vx = (((facePtr->normal.vx * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vx * TRACK_MAGNET)) >> 8;
-        remoteShip->apivot.vy = (((facePtr->normal.vy * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vy * TRACK_MAGNET)) >> 8;
-        remoteShip->apivot.vz = (((facePtr->normal.vz * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vz * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.vx = (((facePtr->normal.vx * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vx * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.vy = (((facePtr->normal.vy * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vy * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.vz = (((facePtr->normal.vz * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vz * TRACK_MAGNET)) >> 8;
 
-        remoteShip->apivot.vx = (remoteShip->apivot.vx * 60) / FR60;
-        remoteShip->apivot.vy = (remoteShip->apivot.vy * 60) / FR60;
-        remoteShip->apivot.vz = (remoteShip->apivot.vz * 60) / FR60;
+        remoteShip->acc.vx = (remoteShip->acc.vx * 60) / FR60;
+        remoteShip->acc.vy = (remoteShip->acc.vy * 60) / FR60;
+        remoteShip->acc.vz = (remoteShip->acc.vz * 60) / FR60;
 
-        remoteShip->vpivot.vx += remoteShip->apivot.vx;
-        remoteShip->vpivot.vy += remoteShip->apivot.vy;
-        remoteShip->vpivot.vz += remoteShip->apivot.vz;
+        remoteShip->vel.vx += remoteShip->acc.vx;
+        remoteShip->vel.vy += remoteShip->acc.vy;
+        remoteShip->vel.vz += remoteShip->acc.vz;
 
         temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -359,19 +357,19 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
 
         targetVector.vy = 500;
 
-        GetTargetPos(&bestPath, &remoteShip->ppivot, &nextSection->centre, &remoteShip->nearTrkSect->centre);
+        GetTargetPos(&bestPath, &remoteShip->pos, &nextSection->centre, &remoteShip->nearTrkSect->centre);
 
-        remoteShip->apivot.vx = (targetVector.vx + ((bestPath.vx - remoteShip->ppivot.vx) >> 1));
-        remoteShip->apivot.vy = targetVector.vy;
-        remoteShip->apivot.vz = (targetVector.vz + ((bestPath.vz - remoteShip->ppivot.vz) >> 1));
+        remoteShip->acc.vx = (targetVector.vx + ((bestPath.vx - remoteShip->pos.vx) >> 1));
+        remoteShip->acc.vy = targetVector.vy;
+        remoteShip->acc.vz = (targetVector.vz + ((bestPath.vz - remoteShip->pos.vz) >> 1));
 
-        remoteShip->apivot.vx = (remoteShip->apivot.vx * 60) / FR60;
-        remoteShip->apivot.vy = (remoteShip->apivot.vy * 60) / FR60;
-        remoteShip->apivot.vz = (remoteShip->apivot.vz * 60) / FR60;
+        remoteShip->acc.vx = (remoteShip->acc.vx * 60) / FR60;
+        remoteShip->acc.vy = (remoteShip->acc.vy * 60) / FR60;
+        remoteShip->acc.vz = (remoteShip->acc.vz * 60) / FR60;
 
-        remoteShip->vpivot.vx += remoteShip->apivot.vx;
-        remoteShip->vpivot.vy += remoteShip->apivot.vy;
-        remoteShip->vpivot.vz += remoteShip->apivot.vz;
+        remoteShip->vel.vx += remoteShip->acc.vx;
+        remoteShip->vel.vy += remoteShip->acc.vy;
+        remoteShip->vel.vz += remoteShip->acc.vz;
 
         remoteShip->vpitch = -200 - remoteShip->pitch;
 
@@ -385,20 +383,20 @@ void UpdateShipRemote(register ShipData* shipIndex, Object** shipShapes, int shi
         remoteShip->hdg += remoteShip->vhdg >> 4;
     }
 
-    remoteShip->vpivot.vx -= remoteShip->vpivot.vx >> 3;
-    remoteShip->vpivot.vy -= remoteShip->vpivot.vy >> 3;
-    remoteShip->vpivot.vz -= remoteShip->vpivot.vz >> 3;
+    remoteShip->vel.vx -= remoteShip->vel.vx >> 3;
+    remoteShip->vel.vy -= remoteShip->vel.vy >> 3;
+    remoteShip->vel.vz -= remoteShip->vel.vz >> 3;
 
-    remoteShip->ppivot.vx += remoteShip->vpivot.vx >> 6;
-    remoteShip->ppivot.vy += remoteShip->vpivot.vy >> 6;
-    remoteShip->ppivot.vz += remoteShip->vpivot.vz >> 6;
+    remoteShip->pos.vx += remoteShip->vel.vx >> 6;
+    remoteShip->pos.vy += remoteShip->vel.vy >> 6;
+    remoteShip->pos.vz += remoteShip->vel.vz >> 6;
 
     remoteShip->hdg = ang(remoteShip->hdg);
     remoteShip->pitch = ang(remoteShip->pitch);
     remoteShip->roll = ang(remoteShip->roll);
 }
 
-void UpdateShipLinearInterpolateSpline(register ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
+void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 {
     VECTOR pos;
     VECTOR pos1;
@@ -437,25 +435,25 @@ void UpdateShipLinearInterpolateSpline(register ShipData* shipIndex, Object** sh
     step.vy = (pos1.vy - pos.vy) / subdivisions;
     step.vz = (pos1.vz - pos.vz) / subdivisions;
 
-    step.vx = (pos.vx + (subdivisions * step.vx) - shipIndex[ownShip].ppivot.vx);
-    step.vy = (pos.vy + (subdivisions * step.vy) - shipIndex[ownShip].ppivot.vy);
-    step.vz = (pos.vz + (subdivisions * step.vz) - shipIndex[ownShip].ppivot.vz);
+    step.vx = (pos.vx + (subdivisions * step.vx) - shipIndex[ownShip].pos.vx);
+    step.vy = (pos.vy + (subdivisions * step.vy) - shipIndex[ownShip].pos.vy);
+    step.vz = (pos.vz + (subdivisions * step.vz) - shipIndex[ownShip].pos.vz);
 
-    shipIndex[ownShip].vpivot.vx += step.vx;
-    shipIndex[ownShip].vpivot.vy += step.vy;
-    shipIndex[ownShip].vpivot.vz += step.vz;
+    shipIndex[ownShip].vel.vx += step.vx;
+    shipIndex[ownShip].vel.vy += step.vy;
+    shipIndex[ownShip].vel.vz += step.vz;
 
-    shipIndex[ownShip].vpivot.vx -= shipIndex[ownShip].vpivot.vx >> 3;
-    shipIndex[ownShip].vpivot.vy -= shipIndex[ownShip].vpivot.vy >> 3;
-    shipIndex[ownShip].vpivot.vz -= shipIndex[ownShip].vpivot.vz >> 3;
+    shipIndex[ownShip].vel.vx -= shipIndex[ownShip].vel.vx >> 3;
+    shipIndex[ownShip].vel.vy -= shipIndex[ownShip].vel.vy >> 3;
+    shipIndex[ownShip].vel.vz -= shipIndex[ownShip].vel.vz >> 3;
 
-    pos.vx = shipIndex[ownShip].ppivot.vx + (shipIndex[ownShip].vpivot.vx >> 7);
-    pos.vy = shipIndex[ownShip].ppivot.vy + (shipIndex[ownShip].vpivot.vy >> 7);
-    pos.vz = shipIndex[ownShip].ppivot.vz + (shipIndex[ownShip].vpivot.vz >> 7);
+    pos.vx = shipIndex[ownShip].pos.vx + (shipIndex[ownShip].vel.vx >> 7);
+    pos.vy = shipIndex[ownShip].pos.vy + (shipIndex[ownShip].vel.vy >> 7);
+    pos.vz = shipIndex[ownShip].pos.vz + (shipIndex[ownShip].vel.vz >> 7);
 
-    shipIndex[ownShip].ppivot.vx = pos.vx;
-    shipIndex[ownShip].ppivot.vy = pos.vy;
-    shipIndex[ownShip].ppivot.vz = pos.vz;
+    shipIndex[ownShip].pos.vx = pos.vx;
+    shipIndex[ownShip].pos.vy = pos.vy;
+    shipIndex[ownShip].pos.vz = pos.vz;
 
     shipIndex[ownShip].nearTrkSect = FindAllNearestSection(pos);
 
@@ -546,9 +544,9 @@ void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, Re
     */
     camera->section = FindNearestSection(camera->section, pos);
 
-    targetVector.vx = ship[ownShip].ppivot.vx - pos.vx;
-    targetVector.vy = ship[ownShip].ppivot.vy - pos.vy;
-    targetVector.vz = ship[ownShip].ppivot.vz - pos.vz;
+    targetVector.vx = ship[ownShip].pos.vx - pos.vx;
+    targetVector.vy = ship[ownShip].pos.vy - pos.vy;
+    targetVector.vz = ship[ownShip].pos.vz - pos.vz;
 
     temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -605,13 +603,13 @@ void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueD
         CameraUpdate = UpdateCameraExtroAttract;
     }
 
-    pos.vx = ship[ownShip].ppivot.vx - camVx;
-    pos.vy = ship[ownShip].ppivot.vy - camVy;
-    pos.vz = ship[ownShip].ppivot.vz - camVz;
+    pos.vx = ship[ownShip].pos.vx - camVx;
+    pos.vy = ship[ownShip].pos.vy - camVy;
+    pos.vz = ship[ownShip].pos.vz - camVz;
 
-    targetVector.vx = ship[ownShip].ppivot.vx - pos.vx;
-    targetVector.vy = ship[ownShip].ppivot.vy - pos.vy;
-    targetVector.vz = ship[ownShip].ppivot.vz - pos.vz;
+    targetVector.vx = ship[ownShip].pos.vx - pos.vx;
+    targetVector.vy = ship[ownShip].pos.vy - pos.vy;
+    targetVector.vz = ship[ownShip].pos.vz - pos.vz;
 
     temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -652,9 +650,9 @@ void UpdateCameraStationary(TrackCamera* camera, ShipData* ship, RescueData* res
     pos.vy = camera->section->centre.vy - camVy;
     pos.vz = camera->section->centre.vz - camVz;
 
-    targetVector.vx = ship[ownShip].ppivot.vx - pos.vx;
-    targetVector.vy = ship[ownShip].ppivot.vy - pos.vy;
-    targetVector.vz = ship[ownShip].ppivot.vz - pos.vz;
+    targetVector.vx = ship[ownShip].pos.vx - pos.vx;
+    targetVector.vy = ship[ownShip].pos.vy - pos.vy;
+    targetVector.vz = ship[ownShip].pos.vz - pos.vz;
 
     temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -699,9 +697,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 {
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = track->sections + i + 50;
-                    camShip[i].ppivot.vx = (track->sections + i + 50)->centre.vx;
-                    camShip[i].ppivot.vy = (track->sections + i + 50)->centre.vy;
-                    camShip[i].ppivot.vz = (track->sections + i + 50)->centre.vz;
+                    camShip[i].pos.vx = (track->sections + i + 50)->centre.vx;
+                    camShip[i].pos.vy = (track->sections + i + 50)->centre.vy;
+                    camShip[i].pos.vz = (track->sections + i + 50)->centre.vz;
                 }
 
                 /* the spline we want to play */
@@ -717,9 +715,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 pos.vz = (prm.spline)->position.vz;
 
                 camShip[ownShip].nearTrkSect = FindAllNearestSection(pos);
-                camShip[ownShip].ppivot.vx = pos.vx;
-                camShip[ownShip].ppivot.vy = pos.vy;
-                camShip[ownShip].ppivot.vz = pos.vz;
+                camShip[ownShip].pos.vx = pos.vx;
+                camShip[ownShip].pos.vy = pos.vy;
+                camShip[ownShip].pos.vz = pos.vz;
 
                 /* reset ship direction */
                 camShip[ownShip].roll = 0;
@@ -737,9 +735,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(pos);
 
                 /* set the camera direction */
-                targetVector.vx = camShip[ownShip].ppivot.vx - pos.vx;
-                targetVector.vy = camShip[ownShip].ppivot.vy - pos.vy;
-                targetVector.vz = camShip[ownShip].ppivot.vz - pos.vz;
+                targetVector.vx = camShip[ownShip].pos.vx - pos.vx;
+                targetVector.vy = camShip[ownShip].pos.vy - pos.vy;
+                targetVector.vz = camShip[ownShip].pos.vz - pos.vz;
 
                 temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -781,9 +779,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = startSection;
-                    camShip[i].ppivot.vx = startSection->centre.vx;
-                    camShip[i].ppivot.vy = startSection->centre.vy;
-                    camShip[i].ppivot.vz = startSection->centre.vz;
+                    camShip[i].pos.vx = startSection->centre.vx;
+                    camShip[i].pos.vy = startSection->centre.vy;
+                    camShip[i].pos.vz = startSection->centre.vz;
 
                     nextSection = startSection->nextSection.ptr;
                     targetVector.vx = nextSection->centre.vx - startSection->centre.vx;
@@ -796,9 +794,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 camShip[ownShip].update = UpdateShipRemote;
                 camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].ppivot.vx = startSection->centre.vx;
-                camShip[ownShip].ppivot.vy = startSection->centre.vy;
-                camShip[ownShip].ppivot.vz = startSection->centre.vz;
+                camShip[ownShip].pos.vx = startSection->centre.vx;
+                camShip[ownShip].pos.vy = startSection->centre.vy;
+                camShip[ownShip].pos.vz = startSection->centre.vz;
 
                 camVx = 4350;
                 camVy = 9850;
@@ -821,9 +819,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 {
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = track->sections + i;
-                    camShip[i].ppivot.vx = (track->sections + i)->centre.vx;
-                    camShip[i].ppivot.vy = (track->sections + i)->centre.vy;
-                    camShip[i].ppivot.vz = (track->sections + i)->centre.vz;
+                    camShip[i].pos.vx = (track->sections + i)->centre.vx;
+                    camShip[i].pos.vy = (track->sections + i)->centre.vy;
+                    camShip[i].pos.vz = (track->sections + i)->centre.vz;
                 }
 
                 /* the spline we want to play */
@@ -839,9 +837,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 pos.vz = (prm.spline)->position.vz;
 
                 camShip[ownShip].nearTrkSect = FindAllNearestSection(pos);
-                camShip[ownShip].ppivot.vx = pos.vx;
-                camShip[ownShip].ppivot.vy = pos.vy;
-                camShip[ownShip].ppivot.vz = pos.vz;
+                camShip[ownShip].pos.vx = pos.vx;
+                camShip[ownShip].pos.vy = pos.vy;
+                camShip[ownShip].pos.vz = pos.vz;
 
                 /* reset ship direction */
                 camShip[ownShip].roll = 0;
@@ -859,9 +857,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(pos);
 
                 /* set the camera direction */
-                targetVector.vx = camShip[ownShip].ppivot.vx - pos.vx;
-                targetVector.vy = camShip[ownShip].ppivot.vy - pos.vy;
-                targetVector.vz = camShip[ownShip].ppivot.vz - pos.vz;
+                targetVector.vx = camShip[ownShip].pos.vx - pos.vx;
+                targetVector.vy = camShip[ownShip].pos.vy - pos.vy;
+                targetVector.vz = camShip[ownShip].pos.vz - pos.vz;
 
                 temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -898,9 +896,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 {
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = track->sections + i;
-                    camShip[i].ppivot.vx = (track->sections + i)->centre.vx;
-                    camShip[i].ppivot.vy = (track->sections + i)->centre.vy;
-                    camShip[i].ppivot.vz = (track->sections + i)->centre.vz;
+                    camShip[i].pos.vx = (track->sections + i)->centre.vx;
+                    camShip[i].pos.vy = (track->sections + i)->centre.vy;
+                    camShip[i].pos.vz = (track->sections + i)->centre.vz;
                 }
 
                 /* the spline we want to play */
@@ -916,9 +914,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 pos.vz = (prm.spline)->position.vz;
 
                 camShip[ownShip].nearTrkSect = FindAllNearestSection(pos);
-                camShip[ownShip].ppivot.vx = pos.vx;
-                camShip[ownShip].ppivot.vy = pos.vy;
-                camShip[ownShip].ppivot.vz = pos.vz;
+                camShip[ownShip].pos.vx = pos.vx;
+                camShip[ownShip].pos.vy = pos.vy;
+                camShip[ownShip].pos.vz = pos.vz;
 
                 /* reset ship direction */
                 camShip[ownShip].roll = 0;
@@ -936,9 +934,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(pos);
 
                 /* set the camera direction */
-                targetVector.vx = camShip[ownShip].ppivot.vx - pos.vx;
-                targetVector.vy = camShip[ownShip].ppivot.vy - pos.vy;
-                targetVector.vz = camShip[ownShip].ppivot.vz - pos.vz;
+                targetVector.vx = camShip[ownShip].pos.vx - pos.vx;
+                targetVector.vy = camShip[ownShip].pos.vy - pos.vy;
+                targetVector.vz = camShip[ownShip].pos.vz - pos.vz;
 
                 temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -975,9 +973,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 {
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = track->sections + i;
-                    camShip[i].ppivot.vx = (track->sections + i)->centre.vx;
-                    camShip[i].ppivot.vy = (track->sections + i)->centre.vy;
-                    camShip[i].ppivot.vz = (track->sections + i)->centre.vz;
+                    camShip[i].pos.vx = (track->sections + i)->centre.vx;
+                    camShip[i].pos.vy = (track->sections + i)->centre.vy;
+                    camShip[i].pos.vz = (track->sections + i)->centre.vz;
                 }
 
                 /* the spline we want to play */
@@ -993,9 +991,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 pos.vz = (prm.spline)->position.vz;
 
                 camShip[ownShip].nearTrkSect = FindAllNearestSection(pos);
-                camShip[ownShip].ppivot.vx = pos.vx;
-                camShip[ownShip].ppivot.vy = pos.vy;
-                camShip[ownShip].ppivot.vz = pos.vz;
+                camShip[ownShip].pos.vx = pos.vx;
+                camShip[ownShip].pos.vy = pos.vy;
+                camShip[ownShip].pos.vz = pos.vz;
 
                 /* reset ship direction */
                 camShip[ownShip].roll = 0;
@@ -1013,9 +1011,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(pos);
 
                 /* set the camera direction */
-                targetVector.vx = camShip[ownShip].ppivot.vx - pos.vx;
-                targetVector.vy = camShip[ownShip].ppivot.vy - pos.vy;
-                targetVector.vz = camShip[ownShip].ppivot.vz - pos.vz;
+                targetVector.vx = camShip[ownShip].pos.vx - pos.vx;
+                targetVector.vy = camShip[ownShip].pos.vy - pos.vy;
+                targetVector.vz = camShip[ownShip].pos.vz - pos.vz;
 
                 temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -1072,9 +1070,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 {
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = track->sections + i + 100;
-                    camShip[i].ppivot.vx = (track->sections + i + 100)->centre.vx;
-                    camShip[i].ppivot.vy = (track->sections + i + 100)->centre.vy;
-                    camShip[i].ppivot.vz = (track->sections + i + 100)->centre.vz;
+                    camShip[i].pos.vx = (track->sections + i + 100)->centre.vx;
+                    camShip[i].pos.vy = (track->sections + i + 100)->centre.vy;
+                    camShip[i].pos.vz = (track->sections + i + 100)->centre.vz;
                 }
 
                 /* the spline we want to play */
@@ -1090,9 +1088,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 pos.vz = (prm.spline)->position.vz;
 
                 camShip[ownShip].nearTrkSect = FindAllNearestSection(pos);
-                camShip[ownShip].ppivot.vx = pos.vx;
-                camShip[ownShip].ppivot.vy = pos.vy;
-                camShip[ownShip].ppivot.vz = pos.vz;
+                camShip[ownShip].pos.vx = pos.vx;
+                camShip[ownShip].pos.vy = pos.vy;
+                camShip[ownShip].pos.vz = pos.vz;
 
                 /* reset ship direction */
                 camShip[ownShip].roll = 0;
@@ -1110,9 +1108,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(pos);
 
                 /* set the camera direction */
-                targetVector.vx = camShip[ownShip].ppivot.vx - pos.vx;
-                targetVector.vy = camShip[ownShip].ppivot.vy - pos.vy;
-                targetVector.vz = camShip[ownShip].ppivot.vz - pos.vz;
+                targetVector.vx = camShip[ownShip].pos.vx - pos.vx;
+                targetVector.vy = camShip[ownShip].pos.vy - pos.vy;
+                targetVector.vz = camShip[ownShip].pos.vz - pos.vz;
 
                 temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -1154,9 +1152,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = startSection;
-                    camShip[i].ppivot.vx = startSection->centre.vx;
-                    camShip[i].ppivot.vy = startSection->centre.vy;
-                    camShip[i].ppivot.vz = startSection->centre.vz;
+                    camShip[i].pos.vx = startSection->centre.vx;
+                    camShip[i].pos.vy = startSection->centre.vy;
+                    camShip[i].pos.vz = startSection->centre.vz;
 
                     nextSection = startSection->nextSection.ptr;
                     targetVector.vx = nextSection->centre.vx - startSection->centre.vx;
@@ -1169,9 +1167,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 camShip[ownShip].update = UpdateShipRemote;
                 camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].ppivot.vx = startSection->centre.vx;
-                camShip[ownShip].ppivot.vy = startSection->centre.vy;
-                camShip[ownShip].ppivot.vz = startSection->centre.vz;
+                camShip[ownShip].pos.vx = startSection->centre.vx;
+                camShip[ownShip].pos.vy = startSection->centre.vy;
+                camShip[ownShip].pos.vz = startSection->centre.vz;
 
                 camVx = 2000;
                 camVy = 2750;
@@ -1194,9 +1192,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = startSection;
-                    camShip[i].ppivot.vx = startSection->centre.vx;
-                    camShip[i].ppivot.vy = startSection->centre.vy;
-                    camShip[i].ppivot.vz = startSection->centre.vz;
+                    camShip[i].pos.vx = startSection->centre.vx;
+                    camShip[i].pos.vy = startSection->centre.vy;
+                    camShip[i].pos.vz = startSection->centre.vz;
 
                     nextSection = startSection->nextSection.ptr;
                     targetVector.vx = nextSection->centre.vx - startSection->centre.vx;
@@ -1209,9 +1207,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 camShip[ownShip].update = UpdateShipRemote;
                 camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].ppivot.vx = startSection->centre.vx;
-                camShip[ownShip].ppivot.vy = startSection->centre.vy;
-                camShip[ownShip].ppivot.vz = startSection->centre.vz;
+                camShip[ownShip].pos.vx = startSection->centre.vx;
+                camShip[ownShip].pos.vy = startSection->centre.vy;
+                camShip[ownShip].pos.vz = startSection->centre.vz;
 
                 camVx = 2250;
                 camVy = 1500;
@@ -1234,9 +1232,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = startSection;
-                    camShip[i].ppivot.vx = startSection->centre.vx;
-                    camShip[i].ppivot.vy = startSection->centre.vy;
-                    camShip[i].ppivot.vz = startSection->centre.vz;
+                    camShip[i].pos.vx = startSection->centre.vx;
+                    camShip[i].pos.vy = startSection->centre.vy;
+                    camShip[i].pos.vz = startSection->centre.vz;
 
                     nextSection = startSection->nextSection.ptr;
                     targetVector.vx = nextSection->centre.vx - startSection->centre.vx;
@@ -1249,9 +1247,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 camShip[ownShip].update = UpdateShipRemote;
                 camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].ppivot.vx = startSection->centre.vx;
-                camShip[ownShip].ppivot.vy = startSection->centre.vy;
-                camShip[ownShip].ppivot.vz = startSection->centre.vz;
+                camShip[ownShip].pos.vx = startSection->centre.vx;
+                camShip[ownShip].pos.vy = startSection->centre.vy;
+                camShip[ownShip].pos.vz = startSection->centre.vz;
 
                 nextSection = startSection->nextSection.ptr;
                 targetVector.vx = nextSection->centre.vx - startSection->centre.vx;
@@ -1280,9 +1278,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 {
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = track->sections + i + 100;
-                    camShip[i].ppivot.vx = (track->sections + i + 100)->centre.vx;
-                    camShip[i].ppivot.vy = (track->sections + i + 100)->centre.vy;
-                    camShip[i].ppivot.vz = (track->sections + i + 100)->centre.vz;
+                    camShip[i].pos.vx = (track->sections + i + 100)->centre.vx;
+                    camShip[i].pos.vy = (track->sections + i + 100)->centre.vy;
+                    camShip[i].pos.vz = (track->sections + i + 100)->centre.vz;
                 }
 
                 /* the spline we want to play */
@@ -1298,9 +1296,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 pos.vz = (prm.spline)->position.vz;
 
                 camShip[ownShip].nearTrkSect = FindAllNearestSection(pos);
-                camShip[ownShip].ppivot.vx = pos.vx;
-                camShip[ownShip].ppivot.vy = pos.vy;
-                camShip[ownShip].ppivot.vz = pos.vz;
+                camShip[ownShip].pos.vx = pos.vx;
+                camShip[ownShip].pos.vy = pos.vy;
+                camShip[ownShip].pos.vz = pos.vz;
 
                 /* reset ship direction */
                 camShip[ownShip].roll = 0;
@@ -1325,9 +1323,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(pos);
 
                 /* set the camera direction */
-                targetVector.vx = camShip[ownShip].ppivot.vx - pos.vx;
-                targetVector.vy = camShip[ownShip].ppivot.vy - pos.vy;
-                targetVector.vz = camShip[ownShip].ppivot.vz - pos.vz;
+                targetVector.vx = camShip[ownShip].pos.vx - pos.vx;
+                targetVector.vy = camShip[ownShip].pos.vy - pos.vy;
+                targetVector.vz = camShip[ownShip].pos.vz - pos.vz;
 
                 temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -1364,9 +1362,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 {
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = track->sections + i + 100;
-                    camShip[i].ppivot.vx = (track->sections + i + 100)->centre.vx;
-                    camShip[i].ppivot.vy = (track->sections + i + 100)->centre.vy;
-                    camShip[i].ppivot.vz = (track->sections + i + 100)->centre.vz;
+                    camShip[i].pos.vx = (track->sections + i + 100)->centre.vx;
+                    camShip[i].pos.vy = (track->sections + i + 100)->centre.vy;
+                    camShip[i].pos.vz = (track->sections + i + 100)->centre.vz;
                 }
 
                 /* the spline we want to play */
@@ -1382,9 +1380,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 pos.vz = (prm.spline)->position.vz;
 
                 camShip[ownShip].nearTrkSect = FindAllNearestSection(pos);
-                camShip[ownShip].ppivot.vx = pos.vx;
-                camShip[ownShip].ppivot.vy = pos.vy;
-                camShip[ownShip].ppivot.vz = pos.vz;
+                camShip[ownShip].pos.vx = pos.vx;
+                camShip[ownShip].pos.vy = pos.vy;
+                camShip[ownShip].pos.vz = pos.vz;
 
                 /* reset ship direction */
                 camShip[ownShip].roll = 0;
@@ -1402,9 +1400,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(pos);
 
                 /* set the camera direction */
-                targetVector.vx = camShip[ownShip].ppivot.vx - pos.vx;
-                targetVector.vy = camShip[ownShip].ppivot.vy - pos.vy;
-                targetVector.vz = camShip[ownShip].ppivot.vz - pos.vz;
+                targetVector.vx = camShip[ownShip].pos.vx - pos.vx;
+                targetVector.vy = camShip[ownShip].pos.vy - pos.vy;
+                targetVector.vz = camShip[ownShip].pos.vz - pos.vz;
 
                 temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
 
@@ -1442,9 +1440,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                     camShip[i].update = UpdateShipRemote;
                     camShip[i].nearTrkSect = startSection;
-                    camShip[i].ppivot.vx = startSection->centre.vx;
-                    camShip[i].ppivot.vy = startSection->centre.vy;
-                    camShip[i].ppivot.vz = startSection->centre.vz;
+                    camShip[i].pos.vx = startSection->centre.vx;
+                    camShip[i].pos.vy = startSection->centre.vy;
+                    camShip[i].pos.vz = startSection->centre.vz;
 
                     nextSection = startSection->nextSection.ptr;
                     targetVector.vx = nextSection->centre.vx - startSection->centre.vx;
@@ -1457,9 +1455,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 camShip[ownShip].update = UpdateShipRemote;
                 camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].ppivot.vx = startSection->centre.vx;
-                camShip[ownShip].ppivot.vy = startSection->centre.vy;
-                camShip[ownShip].ppivot.vz = startSection->centre.vz;
+                camShip[ownShip].pos.vx = startSection->centre.vx;
+                camShip[ownShip].pos.vy = startSection->centre.vy;
+                camShip[ownShip].pos.vz = startSection->centre.vz;
 
                 nextSection = startSection->nextSection.ptr;
                 targetVector.vx = nextSection->centre.vx - startSection->centre.vx;
@@ -1467,9 +1465,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 targetVector.vz = nextSection->centre.vz - startSection->centre.vz;
                 camShip[ownShip].hdg = -ratan2(targetVector.vx, targetVector.vz);
 
-                camShip[ownShip].vpivot.vx = targetVector.vx >> 2;
-                camShip[ownShip].vpivot.vy = targetVector.vy >> 2;
-                camShip[ownShip].vpivot.vz = targetVector.vz >> 2;
+                camShip[ownShip].vel.vx = targetVector.vx >> 2;
+                camShip[ownShip].vel.vy = targetVector.vy >> 2;
+                camShip[ownShip].vel.vz = targetVector.vz >> 2;
 
                 camVx = 1100;
                 camVy = 7850;

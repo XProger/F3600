@@ -16,7 +16,7 @@ const char* GetCdTrackName(int no)
         return (sometrack[no]);
 }
 
-void InGameReset(int choice, char machinePaused, ConfigData* gameData, int* cdPause)
+void InGameReset(int choice, ConfigData* gameData, int* cdPause)
 {
     int i;
 
@@ -25,31 +25,28 @@ void InGameReset(int choice, char machinePaused, ConfigData* gameData, int* cdPa
         CentreText("PAUSED", text_data(107, 90, 12), RedText);
     }
 
-    if (machinePaused == SINGLE || machinePaused == MASTER)
+    for (i = 0; i < 4; i++)
     {
-        for (i = 0; i < 4; i++)
-        {
-            CentreText(ingameMenu[i], text_data(0, 122 + (16 * i), 8), (i == choice) ? BLINK_TEXT : WhiteText);
-        }
+        CentreText(ingameMenu[i], text_data(0, 122 + (16 * i), 8), (i == choice) ? BLINK_TEXT : WhiteText);
+    }
 
-        if (choice == 3)
-        {
-            CentreText(GetCdTrackName(gameData->cdTrack - 1), text_data(0, 122 + (16 * 4), 8), RedText);
-        }
+    if (choice == 3)
+    {
+        CentreText(GetCdTrackName(gameData->cdTrack - 1), text_data(0, 122 + (16 * 4), 8), RedText);
     }
 }
 
 void InGameConfirm(char* confirm, int choice, short xpad, char* lConfirm)
 {
+    CentreText("ARE YOU SURE YOU", text_data(0, 95, 8), WhiteText);
+
     if (choice == 1)
     {
-        CentreText("ARE YOU SURE YOU", text_data(77, 95, 8), WhiteText);
-        CentreText("WANT TO RESTART", text_data(90, 105, 8), WhiteText);
+        CentreText("WANT TO RESTART", text_data(0, 105, 8), WhiteText);
     }
     else
     {
-        CentreText("ARE YOU SURE YOU", text_data(77, 95, 8), WhiteText);
-        CentreText("WANT TO QUIT", text_data(105, 105, 8), WhiteText);
+        CentreText("WANT TO QUIT", text_data(0, 105, 8), WhiteText);
     }
 
 #if 0
@@ -67,28 +64,4 @@ void InGameConfirm(char* confirm, int choice, short xpad, char* lConfirm)
    if ((GetMenuKey(M_SELECT)) || (GetMenuKey(M_START)))
       *confirm = *lConfirm ;
 #endif
-}
-
-void DeSelectScreen(void)
-{
-    /*TODO deselect screen?
-       SetPolyF4(&(selectBox[CurrentScreen]));
-       selectBox[CurrentScreen].r0=230;
-       selectBox[CurrentScreen].g0=0;
-       selectBox[CurrentScreen].b0=BLACK2_TRANSL;
-
-       setXY4(&(selectBox[CurrentScreen]),0 , 0,
-                              320 , 0,
-                              0 , 240,
-                              320 , 240);
-
-       SetSemiTrans((P_TAG *)&(selectBox[CurrentScreen]), 1);
-
-    // SetDrawMode(&(selectTrans[CurrentScreen]), 1, 1, GetTPage(0, 0, 0, 0), 0);
-       SetDrawMode(&(selectTrans[CurrentScreen]), 1, 1, FONT_TPAGE, 0);
-
-
-       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(selectBox[CurrentScreen]) );
-       AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(selectTrans[CurrentScreen]) );
-       */
 }

@@ -21,10 +21,18 @@
 #define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? WhiteText : RedText)
 #define BLINK_SLOW ((gFrameIndex & 63) <= 42)
 
+extern int gWidth;
+extern int gHeight;
+extern int gBorder;
+
+extern int HACK_LOAD_TRACK;
+extern int HACK_LOAD_SHADOW;
+
+#define SCREEN_Z 160
+
 extern TrackData* track;
 extern int ownShip;
 extern int serialShip;
-extern char gameType;
 extern void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
 extern TrackCamera* cameraPtr;
 extern int NoOfMainSections;

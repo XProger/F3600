@@ -939,12 +939,6 @@ void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret)
     ret->m[2][2] = (((long)m0->m[2][0] * (long)m1->m[0][2]) + ((long)m0->m[2][1] * (long)m1->m[1][2]) + ((long)m0->m[2][2] * (long)m1->m[2][2])) >> SHIFT;
 }
 
-extern int gWidth;
-extern int gHeight;
-extern int gBorder;
-
-#define SCREEN_Z 160
-
 void ApplyMatrix(const MATRIX* m, const SVECTOR* v0, VECTOR* v1)
 {
     long xt, yt, zt;

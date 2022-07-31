@@ -74,10 +74,10 @@ void DrawEffects()
     cy = ctrlcamera.camPos->absolute.t[1];
     cz = ctrlcamera.camPos->absolute.t[2];
 
-    renderSetMatrix(ctrlcamera.camPos->super, cx, cy, cz);
+    renderSetSkeleton(ctrlcamera.camPos->super, cx, cy, cz);
 
     renderDepthWrite(0);
-    renderTransparent(1);
+    renderSetBlend(BLEND_ADD);
 
     for (i = 0; i < NO_OF_EFFECTS; i++)
     {
@@ -95,7 +95,7 @@ void DrawEffects()
     }
 
     renderDepthWrite(1);
-    renderTransparent(0);
+    renderSetBlend(BLEND_NONE);
 }
 
 void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
@@ -215,9 +215,9 @@ void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
 
                     if (weapon->count == SHIP_EXPLODE)
                     {
-                        fx->vx += (int16)(shipIndex[weapon->targetShip].vpivot.vx >> 6);
-                        fx->vy += (int16)(shipIndex[weapon->targetShip].vpivot.vy >> 6);
-                        fx->vz += (int16)(shipIndex[weapon->targetShip].vpivot.vz >> 6);
+                        fx->vx += (int16)(shipIndex[weapon->targetShip].vel.vx >> 6);
+                        fx->vy += (int16)(shipIndex[weapon->targetShip].vel.vy >> 6);
+                        fx->vz += (int16)(shipIndex[weapon->targetShip].vel.vz >> 6);
                     }
 
                     fx->count = -((((uint8)randy()) >> 4) + 8);
@@ -449,6 +449,8 @@ void MoveDonkey(Object** donkey)
 
 void InitShadow(Skeleton* camPos)
 {
+    HACK_LOAD_SHADOW = 1;
+
     if (ownShip < 2)
         gEffectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad1.tim");
     else if (ownShip < 4)
@@ -458,272 +460,117 @@ void InitShadow(Skeleton* camPos)
     else if (ownShip < 8)
         gEffectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad4.tim");
 
-    /*TODO shadow
-    Shadow* shadow = shipShadow;
-
-    char u[6], v[6];
-
-    u[0] = (effectTextures[FX_SHADOW]->u0 + effectTextures[FX_SHADOW]->u1) >> 1;
-    v[0] = (effectTextures[FX_SHADOW]->v0 + effectTextures[FX_SHADOW]->v1) >> 1;
-    u[1] = effectTextures[FX_SHADOW]->u2;
-    v[1] = effectTextures[FX_SHADOW]->v2;
-    u[2] = effectTextures[FX_SHADOW]->u3;
-    v[2] = effectTextures[FX_SHADOW]->v3;
-    u[3] = (u[0] + u[1]) >> 1;
-    v[3] = (v[0] + v[1]) >> 1;
-    u[4] = (u[1] + u[2]) >> 1;
-    v[4] = (v[1] + v[2]) >> 1;
-    u[5] = (u[2] + u[0]) >> 1;
-    v[5] = (v[2] + v[0]) >> 1;
-
-    for(i = 0; i < NO_OF_SHIPS; i++)
-    {
-       for(j = 0; j < 2; j++)
-       {
-          for(k = 0; k < 4; k++)
-          {
-             SetPolyFT3(&(shadow[i].poly[k][j]));
-             setTPage(&(shadow[i].poly[k][j]),0, 2,
-                effectTextures[FX_SHADOW]->textureX,
-                effectTextures[FX_SHADOW]->textureY);
-             shadow[i].poly[k][j].clut = effectTextures[FX_SHADOW]->cba;
-
-             SetShadeTex((P_TAG *)&(shadow[i].poly[k][j]), 1);
-
-             SetSemiTrans((P_TAG *)&(shadow[i].poly[k][j]), 1);
-
-             shadow[i].poly[k][j].r0 = 230;   // PCwipeout
-             shadow[i].poly[k][j].g0 = 0;
-             shadow[i].poly[k][j].b0 = BLACK5_TRANSL;
-          }
-          setUV3(&(shadow[i].poly[0][j]),
-             u[0], v[0],
-             u[3], v[3],
-             u[5], v[5]);
-          setUV3(&(shadow[i].poly[1][j]),
-             u[3], v[3],
-             u[1], v[1],
-             u[4], v[4]);
-          setUV3(&(shadow[i].poly[2][j]),
-             u[5], v[5],
-             u[3], v[3],
-             u[4], v[4]);
-          setUV3(&(shadow[i].poly[3][j]),
-             u[5], v[5],
-             u[4], v[4],
-             u[2], v[2]);
-       }
-    }
-    */
+    HACK_LOAD_SHADOW = 0;
 }
 
-void DrawShadow(Object** shipShapes, ShipData* shipIndex)
+void DrawShadows(ShipData* shipIndex)
 {
-    Face* facePtr;
-    VECTOR p;
-    int i;
-    int alpha;
-    VECTOR facePoint;
+    const Face* facePtr;
+    Shadow s;
+    int i, j, px, py, pz, cx, cy, cz, nx, nz, wx, wz;
+    int alpha, intensity;
+    const VECTOR* facePoint;
+    ShipData* playerShip;
+    VECTOR v[4];
+
+    cx = ctrlcamera.camPos->absolute.t[0];
+    cy = ctrlcamera.camPos->absolute.t[1];
+    cz = ctrlcamera.camPos->absolute.t[2];
+
+    renderSetBlend(BLEND_SUB);
+    renderSetSkeleton(ctrlcamera.camPos->super, cx, cy, cz);
+
+    #define SHADOW_SHIFT_N  3
+    #define SHADOW_SHIFT_W  4
+    #define SHADOW_BIAS     32
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (!((shipIndex[i].attr & VISIBLE) && ((shipIndex[i].attr & FLYING) == 0)))
+        playerShip = shipIndex + i;
+
+        if (!((playerShip->attr & VISIBLE) && ((playerShip->attr & FLYING) == 0)))
             continue;
 
-        facePtr = track->faces + shipIndex[i].nearTrkSect->faceStart;
+        facePtr = track->faces + playerShip->nearTrkSect->faceStart;
 
         while ((facePtr->flags & TRACK_BASE) == 0)
         {
             facePtr++;
         }
 
-        facePoint.vx = track->vertices[(facePtr->vertex[0])].vx;
-        facePoint.vy = track->vertices[(facePtr->vertex[0])].vy;
-        facePoint.vz = track->vertices[(facePtr->vertex[0])].vz;
+        facePoint = track->vertices + facePtr->vertex[0];
 
-        alpha = PlaneLineCollision(&facePoint, &p, &facePtr->normal);
-        p.vx -= (alpha * facePtr->normal.vx) >> 12;
-        p.vy -= (alpha * facePtr->normal.vy) >> 12;
-        p.vz -= (alpha * facePtr->normal.vz) >> 12;
+        px = playerShip->pos.vx;
+        py = playerShip->pos.vy;
+        pz = playerShip->pos.vz;
 
-#if 0
-        a.vx = (shipIndex[i].ppivot.vx + ((shipIndex[i].unitVecNose.vx * 3) >> 5));
-        a.vy = (shipIndex[i].ppivot.vy + ((shipIndex[i].unitVecNose.vy * 3) >> 5));
-        a.vz = (shipIndex[i].ppivot.vz + ((shipIndex[i].unitVecNose.vz * 3) >> 5));
+        nx = playerShip->unitVecNose.vx >> SHADOW_SHIFT_N;
+        nz = playerShip->unitVecNose.vz >> SHADOW_SHIFT_N;
 
-        b.vx = (shipIndex[i].ppivot.vx - ((shipIndex[i].unitVecNose.vx * 3) >> 5)) + (shipIndex[i].unitVecWing.vx >> 4);
-        b.vy = (shipIndex[i].ppivot.vy - ((shipIndex[i].unitVecNose.vy * 3) >> 5)) + (shipIndex[i].unitVecWing.vy >> 4);
-        b.vz = (shipIndex[i].ppivot.vz - ((shipIndex[i].unitVecNose.vz * 3) >> 5)) + (shipIndex[i].unitVecWing.vz >> 4);
+        wx = playerShip->unitVecWing.vx >> SHADOW_SHIFT_W;
+        wz = playerShip->unitVecWing.vz >> SHADOW_SHIFT_W;
 
-        c.vx = (shipIndex[i].ppivot.vx - ((shipIndex[i].unitVecNose.vx * 3) >> 5)) - (shipIndex[i].unitVecWing.vx >> 4);
-        c.vy = (shipIndex[i].ppivot.vy - ((shipIndex[i].unitVecNose.vy * 3) >> 5)) - (shipIndex[i].unitVecWing.vy >> 4);
-        c.vz = (shipIndex[i].ppivot.vz - ((shipIndex[i].unitVecNose.vz * 3) >> 5)) - (shipIndex[i].unitVecWing.vz >> 4);
+        v[0].vx = px + nx - wx;
+        v[0].vy = py;
+        v[0].vz = pz + nz - wz;
 
+        v[1].vx = px + nx + wx;
+        v[1].vy = py;
+        v[1].vz = pz + nz + wz;
 
-        alpha = PlaneLineCollision(facePoint, b, facePtr->normal);
-        b.vx -= (alpha * facePtr->normal.vx) >> 12;
-        b.vy -= (alpha * facePtr->normal.vy) >> 12;
-        b.vz -= (alpha * facePtr->normal.vz) >> 12;
+        v[2].vx = px - nx + wx;
+        v[2].vy = py;
+        v[2].vz = pz - nz + wz;
 
-        alpha = PlaneLineCollision(facePoint, c, facePtr->normal);
-        c.vx -= (alpha * facePtr->normal.vx) >> 12;
-        c.vy -= (alpha * facePtr->normal.vy) >> 12;
-        c.vz -= (alpha * facePtr->normal.vz) >> 12;
+        v[3].vx = px - nx - wx;
+        v[3].vy = py;
+        v[3].vz = pz - nz - wz;
 
-        vertex[0].vx = a.vx + cameraPtr->camPos->relative.t[0];
-        vertex[0].vy = a.vy + cameraPtr->camPos->relative.t[1];
-        vertex[0].vz = a.vz + cameraPtr->camPos->relative.t[2];
+        intensity = 0;
 
-        vertex[1].vx = b.vx + cameraPtr->camPos->relative.t[0];
-        vertex[1].vy = b.vy + cameraPtr->camPos->relative.t[1];
-        vertex[1].vz = b.vz + cameraPtr->camPos->relative.t[2];
-
-        vertex[2].vx = c.vx + cameraPtr->camPos->relative.t[0];
-        vertex[2].vy = c.vy + cameraPtr->camPos->relative.t[1];
-        vertex[2].vz = c.vz + cameraPtr->camPos->relative.t[2];
-
-        // Depth returned is 1/4 the Z component sz of the screen coords
-        // corresponding to v2
-        //           Faster but inaccurate sorting !!!!
-#if 0
-             depth = RotTransPers3(  &(vertex[0]),
-                &(vertex[1]),
-                &(vertex[2]),
-                &(sxy[0]),
-                &(sxy[1]),
-                &(sxy[2]),
-                &p,
-                &flag);
-
-#else
-        // Depth returned for each vertex
-        // Slower but slightly better sorting  !!!!
-
-        depth[0] = RotTransPers(&(vertex[0]), &(sxy[0]), &p, &flag);
-
-        depth[1] = RotTransPers(&(vertex[1]), &(sxy[1]), &p, &flag);
-
-        depth[2] = RotTransPers(&(vertex[2]), &(sxy[2]), &p, &flag);
-#endif
-
-        x[0] = sxy[0].vx;
-        y[0] = sxy[0].vy;
-        x[1] = sxy[1].vx;
-        y[1] = sxy[1].vy;
-        x[2] = sxy[2].vx;
-        y[2] = sxy[2].vy;
-
-        x[3] = (x[0] + x[1]) >> 1;
-        y[3] = (y[0] + y[1]) >> 1;
-        x[4] = (x[1] + x[2]) >> 1;
-        y[4] = (y[1] + y[2]) >> 1;
-        x[5] = (x[2] + x[0]) >> 1;
-        y[5] = (y[2] + y[0]) >> 1;
-
-        if (!(flag & (CrtClipped | ZNegative | ZLarge | ZSmall)))
+        /*TODO optimize, single raycast + normal*/
+        for (j = 0; j < 4; j++)
         {
+            alpha = PlaneLineCollision(facePoint, v + j, &facePtr->normal);
+            intensity += alpha;
 
-            shadow[i].poly[0][CurrentScreen].x0 = x[0];
-            shadow[i].poly[0][CurrentScreen].y0 = y[0];
-            shadow[i].poly[0][CurrentScreen].x1 = x[3];
-            shadow[i].poly[0][CurrentScreen].y1 = y[3];
-            shadow[i].poly[0][CurrentScreen].x2 = x[5];
-            shadow[i].poly[0][CurrentScreen].y2 = y[5];
+            alpha -= SHADOW_BIAS;
 
-            shadow[i].poly[0][CurrentScreen].z0 = vertex[0].vz;
-            shadow[i].poly[0][CurrentScreen].z1 = vertex[0].vz;
-            shadow[i].poly[0][CurrentScreen].z2 = vertex[0].vz;
-            shadow[i].poly[0][CurrentScreen].pad4 = 0;
-            shadow[i].poly[0][CurrentScreen].pad5 = 0;
-            shadow[i].poly[0][CurrentScreen].pad6 = 0;
-
-            shadow[i].poly[1][CurrentScreen].x0 = x[3];
-            shadow[i].poly[1][CurrentScreen].y0 = y[3];
-            shadow[i].poly[1][CurrentScreen].x1 = x[1];
-            shadow[i].poly[1][CurrentScreen].y1 = y[1];
-            shadow[i].poly[1][CurrentScreen].x2 = x[4];
-            shadow[i].poly[1][CurrentScreen].y2 = y[4];
-
-            shadow[i].poly[1][CurrentScreen].z0 = vertex[1].vz;
-            shadow[i].poly[1][CurrentScreen].z1 = vertex[1].vz;
-            shadow[i].poly[1][CurrentScreen].z2 = vertex[1].vz;
-            shadow[i].poly[1][CurrentScreen].pad4 = 0;
-            shadow[i].poly[1][CurrentScreen].pad5 = 0;
-            shadow[i].poly[1][CurrentScreen].pad6 = 0;
-
-            shadow[i].poly[2][CurrentScreen].x0 = x[5];
-            shadow[i].poly[2][CurrentScreen].y0 = y[5];
-            shadow[i].poly[2][CurrentScreen].x1 = x[3];
-            shadow[i].poly[2][CurrentScreen].y1 = y[3];
-            shadow[i].poly[2][CurrentScreen].x2 = x[4];
-            shadow[i].poly[2][CurrentScreen].y2 = y[4];
-
-            shadow[i].poly[2][CurrentScreen].z0 = vertex[0].vz;
-            shadow[i].poly[2][CurrentScreen].z1 = vertex[0].vz;
-            shadow[i].poly[2][CurrentScreen].z2 = vertex[0].vz;
-            shadow[i].poly[2][CurrentScreen].pad4 = 0;
-            shadow[i].poly[2][CurrentScreen].pad5 = 0;
-            shadow[i].poly[2][CurrentScreen].pad6 = 0;
-
-            shadow[i].poly[3][CurrentScreen].x0 = x[5];
-            shadow[i].poly[3][CurrentScreen].y0 = y[5];
-            shadow[i].poly[3][CurrentScreen].x1 = x[4];
-            shadow[i].poly[3][CurrentScreen].y1 = y[4];
-            shadow[i].poly[3][CurrentScreen].x2 = x[2];
-            shadow[i].poly[3][CurrentScreen].y2 = y[2];
-
-            shadow[i].poly[3][CurrentScreen].z0 = vertex[2].vz;
-            shadow[i].poly[3][CurrentScreen].z1 = vertex[2].vz;
-            shadow[i].poly[3][CurrentScreen].z2 = vertex[2].vz;
-            shadow[i].poly[3][CurrentScreen].pad4 = 0;
-            shadow[i].poly[3][CurrentScreen].pad5 = 0;
-            shadow[i].poly[3][CurrentScreen].pad6 = 0;
-
-            depth[0] -= 180;
-            if (depth[0] < 0)
-                depth[0] = 0;
-            depth[1] -= 60;
-            if (depth[1] < 0)
-                depth[1] = 0;
-            depth[2] -= 60;
-            if (depth[2] < 0)
-                depth[2] = 0;
-
-            AddPrim(OT[CurrentScreen] + (depth[0]), (ulong*)&(shadow[i].poly[0][CurrentScreen]));
-            AddPrim(OT[CurrentScreen] + (depth[2]), (ulong*)&(shadow[i].poly[1][CurrentScreen]));
-            AddPrim(OT[CurrentScreen] + (depth[2]), (ulong*)&(shadow[i].poly[2][CurrentScreen]));
-            AddPrim(OT[CurrentScreen] + (depth[2]), (ulong*)&(shadow[i].poly[3][CurrentScreen]));
+            v[j].vx -= (alpha * facePtr->normal.vx) >> 12;
+            v[j].vy -= (alpha * facePtr->normal.vy) >> 12;
+            v[j].vz -= (alpha * facePtr->normal.vz) >> 12;
         }
-#endif
+
+        s.x0 = v[0].vx;
+        s.y0 = v[0].vy;
+        s.z0 = v[0].vz;
+
+        s.x1 = v[1].vx;
+        s.y1 = v[1].vy;
+        s.z1 = v[1].vz;
+
+        s.x2 = v[2].vx;
+        s.y2 = v[2].vy;
+        s.z2 = v[2].vz;
+
+        s.x3 = v[3].vx;
+        s.y3 = v[3].vy;
+        s.z3 = v[3].vz;
+
+        s.texture = gEffectTextures[FX_SHADOW];
+
+        intensity = 255 - (intensity >> 3);
+        if (intensity < 0)
+            intensity = 0;
+        if (intensity > 255)
+            intensity = 255;
+
+        s.intensity = intensity;
+
+        renderShadow(&s);
     }
-}
 
-void InitWeaponSprtIcons(Texture** weaponIconTextures)
-{
-    int tablePos = TextureTableCount;
-
-    LoadCompressedTextureSequence("wipeout\\common\\wicons.cmp");
-
-    weaponIconTextures[MINE - 1] = TextureTable[tablePos++];
-    weaponIconTextures[MISSILE - 1] = TextureTable[tablePos++];
-    weaponIconTextures[ROCKET - 1] = TextureTable[tablePos++];
-    weaponIconTextures[SPECIAL - 1] = TextureTable[tablePos++];
-    weaponIconTextures[ELEC_BOLT - 1] = TextureTable[tablePos++];
-    weaponIconTextures[FLARE - 1] = TextureTable[tablePos++];
-    weaponIconTextures[REV_CON - 1] = TextureTable[tablePos++];
-    weaponIconTextures[SHIELD - 1] = TextureTable[tablePos++];
-    weaponIconTextures[TURBO - 1] = TextureTable[tablePos++];
-}
-
-void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip)
-{
-    int icon = playerShip->weaponType;
-
-    if (icon != NO_WEAPON)
-    {
-        icon -= 1;
-        AddGlyph(144, 20, 32, 32, 0, 0, weaponIconTextures[icon]);
-    }
+    renderSetBlend(BLEND_NONE);
 }
 
 int shakeCount = 0;
@@ -832,22 +679,18 @@ void AuroraBorialis(Object* object)
             abPtr[i]->colour[0].r = (rsin(coords[0] * count) >> 6) + 190;
             abPtr[i]->colour[0].g = (rsin(coords[0] * (count + 54)) >> 6) + 190;
             abPtr[i]->colour[0].b = (rsin(coords[0] * (count + 39)) >> 6) + 190;
-        }
-        if (greyCoords[i] != -2)
-        {
+
             abPtr[i]->colour[1].r = (rsin(coords[1] * count) >> 6) + 190;
             abPtr[i]->colour[1].g = (rsin(coords[1] * (count + 54)) >> 6) + 190;
             abPtr[i]->colour[1].b = (rsin(coords[1] * (count + 39)) >> 6) + 190;
         }
+
         if (greyCoords[i] != -1)
         {
             abPtr[i]->colour[2].r = (rsin(coords[2] * count) >> 6) + 190;
             abPtr[i]->colour[2].g = (rsin(coords[2] * (count + 54)) >> 6) + 190;
             abPtr[i]->colour[2].b = (rsin(coords[2] * (count + 39)) >> 6) + 190;
-        }
 
-        if (greyCoords[i] != -1)
-        {
             abPtr[i]->colour[3].r = (rsin(coords[3] * count) >> 6) + 190;
             abPtr[i]->colour[3].g = (rsin(coords[3] * (count + 54)) >> 6) + 190;
             abPtr[i]->colour[3].b = (rsin(coords[3] * (count + 39)) >> 6) + 190;

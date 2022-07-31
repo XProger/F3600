@@ -18,12 +18,6 @@ typedef struct Effect
     short size;
 } Effect;
 
-typedef struct Shadow
-{
-    /*TODO shadow*/
-    int TODO;
-} Shadow;
-
 void InitEffects(Skeleton* camPos);
 void ResetEffects(void);
 void UpdateEffects();
@@ -32,7 +26,7 @@ void ColourStartBoom(int noToLight);
 void ResetStartBoom(void);
 void InitStartBoom(Object** prm, short prmCount);
 void InitShadow(Skeleton* camPos);
-void DrawShadow(Object** shipShapes, ShipData* shipIndex);
+void DrawShadows(ShipData* shipIndex);
 void SetShake(int duration);
 void ShakeScreen(void);
 void InitAuroraBorialis(Object* object);
@@ -41,7 +35,5 @@ void ColourRedLight(Object* redLight);
 void ColourDroidLights(Object* droid);
 void MoveDonkey(Object** donkey);
 void DrawEffects();
-void DrawWeaponSprtIcons(Texture** weaponIconTextures, ShipData* playerShip);
 void InitRedLight(Object** prm, short prmCount, Object** redLight);
 void InitDonkey(Object** prm, short prmCount, Object** donkey);
-void InitWeaponSprtIcons(Texture** weaponIconTextures);

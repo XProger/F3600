@@ -22,9 +22,9 @@ int SectionSearch(ShipData* playerShip)
     /****** Find vector from ship centre to track section under  ******/
     /******                     consideration                    ******/
 
-    cent2ship.vx = playerShip->ppivot.vx - trk->centre.vx;
-    cent2ship.vy = (playerShip->ppivot.vy - trk->centre.vy) >> 2;
-    cent2ship.vz = playerShip->ppivot.vz - trk->centre.vz;
+    cent2ship.vx = playerShip->pos.vx - trk->centre.vx;
+    cent2ship.vy = (playerShip->pos.vy - trk->centre.vy) >> 2;
+    cent2ship.vz = playerShip->pos.vz - trk->centre.vz;
 
     smallest_mag = ((cent2ship.vx * cent2ship.vx) + (cent2ship.vy * cent2ship.vy) + (cent2ship.vz * cent2ship.vz));
 
@@ -46,9 +46,9 @@ int SectionSearch(ShipData* playerShip)
             juncChecked = 1;
         }
 
-        cent2ship.vx = playerShip->ppivot.vx - trk->centre.vx;
-        cent2ship.vy = (playerShip->ppivot.vy - trk->centre.vy) >> 2;
-        cent2ship.vz = playerShip->ppivot.vz - trk->centre.vz;
+        cent2ship.vx = playerShip->pos.vx - trk->centre.vx;
+        cent2ship.vy = (playerShip->pos.vy - trk->centre.vy) >> 2;
+        cent2ship.vz = playerShip->pos.vz - trk->centre.vz;
         mag = ((cent2ship.vx * cent2ship.vx) + (cent2ship.vy * cent2ship.vy) + (cent2ship.vz * cent2ship.vz));
 
         if (mag < smallest_mag)
@@ -64,9 +64,9 @@ int SectionSearch(ShipData* playerShip)
 
         for (i = 0; i < LOOK_AHEAD; i++)
         {
-            cent2ship.vx = playerShip->ppivot.vx - trk->centre.vx;
-            cent2ship.vy = (playerShip->ppivot.vy - trk->centre.vy) >> 2;
-            cent2ship.vz = playerShip->ppivot.vz - trk->centre.vz;
+            cent2ship.vx = playerShip->pos.vx - trk->centre.vx;
+            cent2ship.vy = (playerShip->pos.vy - trk->centre.vy) >> 2;
+            cent2ship.vz = playerShip->pos.vz - trk->centre.vz;
             mag = ((cent2ship.vx * cent2ship.vx) + (cent2ship.vy * cent2ship.vy) + (cent2ship.vz * cent2ship.vz));
 
             if (mag < smallest_mag)

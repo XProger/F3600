@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\camera.c" />
-    <ClCompile Include="..\card.c" />
     <ClCompile Include="..\collide.c" />
     <ClCompile Include="..\cone.c" />
     <ClCompile Include="..\control.c" />
@@ -57,7 +56,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera.h" />
-    <ClInclude Include="..\card.h" />
     <ClInclude Include="..\collide.h" />
     <ClInclude Include="..\cone.h" />
     <ClInclude Include="..\control.h" />

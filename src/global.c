@@ -2,7 +2,6 @@
 
 int ownShip;
 int serialShip;
-char gameType;
 void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
 TrackCamera* cameraPtr;
 int NoOfMainSections;

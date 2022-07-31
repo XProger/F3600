@@ -43,8 +43,8 @@ typedef struct ShipData
     int combatAttr; /* Ship attributes */
     VECTOR unitVecNose; /* SVECTOR  ? */ /* Unit vector along ships nose */
     VECTOR unitVecWing; /* SVECTOR  ? */ /* Unit vector along ships nose */
-    VECTOR ppivot; /* 32bit ship position */
-    VECTOR vpivot, apivot; /* Velocity, accn vectors for ship */
+    VECTOR pos; /* 32bit ship position */
+    VECTOR vel, acc; /* Velocity, accn vectors for ship */
     short hdg, pitch, roll; /* Orientation attributes */
     short vhdg, vpitch, vroll;
     short ahdg;
@@ -81,9 +81,11 @@ typedef struct ShipData
     int lapTimes[5];
     int updateCount;
 
+    uint32 color;
+
     /***** Control Routines *****/
     void (*updateControl)(VECTOR*, struct ShipData*, Face*, int);
-    void (*update)(struct ShipData*, Object**, int, struct WeaponData*);
+    void (*update)(struct ShipData*, int, struct WeaponData*);
 
 } ShipData;
 

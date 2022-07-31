@@ -258,8 +258,3 @@ typedef union Prm
 
 void InitGameDisplay(void);
 void InitMenuDisplay(int geomOffset);
-
-void TransformStaticMenuObject(Object* object);
-void TransformStaticObjectBodge(Object* object);
-void TransformStaticObject(Object* object);
-void SetSkeletonTransform(Skeleton* skeleton);

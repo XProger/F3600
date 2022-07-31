@@ -54,7 +54,7 @@ HGLRC hRC;
 
 extern const TrackCamera ctrlcamera;
 
-int in3D;
+int gRenderMode;
 
 long xOffset;
 long yOffset;
@@ -63,9 +63,11 @@ int gWidth, gHeight, gBorder;
 
 int gCylX, gCylZ;
 
-int dbg_trackPolys;
-int dbg_objectPolys;
-int dbg_texSwitch;
+#ifdef DEBUG_RENDER
+    int dbg_trackPolys;
+    int dbg_objectPolys;
+    int dbg_texSwitch;
+#endif
 
 #define MAX_TRACK_TEX   22
 TextureGL gTrackTex[MAX_TRACK_TEX];
@@ -75,12 +77,11 @@ extern TrackData* track;
 extern TexTemplate* ctrltexTemplate;
 extern short ctrllibraryTextures;
 extern short ctrlnumLib;
-extern int TrackLoadHack;
 
-void setTexFilter()
+void setTexFilter(int bilinear)
 {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -135,20 +136,8 @@ void renderInit(void)
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
-    glDisable(GL_DEPTH_TEST);
-
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0.0f);
-
-    // use additive blending
-    glBlendFunc(GL_ONE, GL_ONE);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, 320, 240, 0, 0, 1);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 
     glEnable(GL_TEXTURE_2D);
 
@@ -164,11 +153,12 @@ void renderFree(void)
 
 void renderSwap(void)
 {
+#ifdef DEBUG_RENDER
     char buf[64];
     sprintf(buf, "t:%d, o:%d, ts:%d\n", dbg_trackPolys, dbg_objectPolys, dbg_texSwitch);
     dbg_trackPolys = dbg_objectPolys = dbg_texSwitch = 0;
     OutputDebugString(buf);
-
+#endif
     SwapBuffers(hDC);
 }
 
@@ -202,7 +192,10 @@ void setTexture(const TextureGL* tex)
     gTexture = tex;
     renderFlush();
 
+#ifdef DEBUG_RENDER
     dbg_texSwitch++;
+#endif
+
     if (tex)
     {
         glBindTexture(GL_TEXTURE_2D, tex->id);
@@ -237,6 +230,25 @@ void renderQuad(const Quad* q)
         glVertex2s(x1, y1);
         glTexCoord2f(u0, v1);
         glVertex2s(x0, y1);
+    glEnd();
+}
+
+void renderShadow(const Shadow* s)
+{
+    TextureGL* t = (TextureGL*)s->texture;
+
+    setTexture(t);
+
+    glColor4ub(255, 255, 255, s->intensity);
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex3i(s->x0, s->y0, s->z0);
+        glTexCoord2f(1, 0);
+        glVertex3i(s->x1, s->y1, s->z1);
+        glTexCoord2f(1, 1);
+        glVertex3i(s->x2, s->y2, s->z2);
+        glTexCoord2f(0, 1);
+        glVertex3i(s->x3, s->y3, s->z3);
     glEnd();
 }
 
@@ -291,7 +303,7 @@ void prepareTrack(void)
         glGenTextures(1, &gTrackTex[i].id);
         glBindTexture(GL_TEXTURE_2D, gTrackTex[i].id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, gTrackTexData[i]);
-        setTexFilter();
+        setTexFilter(0);
     }
 }
 
@@ -326,8 +338,13 @@ void renderPrepare(void)
 
 void renderFrameBegin(void)
 {
+    gBorder = ((gWidth * 240) / gHeight - 320) >> 1;
+
     gCylX = rcos(-ctrlcamera.hdg);
     gCylZ = rsin(-ctrlcamera.hdg);
+
+    gRenderMode = RENDER_MODE_3D;
+    renderSetMode(RENDER_MODE_2D);
 }
 
 void renderFrameEnd(void)
@@ -335,10 +352,9 @@ void renderFrameEnd(void)
     //
 }
 
-void renderSetMatrix(Skeleton* skeleton, int x, int y, int z)
+void renderSetMatrix(const MATRIX* matrix, int x, int y, int z)
 {
     float m[4][4];
-    const MATRIX* matrix = GetSkeletonMatrix(skeleton);
 
     m[0][0] = matrix->m[0][0] * i4096;
     m[0][1] = matrix->m[1][0] * i4096;
@@ -361,6 +377,12 @@ void renderSetMatrix(Skeleton* skeleton, int x, int y, int z)
     m[3][3] = 1.0f;
 
     glLoadMatrixf((GLfloat*)&m);
+}
+
+void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
+{
+    float m[4][4];
+    renderSetMatrix(GetSkeletonMatrix(skeleton), x, y, z);
 }
 
 void renderTrack(void)
@@ -387,7 +409,7 @@ void renderTrack(void)
     cy = ctrlcamera.camPos->absolute.t[1];
     cz = ctrlcamera.camPos->absolute.t[2];
 
-    renderSetMatrix(ctrlcamera.camPos->super, cx, cy, cz);
+    renderSetSkeleton(ctrlcamera.camPos->super, cx, cy, cz);
 
     switch (dir)
     {
@@ -455,7 +477,9 @@ void renderTrack(void)
                     }
                     glEnd();
 
+                #ifdef DEBUG_RENDER
                     dbg_trackPolys++;
+                #endif
                 }
 
                 section = section->nextSection.ptr;
@@ -489,12 +513,14 @@ void renderObject(const Object* object)
     cy = matrix->t[1];
     cz = matrix->t[2];
 
-    renderSetMatrix(object->skeleton, cx, cy, cz);
+    renderSetSkeleton(object->skeleton, cx, cy, cz);
 
     vertices = object->vertices;
     poly.primitive = object->primitives;
 
+#ifdef DEBUG_RENDER
     dbg_objectPolys += object->primitiveCount;
+#endif
 
     for (i = 0; i < object->primitiveCount; i++)
     {
@@ -528,7 +554,7 @@ void renderObject(const Object* object)
 
                 if (f->flag & ShipEngine)
                 {
-                    renderTransparent(1);
+                    renderSetBlend(BLEND_ADD);
                     glColor3ub(255, 255, 255);
                 }
                 else
@@ -549,7 +575,7 @@ void renderObject(const Object* object)
 
                 if (f->flag & ShipEngine)
                 {
-                    renderTransparent(0);
+                    renderSetBlend(BLEND_NONE);
                 }
 
                 poly.ft3++;
@@ -634,7 +660,7 @@ void renderObject(const Object* object)
 
                 if (f->flag & ShipEngine)
                 {
-                    renderTransparent(1);
+                    renderSetBlend(BLEND_ADD);
                     c = &colorWhite3[0];
                 }
 
@@ -654,7 +680,7 @@ void renderObject(const Object* object)
 
                 if (f->flag & ShipEngine)
                 {
-                    renderTransparent(0);
+                    renderSetBlend(BLEND_NONE);
                 }
 
                 poly.gt3++;
@@ -765,55 +791,62 @@ void renderSky(const Object* object)
     glEnable(GL_DEPTH_TEST);
 }
 
-void renderBegin3D(void)
+void renderSetMode(int renderMode)
 {
-    in3D++;
-
-    glEnable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glTranslatef((xOffset - 160) / 160.0f, -(yOffset - 120) / 120.f, 0);
-    gluPerspective(75.0f, (float)gWidth / (float)gHeight, (float)64, (float)(64 * 1024));
-    glScalef(1, -1, -1);
-
-    glMatrixMode(GL_MODELVIEW);
-}
-
-void renderEnd3D(void)
-{
-    in3D--;
-    if (in3D > 0)
+    if (gRenderMode == renderMode)
         return;
-
-    glDisable(GL_DEPTH_TEST);
+    gRenderMode = renderMode;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    
-    gBorder = ((gWidth * 240) / gHeight - 320) >> 1;
-    
-    glOrtho(-gBorder, 320 + gBorder, 240, 0, 0, 1);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-
-void renderTransparent(int enable)
-{
-    if (enable)
+    if (renderMode == RENDER_MODE_2D)
     {
-        glEnable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glOrtho(-gBorder, 320 + gBorder, 240, 0, 0, 1);
     }
     else
     {
-        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glTranslatef((xOffset - 160) / 160.0f, -(yOffset - 120) / 120.f, 0);
+        gluPerspective(75.0f, (float)gWidth / (float)gHeight, (float)64, (float)(64 * 1024));
+        glScalef(1, -1, -1);
+    }
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+void renderSetBlend(enum BlendMode mode)
+{
+    switch (mode)
+    {
+        case BLEND_NONE:
+            glDisable(GL_BLEND);
+            break;
+        case BLEND_ADD:
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ONE, GL_ONE);
+            break;
+        case BLEND_SUB:
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+            break;
+        case BLEND_MUL:
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_DST_COLOR, GL_ZERO);
+            break;
     }
 }
 
 void renderDepthWrite(int enable)
 {
     glDepthMask(enable ? GL_TRUE : GL_FALSE);
+}
+
+void renderSetColor(uint32 color)
+{
+    glColor3ubv((GLubyte*)&color);
 }
 
 uint16 RGB5551(uint16 c)
@@ -916,7 +949,7 @@ Texture* renderCreateTexture(Tim* tim)
         ASSERT(0);
     }
 
-    if (TrackLoadHack)
+    if (HACK_LOAD_TRACK)
     {
         ASSERT(w == 32);
         ASSERT(h == 32);
@@ -933,8 +966,28 @@ Texture* renderCreateTexture(Tim* tim)
 
         glGenTextures(1, &tex->id);
         glBindTexture(GL_TEXTURE_2D, tex->id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
-        setTexFilter();
+
+        if (HACK_LOAD_SHADOW)
+        {
+            uint16* src = tempData;
+            uint8* dst = (uint8*)tempData;
+            for (i = 0; i < w * h; i++)
+            {
+                int32 alpha = ((*src++ >> 1) & 31) << 3;
+                alpha <<= 2;
+                if (alpha > 255)
+                    alpha = 255;
+                *dst++ = alpha;
+            }
+            // create alpha only texture for the shadow
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, tempData);
+        }
+        else
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
+        }
+
+        setTexFilter(HACK_LOAD_SHADOW);
 
         return (Texture*)tex;
     }

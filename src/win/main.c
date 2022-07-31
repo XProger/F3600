@@ -82,7 +82,10 @@ typedef struct JoyDevice
 
 JoyDevice joyDevice[INPUT_JOY_COUNT];
 
-int32 osJoyReady(int index) { return joyDevice[index].ready; }
+int32 osJoyReady(int index)
+{
+    return joyDevice[index].ready;
+}
 
 void osJoyVibrate(int index, int L, int R)
 {
@@ -145,7 +148,10 @@ void inputInit()
     }
 }
 
-void inputFree() { memset(joyDevice, 0, sizeof(joyDevice)); }
+void inputFree()
+{
+    memset(joyDevice, 0, sizeof(joyDevice));
+}
 
 void inputReset()
 {

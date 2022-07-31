@@ -15,6 +15,16 @@ typedef struct
 
 typedef struct
 {
+    int32 x0, y0, z0;
+    int32 x1, y1, z1;
+    int32 x2, y2, z2;
+    int32 x3, y3, z3;
+    const Texture* texture;
+    int32 intensity;
+} Shadow;
+
+typedef struct
+{
     int16 x0, y0;
     int16 x1, y1;
     int16 x2, y2;
@@ -32,6 +42,20 @@ typedef struct
     const Texture* texture;
 } Billboard;
 
+enum BlendMode
+{
+    BLEND_NONE,
+    BLEND_ADD,
+    BLEND_SUB,
+    BLEND_MUL
+};
+
+enum RenderMode
+{
+    RENDER_MODE_2D,
+    RENDER_MODE_3D
+};
+
 extern int gFrameIndex;
 extern int gLastFrameIndex;
 
@@ -44,20 +68,22 @@ void renderResize(int width, int height);
 void renderOffset(int x, int y);
 void renderClear(void);
 void renderQuad(const Quad* q);
+void renderShadow(const Shadow* s);
 void renderColorQuad(const ColorQuad* q);
 void renderBillboard(const Billboard* b);
 
 void renderPrepare(void);
 void renderFrameBegin(void);
 void renderFrameEnd(void);
-void renderSetMatrix(Skeleton* skeleton, int x, int y, int z);
+void renderSetMatrix(const MATRIX* matrix, int x, int y, int z);
+void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z);
 void renderTrack(void);
 void renderObject(const Object* object);
 void renderSky(const Object* object);
-void renderBegin3D(void);
-void renderEnd3D(void);
-void renderTransparent(int enable);
+void renderSetMode(int renderMode);
+void renderSetBlend(enum BlendMode mode);
 void renderDepthWrite(int enable);
+void renderSetColor(uint32 color);
 Texture* renderCreateTexture(Tim* tim);
 
 #endif

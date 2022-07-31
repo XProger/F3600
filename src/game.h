@@ -22,7 +22,6 @@
 #include "hud.h"
 #include "global.h"
 #include "sfx.h"
-#include "card.h"
 #include "utils.h"
 #include "race.h"
 #include "search.h"

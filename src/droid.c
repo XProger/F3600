@@ -3,7 +3,7 @@
 /**************************************************************************/
 /****             Rescue droid control update routine                  ****/
 /**************************************************************************/
-void UpdateRescueDroid(ShipData* shipIndex, Object** shipShapes, int shipNo, WeaponData* weaponIndex)
+void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 {
     ShipData* playerShip;
     TrackSection* section;
@@ -37,9 +37,9 @@ void UpdateRescueDroid(ShipData* shipIndex, Object** shipShapes, int shipNo, Wea
         target.vy = ((section->centre.vy + nextSection->centre.vy) >> 1) - 2000;
         target.vz = (section->centre.vz + nextSection->centre.vz) >> 1;
 
-        playerShip->vpivot.vx = 0;
-        playerShip->vpivot.vy = 0;
-        playerShip->vpivot.vz = 0;
+        playerShip->vel.vx = 0;
+        playerShip->vel.vy = 0;
+        playerShip->vel.vz = 0;
 
         playerShip->updateCount--;
     }
@@ -52,9 +52,9 @@ void UpdateRescueDroid(ShipData* shipIndex, Object** shipShapes, int shipNo, Wea
         target.vy += (nextSection->centre.vy - target.vy) >> 7;
         target.vz += (nextSection->centre.vz - target.vz) >> 7;
 
-        playerShip->vpivot.vx = ((target.vx - playerShip->ppivot.vx) * 60) / FR60;
-        playerShip->vpivot.vy = ((target.vy - playerShip->ppivot.vy) * 60) / FR60;
-        playerShip->vpivot.vz = ((target.vz - playerShip->ppivot.vz) * 60) / FR60;
+        playerShip->vel.vx = ((target.vx - playerShip->pos.vx) * 60) / FR60;
+        playerShip->vel.vy = ((target.vy - playerShip->pos.vy) * 60) / FR60;
+        playerShip->vel.vz = ((target.vz - playerShip->pos.vz) * 60) / FR60;
 
         targetVector.vx = nextSection->centre.vx - playerShip->nearTrkSect->centre.vx;
         targetVector.vy = nextSection->centre.vy - playerShip->nearTrkSect->centre.vy;
@@ -69,17 +69,17 @@ void UpdateRescueDroid(ShipData* shipIndex, Object** shipShapes, int shipNo, Wea
         playerShip->hdg = ang(playerShip->hdg);
     }
 
-    playerShip->vpivot.vx -= playerShip->vpivot.vx >> 4;
-    playerShip->vpivot.vy -= playerShip->vpivot.vy >> 4;
-    playerShip->vpivot.vz -= playerShip->vpivot.vz >> 4;
+    playerShip->vel.vx -= playerShip->vel.vx >> 4;
+    playerShip->vel.vy -= playerShip->vel.vy >> 4;
+    playerShip->vel.vz -= playerShip->vel.vz >> 4;
 
-    playerShip->ppivot.vx += playerShip->vpivot.vx >> 5;
-    playerShip->ppivot.vy += playerShip->vpivot.vy >> 5;
-    playerShip->ppivot.vz += playerShip->vpivot.vz >> 5;
+    playerShip->pos.vx += playerShip->vel.vx >> 5;
+    playerShip->pos.vy += playerShip->vel.vy >> 5;
+    playerShip->pos.vz += playerShip->vel.vz >> 5;
 
-    distance.vx = playerShip->ppivot.vx - playerShip->nearTrkSect->centre.vx;
-    distance.vy = playerShip->ppivot.vy - playerShip->nearTrkSect->centre.vy;
-    distance.vz = playerShip->ppivot.vz - playerShip->nearTrkSect->centre.vz;
+    distance.vx = playerShip->pos.vx - playerShip->nearTrkSect->centre.vx;
+    distance.vy = playerShip->pos.vy - playerShip->nearTrkSect->centre.vy;
+    distance.vz = playerShip->pos.vz - playerShip->nearTrkSect->centre.vz;
 
     playerShip->pitch -= playerShip->pitch >> 3;
     playerShip->roll -= playerShip->roll >> 5;
@@ -239,9 +239,9 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         rescueDroid->updateCount = 799;
     }
 
-    target.vx = shipIndex->ppivot.vx;
-    target.vy = shipIndex->ppivot.vy - 350;
-    target.vz = shipIndex->ppivot.vz;
+    target.vx = shipIndex->pos.vx;
+    target.vy = shipIndex->pos.vy - 350;
+    target.vz = shipIndex->pos.vz;
 
     rescueDroid->vhdg = 0;
     rescueDroid->hdg = shipIndex->hdg;
@@ -354,9 +354,9 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
             break;
     }
 
-    rescueDroid->pos.vx = shipIndex->ppivot.vx;
-    rescueDroid->pos.vy = shipIndex->ppivot.vy - 200;
-    rescueDroid->pos.vz = shipIndex->ppivot.vz;
+    rescueDroid->pos.vx = shipIndex->pos.vx;
+    rescueDroid->pos.vy = shipIndex->pos.vy - 200;
+    rescueDroid->pos.vz = shipIndex->pos.vz;
 
     rescueDroid->vel.vx = 0;
     rescueDroid->vel.vy = 0;

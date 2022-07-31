@@ -777,9 +777,9 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
     {
         if ((i != ownShip) && ((ownShip & RACING) == 0))
         {
-            distance.vx = (shipIndex[i].ppivot.vx + camera->camPos->relative.t[0]) >> 3;
-            distance.vy = (shipIndex[i].ppivot.vy + camera->camPos->relative.t[1]) >> 3;
-            distance.vz = (shipIndex[i].ppivot.vz + camera->camPos->relative.t[2]) >> 3;
+            distance.vx = (shipIndex[i].pos.vx + camera->camPos->relative.t[0]) >> 3;
+            distance.vy = (shipIndex[i].pos.vy + camera->camPos->relative.t[1]) >> 3;
+            distance.vz = (shipIndex[i].pos.vz + camera->camPos->relative.t[2]) >> 3;
 
             mag = GetMagnitude(&distance);
 
@@ -805,9 +805,9 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
     {
         if (ident[i] > -1)
         {
-            distance.vx = (shipIndex[ident[i]].ppivot.vx + camera->camPos->relative.t[0]) >> 3;
-            distance.vy = (shipIndex[ident[i]].ppivot.vy + camera->camPos->relative.t[1]) >> 3;
-            distance.vz = (shipIndex[ident[i]].ppivot.vz + camera->camPos->relative.t[2]) >> 3;
+            distance.vx = (shipIndex[ident[i]].pos.vx + camera->camPos->relative.t[0]) >> 3;
+            distance.vy = (shipIndex[ident[i]].pos.vy + camera->camPos->relative.t[1]) >> 3;
+            distance.vz = (shipIndex[ident[i]].pos.vz + camera->camPos->relative.t[2]) >> 3;
 
             mag = GetMagnitude(&distance);
 
@@ -839,9 +839,9 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
             voll = (voll * sampleLevel) >> 15;
             volr = (volr * sampleLevel) >> 15;
 
-            dopler.vx = (shipIndex[ident[i]].vpivot.vx >> 6) - camera->vel.vx;
-            dopler.vy = (shipIndex[ident[i]].vpivot.vy >> 6) - camera->vel.vy;
-            dopler.vz = (shipIndex[ident[i]].vpivot.vz >> 6) - camera->vel.vz;
+            dopler.vx = (shipIndex[ident[i]].vel.vx >> 6) - camera->vel.vx;
+            dopler.vy = (shipIndex[ident[i]].vel.vy >> 6) - camera->vel.vy;
+            dopler.vz = (shipIndex[ident[i]].vel.vz >> 6) - camera->vel.vz;
 
             dopler.vx += distance.vx;
             dopler.vy += distance.vy;
