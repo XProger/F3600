@@ -98,14 +98,6 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 /**************************************************************************/
 void UpdateDroidStart(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes)
 {
-#if 1
-    if (rescueDroid->updateCount == 800)
-    {
-        PlayDirectionalNote(START_SIREN, 0, -1, rescueDroid->pos);
-    }
-    else
-        AdjustDirectionalNote(START_SIREN, 0, 0, rescueDroid->pos);
-#endif
     rescueDroid->updateCount--;
 
     if (rescueDroid->updateCount < 400)
@@ -136,7 +128,6 @@ void UpdateDroidStart(RescueData* rescueDroid, ShipData* shipIndex, Object** shi
 
     if (rescueDroid->updateCount == 0)
     {
-        KillNote(START_SIREN);
         rescueDroid->updateCount = 800;
         rescueDroid->droidUpdate = UpdateDroidCircle;
         rescueDroid->pos.vx = rescueDroid->section->centre.vx;
@@ -189,7 +180,7 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     {
         rescueDroid->droidUpdate = UpdateDroidRescue;
         rescueDroid->updateCount = 800;
-        PlayNote(TRACTOR_BEAM, 0, -1);
+        PlayNote(SFX_TRACTOR_BEAM);
         CameraUpdate = UpdateCameraDroidView;
         shipIndex->attr |= REMOTE_VIEW;
         if (shipIndex->nearTrkSect->flags & Jump)
@@ -199,8 +190,6 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     }
 
     SetDroidVectors(rescueDroid, shipShapes);
-
-    AdjustDirectionalNote(START_SIREN, 0, 0, rescueDroid->pos);
 }
 
 void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes)
@@ -268,8 +257,6 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     if ((rescueDroid->vel.vz > -129) && (rescueDroid->vel.vz < 0))
         rescueDroid->vel.vz = -129;
 
-    AdjustDirectionalNote(START_SIREN, 0, 0, rescueDroid->pos);
-
     if (shipIndex->attr & IN_TOW)
     {
 
@@ -305,8 +292,7 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
 
     if ((shipIndex->attr & RESCUE) == 0)
     {
-        KillNote(START_SIREN);
-        KillNote(TRACTOR_BEAM);
+        KillNote(SFX_TRACTOR_BEAM);
         rescueDroid->droidUpdate = UpdateDroidCircle;
         rescueDroid->updateCount = 800;
         shipIndex->attr &= ~REMOTE_VIEW;

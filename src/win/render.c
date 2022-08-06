@@ -388,11 +388,60 @@ void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
     renderSetMatrix(GetSkeletonMatrix(skeleton), x, y, z);
 }
 
+void renderSection(const TrackSection* section)
+{
+    const Face* face = track->faces + section->faceStart;
+    const VECTOR* vertices = track->vertices;
+    int i;
+
+    for (i = 0; i < section->faceCount; i++, face++)
+    {
+        ASSERT(face->texture < ctrlnumLib);
+
+    #ifdef CHECK_UNUSED_TEX
+        texUsed[face->texture] = 1;
+    #endif
+
+        setTexture(gTrackTex + face->texture);
+
+        glColor3ub(face->red, face->green, face->blue);
+
+        glBegin(GL_QUADS);
+        if (face->flags & FLIP_TEXTURE)
+        {
+            glTexCoord2f(0, 1);
+            glVertex3iv((GLint*)(vertices + face->vertex[3]));
+            glTexCoord2f(1, 1);
+            glVertex3iv((GLint*)(vertices + face->vertex[2]));
+            glTexCoord2f(1, 0);
+            glVertex3iv((GLint*)(vertices + face->vertex[1]));
+            glTexCoord2f(0, 0);
+            glVertex3iv((GLint*)(vertices + face->vertex[0]));
+        }
+        else
+        {
+            glTexCoord2f(1, 1);
+            glVertex3iv((GLint*)(vertices + face->vertex[3]));
+            glTexCoord2f(0, 1);
+            glVertex3iv((GLint*)(vertices + face->vertex[2]));
+            glTexCoord2f(0, 0);
+            glVertex3iv((GLint*)(vertices + face->vertex[1]));
+            glTexCoord2f(1, 0);
+            glVertex3iv((GLint*)(vertices + face->vertex[0]));
+        }
+        glEnd();
+
+    #ifdef DEBUG_RENDER
+        dbg_trackPolys++;
+    #endif
+    }
+}
+
 void renderTrack(void)
 {
     const VECTOR* vertices = track->vertices;
     const Face* face;
-    int i, j, s, k, id;
+    int i, j, s, id;
     int cx, cy, cz;
     int dir;
     short* counts;
@@ -433,58 +482,18 @@ void renderTrack(void)
             sections = ctrlcamera.section->eastViewSection;
     }
 
-    for (k = 0; k < 3; k++)
+    section = track->sections + sections[0][0];
+    renderSection(section->prevSection.ptr);
+
+    for (i = 0; i < 3; i++)
     {
-        for (j = 0; j < counts[k]; j += 2)
+        for (j = 0; j < counts[i]; j += 2)
         {
-            section = track->sections + sections[k][j];
+            section = track->sections + sections[i][j];
 
-            for (s = 0; s < sections[k][j + 1]; s++)
+            for (s = 0; s < sections[i][j + 1]; s++)
             {
-                face = track->faces + section->faceStart;
-
-                for (i = 0; i < section->faceCount; i++, face++)
-                {
-                    ASSERT(face->texture < ctrlnumLib);
-
-                #ifdef CHECK_UNUSED_TEX
-                    texUsed[face->texture] = 1;
-                #endif
-
-                    setTexture(gTrackTex + face->texture);
-
-                    glColor3ub(face->red, face->green, face->blue);
-
-                    glBegin(GL_QUADS);
-                    if (face->flags & FLIP_TEXTURE)
-                    {
-                        glTexCoord2f(0, 1);
-                        glVertex3iv((GLint*)(vertices + face->vertex[3]));
-                        glTexCoord2f(1, 1);
-                        glVertex3iv((GLint*)(vertices + face->vertex[2]));
-                        glTexCoord2f(1, 0);
-                        glVertex3iv((GLint*)(vertices + face->vertex[1]));
-                        glTexCoord2f(0, 0);
-                        glVertex3iv((GLint*)(vertices + face->vertex[0]));
-                    }
-                    else
-                    {
-                        glTexCoord2f(1, 1);
-                        glVertex3iv((GLint*)(vertices + face->vertex[3]));
-                        glTexCoord2f(0, 1);
-                        glVertex3iv((GLint*)(vertices + face->vertex[2]));
-                        glTexCoord2f(0, 0);
-                        glVertex3iv((GLint*)(vertices + face->vertex[1]));
-                        glTexCoord2f(1, 0);
-                        glVertex3iv((GLint*)(vertices + face->vertex[0]));
-                    }
-                    glEnd();
-
-                #ifdef DEBUG_RENDER
-                    dbg_trackPolys++;
-                #endif
-                }
-
+                renderSection(section);
                 section = section->nextSection.ptr;
             }
         }
@@ -528,7 +537,7 @@ void renderObject(const Object* object)
         {
             case TypeF3:
             {
-                const F3* f = poly.f3;
+                const F3* f = poly.f3++;
 
                 setTexture(NULL);
 
@@ -540,14 +549,29 @@ void renderObject(const Object* object)
 
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
+                break;
+            }
 
-                poly.f3++;
+            case TypeLSF3:
+            {
+                const LSF3* f = poly.lsf3++;
+
+                setTexture(NULL);
+
+                glColor3f(gR * f->colour.r, gG * f->colour.g, gB * f->colour.b);
+                glBegin(GL_TRIANGLES);
+                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                glEnd();
                 break;
             }
 
             case TypeFT3:
             {
-                const FT3* f = poly.ft3;
+                const FT3* f = poly.ft3++;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
                 setTexture(t);
@@ -577,14 +601,34 @@ void renderObject(const Object* object)
                 {
                     renderSetBlend(BLEND_NONE);
                 }
+                break;
+            }
 
-                poly.ft3++;
+            case TypeLSFT3:
+            {
+                const LSFT3* f = poly.lsft3++;
+                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+
+                setTexture(t);
+
+                glColor3f(gR * f->colour.r, gG * f->colour.g, gB * f->colour.b);
+
+                glBegin(GL_TRIANGLES);
+                    glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                    glTexCoord2f(f->u1 * t->iw, f->v1 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                    glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                glEnd();
                 break;
             }
 
             case TypeF4:
             {
-                const F4* f = poly.f4;
+                const F4* f = poly.f4++;
 
                 setTexture(NULL);
 
@@ -598,14 +642,31 @@ void renderObject(const Object* object)
 
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
+                break;
+            }
 
-                poly.f4++;
+            case TypeLSF4:
+            {
+                const LSF4* f = poly.lsf4++;
+
+                setTexture(NULL);
+
+                glColor3f(gR * f->colour.r, gG * f->colour.g, gB * f->colour.b);
+                glBegin(GL_QUADS);
+                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                    glVertex3sv((GLshort*)(vertices + f->coords[3]));
+
+                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                glEnd();
                 break;
             }
 
             case TypeFT4:
             {
-                const FT4* f = poly.ft4;
+                const FT4* f = poly.ft4++;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
                 setTexture(t);
@@ -624,14 +685,36 @@ void renderObject(const Object* object)
                     glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
+                break;
+            }
 
-                poly.ft4++;
+            case TypeLSFT4:
+            {
+                const LSFT4* f = poly.lsft4++;
+                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+
+                setTexture(t);
+
+                glColor3f(gR * f->colour.r, gG * f->colour.g, gB * f->colour.b);
+                glBegin(GL_QUADS);
+                    glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                    glTexCoord2f(f->u1 * t->iw, f->v1 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                    glTexCoord2f(f->u3 * t->iw, f->v3 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[3]));
+
+                    glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                glEnd();
                 break;
             }
 
             case TypeG3:
             {
-                const G3* f = poly.g3;
+                const G3* f = poly.g3++;
 
                 setTexture(NULL);
 
@@ -645,14 +728,31 @@ void renderObject(const Object* object)
                     glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
+                break;
+            }
 
-                poly.g3++;
+            case TypeLSG3:
+            {
+                const LSG3* f = poly.lsg3++;
+
+                setTexture(NULL);
+
+                glBegin(GL_TRIANGLES);
+                    glColor3f(gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b);
+                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                    glColor3f(gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b);
+                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                    glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
+                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                glEnd();
                 break;
             }
 
             case TypeGT3:
             {
-                const GT3* f = poly.gt3;
+                const GT3* f = poly.gt3++;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
                 setTexture(t);
@@ -691,14 +791,35 @@ void renderObject(const Object* object)
                         glVertex3sv((GLshort*)(vertices + f->coords[2]));
                     glEnd();
                 }
+                break;
+            }
 
-                poly.gt3++;
+            case TypeLSGT3:
+            {
+                const LSGT3* f = poly.lsgt3++;
+                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+
+                setTexture(t);
+
+                glBegin(GL_TRIANGLES);
+                    glColor3f(gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b);
+                    glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                    glColor3f(gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b);
+                    glTexCoord2f(f->u1 * t->iw, f->v1 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                    glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
+                    glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                glEnd();
                 break;
             }
 
             case TypeG4:
             {
-                const G4* f = poly.g4;
+                const G4* f = poly.g4++;
 
                 setTexture(NULL);
 
@@ -715,14 +836,34 @@ void renderObject(const Object* object)
                     glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
+                break;
+            }
 
-                poly.g4++;
+            case TypeLSG4:
+            {
+                const LSG4* f = poly.lsg4++;
+
+                setTexture(NULL);
+
+                glBegin(GL_QUADS);
+                    glColor3f(gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b);
+                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                    glColor3f(gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b);
+                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                    glColor3f(gR * f->colour[3].r, gG * f->colour[3].g, gB * f->colour[3].b);
+                    glVertex3sv((GLshort*)(vertices + f->coords[3]));
+
+                    glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
+                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                glEnd();
                 break;
             }
 
             case TypeGT4:
             {
-                const GT4* f = poly.gt4;
+                const GT4* f = poly.gt4++;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
                 setTexture(t);
@@ -744,15 +885,40 @@ void renderObject(const Object* object)
                     glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
                     glVertex3sv((GLshort*)(vertices + f->coords[2]));
                 glEnd();
+                break;
+            }
 
-                poly.gt4++;
+            case TypeLSGT4:
+            {
+                const LSGT4* f = poly.lsgt4++;
+                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+
+                setTexture(t);
+
+                glBegin(GL_QUADS);
+                    glColor3f(gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b);
+                    glTexCoord2f(f->u0 * t->iw, f->v0 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[0]));
+
+                    glColor3f(gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b);
+                    glTexCoord2f(f->u1 * t->iw, f->v1 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[1]));
+
+                    glColor3f(gR * f->colour[3].r, gG * f->colour[3].g, gB * f->colour[3].b);
+                    glTexCoord2f(f->u3 * t->iw, f->v3 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[3]));
+
+                    glColor3f(gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b);
+                    glTexCoord2f(f->u2 * t->iw, f->v2 * t->ih);
+                    glVertex3sv((GLshort*)(vertices + f->coords[2]));
+                glEnd();
                 break;
             }
 
             case TypeTSPR:
             case TypeBSPR:
             {
-                const SPR* f = poly.spr;
+                const SPR* f = poly.spr++;
                 const SVECTOR* v = vertices + f->coord;
                 int w = f->width >> 1;
                 int h = f->height;
@@ -779,10 +945,20 @@ void renderObject(const Object* object)
                     glTexCoord2f(0, 1);
                     glVertex3s(v->vx - sx, v->vy, v->vz - sz);
                 glEnd();
-
-                poly.spr++;
                 break;
             }
+
+            case TypeInfiniteLight:
+                poly.infiniteLight++;
+                break;
+
+            case TypePointLight:
+                poly.pointLight++;
+                break;
+
+            case TypeSpotLight:
+                poly.spotLight++;
+                break;
 
             default:
                 ASSERT(0);

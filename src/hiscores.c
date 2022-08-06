@@ -227,7 +227,7 @@ void HighScore(ConfigData* gameData)
 
             if ((pad & IN_RIGHT) && (padDelay == 0))
             {
-                PlayNote(MENU_MOVE, 1, 20);
+                PlayNote(SFX_MENU_MOVE);
                 padDelay = 5;
                 charVal++;
                 if (charVal > 27) // 25
@@ -241,7 +241,7 @@ void HighScore(ConfigData* gameData)
 
             if ((pad & IN_LEFT) && (padDelay == 0))
             {
-                PlayNote(MENU_MOVE, 1, 20);
+                PlayNote(SFX_MENU_MOVE);
                 padDelay = 5;
                 charVal--;
                 if (numChars != 3)
@@ -263,7 +263,7 @@ void HighScore(ConfigData* gameData)
                 {
                     if (numChars >= 1)
                     {
-                        PlayNote(MENU_SELECT, 1, 20);
+                        PlayNote(SFX_MENU_SELECT);
                         numChars--;
                         charX -= CharSet16[(nameEntered[numChars] - 'A')].width;
                         nameEntered[numChars] = 0;
@@ -275,7 +275,7 @@ void HighScore(ConfigData* gameData)
                     currChar = charVal + 'A';
                     if ((xpad & IN_A) && (numChars != (nameLetters + 1)) && (charVal != 26) && (charVal != 27))
                     {
-                        PlayNote(MENU_SELECT, 1, 20);
+                        PlayNote(SFX_MENU_SELECT);
                         nameEntered[numChars] = currChar;
                         nameEntered[numChars + 1] = 0;
                         numChars++;
@@ -494,7 +494,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
         if ((pad & IN_RIGHT) && (hiScoreData->padDelay == 0))
         {
             ajscount = 0;
-            PlayNote(MENU_MOVE, 1, 20);
+            PlayNote(SFX_MENU_MOVE);
             hiScoreData->padDelay = 5;
             hiScoreData->charVal++;
             if (hiScoreData->charVal > 27) /* 25 */
@@ -509,7 +509,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
         if ((pad & IN_LEFT) && (hiScoreData->padDelay == 0))
         {
             ajscount = 0;
-            PlayNote(MENU_MOVE, 1, 20);
+            PlayNote(SFX_MENU_MOVE);
             hiScoreData->padDelay = 5;
             hiScoreData->charVal--;
             if (hiScoreData->numChars != 3)
@@ -532,7 +532,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
             ajscount = 0;
             if (hiScoreData->numChars >= 1)
             {
-                PlayNote(MENU_SELECT, 1, 20);
+                PlayNote(SFX_MENU_SELECT);
                 hiScoreData->numChars--;
                 hiScoreData->charX -= CharSet16[(hiScoreData->nameEntered[hiScoreData->numChars] - 'A')].width;
                 hiScoreData->nameEntered[hiScoreData->numChars] = 0;
@@ -545,7 +545,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
             if ((select) && (hiScoreData->numChars != (nameLetters + 1)) && (hiScoreData->charVal != 26) && (hiScoreData->charVal != 27))
             {
                 ajscount = 0;
-                PlayNote(MENU_SELECT, 1, 20);
+                PlayNote(SFX_MENU_SELECT);
                 hiScoreData->nameEntered[hiScoreData->numChars] = hiScoreData->currChar;
                 hiScoreData->nameEntered[hiScoreData->numChars + 1] = 0;
                 hiScoreData->numChars++;
@@ -559,7 +559,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
             else if ((select) && (hiScoreData->charVal == 27))
             {
                 ajscount = 0;
-                PlayNote(MENU_SELECT, 1, 20);
+                PlayNote(SFX_MENU_SELECT);
                 hiScoreData->nameEntered[hiScoreData->numChars] = hiScoreData->currChar;
                 hiScoreData->nameEntered[hiScoreData->numChars + 1] = 0;
                 hiScoreData->userEntry = 0;

@@ -1,7 +1,6 @@
 #include "pad.h"
 
 #define COMBAT 1
-#define CD_AUDIO 0
 
 #define INTERACTIVE 0
 #define ATTRACT 1
@@ -39,10 +38,6 @@ extern uint16 pad;
 extern uint16 opad, xpad;
 extern PadInfo pCon;
 
-extern ChanTable chanTable[24];
-extern VagTable vagTable[42];
-extern short sampleLevel;
-
 extern int trackNo;
 extern char NumTracks;
 extern char totalTracks;
@@ -59,6 +54,7 @@ extern int crossedLine;
 extern Texture* FontTextureTable[];
 extern Texture* TextureTable[];
 extern short TextureTableCount;
+extern short gBaseTextureIndex;
 extern Object* objectTable[ObjectTableMax];
 
 /* spline stuff */
@@ -66,6 +62,14 @@ extern Object* camSpline[];
 extern Object* shipSpline[];
 extern short finishedExtro;
 extern short extroLevel;
+
+extern Skeleton gCamPos;
+extern Skeleton gCamDir;
+
+extern short trackNum;
+extern int32 gMusicTracksCount;
+extern int32 gMusicTrack;
+extern int32 gMasterBalance;
 
 /* fade table references */
 

@@ -71,7 +71,7 @@ void SetFire(ShipData* playerShip, short padFire, WeaponData* weaponIndex, int s
         if ((playerShip->attr & SHIELDED) == 0)
             FireWeapon(playerShip, weaponIndex, shipNo, playerShip->weaponType);
         else
-            PlayNote(MENU_MOVE, 1, 20);
+            PlayNote(SFX_MENU_MOVE);
     }
 }
 

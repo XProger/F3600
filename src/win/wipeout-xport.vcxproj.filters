@@ -24,7 +24,6 @@
     <ClCompile Include="..\search.c" />
     <ClCompile Include="..\ships.c" />
     <ClCompile Include="..\skeleton.c" />
-    <ClCompile Include="..\sound.c" />
     <ClCompile Include="..\spline.c" />
     <ClCompile Include="..\track.c" />
     <ClCompile Include="..\ttf.c" />
@@ -35,6 +34,8 @@
     <ClCompile Include="render.c" />
     <ClCompile Include="..\menus.c" />
     <ClCompile Include="..\object.c" />
+    <ClCompile Include="..\sfx.c" />
+    <ClCompile Include="sound.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera.h" />

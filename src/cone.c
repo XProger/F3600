@@ -155,6 +155,24 @@ void InitCone(Cone* cone)
     }
 }
 
+void ResetCone(Cone* cone)
+{
+    short i, j;
+
+    for (i = 0; i < 8; i++)
+    {
+        for (j = 0; j < 3; j++)
+        {
+            if (cone->coneIndex[j][i] != -1)
+            {
+                cone->object[i]->vertices[cone->coneIndex[j][i]].vz = cone->oldVertex[j][i].vz;
+                cone->object[i]->vertices[cone->coneIndex[j][i]].vx = cone->oldVertex[j][i].vx;
+                cone->object[i]->vertices[cone->coneIndex[j][i]].vy = cone->oldVertex[j][i].vy;
+            }
+        }
+    }
+}
+
 void UpdateCone(Cone* cone)
 {
     short disp;

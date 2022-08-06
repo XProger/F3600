@@ -30,8 +30,8 @@ void InitSkeleton(Skeleton* skeleton)
     /* Set rotation matrix bottom row */
 
     skeleton->relative.m[2][0] = 0;
-    skeleton->relative.m[2][1] = 4096;
-    skeleton->relative.m[2][2] = 0;
+    skeleton->relative.m[2][1] = 0;
+    skeleton->relative.m[2][2] = 4096;
 
     /* Set flag to indicate absolute matrix needs recalculating */
 

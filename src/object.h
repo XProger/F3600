@@ -142,6 +142,120 @@ typedef struct GT4
     CVECTOR colour[4];
 } GT4;
 
+typedef struct LSF3
+{
+    short type;
+    short flag;
+    short coords[3];
+    short normal;
+    CVECTOR colour;
+} LSF3;
+
+typedef struct LSFT3
+{
+    short type;
+    short flag;
+    short coords[3];
+    short normal;
+    short texture;
+    short cba;
+    short tsb;
+    char u0;
+    char v0;
+    char u1;
+    char v1;
+    char u2;
+    char v2;
+    CVECTOR colour;
+} LSFT3;
+
+typedef struct LSF4
+{
+    short type;
+    short flag;
+    short coords[4];
+    short normal;
+    short pad1;
+    CVECTOR colour;
+} LSF4;
+
+typedef struct LSFT4
+{
+    short type;
+    short flag;
+    short coords[4];
+    short normal;
+    short texture;
+    short cba;
+    short tsb;
+    char u0;
+    char v0;
+    char u1;
+    char v1;
+    char u2;
+    char v2;
+    char u3;
+    char v3;
+    CVECTOR colour;
+} LSFT4;
+
+typedef struct LSG3
+{
+    short type;
+    short flag;
+    short coords[3];
+    short normals[3];
+    CVECTOR colour[3];
+} LSG3;
+
+typedef struct LSGT3
+{
+    short type;
+    short flag;
+    short coords[3];
+    short normals[3];
+    short texture;
+    short cba;
+    short tsb;
+    char u0;
+    char v0;
+    char u1;
+    char v1;
+    char u2;
+    char v2;
+    CVECTOR colour[3];
+} LSGT3;
+
+typedef struct LSG4
+{
+    short type;
+    short flag;
+    short coords[4];
+    short normals[4];
+    CVECTOR colour[4];
+} LSG4;
+
+typedef struct LSGT4
+{
+    short type;
+    short flag;
+    short coords[4];
+    short normals[4];
+    short texture;
+    short cba;
+    short tsb;
+    char u0;
+    char v0;
+    char u1;
+    char v1;
+    char u2;
+    char v2;
+    char u3;
+    char v3;
+    short pad1;
+    CVECTOR colour[4];
+} LSGT4;
+
 typedef struct SPR
 {
     short type;
@@ -163,6 +277,37 @@ typedef struct Spline
     CVECTOR colour;
 } Spline;
 
+typedef struct PointLight
+{
+    short type;
+    short flag;
+    VECTOR position;
+    CVECTOR colour;
+    short startFalloff;
+    short endFalloff;
+} PointLight;
+
+typedef struct SpotLight
+{
+    short type;
+    short flag;
+    VECTOR position;
+    SVECTOR direction;
+    CVECTOR colour;
+    short startFalloff;
+    short endFalloff;
+    short coneAngle;
+    short spreadAngle;
+} SpotLight;
+
+typedef struct InfiniteLight
+{
+    short type;
+    short flag;
+    SVECTOR direction;
+    CVECTOR colour;
+} InfiniteLight;
+
 /* PRIMITIVE FLAGS */
 
 #define SingleSided     0x0001
@@ -182,16 +327,20 @@ typedef struct Spline
 #define TypeTSPR    10
 #define TypeBSPR    11
 
-//#define TypeLSF3    12
-//#define TypeLSFT3   13
-//#define TypeLSF4    14
-//#define TypeLSFT4   15
-//#define TypeLSG3    16
-//#define TypeLSGT3   17
-//#define TypeLSG4    18
-//#define TypeLSGT4   19
+#define TypeLSF3    12
+#define TypeLSFT3   13
+#define TypeLSF4    14
+#define TypeLSFT4   15
+#define TypeLSG3    16
+#define TypeLSGT3   17
+#define TypeLSG4    18
+#define TypeLSGT4   19
 
 #define TypeSpline  20
+
+#define TypeInfiniteLight 21
+#define TypePointLight    22
+#define TypeSpotLight     23
 
 /* Main Object Structure
  */
@@ -242,8 +391,23 @@ typedef union Prm
     GT3* gt3;
     G4* g4;
     GT4* gt4;
+
     SPR* spr;
+
+    LSF3* lsf3;
+    LSFT3* lsft3;
+    LSF4* lsf4;
+    LSFT4* lsft4;
+    LSG3* lsg3;
+    LSGT3* lsgt3;
+    LSG4* lsg4;
+    LSGT4* lsgt4;
+
     Spline* spline;
+
+    PointLight* pointLight;
+    SpotLight* spotLight;
+    InfiniteLight* infiniteLight;
 } Prm;
 
 #define CrtClipped  0x80000000

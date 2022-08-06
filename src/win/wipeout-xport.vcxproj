@@ -43,9 +43,9 @@
     <ClCompile Include="..\radscn.c" />
     <ClCompile Include="..\scene.c" />
     <ClCompile Include="..\search.c" />
+    <ClCompile Include="..\sfx.c" />
     <ClCompile Include="..\ships.c" />
     <ClCompile Include="..\skeleton.c" />
-    <ClCompile Include="..\sound.c" />
     <ClCompile Include="..\spline.c" />
     <ClCompile Include="..\track.c" />
     <ClCompile Include="..\ttf.c" />
@@ -53,6 +53,7 @@
     <ClCompile Include="..\weapon.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="render.c" />
+    <ClCompile Include="sound.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera.h" />

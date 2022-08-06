@@ -316,6 +316,47 @@ unsigned short GetKeyNoBlock(void)
     return lastKey;
 }
 
+// sound
+int16 soundBuffer[2 * 2 * SND_SAMPLES];
+HWAVEOUT waveOut;
+WAVEHDR waveBuf[2];
+uint32 curSoundBuffer = 0;
+
+const WAVEFORMATEX waveFmt = {
+    WAVE_FORMAT_PCM,
+    SND_CHANNELS,
+    SND_OUTPUT_FREQ,
+    sizeof(soundBuffer[0]) * SND_OUTPUT_FREQ * SND_CHANNELS,
+    sizeof(soundBuffer[0]) * SND_CHANNELS,
+    sizeof(soundBuffer[0]) * 8,
+    sizeof(waveFmt)
+};
+
+void soundInit()
+{
+    if (waveOutOpen(&waveOut, WAVE_MAPPER, &waveFmt, (INT_PTR)hWnd, 0, CALLBACK_WINDOW) != MMSYSERR_NOERROR)
+        return;
+
+    for (int i = 0; i < 2; i++)
+    {
+        WAVEHDR *waveHdr = waveBuf + i;
+        waveHdr->dwBufferLength = SND_SAMPLES * SND_CHANNELS * sizeof(int16);
+        waveHdr->lpData = (LPSTR)(soundBuffer + i * SND_SAMPLES * SND_CHANNELS);
+        waveOutPrepareHeader(waveOut, waveHdr, sizeof(WAVEHDR));
+        waveOutWrite(waveOut, waveHdr, sizeof(WAVEHDR));
+    }
+}
+
+void soundFill()
+{
+    WAVEHDR *waveHdr = waveBuf + curSoundBuffer;
+    waveOutUnprepareHeader(waveOut, waveHdr, sizeof(WAVEHDR));
+    RenderSound((int16*)waveHdr->lpData, SND_SAMPLES);
+    waveOutPrepareHeader(waveOut, waveHdr, sizeof(WAVEHDR));
+    waveOutWrite(waveOut, waveHdr, sizeof(WAVEHDR));
+    curSoundBuffer ^= 1;
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
@@ -384,6 +425,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             inputInit();
             return 1;
 
+        case MM_WOM_DONE:
+            soundFill();
+            break;
+
         default:
             return DefWindowProc(hWnd, msg, wParam, lParam);
     }
@@ -391,8 +436,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-#define WND_WIDTH 640 // 1280
-#define WND_HEIGHT 480 // 960
+#define WND_WIDTH 1280
+#define WND_HEIGHT 720
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -410,6 +455,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     timerInit();
     inputInit();
+    soundInit();
 
     srand((int)gTimerStart.QuadPart);
 
@@ -441,35 +487,3 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     return 0;
 }
-
-// dummy functions
-uint16 SfxInit(uint16 wCard, uint16 wMixType, uint16 wSampRate) { return 0; }
-void SfxFree(void) { }
-
-uint16 SfxInitReverb(uint16 wDelay) { return 0; }
-void SfxReverbOn(void) { }
-void SfxReverbOff(void) { }
-void SfxSetReverbDepth(uint8 bDepth) { }
-
-uint16 SfxSetMaxEffects(uint16 wNum) { return 0; }
-
-uint16 SfxGetFxBank(char* filename) { return 0; }
-int16 SfxOpenFxBank(int16* pwFirstId) { return 0; }
-
-void SfxSetVolume(uint8 bVolume) { }
-void SfxSetCdVolume(uint8 bVolume) { }
-void SfxPlay(int16 wSampleId, uint8 bVolume, uint8 bLRPan, uint8 bFBPan, uint16 wPitch, uint8 bFlags) { }
-int16 SfxPlayID(int16 wSampleId, uint8 bVolume, uint8 bLRPan, uint8 bFBPan, uint16 wPitch, uint8 bFlags) { return 0; }
-
-void SfxStop(int16 wPlayId) { }
-void SfxStopAll(void) { }
-void SfxEffectVol(int16 wPlayId, uint8 bVolume) { }
-void SfxEffectPitch(int16 wPlayId, uint16 wPitch) { }
-void SfxEffectPan(int16 wPlayId, uint16 bPan) { }
-
-// cd
-int CdControl(unsigned char Cmd, struct CdlPos* parm1, unsigned char* parm2) { return 0; }
-void CDRestart(void) { }
-void CDPlay(short int CurrTrackNo) { }
-void CDStop(void) { }
-void CdSetVol(long newVol) { }

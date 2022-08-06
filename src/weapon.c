@@ -62,7 +62,8 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     weaponIndex[i].fireShip = shipNo;
                     if (shipNo == ownShip)
                     {
-                        PlayNote(MISS_LAUNCH, 1, 50);
+                        PlayNote(SFX_MISS_LAUNCH);
+                        SetPitch(SFX_MISS_LAUNCH, 0x1000);
                     }
                     weaponIndex[i].type = ROCKET;
                     playerShip->weaponType = NO_WEAPON;
@@ -75,7 +76,8 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     weaponIndex[i].fireShip = shipNo;
                     if (shipNo == ownShip)
                     {
-                        PlayNote(MISS_LAUNCH, 1, 50);
+                        PlayNote(SFX_MISS_LAUNCH);
+                        SetPitch(SFX_MISS_LAUNCH, 0x1000);
                     }
                     weaponIndex[i].type = MISSILE;
                     playerShip->weaponType = NO_WEAPON;
@@ -120,7 +122,7 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     playerShip->weaponType = NO_WEAPON;
                     if (shipNo == ownShip)
                     {
-                        PlayNote(ELECTROBOLT, 1, 50);
+                        PlayNote(SFX_ELECTROBOLT);
                     }
                     return;
 
@@ -133,7 +135,7 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     playerShip->weaponType = NO_WEAPON;
                     if (shipNo == ownShip)
                     {
-                        PlayNote(ELECTROBOLT, 1, 50);
+                        PlayNote(SFX_ELECTROBOLT);
                     }
                     return;
 
@@ -156,11 +158,8 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
 
                     if (shipNo == ownShip)
                     {
-                        PlayNote(TURBO_SOUND, 1, 100);
-                        /*TODO audio*/
-                        // chanTable[vagTable[TURBO_SOUND].channelID].s_attr.pitch = 0x0400;
-                        // chanTable[vagTable[TURBO_SOUND].channelID].s_attr.volume.left = 0x3fff;
-                        // chanTable[vagTable[TURBO_SOUND].channelID].s_attr.volume.right = 0x3fff;
+                        PlayNote(SFX_MISS_LAUNCH);
+                        SetPitch(SFX_MISS_LAUNCH, 0x0400);
                     }
                     return;
             }
@@ -444,14 +443,14 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
             if (i != ownShip)
             {
-                PlayDirectionalNote(EXPLOSION_1, 0, 40, weapon->pos);
+                PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
             }
             else
             {
-                PlayNote(EXPLOSION_1, 0, 40);
+                PlayNote(SFX_EXPLOSION_1);
                 /*TODO audio*/
-                // chanTable[vagTable[EXPLOSION_1].channelID].s_attr.volume.left = 0x3fff;
-                // chanTable[vagTable[EXPLOSION_1].channelID].s_attr.volume.right = 0x3fff;
+                // chanTable[vagTable[SFX_EXPLOSION_1].channelID].s_attr.volume.left = 0x3fff;
+                // chanTable[vagTable[SFX_EXPLOSION_1].channelID].s_attr.volume.right = 0x3fff;
             }
             return;
         }
@@ -474,7 +473,7 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
                 weapon->count = TRACK_EXPLODE;
                 weaponShapes[weapon->currentWeapon].used = 0;
                 weaponIndex[weapon->currentWeapon].availible = 0;
-                PlayDirectionalNote(EXPLOSION_2, 0, 40, weapon->pos);
+                PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
                 return;
             }
             facePtr++;
@@ -618,7 +617,7 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
             weaponShapes[weapon->currentWeapon].used = 0;
             weaponIndex[weapon->currentWeapon].availible = 0;
 
-            PlayDirectionalNote(EXPLOSION_1, 0, 40, weapon->pos);
+            PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
             return;
         }
     }
@@ -637,7 +636,7 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
             weapon->count = TRACK_EXPLODE;
             weaponShapes[weapon->currentWeapon].used = 0;
             weaponIndex[weapon->currentWeapon].availible = 0;
-            PlayDirectionalNote(EXPLOSION_2, 0, 40, weapon->pos);
+            PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
             return;
         }
         facePtr++;
@@ -755,10 +754,6 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
 
     weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
-#if 0
-
-   renderObject( weaponShapes[weapon->currentWeapon].shapePtr );
-#endif
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -796,7 +791,7 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
             weapon->count = SHIP_EXPLODE;
             weaponShapes[weapon->currentWeapon].used = 0;
             weaponIndex[weapon->currentWeapon].availible = 0;
-            PlayDirectionalNote(EXPLOSION_1, 0, 40, weapon->pos);
+            PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
             return;
         }
     }
@@ -956,10 +951,6 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->hdg, weapon->pitch, 0);
 
     weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
-#if 0
-
-      renderObject( weaponShapes[weapon->currentWeapon].shapePtr );
-#endif
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -1007,7 +998,7 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
             weapon->count = TRACK_EXPLODE;
             weaponShapes[weapon->currentWeapon].used = 0;
             weaponIndex[weapon->currentWeapon].availible = 0;
-            PlayDirectionalNote(EXPLOSION_2, 0, 40, weapon->pos);
+            PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
             return;
         }
         facePtr++;
@@ -1238,10 +1229,6 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->hdg, weapon->pitch, 0);
 
     weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
-#if 0
-
-      renderObject( weaponShapes[weapon->currentWeapon].shapePtr );
-#endif
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -1297,7 +1284,7 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             weapon->count = TRACK_EXPLODE;
             weaponShapes[weapon->currentWeapon].used = 0;
             weaponIndex[weapon->currentWeapon].availible = 0;
-            PlayDirectionalNote(EXPLOSION_2, 0, 40, weapon->pos);
+            PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
             return;
         }
         facePtr++;
@@ -1325,7 +1312,7 @@ void InitMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon
                 weapon->hdg = 0;
                 if (weapon->fireShip == ownShip)
                 {
-                    PlayNote(MINE_DROP, 0, 10);
+                    PlayNote(SFX_MINE_DROP);
                 }
                 weapon->updateWeapon = UpdateMine;
                 weapon->count = MINE_DURATION;
@@ -1360,9 +1347,8 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
             if (weapon->fireShip == ownShip)
             {
-                PlayNote(SHIELDS, 0, -1);
-                /*TODO audio*/
-                // chanTable[vagTable[SHIELDS].channelID].s_attr.pitch = 0x0800;
+                PlayNote(SFX_SHIELDS);
+                SetPitch(SFX_SHIELDS, 0x0800);
             }
             weapon->updateWeapon = UpdateShield;
             weapon->availible = 1; // AJY
@@ -1403,7 +1389,7 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
         if (weapon->fireShip == ownShip)
         {
-            KillNote(SHIELDS);
+            KillNote(SFX_SHIELDS);
         }
 
         shipIndex[weapon->fireShip].attr &= ~SHIELDED;
@@ -1514,7 +1500,7 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
                         weaponGrid[i].count = -30;
                         if (j == ownShip)
                         {
-                            PlayNote(POWER_UP, 0, 40);
+                            PlayNote(SFX_POWER_UP);
                             shipIndex[j].weaponType = GetNewWeapon();
                         }
                         else
@@ -1532,7 +1518,7 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
                         weaponGrid[i].count = -30;
                         if (j == ownShip)
                         {
-                            PlayNote(POWER_UP, 0, 40);
+                            PlayNote(SFX_POWER_UP);
                             shipIndex[j].weaponType = GetNewWeapon();
                         }
                         else
@@ -1638,7 +1624,7 @@ void Weapon2Mine(WeaponData* weapon, WeaponData* weaponIndex, WeaponShape* weapo
                 weaponShapes[weaponIndex->currentWeapon].used = 0;
                 weapon->count = TRACK_EXPLODE;
                 weaponShapes[weapon->currentWeapon].used = 0;
-                PlayDirectionalNote(EXPLOSION_2, 0, 40, weapon->pos);
+                PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
                 return;
             }
         }

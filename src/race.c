@@ -9,7 +9,6 @@
 
 extern long fr;
 extern ChampionShip winTable[];
-extern short starttrack, endtrack, CurrTrkNo;
 
 extern short startIceText;
 extern short startFireText;
@@ -32,9 +31,6 @@ TrackSection* ctrlnextSection;
 TrackCamera ctrlcamera;
 Skeleton* ctrlcamDir;
 
-Skeleton gCamPos;
-Skeleton gCamDir;
-
 Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 ShipData ctrlshipIndex[NO_OF_SHIPS];
 RescueData ctrlrescueDroid;
@@ -50,8 +46,6 @@ short ctrlsky;
 int ctrlchoice;
 TrackSection* ctrlsection;
 Face* ctrlfacePtr;
-int ctrlcdTrack;
-int ctrlnoCdTracks;
 Object* ctrllostad[20]; /* It wouldn`t suprise me ! */
 int ctrlstadCount;
 short ctrlsectCount;
@@ -107,12 +101,9 @@ long ctrlNeedInGameReset;
 long ctrlNeedInSingleGameConfirm;
 long ctrlNeedInGameConfirm;
 long ctrlNeedTargetIcon;
-long ctrlCDPaused;
 long ctrlfirsttime;
 
 long ctrl_says_quit;
-long CDRestartNeeded;
-long CDloopCheck;
 unsigned long ctrlFramesCount;
 
 extern short trackNum; // SJR
@@ -129,12 +120,76 @@ const char* const PILOT_NAMES[] =
     "paul"
 };
 
+int InitCrowdSound(Object** prm, short prmCount, Object** lostad, int stadCount)
+{
+    int i, j;
+    Object* obj;
+
+    for (i = 0; i < prmCount; i++)
+    {
+        obj = prm[i];
+        while (obj)
+        {
+            if (!strncmp(obj->name, "lost", 4))
+            {
+                lostad[stadCount] = obj;
+                stadCount++;
+            }
+
+            obj = obj->next;
+        }
+    }
+    return (stadCount);
+}
+
+void AdjustCrowdSound(Object** lostad, int stadCount)
+{
+    int i;
+    VECTOR distance;
+    int mag;
+    int chosen;
+    int smallestMag;
+    VECTOR pos;
+
+    smallestMag = 10000;
+    chosen = -1;
+
+    /*TODO audio crowd lerp between two closest*/
+
+    for (i = 0; i < stadCount; i++)
+    {
+        distance.vx = (lostad[i]->skeleton->relative.t[0] + cameraPtr->camPos->relative.t[0]) >> 3;
+        distance.vy = (lostad[i]->skeleton->relative.t[1] + cameraPtr->camPos->relative.t[1]) >> 3;
+        distance.vz = (lostad[i]->skeleton->relative.t[2] + cameraPtr->camPos->relative.t[2]) >> 3;
+
+        mag = GetMagnitude(&distance);
+
+        if (mag < smallestMag)
+        {
+            smallestMag = mag;
+            chosen = i;
+        }
+    }
+
+    if (smallestMag < 8192)
+    {
+        pos.vx = lostad[chosen]->skeleton->relative.t[0];
+        pos.vy = lostad[chosen]->skeleton->relative.t[1];
+        pos.vz = lostad[chosen]->skeleton->relative.t[2];
+
+        AdjustDirectionalNote(SFX_CROWD, &pos);
+    }
+    else
+    {
+        SetVolume(SFX_CROWD, 0, 0);
+    }
+}
+
 void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex, WeaponShape* weaponShapes, RescueData* rescueDroid, Object** shipShapes)
 {
     int i;
 
     KillNotes();
-    StopNotes();
     initShipData(track->sections, shipIndex, gameData);
     InitRescueDroid(rescueDroid, shipShapes, &(shipIndex[ownShip]));
     cameraPtr->section = shipIndex[ownShip].nearTrkSect;
@@ -151,28 +206,11 @@ void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex,
 
     ResetEffects();
 
-    /*TODO audio*/
-    // r_attr.depth.left = 2000;
-    // r_attr.depth.right = 2000;
-
     CameraUpdate = UpdateCameraRaceStart;
-    CDRestartNeeded = 1;
 }
 
 void QuitGame()
 {
-    /*TODO audio
-    int i;
-    for(i = 0; i < 10; i++)
-    {
-       c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   // Master volume (left)
-       c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   // Master volume (right)
-       UpdateNotes(NOT_PAUSED);
-    }
-
-    r_attr.depth.left = 2000;
-    r_attr.depth.right = 2000;
-    */
     KillNotes();
 }
 
@@ -205,14 +243,11 @@ void raceInit(ConfigData* gameData)
         trackNo = gameData->actTrackNum;
     }
 
-    /*TODO audio*/
-    // CdControlB(CdlStop, 0, 0);
-
     showLoadingScreen();
 
     trackNum = gameData->trackNum; // for restoring - SJR
 
-    TextureTableCount = 0;
+    TextureTableCount = gBaseTextureIndex;
 
     attractDelay = 0;
 
@@ -224,15 +259,11 @@ void raceInit(ConfigData* gameData)
 
     gameData->newLapRecord = 0;
 
-    StopNotes();
-
     ctrl_says_quit = 0;
     ctrlprmCount = 0;
     ctrlnumLib = 0;
-    ctrlCDPaused = 0;
     ctrlnoWeaponGrids = 0;
     ctrlchoice = -1;
-    ctrlcdTrack = 1;
     ctrlcheck = 1;
     ctrljcheck = 1;
     ctrlbuttonPressed = 0;
@@ -257,15 +288,12 @@ void raceInit(ConfigData* gameData)
     /***                 Initialise Camera                  ***/
     /**********************************************************/
 
+    InitSkeleton(&gCamPos);
+    InitSkeleton(&gCamDir);
+
     ctrlcamera.camPos = &gCamPos;
     ctrlcamDir = &gCamDir;
 
-    InitSkeleton(ctrlcamera.camPos);
-    SetSkeletonPosition(ctrlcamera.camPos, 0, 0, 0);
-    SetSkeletonDirection(ctrlcamera.camPos, 0, 0, 0);
-    InitSkeleton(ctrlcamDir);
-    SetSkeletonPosition(ctrlcamDir, 0, 0, 0);
-    SetSkeletonDirection(ctrlcamDir, 0, 0, 0);
     ctrlcamera.camPos->super = ctrlcamDir;
 
     cameraPtr = &ctrlcamera;
@@ -385,13 +413,12 @@ void raceInit(ConfigData* gameData)
 
     InitSpeedo();
 
-    loadShipData(track->sections, ctrlshipIndex, ctrlshipShapes, ctrlcamera.camPos);
     ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
 
     InitStartBoom(ctrlprm, ctrlprmCount);
     ResetStartBoom();
 
-    // ctrlstadCount = InitCrowdSound(ctrlprm, ctrlprmCount, ctrllostad, ctrlstadCount);
+    ctrlstadCount = InitCrowdSound(ctrlprm, ctrlprmCount, ctrllostad, ctrlstadCount);
 
     if ((trackNo == 8) || (trackNo == 11))
     {
@@ -428,14 +455,14 @@ void raceInit(ConfigData* gameData)
     InitHiScoreData(&ctrlhiScoreData);
 
     gameData->Lives = 3;
-    gameData->Position = 8;
+    gameData->Position = NO_OF_SHIPS;
     gameData->EndOfGame = 0;
     gameData->gameOverCount = 0;
 
     ctrlhiScoreData.confirm = 2;
     ctrlhiScoreData.lConfirm = 0;
 
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < NO_OF_SHIPS; i++)
     {
         ctrlcone.object[i] = ctrlshipShapes[ctrlshipIndex[i].highResTableIndex];
         ctrlcone.ship[i] = &ctrlshipIndex[i];
@@ -483,13 +510,6 @@ void raceInit(ConfigData* gameData)
 
     UpdateEffects();
 
-    /*TODO audio*/
-    // CdControlB(CdlStop, 0, 0);
-
-    UpdateNotes(NOT_PAUSED);
-
-    CDRestartNeeded = 0;
-    CDloopCheck = 0;
     raceCtrl(gameData);
     raceCtrl(gameData);
     raceCtrl(gameData);
@@ -521,8 +541,6 @@ void raceCtrl(ConfigData* gameData)
 
     if (ctrlfirsttime)
     {
-        PlayNote(CROWD, 0, -1);
-        PlayNote(CROWD2, 0, -1);
         ctrlfirsttime = 0;
     }
 
@@ -548,30 +566,36 @@ void raceCtrl(ConfigData* gameData)
         {
             if (gameData->Lives)
             {
-                ctrlCDPaused = 1; // If we're racing, and start key hit pause CD
-                PlayNote(MENU_SELECT, 0, 20); // go boing
+                PlayNote(SFX_MENU_SELECT); // go boing
                 ctrlchoice = 0; // set ctrlchoice to the first on the list
                 xpad = 0; // clear the status of the pad so that the next bit does not select
+
+                SetVolume(SFX_REMOTE_ENG, 0, 0);
+                SetVolume(SFX_ENG_RUMBLE, 0, 0);
+                SetVolume(SFX_ENG_AIR_INTAKE, 0, 0);
+                SetVolume(SFX_ENG_THRUST, 0, 0);
+                SetVolume(SFX_TURBULENCE, 0, 0);
+                SetVolume(SFX_CROWD, 0, 0);
+                SetVolume(SFX_SHIELDS, 0, 0);
             }
         }
     }
 
     if (ctrlchoice > -1) // we are in pause state
     {
-        UpdateNotes(PAUSED); // service the held notes
         if ((GetMenuKey(M_UP)) && ctrlshowMenu) // hit up key
         {
             ctrlchoice--;
             if (ctrlchoice < 0)
                 ctrlchoice = 3; // hard code no of entries to 3!
-            PlayNote(MENU_MOVE, 0, 20); // Play a boing
+            PlayNote(SFX_MENU_MOVE); // Play a boing
         }
         else if ((GetMenuKey(M_DOWN)) && ctrlshowMenu)
         { // ditto but down
             ctrlchoice++;
             if (ctrlchoice > 3)
                 ctrlchoice = 0;
-            PlayNote(MENU_MOVE, 0, 20);
+            PlayNote(SFX_MENU_MOVE);
         }
 
         if (ctrlshowMenu)
@@ -579,28 +603,17 @@ void raceCtrl(ConfigData* gameData)
             ctrlNeedInGameReset = 1;
             ctrlNeedDeSelectScreen = 1;
             ctrllConfirm = 0;
-            // Keyboard stuff
+
             if (ctrlchoice == 3)
             {
                 if (GetMenuKey(M_LEFT))
                 {
-                    PlayNote(MENU_MOVE, 1, 2);
-                    gameData->cdTrack--;
-                    if (gameData->cdTrack < 1)
-                        gameData->cdTrack = endtrack;
-                    CDRestartNeeded = 1;
-                    ctrlcdPause = 1;
+                    GoPrevMusic();
                 }
                 else if (GetMenuKey(M_RIGHT))
                 {
-                    PlayNote(MENU_MOVE, 1, 2);
-                    gameData->cdTrack++;
-                    if (gameData->cdTrack > endtrack)
-                        gameData->cdTrack = 1;
-                    CDRestartNeeded = 1;
-                    ctrlcdPause = 1;
+                    GoNextMusic();
                 }
-                CurrTrkNo = gameData->cdTrack;
             }
         }
         else
@@ -609,9 +622,9 @@ void raceCtrl(ConfigData* gameData)
             if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
             {
                 ctrllConfirm ^= 1;
-                PlayNote(MENU_MOVE, 1, 20);
+                PlayNote(SFX_MENU_MOVE);
             }
-            //          if ((GetMenuKey(M_SELECT)) || (GetMenuKey(M_START)))
+
             if (GetMenuKey(M_SELECT))
                 ctrlconfirm = ctrllConfirm;
 
@@ -654,9 +667,6 @@ void raceCtrl(ConfigData* gameData)
                         }
                     }
                     Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
-
-                    PlayNote(CROWD, 0, -1);
-                    PlayNote(CROWD2, 0, -1);
                     break;
 
                 case 2:
@@ -671,14 +681,13 @@ void raceCtrl(ConfigData* gameData)
 
         if (GetMenuKey(M_SELECT) && (ctrlshowMenu))
         {
-            PlayNote(MENU_SELECT, 0, 20);
+            PlayNote(SFX_MENU_SELECT);
             if (ctrlchoice == 1 || ctrlchoice == 2)
             {
                 ctrlshowMenu = 0;
             }
             else if (ctrlchoice == 0)
             {
-                ctrlCDPaused = 2;
                 ctrlchoiceData = 0;
                 ctrlchoice = -1;
             }
@@ -714,8 +723,6 @@ void raceCtrl(ConfigData* gameData)
 
     if ((ctrlchoice == -1) && (ctrlshowGameOver == 0))
     {
-        UpdateNotes(NOT_PAUSED);
-
         if (ctrlmode != ATTRACT)
         {
             if (pad == 0)
@@ -753,10 +760,10 @@ void raceCtrl(ConfigData* gameData)
 
         CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
 
-        // AdjustEngineSound(&(ctrlshipIndex[ownShip]), &ctrlcamera);
-
-        // AdjustCrowdSound(ctrllostad, ctrlstadCount);
-        // AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes, &ctrlcamera );
+        SetVolume(SFX_SHIELDS, 0x8000, 0x8000);
+        AdjustEngineSound(&(ctrlshipIndex[ownShip]), &ctrlcamera);
+        AdjustCrowdSound(ctrllostad, ctrlstadCount);
+        AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes, &ctrlcamera );
 
         UpdateEffects();
 
@@ -847,7 +854,7 @@ void raceCtrl(ConfigData* gameData)
                     if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
                     {
                         ctrlhiScoreData.lConfirm ^= 1;
-                        PlayNote(MENU_MOVE, 1, 20);
+                        PlayNote(SFX_MENU_MOVE);
                     }
                     ajscount++;
                     if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
@@ -876,13 +883,10 @@ void raceCtrl(ConfigData* gameData)
                         attractDelay = 0;
                         ctrlhiScoreData.confirm = 2;
                         ctrlhiScoreData.lConfirm = 0;
-                        CDRestartNeeded = 1;
                         ctrlNeedDeSelectScreen = 0;
                         InitHiScoreData(&ctrlhiScoreData);
 
                         Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
-                        PlayNote(CROWD, 0, -1);
-                        PlayNote(CROWD2, 0, -1);
                     }
                 }
             }
@@ -935,7 +939,7 @@ void raceCtrl(ConfigData* gameData)
                         if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
                         {
                             ctrlhiScoreData.lConfirm ^= 1;
-                            PlayNote(MENU_MOVE, 1, 20);
+                            PlayNote(SFX_MENU_MOVE);
                         }
                         ajscount++;
                         if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
@@ -964,11 +968,8 @@ void raceCtrl(ConfigData* gameData)
                             attractDelay = 0;
                             ctrlhiScoreData.confirm = 2;
                             ctrlhiScoreData.lConfirm = 0;
-                            CDRestartNeeded = 1;
                             InitHiScoreData(&ctrlhiScoreData);
                             Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
-                            PlayNote(CROWD, 0, -1);
-                            PlayNote(CROWD2, 0, -1);
                         }
                     }
                 }
@@ -1212,7 +1213,7 @@ void raceCtrl(ConfigData* gameData)
                                         if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
                                         {
                                             ctrlhiScoreData.lConfirm ^= 1;
-                                            PlayNote(MENU_MOVE, 1, 20);
+                                            PlayNote(SFX_MENU_MOVE);
                                         }
                                         ajscount++;
                                         if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
@@ -1242,8 +1243,6 @@ void raceCtrl(ConfigData* gameData)
                                             ctrlhiScoreData.confirm = 2;
                                             ctrlhiScoreData.lConfirm = 0;
                                             Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
-                                            PlayNote(CROWD, 0, -1);
-                                            PlayNote(CROWD2, 0, -1);
                                         }
                                     }
                                 }
@@ -1311,43 +1310,13 @@ void raceLoop(ConfigData* gameData)
 
     if (ctrl_says_quit)
     {
-#if CD_AUDIO
-        /*TODO audio*/
-        // CdControlB(CdlStop, 0, 0);
-#endif
         ctrlmode = INTERACTIVE;
 
-        TextureTableCount = 0;
-        ctrlGameLoop = GAME_LOOP_TITLE_INIT;//GAME_LOOP_MENU_INIT;
+        ResetCone(&ctrlcone);
+        TextureTableCount = gBaseTextureIndex;
+        ctrlGameLoop = GAME_LOOP_MENU_INIT;
         return;
     }
-
-    if (CDRestartNeeded)
-    {
-        CDRestart();
-        CDRestartNeeded = 0;
-        ctrlCDPaused = 0;
-    }
-
-    // if (CDloopCheck++ > 20)
-    //    {
-    //    CDLoopCheck();
-    //    CDloopCheck = 0;
-    //    }
-#if CD_AUDIO
-    switch (ctrlCDPaused)
-    {
-        case 0:
-            break;
-        case 1:
-            CdPause();
-            break;
-        case 2:
-            CdPlay();
-            ctrlCDPaused = 0;
-            break;
-    }
-#endif
 
     renderFrameBegin();
     renderClear();

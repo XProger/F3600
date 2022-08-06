@@ -11,6 +11,10 @@ extern long ctrlfirsttime;
 Texture* titleScreen;
 int gTimeout;
 
+extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
+extern ShipData ctrlshipIndex[NO_OF_SHIPS];
+extern const TrackCamera ctrlcamera;
+
 void titleInit()
 {
     titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim");
@@ -30,15 +34,11 @@ void titleLoop()
     renderSetMode(RENDER_MODE_2D);
 
     AddGlyph(0, 0, 320, 240, 0, 0, titleScreen);
-    CentreText("PRESS START", text_data(0, 200, 8), WhiteText);
+    CentreText("PRESS ANY KEY", text_data(0, 200, 8), WhiteText);
 
-    if (GetMenuKey(M_SELECT))
+    if (pad)
     {
-        PlayNote(MENU_SELECT, 1, 20);
-        for (i = 0; i < 10; i++)
-        {
-            UpdateNotes(NOT_PAUSED);
-        }
+        PlayNote(SFX_MENU_SELECT);
         ctrlmode = INTERACTIVE;
         ctrlGameLoop = GAME_LOOP_MENU_INIT;
     }
@@ -56,7 +56,12 @@ void gameInit(void)
 {
     InitGameDisplay();
 
-    InitSpuSound();
+    SfxInit();
+    InitSound();
+
+    gMusicTracksCount = 11;
+    gMusicTrack = 0; // random
+    gMasterBalance = 160; // ~60%
 
     SetCharTextures(8);
     SetCharTextures(12);
@@ -84,8 +89,6 @@ void gameInit(void)
     ctrlConfigData.showBonusTrack = 1;
 #endif
 
-    SfxSetVolume((char)((0x3fff - (75 * ctrlConfigData.currSliderPos)) >> 6));
-
     InitPadSettings();
     InitChampionship();
 
@@ -100,6 +103,10 @@ void gameInit(void)
     trackNum = 16; // SJR
 
     ctrlGameLoop = GAME_LOOP_TITLE_INIT;
+
+    loadShipData(ctrlshipIndex, ctrlshipShapes, &gCamPos);
+
+    gBaseTextureIndex = TextureTableCount;
 }
 
 void gameCtrl(void)
@@ -127,6 +134,18 @@ void gameCtrl(void)
         case GAME_LOOP_RACE:
             raceLoop(&ctrlConfigData);
             break;
+    }
+
+    if (!MusicIsPlaying())
+    {
+        if (gMusicTrack == 0) // random
+        {
+            MusicPlay(1 + (randy() % gMusicTracksCount));
+        }
+        else
+        {
+            MusicPlay(gMusicTrack);
+        }
     }
 }
 

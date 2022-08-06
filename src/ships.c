@@ -119,7 +119,7 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
     renderSetColor(0xFFFFFFFF);
 }
 
-void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
+void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
 {
     int shipTextures, droidTextures, colTextures;
     Object* obj;
@@ -139,9 +139,7 @@ void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShape
     droidTextures = TextureTableCount;
     LoadCompressedTextureSequence("wipeout\\common\\rescu.cmp");
 
-    shipShapes[0] = LoadPrm("wipeout\\common\\allsh.prm", shipTextures);
-
-    obj = shipShapes[0];
+    obj = LoadPrm("wipeout\\common\\allsh.prm", shipTextures);
 
     while (obj)
     {

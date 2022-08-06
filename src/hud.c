@@ -16,6 +16,9 @@ const uint16 Text8[] = { 13, 13, 10, 13, 13, 9, 13, 10, 4, 9, 10, 10, 16, 10, 13
 extern HiScores scoreTable[];
 extern ChampionShip winTable[];
 
+extern int short startLinePos[];
+extern const char gTrackList[15];
+
 Texture* speedoTex;
 
 Texture* gWeaponIconTextures[NO_OF_WEAPON_TYPES];
@@ -528,14 +531,11 @@ TEXT_DATA* text_data(int start_pos_x, int start_pos_y, int size)
     return (&text);
 }
 
-extern int short startLinePos[];
-
 void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 {
     int i, j;
     int position = NO_OF_SHIPS;
-    int ownSecNo, serialSecNo;
-    char trackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
+    int ownSecNo;
     int secNo;
     SortTable sortTable[NO_OF_SHIPS];
     char tempShip;
@@ -759,7 +759,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
                             gameData->trackNum++;
                             gameData->trackInc = 1;
                         }
-                        gameData->actTrackNum = trackList[(gameData->trackNum - 1)];
+                        gameData->actTrackNum = gTrackList[(gameData->trackNum - 1)];
                         gameData->venomComplete = 1;
                         gameData->gotoMenu = 1;
                     }
@@ -791,7 +791,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
                 {
                     gameData->trackInc = 1;
                     gameData->trackNum++;
-                    gameData->actTrackNum = trackList[(gameData->trackNum - 1)];
+                    gameData->actTrackNum = gTrackList[(gameData->trackNum - 1)];
                 }
             }
         }

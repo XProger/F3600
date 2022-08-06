@@ -123,7 +123,7 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
                     soundPos.vx = (shipIndex[i].pos.vx + shipIndex[j].pos.vx) >> 1;
                     soundPos.vy = (shipIndex[i].pos.vy + shipIndex[j].pos.vy) >> 1;
                     soundPos.vz = (shipIndex[i].pos.vz + shipIndex[j].pos.vz) >> 1;
-                    PlayDirectionalNote(SHIP_2_SHIP, 0, 30, soundPos);
+                    PlayDirectionalNote(SFX_SHIP_2_SHIP, &soundPos);
 
                     if (j == ownShip)
                     {
@@ -654,7 +654,7 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
         wingPos.vz = playerShip->pos.vz - (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
     }
 
-    PlayDirectionalNote(SHIP_2_TRACK, 1, 20, wingPos);
+    PlayDirectionalNote(SFX_SHIP_2_TRACK, &wingPos);
 
     /***** Magnitude returns approx between 0 & 1000    *****/
     /***** scale this and shift to a figure around zero *****/
@@ -663,10 +663,10 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     magnitude = magnitude - 500;
     magnitude = magnitude << 2;
     /*TODO audio
-    SetVolume(SHIP_2_TRACK,
-       chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
-       chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
-       */
+    SetVolume(SFX_SHIP_2_TRACK,
+       chanTable[vagTable[SFX_SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
+       chanTable[vagTable[SFX_SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
+    */
 }
 
 void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha)
@@ -706,7 +706,7 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     nosePos.vy = playerShip->pos.vy + (playerShip->unitVecNose.vy >> 3);
     nosePos.vz = playerShip->pos.vz + (playerShip->unitVecNose.vz >> 3);
 
-    PlayDirectionalNote(SHIP_2_TRACK, 1, 20, nosePos);
+    PlayDirectionalNote(SFX_SHIP_2_TRACK, &nosePos);
 
     /***** Magnitude returns approx between 0 & 1000    *****/
     /***** scale this and shift to a figure around zero *****/
@@ -715,10 +715,11 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
     magnitude = magnitude - 500;
     magnitude = magnitude << 2;
-    /*TODO audio*/
-    // SetVolume(SHIP_2_TRACK,
-    //   chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
-    //   chanTable[vagTable[SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
+    /*TODO audio
+    SetVolume(SFX_SHIP_2_TRACK,
+       chanTable[vagTable[SFX_SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
+       chanTable[vagTable[SFX_SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
+    */
 }
 
 void Reflection(VECTOR* incidence, const SVector* normal)

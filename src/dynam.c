@@ -144,7 +144,7 @@ void ShipTrkReaction(ShipData* playerShip)
         /******************************************************************/
         if (alpha <= 0)
         {
-            PlayDirectionalNote(SHIP_2_TRACK, 1, 20, playerShip->pos);
+            PlayDirectionalNote(SFX_SHIP_2_TRACK, &playerShip->pos);
 
             Reflection(&(playerShip->vel), &facePtr->normal);
 

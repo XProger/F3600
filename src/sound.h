@@ -4,69 +4,53 @@
 #define PAUSED 0
 #define PAUSE_LEAVE 8
 
-/****** CONSTANT VOICE CHANNELS ******/
 
-#define ENG_1  0
-#define ENG_2  1
-#define ENG_3  2
-#define ENG_4  3
-#define ENG_5  4
-#define BRAKE  5
-#define ENG_5a 6
+#define SND_CHANNELS    2
+#define SND_SAMPLES     (2352 * 2)
+#define SND_OUTPUT_FREQ 44100
 
 /****** PROGRAME IDENTIFIERS ******/
 
-#define SHIP_2_SHIP     0
-#define ELECTROBOLT     1
-#define ENG_AIR_INTAKE  2
-#define ENG_RUMBLE      3
-#define ENG_THRUST      4
-#define EXPLOSION_1     5
-#define EXPLOSION_2     6
-#define SHIP_2_TRACK    7
-#define MENU_MOVE       8
-#define MENU_SELECT     9
-#define MENU_2_MENU     10
-#define MINE_DROP       11
-#define MISS_LAUNCH     12
-#define REMOTE_ENG      13
-#define POWER_UP        14
-#define SHIELDS         15
-#define START_SIREN     16
-#define TRACTOR_BEAM    17
-#define TURBULENCE      18
-#define CROWD           19
-#define SP_MINES        20
-#define SP_MISSILE      21
-#define SP_ROCKET       22
-#define SP_REVCON       23
-#define SP_SHOCKWAVE    24
-#define SP_SPECIAL      25
-#define SP_3            26
-#define SP_2            27
-#define SP_1            28
-#define SP_GO           29
-#define REMOTE          13  /* 31 */ /* REMOTE_ENG */
-#define REMOTE2         13  /* 31 */ /* REMOTE_ENG */
-#define REMOTE3         13  /* 33 */ /* REMOTE_ENG */
-#define TURBO_SOUND     12  /* 34 */ /* MISS_LAUNCH */
-#define CROWD2          19  /* CROWD */
-
+enum SfxType
+{
+    SFX_SHIP_2_SHIP,
+    SFX_ELECTROBOLT,
+    SFX_ENG_AIR_INTAKE,
+    SFX_ENG_RUMBLE,
+    SFX_ENG_THRUST,
+    SFX_EXPLOSION_1,
+    SFX_EXPLOSION_2,
+    SFX_SHIP_2_TRACK,
+    SFX_MENU_MOVE,
+    SFX_MENU_SELECT,
+    SFX_MENU_2_MENU,
+    SFX_MINE_DROP,
+    SFX_MISS_LAUNCH,
+    SFX_REMOTE_ENG,
+    SFX_POWER_UP,
+    SFX_SHIELDS,
+    SFX_START_SIREN, // unused
+    SFX_TRACTOR_BEAM,
+    SFX_TURBULENCE,
+    SFX_CROWD,
+    SFX_SP_MINES,
+    SFX_SP_MISSILE,
+    SFX_SP_ROCKET,
+    SFX_SP_REVCON,
+    SFX_SP_SHOCKWAVE,
+    SFX_SP_SPECIAL,
+    SFX_SP_3,
+    SFX_SP_2,
+    SFX_SP_1,
+    SFX_SP_GO,
+    SFX_MAX
+};
 
 /****** Max volume settings ******/
-
 #define ENG_AIR_INTAKE_VOL 4096
 #define ENG_RUMBLE_VOL 8192
 #define ENG_THRUST_VOL 500
 #define REMOTE_ENG_VOL 125
-
-
-#define ENG_NOTE_1 60
-#define ENG_NOTE_2 42
-#define ENG_NOTE_3 39
-#define ENG_NOTE_4 48
-#define ENG_NOTE_5 55
-#define ENG_NOTE_5a 50
 
 typedef struct SampRec
 {
@@ -78,50 +62,17 @@ typedef struct SampRec
     int16 PlayID;
 } SampRec;
 
-typedef struct ChanTable
-{
-    int duration;
-    short priority;
-    short vagID;
-    // SpuVoiceAttr s_attr; /*TODO audio*/
-} ChanTable;
-
-typedef struct VagTable
-{
-    uint32 addr;
-    short channelID;
-} VagTable; /*   int ?? */
-
-typedef struct _sfx_info
-{
-    char Volume;
-    char Pan;
-    short Pitch;
-
-    short vagNo;
-    short Playing;
-
-    short Priority;
-    short Duration;
-
-    int16 PlayID;
-    int16 pad;
-} SFX_INFO;
-
-void InitSpuSound(void);
-void UpdateNotes(int paused);
-void KillNote(int note);
+int WhatChannel(enum SfxType id);
+int IsPlaying(int channel);
+void InitSound(void);
+void KillNote(enum SfxType id);
 void KillNotes(void);
-short PlayNote(short, short, short);
-short PlayDirectionalNote(short vagID, short priority, short duration, VECTOR pos);
-void SetPitch(short VagID, short pitch);
-void SetVolume(short vagID, short voll, short volr);
-short AdjustDirectionalNote(short vagID, short priority, short duration, VECTOR pos);
-short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCamera* camera);
-void AdjustEngineSound(ShipData*, TrackCamera*);
 void StopNotes(void);
+int PlayNote(enum SfxType id);
+void SetPitch(enum SfxType id, int32 pitch);
+void SetVolume(enum SfxType id, int32 volL, int32 volR);
+void RenderSound(int16* samples, int32 count);
 
-void CDRestart(void);
-void CDPlay(short int CurrTrackNo);
-void CDStop(void);
-void CdSetVol(long newVol);
+int MusicIsPlaying();
+void MusicPlay(int track);
+void MusicStop();

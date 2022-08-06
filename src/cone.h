@@ -9,4 +9,5 @@ typedef struct
 } Cone;
 
 void InitCone(Cone* cone);
+void ResetCone(Cone* cone);
 void UpdateCone(Cone* cone);

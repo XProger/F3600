@@ -3,9 +3,6 @@
 extern short trackNum; // SJR
 extern long ctrlGameLoop;
 
-extern short endtrack, starttrack;
-short globalvol;
-
 Texture* menuScreen;
 
 extern TexChar CharSet16[];
@@ -20,8 +17,9 @@ int zoomInOut = 0;
 int downUp = 0;
 
 Texture* buttonTex[18];
+Texture* slideTex;
+Texture* sliderTex;
 
-extern const char* GetCdTrackName(int no);
 char CheckKey(unsigned short code);
 
 #define NONE        0
@@ -42,9 +40,8 @@ int gCurrMenu;
 int gCurrOption;
 
 extern long ctrlfirsttime;
+extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 
-//Menus menuSystem[MAX_MENUS];
-Object* shipShapes[NO_OF_SHIPS];
 Object* audioShapes[3];
 Object* pilotShapes[8];
 Object* teamShapes[4];
@@ -57,7 +54,7 @@ SelectionData selectData;
 
 Texture* trackTex[7];
 
-const char trackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
+const char gTrackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
 
 void DrawControllerMenu(const Menu* menu, int shapeNo);
 void DrawControllerEdit(const Menu* menu, int shapeNo);
@@ -80,7 +77,8 @@ void ResetKeys(void);
 
 void CallMenuSelector(Object**, ConfigData*, SelectionData*);
 void CallMenuActivator(ConfigData*, SelectionData*);
-int LoadTexModel(Object**, Skeleton*, char*);
+int LoadModel(Object** modelShapes, char* fileName);
+int LoadTexModel(Object** modelShapes, char* fileName);
 void MusicVSfx(SelectionData*, ConfigData*);
 void ShowHiScores(SelectionData*, ConfigData*);
 void InitSelectData(SelectionData*);
@@ -93,10 +91,6 @@ void QuitYesNo(SelectionData*, ConfigData*);
 void GraphicOptions(SelectionData*, ConfigData*);
 void ControllerOptions(SelectionData*, ConfigData*);
 void ControllerEdit(SelectionData*, ConfigData*);
-
-#define MenuModelSkeletonsMax 36
-
-Skeleton MenuModelSkeletons[MenuModelSkeletonsMax];
 
 #define MAX_MENU_HISTORY 8
 
@@ -111,7 +105,7 @@ MenuHistory gMenuHistory[MAX_MENU_HISTORY];
 
 const Menu gMenuSystem[] = {
 // MAIN_MENU
-    { "WIPEOUT MAIN MENU", shipShapes, gameShapes, DrawMainMenu, 0, 3,
+    { "WIPEOUT MAIN MENU", ctrlshipShapes, gameShapes, DrawMainMenu, 0, 3,
         { 
             "START GAME",
             "OPTIONS",
@@ -131,14 +125,14 @@ const Menu gMenuSystem[] = {
         }
     },
 // AUDIO_MENU
-    { "AUDIO CONFIGURATION", 0, 0, 0, MusicVSfx, 0 }, // TODO audio menu
+    { "AUDIO", 0, 0, 0, MusicVSfx, 0 },
 // OPTION_MENU
-    { "GAME CONFIGURATION", optShapes, padShapes, DrawOptionMenus, 0, 4,
+    { "OPTIONS", optShapes, padShapes, DrawOptionMenus, 0, 4,
         { 
-            "CONTROLLER CONFIG",
-            "GRAPHICS DETAIL",
-            "AUDIO CONFIG",
-            "VIEW BEST TIMES"
+            "CONTROLS",
+            "GRAPHICS",
+            "AUDIO",
+            "BEST TIMES"
         }
     },
 // CLASS_MENU
@@ -149,7 +143,7 @@ const Menu gMenuSystem[] = {
         }
     },
 // TEAM_MENU
-    { "SELECT YOUR TEAM", teamShapes, shipShapes, DrawTeams, 0, 4,
+    { "SELECT YOUR TEAM", teamShapes, ctrlshipShapes, DrawTeams, 0, 4,
         { 
             "AG SYSTEMS",
             "AURICOM",
@@ -158,28 +152,28 @@ const Menu gMenuSystem[] = {
         }
     },
 // PILOT_MENU_1 - AG_SYSTEMS
-    { "CHOOSE YOUR PILOT", pilotShapes, shipShapes, DrawPilot, 0, 2,
+    { "CHOOSE YOUR PILOT", pilotShapes, ctrlshipShapes, DrawPilot, 0, 2,
         { 
             "JOHN DEKKA",
             "DANIEL CHANG"
         }
     },
 // PILOT_MENU_2 - AURICOM
-    { "CHOOSE YOUR PILOT", pilotShapes, shipShapes, DrawPilot, 0, 2,
+    { "CHOOSE YOUR PILOT", pilotShapes, ctrlshipShapes, DrawPilot, 0, 2,
         { 
             "ARIAL TETSUO",
             "ANASTASIA CHEROVOSKI"
         }
     },
 // PILOT_MENU_3 - QIREX
-    { "CHOOSE YOUR PILOT", pilotShapes, shipShapes, DrawPilot, 0, 2,
+    { "CHOOSE YOUR PILOT", pilotShapes, ctrlshipShapes, DrawPilot, 0, 2,
         { 
             "KEL SOLAAR",
             "ARIAN TETSUO"
         }
     },
 // PILOT_MENU_4 - FEISAR
-    { "CHOOSE YOUR PILOT", pilotShapes, shipShapes, DrawPilot, 0, 2,
+    { "CHOOSE YOUR PILOT", pilotShapes, ctrlshipShapes, DrawPilot, 0, 2,
         { 
             "SOFIA DE LA RENTE",
             "PAUL JACKSON"
@@ -194,37 +188,46 @@ const Menu gMenuSystem[] = {
         }
     },
 // HIGH_SCORES_MENU
-    { "BEST TIMES", 0, 0, 0, ShowHiScores, 0 },
+    { "BEST RACE TIMES", 0, 0, 0, ShowHiScores, 0 },
 // BEST_TIMES_MENU
-    { "VIEW BEST TIMES", optShapes, 0, DrawHiScoreMenu, 0, 2,
+    { "BEST TIMES", optShapes, 0, DrawHiScoreMenu, 0, 2,
         { 
-            "VIEW BEST RACE TIMES",
-            "VIEW BEST TIME TRIAL TIMES"
+            "BEST RACE TIMES",
+            "BEST TIME TRIAL TIMES"
         }
     },
 // TIME_TRIAL_MENU
-    { "BEST TIMES", 0, 0, 0, ShowTimeTrialScores, 0 },
+    { "BEST TIME TRIAL TIMES", 0, 0, 0, ShowTimeTrialScores, 0 },
 // QUIT_MENU
     { "", 0, 0, 0, QuitYesNo, 0 },
     // DETAILS_MENU
-    { "GRAPHIC DETAIL OPTIONS", shipShapes, 0, DrawGraphicDetail, GraphicOptions, 0 },
+    { "GRAPHICS", ctrlshipShapes, 0, DrawGraphicDetail, GraphicOptions, 0 },
 // CONTROLLER_MENU
-    { "CONTROLLER OPTIONS", padShapes, padShapes, DrawControllerMenu, ControllerOptions, 0 },
+    { "CONTROLS", padShapes, padShapes, DrawControllerMenu, ControllerOptions, 0 },
 // CONTROL_EDIT_MENU
     { "CONFIGURE KEYBOARD", padShapes, padShapes, DrawControllerEdit, ControllerEdit, 0 }
 };
 
+//#define VER_PSX
+
 void menuInit(void)
 {
-    Skeleton* skeletons = MenuModelSkeletons;
-    skeletons += LoadTexModel(shipShapes, skeletons, "allsh");
-    skeletons += LoadTexModel(pilotShapes, skeletons, "pilot");
-    skeletons += LoadTexModel(teamShapes, skeletons, "team"); // jed
-    skeletons += LoadTexModel(audioShapes, skeletons, "cdobj"); /*audio = headphones*/
-    skeletons += LoadTexModel(clsShapes, skeletons, "leeg"); // jed
-    skeletons += LoadTexModel(padShapes, skeletons, "cntrl"); // jed
-    skeletons += LoadTexModel(gameShapes, skeletons, "msdos"); // jed
-    skeletons += LoadTexModel(optShapes, skeletons, "misc"); // jed
+    LoadTexModel(pilotShapes, "pilot");
+    LoadTexModel(audioShapes, "cdobj");
+
+#ifdef VER_PSX
+    LoadModel(teamShapes, "teams");
+    LoadModel(clsShapes, "class");
+    LoadTexModel(padShapes, "pad1");
+    LoadModel(gameShapes, "champ");
+    LoadTexModel(optShapes, "alopt");
+#else
+    LoadTexModel(teamShapes, "team");
+    LoadTexModel(clsShapes, "leeg");
+    LoadTexModel(padShapes, "cntrl");
+    LoadTexModel(gameShapes, "msdos");
+    LoadTexModel(optShapes, "misc");
+#endif
 
     InitTrackTex(trackTex);
 
@@ -232,8 +235,8 @@ void menuInit(void)
 
     trackNum = 15; // pretend track for restoring - SJR
 
-    //slideTex = LoadTexture("wipeout\\textures\\slider1.tim"); /*slide*/
-    //sliderTex = LoadTexture("wipeout\\textures\\slide1.tim");
+    slideTex = LoadTexture("wipeout\\textures\\slider1.tim");
+    sliderTex = LoadTexture("wipeout\\textures\\slide1.tim");
 
     InitMenuDisplay(90);
     InitButtons("wipeout\\textures\\buttons.cmp");
@@ -246,12 +249,13 @@ void menuInit(void)
     selectData.combatInit = 0;
     selectData.combatComplete = 0;
 
-    UpdateNotes(NOT_PAUSED);
-
     menuScreen = LoadTexture("wipeout\\textures\\wipeout1.tim");
 
     gCurrMenu = 0;
     gCurrOption = 0;
+
+    InitSkeleton(&gCamPos);
+    InitSkeleton(&gCamDir);
 }
 
 void menuLoop(ConfigData* gameData)
@@ -260,8 +264,6 @@ void menuLoop(ConfigData* gameData)
 
     UpdatePad();
 
-    UpdateNotes(NOT_PAUSED);
-
     renderFrameBegin();
     renderClear();
     renderSetMode(RENDER_MODE_2D);
@@ -269,7 +271,7 @@ void menuLoop(ConfigData* gameData)
     DisplayPicture(menuScreen, 0, 0, 320, 240);
 
     if (gCurrMenu >= 0)
-        CallMenuSelector(shipShapes, gameData, &selectData);
+        CallMenuSelector(ctrlshipShapes, gameData, &selectData);
 
     if (selectData.select)
     {
@@ -314,16 +316,6 @@ void menuLoop(ConfigData* gameData)
     if (gCurrMenu == -1)
     {
         ctrlGameLoop = GAME_LOOP_RACE_INIT;
-
-        for (i = 0; i < 10; i++)
-        {
-            /*TODO audio*/
-            // c_attr.cd.volume.left  -= c_attr.cd.volume.left >> 3 ;   /* Master volume (left) */
-            // c_attr.cd.volume.right -= c_attr.cd.volume.right >> 3;   /* Master volume (right) */
-            UpdateNotes(NOT_PAUSED);
-        }
-        // CdControlB(CdlStop, 0, 0);
-
         return;
     }
 
@@ -345,6 +337,9 @@ void GoMenu(int menu)
 
     gCurrMenu = menu;
     gCurrOption = 0;
+
+    PlayNote(SFX_MENU_SELECT);
+    InitMenuDisplay(90);
 }
 
 void GoBack(void)
@@ -355,6 +350,29 @@ void GoBack(void)
 
     gCurrMenu = h->menu;
     gCurrOption = h->option;
+
+    KillNote(SFX_SHIELDS);
+
+    PlayNote(SFX_MENU_2_MENU);
+    InitMenuDisplay(90);
+}
+
+void GoPrevMusic(void)
+{
+    PlayNote(SFX_MENU_MOVE);
+    gMusicTrack--;
+    if (gMusicTrack < 0)
+        gMusicTrack = gMusicTracksCount;
+    MusicStop();
+}
+
+void GoNextMusic(void)
+{
+    PlayNote(SFX_MENU_MOVE);
+    gMusicTrack++;
+    if (gMusicTrack > gMusicTracksCount)
+        gMusicTrack = 0;
+    MusicStop();
 }
 
 void DisplayButtons(int x, int y, int buttType)
@@ -400,7 +418,7 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
         case TRACK_MENU:
         {
             gameData->trackNum = (gCurrOption + 1) + gameData->Class * 7;
-            gameData->actTrackNum = trackList[(gameData->trackNum - 1)];
+            gameData->actTrackNum = gTrackList[(gameData->trackNum - 1)];
             GoMenu(-1);
             break;
         }
@@ -417,10 +435,8 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
                     break;
                 case AUDIO_CONFIG:
                     GoMenu(AUDIO_MENU);
-                    PlayNote(SHIELDS, 0, -1);
                     InitMenuDisplay(180);
                     gameData->oldSliderPos = gameData->currSliderPos;
-                    gameData->oldCdTrack = gameData->cdTrack;
                     break;
                 case HIGH_SCORES:
                     GoMenu(BEST_TIMES_MENU);
@@ -488,7 +504,7 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
             {
                 case CHAMPIONSHIP:
                     gameData->gameType = CHAMPIONSHIP;
-                    gameData->actTrackNum = trackList[gameData->trackNum - 1];
+                    gameData->actTrackNum = gTrackList[gameData->trackNum - 1];
                     InitChampTable();
                     break;
                 case SINGLE_RACE:
@@ -573,7 +589,7 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
 
     if (GetMenuKey(M_UP))
     {
-        PlayNote(MENU_MOVE, 1, 20);
+        PlayNote(SFX_MENU_MOVE);
         gCurrOption--;
         if (gCurrOption < 0)
         {
@@ -583,7 +599,7 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
 
     if (GetMenuKey(M_DOWN))
     {
-        PlayNote(MENU_MOVE, 1, 20);
+        PlayNote(SFX_MENU_MOVE);
         gCurrOption++;
         if (gCurrOption > (numOptions - 1))
             gCurrOption = 0;
@@ -617,15 +633,10 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
     if (GetMenuKey(M_SELECT))
     {
         selectData->select = 1;
-        PlayNote(MENU_SELECT, 1, 20);
-        InitMenuDisplay(90);
     }
 
     if (GetMenuKey(M_BACK) && (gMenuHistoryIndex > 0))
     {
-        //       if(*currMenu == AUDIO_MENU)
-        //          KillNote(SHIELDS);
-
         if (gCurrMenu == CONTROL_EDIT_MENU)
         {
             ResetKeys();
@@ -634,13 +645,32 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
         GoBack();
 
         KeyToChange = NONE;
-
-        PlayNote(MENU_SELECT, 1, 20);
-        InitMenuDisplay(90);
     }
 }
 
-int LoadTexModel(Object** modelShapes, Skeleton* skeletons, char* fileName)
+int LoadModel(Object** modelShapes, char* fileName)
+{
+    Object* obj;
+    int count = 0;
+    char modelFile[64];
+
+    strcpy(modelFile, "wipeout\\common\\");
+    strcat(modelFile, fileName);
+    strcat(modelFile, ".prm");
+
+    obj = LoadPrm(modelFile, TextureTableCount);
+
+    while (obj)
+    {
+        modelShapes[count] = obj;
+        count++;
+        obj = obj->next;
+    }
+
+    return count;
+}
+
+int LoadTexModel(Object** modelShapes, char* fileName)
 {
     int modelTextures = 0;
     Object* obj;
@@ -662,14 +692,10 @@ int LoadTexModel(Object** modelShapes, Skeleton* skeletons, char* fileName)
     strcat(modelFile, fileName);
     strcat(modelFile, ".prm");
 
-    modelShapes[0] = (Object*)LoadPrm(modelFile, modelTextures);
-
-    obj = modelShapes[0];
+    obj = LoadPrm(modelFile, modelTextures);
 
     while (obj)
     {
-        obj->skeleton = skeletons + count;
-        InitSkeleton(obj->skeleton);
         modelShapes[count] = obj;
         count++;
         obj = obj->next;
@@ -780,23 +806,11 @@ void InitSelectData(SelectionData* selectData)
 
 void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
 {
-/*TODO audio settings
-    int slidePosx = 48;
-    int slidePosy = 85;
-    int slideWidth = 224;
-    int slideHeight = 28;
-    int sliderLeftOffset = 0;
-    int sliderRightOffset = 24;
-
-    extern short CurrTrkNo;
-*/
-    int sliderRange = 218;
-
-    static int ShieldOn = 0;
+    Quad q;
 
     if (xpad & IN_UP)
     {
-        PlayNote(MENU_MOVE, 1, 2);
+        PlayNote(SFX_MENU_MOVE);
         selectData->optionNo--;
         if (selectData->optionNo < 0)
             selectData->optionNo = 1;
@@ -804,188 +818,82 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
 
     if (xpad & IN_DOWN)
     {
-        PlayNote(MENU_MOVE, 1, 2);
+        PlayNote(SFX_MENU_MOVE);
         selectData->optionNo++;
         if (selectData->optionNo > 1)
             selectData->optionNo = 0;
     }
 
-    /*TODO audio settings*/
-#if 0
-   /* Slider overlay knob */
-   SetPolyFT4(&(musicPrims->sliderPrim));
-   musicPrims->sliderPrim.r0=230; // PCwipeout
-   musicPrims->sliderPrim.g0=0;
-   musicPrims->sliderPrim.b0=BLACK_NOT_DRAWN;
+    q.texture = sliderTex;
+    q.x = 39 + (gMasterBalance * 218 >> 8);
+    q.y = 61;
+    q.w = sliderTex->width;
+    q.h = sliderTex->height;
+    q.u0 = 0;
+    q.v0 = 0;
+    q.u1 = q.w;
+    q.v1 = q.h;
+    renderQuad(&q);
 
-   setXY4(&(musicPrims->sliderPrim), (slidePosx-9) + sliderLeftOffset + gameData->oldSliderPos, slidePosy - 24,
-      (slidePosx-9) + sliderRightOffset + gameData->oldSliderPos, slidePosy - 24,
-      (slidePosx-9) + sliderLeftOffset + gameData->oldSliderPos, slidePosy + 52,
-      (slidePosx-9) + sliderRightOffset + gameData->oldSliderPos, slidePosy + 52) ;
-
-   setUV4(&(musicPrims->sliderPrim), musicTex->sliderTex->u0, musicTex->sliderTex->v0,
-      musicTex->sliderTex->u1+1, musicTex->sliderTex->v1,
-      musicTex->sliderTex->u2, musicTex->sliderTex->v2+1,
-      musicTex->sliderTex->u3+1, musicTex->sliderTex->v3+1) ;
-
-   setTPage(&(musicPrims->sliderPrim),0,0,musicTex->sliderTex->textureX,musicTex->sliderTex->textureY);
-
-   musicPrims->sliderPrim.clut = musicTex->sliderTex->cba;
-
-   AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(musicPrims->sliderPrim) );
-
-   /* Slider background */
-   SetPolyFT4(&(musicPrims->slidePrim));
-   musicPrims->slidePrim.r0=230; // PCwipeout
-   musicPrims->slidePrim.g0=0;
-   musicPrims->slidePrim.b0=BLACK_NOT_DRAWN;
-
-   setXY4(&(musicPrims->slidePrim), slidePosx, slidePosy,
-      slidePosx + slideWidth, slidePosy,
-      slidePosx, slidePosy + slideHeight,
-      slidePosx + slideWidth, slidePosy + slideHeight) ;
-
-   setUV4(&(musicPrims->slidePrim), musicTex->slideTex->u0, musicTex->slideTex->v0,
-      musicTex->slideTex->u1, musicTex->slideTex->v1,
-      musicTex->slideTex->u2, musicTex->slideTex->v2+1,
-      musicTex->slideTex->u3, musicTex->slideTex->v3+1) ;
-
-   setTPage(&(musicPrims->slidePrim),0,0,musicTex->slideTex->textureX,musicTex->slideTex->textureY);
-
-   musicPrims->slidePrim.clut = musicTex->slideTex->cba;
-
-   AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(musicPrims->slidePrim) );
-#endif
+    q.texture = slideTex;
+    q.x = 48;
+    q.y = 85;
+    q.w = slideTex->width;
+    q.h = slideTex->height;
+    q.u0 = 0;
+    q.v0 = 0;
+    q.u1 = q.w;
+    q.v1 = q.h;
+    renderQuad(&q);
 
     AddText("SFX", text_data(33, 51, 8), (selectData->optionNo == 0) ? BLINK_TEXT : WhiteText);
     AddText("MUSIC", text_data(250, 139, 8), (selectData->optionNo == 0) ? BLINK_TEXT : WhiteText);
-    AddText("SELECT CD", text_data(15, 175, 8), (selectData->optionNo == 1) ? BLINK_TEXT : WhiteText);
-    AddText(GetCdTrackName(gameData->oldCdTrack - 1), text_data(130, 175, 8), RedText);
+    AddText("TRACK", text_data(33, 175, 8), (selectData->optionNo == 1) ? BLINK_TEXT : WhiteText);
+    AddText(GetMusicTrackName(gMusicTrack), text_data(130, 175, 8), RedText);
 
     if (selectData->optionNo == 0)
     {
         if (pad & IN_LEFT)
         {
-            if (!ShieldOn)
+            if (WhatChannel(SFX_SHIELDS) == -1)
             {
-                PlayNote(SHIELDS, 0, -1);
-                ShieldOn = 1;
+                PlayNote(SFX_SHIELDS);
+                SetPitch(SFX_SHIELDS, 0x0800);
+                SetVolume(SFX_SHIELDS, 0x8000, 0x8000);
             }
-            /*TODO audio
-            chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
-            chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
-            */
-            gameData->oldSliderPos--;
-            if (gameData->oldSliderPos < 0)
-                gameData->oldSliderPos = 0;
-            SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos)) >> 6));
-            globalvol = 218 - gameData->oldSliderPos;
-            CdSetVol(gameData->oldSliderPos);
-            SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos)) >> 6));
+            gMasterBalance -= (gFrameIndex - gLastFrameIndex);
+            if (gMasterBalance < 0)
+                gMasterBalance = 0;
         }
         else if (pad & IN_RIGHT)
         {
-            if (!ShieldOn)
+            if (WhatChannel(SFX_SHIELDS) == -1)
             {
-                PlayNote(SHIELDS, 0, -1);
-                ShieldOn = 1;
+                PlayNote(SFX_SHIELDS);
+                SetPitch(SFX_SHIELDS, 0x0800);
+                SetVolume(SFX_SHIELDS, 0x8000, 0x8000);
             }
-            /*TODO audio*/
-            // chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0x3fff - (75 * gameData->oldSliderPos);
-            // chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0x3fff - (75 * gameData->oldSliderPos);
-            gameData->oldSliderPos++;
-            if (gameData->oldSliderPos > sliderRange)
-                gameData->oldSliderPos = sliderRange;
-            globalvol = 218 - gameData->oldSliderPos;
-            CdSetVol(gameData->oldSliderPos);
-            SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos)) >> 6));
-#ifdef PORT_SOUND
-            SfxSetVolume((char)((0x3fff - (75 * gameData->oldSliderPos)) >> 6));
-#endif
+            gMasterBalance += (gFrameIndex - gLastFrameIndex);
+            if (gMasterBalance > 256)
+                gMasterBalance = 256;
         }
         else
         {
-            if (ShieldOn)
-            {
-                KillNote(SHIELDS);
-                ShieldOn = 0;
-            }
-            /*TODO audio
-            chanTable[vagTable[SHIELDS].channelID].s_attr.volume.left = 0;
-            chanTable[vagTable[SHIELDS].channelID].s_attr.volume.right = 0;
-            */
+            KillNote(SFX_SHIELDS);
         }
-
-        globalvol = 218 - gameData->oldSliderPos;
-        CdSetVol(gameData->oldSliderPos);
-        /*TODO audio
-        c_attr.cd.volume.left  = 150 * gameData->oldSliderPos;   // Master volume (left)
-        c_attr.cd.volume.right  = 150 * gameData->oldSliderPos;  // Master volume (right)
-        */
     }
 
     if (selectData->optionNo == 1)
     {
-        if (ShieldOn)
-        {
-            KillNote(SHIELDS);
-            ShieldOn = 0;
-        }
+        KillNote(SFX_SHIELDS);
+
         if (xpad & IN_LEFT)
         {
-            PlayNote(MENU_MOVE, 1, 2);
-            /*TODO audio
-            if (gameData->oldCdTrack == starttrack)
-                gameData->oldCdTrack = 1;
-            else
-                gameData->oldCdTrack--;
-
-            if (gameData->oldCdTrack < 1)
-                gameData->oldCdTrack = endtrack;
-
-            CdControlB(CdlStop, 0, 0);
-
-            if(gameData->oldCdTrack != 1)
-            {
-               //          CdControlB(CdlSetloc, (u_char *)&(loc[gameData->oldCdTrack]), 0);
-               CurrTrkNo = gameData->oldCdTrack;
-               CdControlB(CdlPlay, 0, 0);
-            }
-            else
-            {
-               CurrTrkNo = (randy() % (endtrack - 1)) + 2;
-               CdControlB(CdlPlay, 0, 0);
-            }
-            */
+            GoPrevMusic();
         }
-
-        if (xpad & IN_RIGHT)
+        else if (xpad & IN_RIGHT)
         {
-            PlayNote(MENU_MOVE, 1, 2);
-            /*TODO audio
-            if (gameData->oldCdTrack == 1)
-                gameData->oldCdTrack = starttrack;
-            else
-                gameData->oldCdTrack++;
-
-            if (gameData->oldCdTrack > endtrack)
-                gameData->oldCdTrack = 1;
-
-
-            CdControlB(CdlStop, 0, 0);
-
-            if(gameData->oldCdTrack != 1)
-            {
-               //          CdControlB(CdlSetloc, (u_char *)&(loc[gameData->oldCdTrack]), 0);
-               CurrTrkNo = gameData->oldCdTrack;
-               CdControlB(CdlPlay, 0, 0);
-            }
-            else
-            {
-               CurrTrkNo = (randy() % (endtrack - 1)) + 2;
-               CdControlB(CdlPlay, 0, 0);
-            }
-            */
+            GoNextMusic();
         }
     }
 }
@@ -996,7 +904,7 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
 
     if (GetMenuKey(M_RIGHT))
     {
-        PlayNote(MENU_MOVE, 1, 20);
+        PlayNote(SFX_MENU_MOVE);
         selectData->hiscoreTrack++;
         if (gameData->RapierClass == 0)
         {
@@ -1018,7 +926,7 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
 
     if (GetMenuKey(M_LEFT))
     {
-        PlayNote(MENU_MOVE, 1, 20);
+        PlayNote(SFX_MENU_MOVE);
         selectData->hiscoreTrack--;
         if (gameData->RapierClass == 0)
         {
@@ -1054,14 +962,18 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
     }
 
     if (((gameData->RapierClass == 0) && (selectData->hiscoreTrack == (NumTracks - 1))) || ((gameData->RapierClass == 1) && (selectData->hiscoreTrack == (totalTracks - 1))))
-        DisplayButtons(290, 116, ARROWR);
+    {
+    //    DisplayButtons(290, 116, ARROWR);
+    }
     else if (BLINK_SLOW)
     {
         DisplayButtons(290, 116, ARROWR);
     }
 
     if (selectData->hiscoreTrack == 0)
-        DisplayButtons(20, 116, ARROWL);
+    {
+    //    DisplayButtons(20, 116, ARROWL);
+    }
     else if (BLINK_SLOW)
     {
         DisplayButtons(20, 116, ARROWL);
@@ -1084,7 +996,7 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
 
     if (GetMenuKey(M_RIGHT))
     {
-        PlayNote(MENU_MOVE, 1, 20);
+        PlayNote(SFX_MENU_MOVE);
         selectData->hiscoreTrack++;
         if (gameData->RapierClass == 0)
         {
@@ -1106,7 +1018,7 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
 
     if (GetMenuKey(M_LEFT))
     {
-        PlayNote(MENU_MOVE, 1, 20);
+        PlayNote(SFX_MENU_MOVE);
         selectData->hiscoreTrack--;
         if (gameData->RapierClass == 0)
         {
@@ -1126,8 +1038,6 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
         }
     }
 
-    CentreText("BEST TIMES", text_data(1, 21, 12), RedText);
-
     actualTrack = (selectData->hiscoreTrack - HiScoreTracks);
 
     if ((selectData->hiscoreTrack - HiScoreTracks) >= (NumTracks))
@@ -1144,14 +1054,18 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
     }
 
     if (((gameData->RapierClass == 0) && ((selectData->hiscoreTrack - HiScoreTracks) == (NumTracks - 1))) || ((gameData->RapierClass == 1) && ((selectData->hiscoreTrack - HiScoreTracks) == (totalTracks - 1))))
-        DisplayButtons(290, 116, ARROWR);
+    {
+    //    DisplayButtons(290, 116, ARROWR);
+    }
     else if (BLINK_SLOW)
     {
         DisplayButtons(290, 116, ARROWR);
     }
 
     if ((selectData->hiscoreTrack - HiScoreTracks) == 0)
-        DisplayButtons(20, 116, ARROWL);
+    {
+    //    DisplayButtons(20, 116, ARROWL);
+    }
     else if (BLINK_SLOW)
     {
         DisplayButtons(20, 116, ARROWL);
@@ -1179,7 +1093,6 @@ void InitGameData(ConfigData* gameData)
     gameData->NumTracks = 1;
     gameData->Position = 8;
     gameData->RapierClass = 0;
-    gameData->cdTrack = 1;
     gameData->gameComplete = 0;
     gameData->showPilotCount = 0;
     gameData->gameOverCount = 0;
@@ -1444,12 +1357,12 @@ void GraphicOptions(SelectionData* selectData, ConfigData* gameData)
 
     if (GetMenuKey(M_LEFT))
     {
-        PlayNote(MENU_SELECT, 1, 20);
+        PlayNote(SFX_MENU_SELECT);
     }
 
     if (GetMenuKey(M_RIGHT))
     {
-        PlayNote(MENU_SELECT, 1, 20);
+        PlayNote(SFX_MENU_SELECT);
     }
 
     switch (listpos)
@@ -1536,7 +1449,7 @@ void ControllerOptions(SelectionData* selectData, ConfigData* gameData)
           colour2=WhiteText;
           if (GetMenuKey(M_LEFT))
           {
-             PlayNote(MENU_MOVE, 1, 20);
+             PlayNote(SFX_MENU_MOVE);
              if (orig_controller==_KEYBOARD) orig_controller=_JOYSTICK1;
              else
                 if (orig_controller==_MOUSE1) orig_controller=_KEYBOARD;
@@ -1546,7 +1459,7 @@ void ControllerOptions(SelectionData* selectData, ConfigData* gameData)
 
           if (GetMenuKey(M_RIGHT))
           {
-             PlayNote(MENU_MOVE, 1, 20);
+             PlayNote(SFX_MENU_MOVE);
              if (orig_controller==_KEYBOARD) orig_controller=_MOUSE1;
              else
                 if (orig_controller==_MOUSE1) orig_controller=_JOYSTICK1;
@@ -1651,7 +1564,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[15] = KeyCode;
                    NewOriginalKeyCodes[15] = KeyCode;
                    SetKey(15, KeyCode);
@@ -1675,7 +1588,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[13] = KeyCode;
                    NewOriginalKeyCodes[13] = KeyCode;
                    SetKey(13, KeyCode);
@@ -1699,7 +1612,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[12] = KeyCode;
                    NewOriginalKeyCodes[12] = KeyCode;
                    SetKey(12, KeyCode);
@@ -1723,7 +1636,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[14] = KeyCode;
                    NewOriginalKeyCodes[14] = KeyCode;
                    SetKey(14, KeyCode);
@@ -1747,7 +1660,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[0] = KeyCode;
                    NewOriginalKeyCodes[0] = KeyCode;
                    SetKey(0, KeyCode);
@@ -1771,7 +1684,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[1] = KeyCode;
                    NewOriginalKeyCodes[1] = KeyCode;
                    SetKey(1, KeyCode);
@@ -1795,7 +1708,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[6] = KeyCode;
                    NewOriginalKeyCodes[6] = KeyCode;
                    SetKey(6, KeyCode);
@@ -1819,7 +1732,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[5] = KeyCode;
                    NewOriginalKeyCodes[5] = KeyCode;
                    SetKey(5, KeyCode);
@@ -1843,7 +1756,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[4] = KeyCode;
                    NewOriginalKeyCodes[4] = KeyCode;
                    SetKey(4, KeyCode);
@@ -1867,7 +1780,7 @@ void KeyConfig(void)
 
                 if(exists)
                 {
-                   PlayNote(MENU_SELECT, 1, 20);
+                   PlayNote(SFX_MENU_SELECT);
                    OriginalKeyCodes[11] = KeyCode;
                    NewOriginalKeyCodes[11] = KeyCode;
                    SetKey(11, KeyCode);

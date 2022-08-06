@@ -127,9 +127,9 @@ typedef struct ConfigData
     char venomComplete;
     signed char normpadPreset;
     signed char oldPadPreset;
-    char cdTrack;
+    char unused_1;
 
-    char oldCdTrack;
+    char unused_2;
     char trackNum;
     char actTrackNum;
     char shipNum;
@@ -212,5 +212,8 @@ void InitChampionship(void);
 void ContinueGameConfirm(char*, short, char*);
 void RestartGameConfirm(char* confirm, short xpad, char* lConfirm);
 void SetNormPadPresets(ConfigData*);
+
+void GoPrevMusic(void);
+void GoNextMusic(void);
 
 #endif

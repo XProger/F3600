@@ -89,6 +89,6 @@ typedef struct ShipData
 
 } ShipData;
 
-void loadShipData(TrackSection* section, ShipData* shipIndex, Object** shipShapes, Skeleton* camPos);
+void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos);
 void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamera camera);
 void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData);
