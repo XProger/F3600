@@ -22,20 +22,26 @@ void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
 void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex)
 {
     int i;
+    int16 roll;
     WeaponData* weapon;
 
     for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
         if ((weaponIndex[i].count > 0) && (weaponIndex[i].availible))
         {
-            weapon = &(weaponIndex[i]);
+            weapon = weaponIndex + i;
 
             if (weapon->type == SHIELD)
             {
                 renderSetBlend(BLEND_ADD);
+                roll = shipIndex[weapon->fireShip].roll;
+            }
+            else
+            {
+                roll = 0;
             }
 
-            renderObject(weaponShapes[weapon->currentWeapon].shapePtr);
+            DrawObject(weaponShapes[weapon->currentWeapon].shapePtr, weapon->pos.vx, weapon->pos.vy, weapon->pos.vz, weapon->hdg, weapon->pitch, roll);
 
             if (weapon->type == SHIELD)
             {
@@ -63,7 +69,7 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     if (shipNo == ownShip)
                     {
                         PlayNote(SFX_MISS_LAUNCH);
-                        SetPitch(SFX_MISS_LAUNCH, 0x1000);
+                        SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH);
                     }
                     weaponIndex[i].type = ROCKET;
                     playerShip->weaponType = NO_WEAPON;
@@ -77,7 +83,7 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     if (shipNo == ownShip)
                     {
                         PlayNote(SFX_MISS_LAUNCH);
-                        SetPitch(SFX_MISS_LAUNCH, 0x1000);
+                        SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH);
                     }
                     weaponIndex[i].type = MISSILE;
                     playerShip->weaponType = NO_WEAPON;
@@ -159,7 +165,7 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     if (shipNo == ownShip)
                     {
                         PlayNote(SFX_MISS_LAUNCH);
-                        SetPitch(SFX_MISS_LAUNCH, 0x0400);
+                        SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH >> 2);
                     }
                     return;
             }
@@ -396,10 +402,6 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         weaponIndex[weapon->currentWeapon].availible = 0;
     }
 
-    SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
-
-    weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
-
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
     /***********************************************************/
@@ -448,9 +450,7 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             else
             {
                 PlayNote(SFX_EXPLOSION_1);
-                /*TODO audio*/
-                // chanTable[vagTable[SFX_EXPLOSION_1].channelID].s_attr.volume.left = 0x3fff;
-                // chanTable[vagTable[SFX_EXPLOSION_1].channelID].s_attr.volume.right = 0x3fff;
+                SetVolume(SFX_EXPLOSION_1, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
             return;
         }
@@ -571,12 +571,6 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
         weaponIndex[weapon->currentWeapon].availible = 0;
     }
 
-    SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
-
-    SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->hdg, weapon->pitch, 0);
-
-    weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
-
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
     /***********************************************************/
@@ -696,10 +690,9 @@ void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
             weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
             weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
 
-            SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), shipIndex[weapon->fireShip].hdg, shipIndex[weapon->fireShip].pitch, shipIndex[weapon->fireShip].roll);
-
             weapon->hdg = shipIndex[weapon->fireShip].hdg;
             weapon->pitch = shipIndex[weapon->fireShip].pitch;
+
             weapon->updateWeapon = UpdateMissile;
             weapon->availible = 1; // AJY
             return;
@@ -729,6 +722,7 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
     weapon->pos.vx += ossilation;
     weapon->hdg += 128;
+    weapon->pitch = 0;
 
     poly.primitive = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
 
@@ -748,12 +742,6 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
                 break;
         }
     }
-
-    SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->hdg, 0, 0);
-
-    SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
-
-    weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -849,7 +837,8 @@ void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
             weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
             weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
 
-            SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), shipIndex[weapon->fireShip].hdg, shipIndex[weapon->fireShip].pitch, shipIndex[weapon->fireShip].roll);
+            weapon->hdg = shipIndex[weapon->fireShip].hdg;
+            weapon->pitch = shipIndex[weapon->fireShip].pitch;
 
             weapon->updateWeapon = UpdateRocket;
             weapon->availible = 1; // AJY
@@ -945,12 +934,6 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
         weaponShapes[weapon->currentWeapon].used = 0;
         weaponIndex[weapon->currentWeapon].availible = 0;
     }
-
-    SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
-
-    SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->hdg, weapon->pitch, 0);
-
-    weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -1052,8 +1035,6 @@ void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
             weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
 
-            SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), shipIndex[weapon->fireShip].hdg, shipIndex[weapon->fireShip].pitch, shipIndex[weapon->fireShip].roll);
-
             weapon->hdg = shipIndex[weapon->fireShip].hdg;
             weapon->pitch = shipIndex[weapon->fireShip].pitch;
             weapon->updateWeapon = UpdateElecBolt;
@@ -1124,8 +1105,6 @@ void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
             weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
             weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
             weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
-
-            SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), shipIndex[weapon->fireShip].hdg, shipIndex[weapon->fireShip].pitch, shipIndex[weapon->fireShip].roll);
 
             weapon->hdg = shipIndex[weapon->fireShip].hdg;
             weapon->pitch = shipIndex[weapon->fireShip].pitch;
@@ -1223,12 +1202,6 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         weaponShapes[weapon->currentWeapon].used = 0;
         weaponIndex[weapon->currentWeapon].availible = 0;
     }
-
-    SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
-
-    SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->hdg, weapon->pitch, 0);
-
-    weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -1343,12 +1316,13 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
             weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
             weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
 
-            SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), shipIndex[weapon->fireShip].hdg, shipIndex[weapon->fireShip].pitch, shipIndex[weapon->fireShip].roll);
+            weapon->hdg = shipIndex[weapon->fireShip].hdg;
+            weapon->pitch = shipIndex[weapon->fireShip].pitch;
 
             if (weapon->fireShip == ownShip)
             {
                 PlayNote(SFX_SHIELDS);
-                SetPitch(SFX_SHIELDS, 0x0800);
+                SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
             }
             weapon->updateWeapon = UpdateShield;
             weapon->availible = 1; // AJY
@@ -1397,9 +1371,8 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
     if ((shipIndex[weapon->fireShip].attr & VIEW_IN) == 0)
     {
-        SetSkeletonPosition((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
-
-        SetSkeletonDirectionHPR((weaponShapes[weapon->currentWeapon].shapePtr->skeleton), shipIndex[weapon->fireShip].hdg, shipIndex[weapon->fireShip].pitch, shipIndex[weapon->fireShip].roll);
+        weapon->hdg = shipIndex[weapon->fireShip].hdg;
+        weapon->pitch = shipIndex[weapon->fireShip].pitch;
 
         poly.primitive = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
         primitiveCount = weaponShapes[weapon->currentWeapon].shapePtr->primitiveCount;
@@ -1470,7 +1443,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             }
         }
 
-        weaponShapes[weapon->currentWeapon].shapePtr->skeleton->update = 1;
         shieldID = weapon->currentWeapon - SHIELD_OFFSET;
     }
 }

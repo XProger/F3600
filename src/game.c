@@ -36,7 +36,7 @@ void titleLoop()
     AddGlyph(0, 0, 320, 240, 0, 0, titleScreen);
     CentreText("PRESS ANY KEY", text_data(0, 200, 8), WhiteText);
 
-    if (pad)
+    if (xpad)
     {
         PlayNote(SFX_MENU_SELECT);
         ctrlmode = INTERACTIVE;
@@ -57,7 +57,7 @@ void gameInit(void)
     InitGameDisplay();
 
     SfxInit();
-    InitSound();
+    InitNotes();
 
     gMusicTracksCount = 11;
     gMusicTrack = 0; // random

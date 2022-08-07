@@ -351,7 +351,7 @@ void soundFill()
 {
     WAVEHDR *waveHdr = waveBuf + curSoundBuffer;
     waveOutUnprepareHeader(waveOut, waveHdr, sizeof(WAVEHDR));
-    RenderSound((int16*)waveHdr->lpData, SND_SAMPLES);
+    FillNotes((int16*)waveHdr->lpData, SND_SAMPLES);
     waveOutPrepareHeader(waveOut, waveHdr, sizeof(WAVEHDR));
     waveOutWrite(waveOut, waveHdr, sizeof(WAVEHDR));
     curSoundBuffer ^= 1;

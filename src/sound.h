@@ -9,6 +9,9 @@
 #define SND_SAMPLES     (2352 * 2)
 #define SND_OUTPUT_FREQ 44100
 
+#define SND_MAX_VOLUME  0x8000
+#define SND_DEF_PITCH   0x1000
+
 /****** PROGRAME IDENTIFIERS ******/
 
 enum SfxType
@@ -64,14 +67,13 @@ typedef struct SampRec
 
 int WhatChannel(enum SfxType id);
 int IsPlaying(int channel);
-void InitSound(void);
+void InitNotes(void);
 void KillNote(enum SfxType id);
 void KillNotes(void);
-void StopNotes(void);
 int PlayNote(enum SfxType id);
 void SetPitch(enum SfxType id, int32 pitch);
 void SetVolume(enum SfxType id, int32 volL, int32 volR);
-void RenderSound(int16* samples, int32 count);
+void FillNotes(int16* samples, int32 count);
 
 int MusicIsPlaying();
 void MusicPlay(int track);

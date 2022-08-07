@@ -93,21 +93,14 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
                 obj = shipShapes[shipIndex[i].highResTableIndex];
             }
 
-            SetSkeletonPosition(obj->skeleton, shipIndex[i].pos.vx, shipIndex[i].pos.vy, shipIndex[i].pos.vz);
-
-            SetSkeletonDirectionHPR(obj->skeleton, shipIndex[i].hdg, shipIndex[i].pitch, shipIndex[i].roll);
-
-            renderSetColor(shipIndex[i].color);
-
             if (((shipIndex[i].attr & VIEW_IN) == 0) || (shipIndex[i].attr & REMOTE_VIEW))
             {
-                if (raceType == TIME_TRIAL)
+                /*TODO disable AI ships for TIME TRIAL!*/
+                if ((i == ownShip) || (raceType != TIME_TRIAL))
                 {
-                    if (i == ownShip)
-                        renderObject(obj);
+                    renderSetColor(shipIndex[i].color);
+                    DrawObject(obj, shipIndex[i].pos.vx, shipIndex[i].pos.vy, shipIndex[i].pos.vz, shipIndex[i].hdg, shipIndex[i].pitch, shipIndex[i].roll);
                 }
-                else
-                    renderObject(obj);
             }
         }
         else
@@ -236,10 +229,6 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
     short RMaxThrustPro[7]  = { 3750,   3780,   3800,   3850,   3900,   3950,   4000    };
     short RThrustMagPro[7]  = { 50,     53,     55,     57,     60,     62,     65      };
     short fightBackPro[7]   = { 1,      1,      1,      1,      1,      1,      1       };
-
-#if 0 /************* Disable Rapier Class *************/
-   gameData->Class = 0;
-#endif
 
     crossedLine = 0;
 

@@ -54,8 +54,6 @@ SelectionData selectData;
 
 Texture* trackTex[7];
 
-const char gTrackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
-
 void DrawControllerMenu(const Menu* menu, int shapeNo);
 void DrawControllerEdit(const Menu* menu, int shapeNo);
 void DrawGraphicDetail(const Menu* menu, int shapeNo);
@@ -704,13 +702,6 @@ int LoadTexModel(Object** modelShapes, char* fileName)
     return count;
 }
 
-void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short roll)
-{
-    SetSkeletonPosition(obj->skeleton, x, y, z); /*1800*/
-    SetSkeletonDirectionHPR(obj->skeleton, hdg, pitch, roll);
-    renderObject(obj);
-}
-
 void DrawMainMenu(const Menu* menu, int shapeNo)
 {
     int hdg = gFrameIndex * 20;
@@ -858,8 +849,8 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
             if (WhatChannel(SFX_SHIELDS) == -1)
             {
                 PlayNote(SFX_SHIELDS);
-                SetPitch(SFX_SHIELDS, 0x0800);
-                SetVolume(SFX_SHIELDS, 0x8000, 0x8000);
+                SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
+                SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
             gMasterBalance -= (gFrameIndex - gLastFrameIndex);
             if (gMasterBalance < 0)
@@ -870,8 +861,8 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
             if (WhatChannel(SFX_SHIELDS) == -1)
             {
                 PlayNote(SFX_SHIELDS);
-                SetPitch(SFX_SHIELDS, 0x0800);
-                SetVolume(SFX_SHIELDS, 0x8000, 0x8000);
+                SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
+                SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
             gMasterBalance += (gFrameIndex - gLastFrameIndex);
             if (gMasterBalance > 256)

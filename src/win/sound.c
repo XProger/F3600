@@ -176,15 +176,15 @@ int IsPlaying(int channel)
     return (gChannels[channel].data ? 1 : 0);
 }
 
-void InitSound(void)
+void InitNotes(void)
 {
     int32 i;
 
     for (i = 0; i < SFX_MAX; i++)
     {
-        gSfxParams[i].volL = 0x8000;
-        gSfxParams[i].volR = 0x8000;
-        gSfxParams[i].pitch = 0x1000;
+        gSfxParams[i].volL = SND_MAX_VOLUME;
+        gSfxParams[i].volR = SND_MAX_VOLUME;
+        gSfxParams[i].pitch = SND_DEF_PITCH;
         gSfxParams[i].loop = 0;
     }
 
@@ -221,11 +221,6 @@ void KillNotes(void)
         gChannels[i].data = NULL;
         gChannels[i].blockPos = 0;
     }
-}
-
-void StopNotes(void)
-{
-
 }
 
 int PlayNote(enum SfxType id)
@@ -266,8 +261,8 @@ void SetPitch(enum SfxType id, int32 pitch)
 
 void SetVolume(enum SfxType id, int32 volL, int32 volR)
 {
-    ASSERT(volL >= 0 && volL <= 0x8000);
-    ASSERT(volR >= 0 && volR <= 0x8000);
+    ASSERT(volL >= 0 && volL <= SND_MAX_VOLUME);
+    ASSERT(volR >= 0 && volR <= SND_MAX_VOLUME);
 
     gSfxParams[id].volL = volL;
     gSfxParams[id].volR = volR;
@@ -405,7 +400,7 @@ int32 RenderOGG(int16* temp, int32 count, int32 volume)
     return 1;
 }
 
-void RenderSound(int16* samples, int32 count)
+void FillNotes(int16* samples, int32 count)
 {
     Channel* channel;
     int32 i, j;
@@ -433,7 +428,13 @@ void RenderSound(int16* samples, int32 count)
                 continue;
             
             if (!gSfxParams[channel->id].volL && !gSfxParams[channel->id].volR)
+            {
+                if (!gSfxParams[channel->id].loop)
+                {
+                    channel->data = NULL;
+                }
                 continue;
+            }
 
             RenderVAG(channel, count, 256 - gMasterBalance);
         }

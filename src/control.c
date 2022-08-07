@@ -59,7 +59,7 @@ void GeneralStartProcs(ShipData* playerShip)
 
         PlayNote(SFX_CROWD);
         SetVolume(SFX_CROWD, 0, 0);
-        SetPitch(SFX_CROWD, 0x0800);
+        SetPitch(SFX_CROWD, SND_DEF_PITCH >> 1);
     }
 
     playerShip->updateCount--;
@@ -68,7 +68,7 @@ void GeneralStartProcs(ShipData* playerShip)
     {
         ColourStartBoom(3);
         PlayNote(SFX_SP_GO);
-        SetPitch(SFX_SP_GO, 0x1000);
+        SetPitch(SFX_SP_GO, SND_DEF_PITCH);
     }
     else if (playerShip->updateCount <= AMBER_LIGHT)
     {
@@ -82,17 +82,17 @@ void GeneralStartProcs(ShipData* playerShip)
     if (playerShip->updateCount == AMBER_LIGHT)
     {
         PlayNote(SFX_SP_1);
-        SetPitch(SFX_SP_1, 0x1000);
+        SetPitch(SFX_SP_1, SND_DEF_PITCH);
     }
     else if (playerShip->updateCount == RED_LIGHT)
     {
         PlayNote(SFX_SP_2);
-        SetPitch(SFX_SP_2, 0x1000);
+        SetPitch(SFX_SP_2, SND_DEF_PITCH);
     }
     else if (playerShip->updateCount == THREE)
     {
         PlayNote(SFX_SP_3);
-        SetPitch(SFX_SP_3, 0x1000);
+        SetPitch(SFX_SP_3, SND_DEF_PITCH);
     }
 }
 
@@ -403,9 +403,6 @@ void ZigZagShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int shi
     }
 }
 
-#define SLOW_DOWN 1
-#define SHIP_MESS 0
-
 void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 {
     ShipData *myShip, *remoteShip;
@@ -518,7 +515,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                             if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                             {
                                 PlayNote(SFX_SP_MINES);
-                                SetPitch(SFX_SP_MINES, 0x1000);
+                                SetPitch(SFX_SP_MINES, SND_DEF_PITCH);
 
                                 remoteShip->weaponType = MINE;
                                 FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
@@ -589,7 +586,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                 if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                                 {
                                     PlayNote(SFX_SP_ROCKET);
-                                    SetPitch(SFX_SP_ROCKET, 0x1000);
+                                    SetPitch(SFX_SP_ROCKET, SND_DEF_PITCH);
 
                                     remoteShip->weaponType = ROCKET;
                                     FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
@@ -602,7 +599,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                 if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                                 {
                                     PlayNote(SFX_SP_MISSILE);
-                                    SetPitch(SFX_SP_MISSILE, 0x1000);
+                                    SetPitch(SFX_SP_MISSILE, SND_DEF_PITCH);
 
                                     remoteShip->weaponType = MISSILE;
                                     remoteShip->targetShip = ownShip;
@@ -616,7 +613,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                 if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                                 {
                                     PlayNote(SFX_SP_SHOCKWAVE);
-                                    SetPitch(SFX_SP_SHOCKWAVE, 0x1000);
+                                    SetPitch(SFX_SP_SHOCKWAVE, SND_DEF_PITCH);
 
                                     remoteShip->weaponType = ELEC_BOLT;
                                     remoteShip->targetShip = ownShip;

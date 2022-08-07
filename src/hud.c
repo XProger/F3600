@@ -17,7 +17,6 @@ extern HiScores scoreTable[];
 extern ChampionShip winTable[];
 
 extern int short startLinePos[];
-extern const char gTrackList[15];
 
 Texture* speedoTex;
 

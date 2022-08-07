@@ -41,7 +41,7 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
     TrackSection* section;
     long extent;
     SVECTOR centre;
-    Object* obj; // = objectTable[0];
+    Object* obj;
     MATRIX* matrix;
 
     section = camera->section;
@@ -49,7 +49,6 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
     if (section->objectCount > 0)
     {
         for (i = 0; i < section->objectCount; i++)
-        //        while (obj)
         {
             obj = objectTable[section->objects[i]];
 
@@ -77,8 +76,13 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
             {
                 renderObject(obj);
             }
-
-            // obj = obj->next;
         }
     }
+}
+
+void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short roll)
+{
+    SetSkeletonPosition(obj->skeleton, x, y, z);
+    SetSkeletonDirectionHPR(obj->skeleton, hdg, pitch, roll);
+    renderObject(obj);
 }

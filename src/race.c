@@ -760,7 +760,7 @@ void raceCtrl(ConfigData* gameData)
 
         CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
 
-        SetVolume(SFX_SHIELDS, 0x8000, 0x8000);
+        SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
         AdjustEngineSound(&(ctrlshipIndex[ownShip]), &ctrlcamera);
         AdjustCrowdSound(ctrllostad, ctrlstadCount);
         AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes, &ctrlcamera );
@@ -1290,6 +1290,7 @@ void BackPoly(int x, int y, int w, int h)
     q.r2 = q.g2 = q.b2 =
     q.r3 = q.g3 = q.b3 = 128;
 
+    renderNextLayer();
     renderSetBlend(BLEND_MUL);
     renderColorQuad(&q);
     renderSetBlend(BLEND_NONE);
@@ -1314,7 +1315,7 @@ void raceLoop(ConfigData* gameData)
 
         ResetCone(&ctrlcone);
         TextureTableCount = gBaseTextureIndex;
-        ctrlGameLoop = GAME_LOOP_MENU_INIT;
+        ctrlGameLoop = GAME_LOOP_TITLE_INIT;
         return;
     }
 
@@ -1354,10 +1355,7 @@ void raceLoop(ConfigData* gameData)
     DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip, ctrlcamera);
 
     // DROID
-    SetSkeletonPosition(ctrlshipShapes[RESCUE_DROID]->skeleton, ctrlrescueDroid.pos.vx, ctrlrescueDroid.pos.vy, ctrlrescueDroid.pos.vz);
-    SetSkeletonDirectionHPR(ctrlshipShapes[RESCUE_DROID]->skeleton, ctrlrescueDroid.hdg, ctrlrescueDroid.pitch, ctrlrescueDroid.roll);
-    ctrlshipShapes[RESCUE_DROID]->skeleton->update = 1;
-    renderObject(ctrlshipShapes[RESCUE_DROID]);
+    DrawObject(ctrlshipShapes[RESCUE_DROID], ctrlrescueDroid.pos.vx, ctrlrescueDroid.pos.vy, ctrlrescueDroid.pos.vz, ctrlrescueDroid.hdg, ctrlrescueDroid.pitch, ctrlrescueDroid.roll);
 
     // WEAPONS
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
@@ -1457,44 +1455,8 @@ void raceDemo(ConfigData* gameData)
     ctrlmode = ATTRACT;
     ownShip = randy() % 8;
 
-    switch (randy() % 6)
-    {
-        case 0:
-            trackNo = 2; // Altima
-            ctrlConfigData.actTrackNum = 2;
-            ctrlConfigData.trackNum = 1;
-            break;
-
-        case 1:
-            trackNo = 4; // karbonis
-            ctrlConfigData.actTrackNum = 4;
-            ctrlConfigData.trackNum = 2;
-            break;
-
-        case 2:
-            trackNo = 1; // terramax
-            ctrlConfigData.actTrackNum = 1;
-            ctrlConfigData.trackNum = 3;
-            break;
-
-        case 3:
-            trackNo = 12; // korodera
-            ctrlConfigData.actTrackNum = 12;
-            ctrlConfigData.trackNum = 4;
-            break;
-
-        case 4:
-            trackNo = 8; // arridos
-            ctrlConfigData.actTrackNum = 8;
-            ctrlConfigData.trackNum = 5;
-            break;
-
-        case 5:
-            trackNo = 9; // silver
-            ctrlConfigData.actTrackNum = 9;
-            ctrlConfigData.trackNum = 6;
-            break;
-    }
-
+    gameData->gameType = SINGLE_RACE;
+    gameData->trackNum = 1 + (randy() % 6); // all venom
+    gameData->actTrackNum = trackNo = gTrackList[gameData->trackNum - 1];
     ctrlGameLoop = GAME_LOOP_RACE_INIT;
 }

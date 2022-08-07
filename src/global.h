@@ -119,3 +119,4 @@ extern int32 gMasterBalance;
 #define FR32U   (32 * 30 / frameRate30)
 
 extern char trackdir[];
+extern const char gTrackList[15];

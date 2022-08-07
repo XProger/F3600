@@ -31,10 +31,10 @@ extern char Resolution;
 
 void InitMenuDisplay(int geomOffset)
 {
-    SetGeomOffset(160, geomOffset);
+    renderOffset(0, geomOffset - 120);
 }
 
 void InitGameDisplay(void)
 {
-    SetGeomOffset(160, 120);
+    renderOffset(0, 0);
 }

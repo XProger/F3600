@@ -31,10 +31,10 @@
 #define ROCKET    1
 #define MISSILE   2
 #define MINE      3
-#define SPECIAL   4
+#define SPECIAL   4     // TODO multiplayer
 #define ELEC_BOLT 5
-#define FLARE     6
-#define REV_CON   7
+#define FLARE     6     // TODO unused
+#define REV_CON   7     // TODO multiplayer
 #define SHIELD    8
 #define TURBO     9
 

@@ -887,7 +887,7 @@ long rsin(long a)
     if (index < 0)
         index = -index;
 
-    if (a < 0.0)
+    if (a < 0)
         result = -SineTable[index];
     else
         result = SineTable[index];

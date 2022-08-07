@@ -42,24 +42,22 @@ typedef struct
     const Texture* texture;
 } Billboard;
 
-enum BlendMode
+typedef enum
 {
     BLEND_NONE,
     BLEND_ADD,
     BLEND_SUB,
     BLEND_MUL
-};
+} BlendMode;
 
-enum RenderMode
+typedef enum
 {
     RENDER_MODE_2D,
     RENDER_MODE_3D
-};
+} RenderMode;
 
 extern int gFrameIndex;
 extern int gLastFrameIndex;
-
-void SetGeomOffset(long ofx, long ofy);
 
 void renderInit(void);
 void renderFree(void);
@@ -84,6 +82,7 @@ void renderSetMode(int renderMode);
 void renderSetBlend(enum BlendMode mode);
 void renderDepthWrite(int enable);
 void renderSetColor(uint32 color);
+void renderNextLayer();
 Texture* renderCreateTexture(Tim* tim);
 
 #endif
