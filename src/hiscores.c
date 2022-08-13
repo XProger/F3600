@@ -197,7 +197,7 @@ void HighScore(ConfigData* gameData)
         ClearOTagR(OT[CurrentScreen], OT_SIZE);
         UpdateNotes(NOT_PAUSED);
 
-        ScreenFooter(70, 210, WhiteText);
+        ScreenFooter(70, 210, TEXT_COLOR_WHITE);
 
         if (numChars != (nameLetters + 1) && (userEntry))
         {
@@ -210,16 +210,16 @@ void HighScore(ConfigData* gameData)
                 if ((toggleDisplay % 3) == 0)
                 {
                     if (charVal == 26 || charVal == 27)
-                        AddDelEnd((charVal - 26), text_data(charX, charY, 16), WhiteText);
+                        AddDelEnd((charVal - 26), text_data(charX, charY, 16), TEXT_COLOR_WHITE);
                     else
-                        AddText(&(dispChar[0]), text_data(charX, charY, 16), WhiteText);
+                        AddText(&(dispChar[0]), text_data(charX, charY, 16), TEXT_COLOR_WHITE);
                 }
                 else
                 {
                     if (charVal == 26 || charVal == 27)
-                        AddDelEnd((charVal - 26), text_data(charX, charY, 16), RedText);
+                        AddDelEnd((charVal - 26), text_data(charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
                     else
-                        AddText(&(dispChar[0]), text_data(charX, charY, 16), RedText);
+                        AddText(&(dispChar[0]), text_data(charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
                 }
             }
 
@@ -315,14 +315,14 @@ void HighScore(ConfigData* gameData)
         /*
                  for (i=0; i < NumNames; i++)
                  {
-                    AddText (&(scoreTable[(gameData->trackNum-1)].names[i][0]), text_data (40, (80+(spacing*i)), 16), WhiteText) ;
+                    AddText (&(scoreTable[(gameData->trackNum-1)].names[i][0]), text_data (40, (80+(spacing*i)), 16), TEXT_COLOR_WHITE) ;
 
                     if (scoreTable[(gameData->trackNum-1)].lapTimes[i] == 2000000000)
                        AddTime(0,
-                                 text_data (165, (80+(spacing*i)), 16), RedText);
+                                 text_data (165, (80+(spacing*i)), 16), TEXT_COLOR_HIGHLIGHT);
                     else
                        AddTime(scoreTable[(gameData->trackNum-1)].lapTimes[i],
-                                text_data (165, (80+(spacing*i)), 16), RedText);
+                                text_data (165, (80+(spacing*i)), 16), TEXT_COLOR_HIGHLIGHT);
                  }
 
         */
@@ -330,8 +330,8 @@ void HighScore(ConfigData* gameData)
 
         if (userEntry)
         {
-            AddText(&(nameEntered[0]), text_data(40, charY, 16), WhiteText);
-            AddTime(bestLap, text_data(165, charY, 16), RedText);
+            AddText(&(nameEntered[0]), text_data(40, charY, 16), TEXT_COLOR_WHITE);
+            AddTime(bestLap, text_data(165, charY, 16), TEXT_COLOR_HIGHLIGHT);
         }
 
         ShowMenuBackground(&(scorePrim[0]), &(scorePrim1[0]), timInfo);
@@ -450,24 +450,24 @@ void DisplayHiScore(char trackNum)
         {
             if ((toggleDisplay % 3) == 0)
             {
-                AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), WhiteText);
-                AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), WhiteText);
+                AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_WHITE);
+                AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), TEXT_COLOR_WHITE);
             }
             else
             {
-                AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), RedText);
-                AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), RedText);
+                AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_HIGHLIGHT);
+                AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), TEXT_COLOR_HIGHLIGHT);
             }
         }
         else
         {
-            AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), WhiteText);
-            AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), RedText);
+            AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_WHITE);
+            AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), TEXT_COLOR_HIGHLIGHT);
         }
         /*
               if (scoreTable[trackNum].lapTimes[i] == 2000000000)
                  AddTime(0,
-                           text_data (165, (80+(spacing*i)), 16), RedText);
+                           text_data (165, (80+(spacing*i)), 16), TEXT_COLOR_HIGHLIGHT);
               else
         */
     }
@@ -623,28 +623,28 @@ void NewHighScoreDraw(ConfigData* gameData, HiScoreData* hiScoreData)
             if ((hiScoreData->toggleDisplay % 3) == 0)
             {
                 if (hiScoreData->charVal == 26 || hiScoreData->charVal == 27)
-                    AddDelEnd((hiScoreData->charVal - 26), text_data(hiScoreData->charX, charY, 16), WhiteText);
+                    AddDelEnd((hiScoreData->charVal - 26), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_WHITE);
                 else
-                    AddText(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), WhiteText);
+                    AddText(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_WHITE);
             }
             else
             {
                 if (hiScoreData->charVal == 26 || hiScoreData->charVal == 27)
-                    AddDelEnd((hiScoreData->charVal - 26), text_data(hiScoreData->charX, charY, 16), RedText);
+                    AddDelEnd((hiScoreData->charVal - 26), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
                 else
-                    AddText(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), RedText);
+                    AddText(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
             }
         }
 
         if (hiScoreData->userEntry)
         {
-            AddText(&(hiScoreData->nameEntered[0]), text_data(40, charY, 16), WhiteText);
-            AddTime(hiScoreData->bestLap, text_data(165, charY, 16), RedText);
+            AddText(&(hiScoreData->nameEntered[0]), text_data(40, charY, 16), TEXT_COLOR_WHITE);
+            AddTime(hiScoreData->bestLap, text_data(165, charY, 16), TEXT_COLOR_HIGHLIGHT);
         }
 
         hiScoreData->toggleDisplay++;
     }
-    CentreText("HALL OF FAME", text_data(107, 20, 16), WhiteText);
+    CentreText("HALL OF FAME", text_data(107, 20, 16), TEXT_COLOR_WHITE);
 
     if (gameData->gameType == TIME_TRIAL)
         DisplayHiScore(((gameData->trackNum - 1) + HiScoreTracks));

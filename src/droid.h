@@ -17,3 +17,4 @@ void UpdateDroidStart(RescueData* rescueDroid, ShipData* shipIndex, Object** shi
 void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes);
 void SetDroidVectors(RescueData* rescueDroid, Object** shipShapes);
 void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes);
+void DrawDroid(Object* droid, const RescueData* rescueData);

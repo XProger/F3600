@@ -86,3 +86,10 @@ void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short 
     SetSkeletonDirectionHPR(obj->skeleton, hdg, pitch, roll);
     renderObject(obj);
 }
+
+void DrawShip(Object* obj, const ShipData* shipData)
+{
+    SetSkeletonPosition(obj->skeleton, shipData->pos.vx, shipData->pos.vy, shipData->pos.vz);
+    SetSkeletonDirectionHPR(obj->skeleton, shipData->hdg, shipData->pitch, shipData->roll);
+    renderShip(obj, shipData->color);
+}

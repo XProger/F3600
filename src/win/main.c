@@ -9,7 +9,7 @@ int gPad;
 int gPadStickX;
 int gPadStickY;
 
-int lastKey;
+int gLastKey;
 
 int gFrameIndex;
 int gLastFrameIndex;
@@ -167,11 +167,15 @@ void inputReset()
         _XInputSetState(index, &vibration);
     }
 
+    gLastKey = -1;
     gPad = 0;
 }
 
 void inputUpdate()
 {
+    if (!isActive)
+        return;
+
     gPadStickX = gPadStickY = 256;
 
     if (!_XInputGetState)
@@ -258,7 +262,7 @@ void setKey(uint8 code, uint8 KeyDown)
 {
     int p = 0;
 
-    lastKey = KeyDown ? code : -1;
+    gLastKey = KeyDown ? code : -1;
 
     switch (code)
     {
@@ -313,7 +317,7 @@ void setKey(uint8 code, uint8 KeyDown)
 
 unsigned short GetKeyNoBlock(void)
 {
-    return lastKey;
+    return gLastKey;
 }
 
 // sound
@@ -362,7 +366,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg)
     {
         case WM_ACTIVATE:
-            isActive = (wParam == WA_ACTIVE);
+            isActive = (wParam != WA_INACTIVE);
             if (!isActive)
             {
                 inputReset();

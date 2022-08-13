@@ -1,5 +1,7 @@
 #include "game.h"
 
+//#define OLD_SHIELD
+
 extern long ctrlNeedTargetIcon;
 extern int ctrlnearShip;
 extern TrackCamera ctrlcamera;
@@ -24,28 +26,24 @@ void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
     int i;
     int16 roll;
     WeaponData* weapon;
+    Object* obj;
 
     for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
         if ((weaponIndex[i].count > 0) && (weaponIndex[i].availible))
         {
             weapon = weaponIndex + i;
+            obj = weaponShapes[weapon->currentWeapon].shapePtr;
 
             if (weapon->type == SHIELD)
             {
-                renderSetBlend(BLEND_ADD);
-                roll = shipIndex[weapon->fireShip].roll;
+                SetSkeletonPosition(obj->skeleton, weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
+                SetSkeletonDirectionHPR(obj->skeleton, weapon->hdg, weapon->pitch, shipIndex[weapon->fireShip].roll);
+                renderShield(obj, weapon->count);
             }
             else
             {
-                roll = 0;
-            }
-
-            DrawObject(weaponShapes[weapon->currentWeapon].shapePtr, weapon->pos.vx, weapon->pos.vy, weapon->pos.vz, weapon->hdg, weapon->pitch, roll);
-
-            if (weapon->type == SHIELD)
-            {
-                renderSetBlend(BLEND_NONE);
+                DrawObject(weaponShapes[weapon->currentWeapon].shapePtr, weapon->pos.vx, weapon->pos.vy, weapon->pos.vz, weapon->hdg, weapon->pitch, 0);
             }
         }
     }
@@ -288,8 +286,8 @@ void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShap
         return;
 
     renderSetBlend(BLEND_ADD);
-    AddGlyph(sxy.vx - (targetTexture->width >> 1), sxy.vy - (targetTexture->height >> 1), targetTexture->width, targetTexture->height, 0, 0, targetTexture);
-    renderSetBlend(BLEND_NONE);
+    AddGlyph(sxy.vx - (targetTexture->width >> 1), sxy.vy - (targetTexture->height >> 1), targetTexture->width, targetTexture->height, 0, 0, TEXT_COLOR_WHITE, targetTexture);
+    renderSetBlend(BLEND_ALPHA);
 }
 
 void InitWeaponObj(WeaponShape* weaponShapes, int textures, const char* name, int offset, int count)
@@ -327,7 +325,7 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapon
     targetTexture = LoadTexture("wipeout\\textures\\target2.tim");
 
     weaponTextures = TextureTableCount;
-    LoadCompressedTextureSequence("wipeout\\common\\mine.cmp");
+    LoadCompressedTextureSequence("wipeout\\common\\mine.cmp", 1);
 
     InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\rock.prm", ROCKET_OFFSET, MINE_OFFSET - ROCKET_OFFSET);
     InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\mine.prm", MINE_OFFSET, MISSILE_OFFSET - MINE_OFFSET);
@@ -1332,15 +1330,86 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     weapon->count = NON_ACTIVE;
 }
 
-void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+void UpdateShieldColors(Object* object, int32 counter)
 {
-    int k;
+    int i;
     Prm poly;
     short primitiveCount;
     short* coords;
     short col0, col1, col2, col3;
-    int shieldID;
 
+    poly.primitive = object->primitives;
+    primitiveCount = object->primitiveCount;
+
+    for (i = 0; i < primitiveCount; i++)
+    {
+        switch (poly.primitive->type)
+        {
+            case TypeG3:
+                coords = poly.g3->coords;
+
+                col0 = (rsin(counter * coords[0]) >> 5) + 128;
+                col1 = (rsin(counter * coords[1]) >> 5) + 128;
+                col2 = (rsin(counter * coords[2]) >> 5) + 128;
+
+                if (col0 > 255)
+                    col0 = 255;
+                if (col1 > 255)
+                    col1 = 255;
+                if (col2 > 255)
+                    col2 = 255;
+
+                poly.g3->colour[0].r = (uint8)(col0 >> 1);
+                poly.g3->colour[1].r = (uint8)(col1 >> 1);
+                poly.g3->colour[2].r = (uint8)(col2 >> 1);
+                poly.g3->colour[0].g = 64;
+                poly.g3->colour[1].g = 64;
+                poly.g3->colour[2].g = 64;
+                poly.g3->colour[0].b = 128;
+                poly.g3->colour[1].b = 128;
+                poly.g3->colour[2].b = 128;
+
+                poly.g3 += 1;
+                break;
+
+            case TypeG4:
+                coords = poly.g4->coords;
+
+                col0 = (rsin(counter * coords[0]) >> 5) + 128;
+                col1 = (rsin(counter * coords[1]) >> 5) + 128;
+                col2 = (rsin(counter * coords[2]) >> 5) + 128;
+                col3 = (rsin(counter * coords[3]) >> 5) + 128;
+
+                if (col0 > 255)
+                    col0 = 255;
+                if (col1 > 255)
+                    col1 = 255;
+                if (col2 > 255)
+                    col2 = 255;
+                if (col3 > 255)
+                    col2 = 255;
+
+                poly.g4->colour[0].r = (uint8)(col0 >> 1);
+                poly.g4->colour[1].r = (uint8)(col1 >> 1);
+                poly.g4->colour[2].r = (uint8)(col2 >> 1);
+                poly.g4->colour[3].r = (uint8)(col3 >> 1);
+                poly.g4->colour[0].g = 64;
+                poly.g4->colour[1].g = 64;
+                poly.g4->colour[2].g = 64;
+                poly.g4->colour[3].g = 64;
+                poly.g4->colour[0].b = 128;
+                poly.g4->colour[1].b = 128;
+                poly.g4->colour[2].b = 128;
+                poly.g4->colour[3].b = 128;
+
+                poly.g4 += 1;
+                break;
+        }
+    }
+}
+
+void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+{
     if (shipIndex[weapon->fireShip].attr & VIEW_IN)
     {
         weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx + (shipIndex[weapon->fireShip].unitVecNose.vx >> 6);
@@ -1374,76 +1443,9 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         weapon->hdg = shipIndex[weapon->fireShip].hdg;
         weapon->pitch = shipIndex[weapon->fireShip].pitch;
 
-        poly.primitive = weaponShapes[weapon->currentWeapon].shapePtr->primitives;
-        primitiveCount = weaponShapes[weapon->currentWeapon].shapePtr->primitiveCount;
-
-        for (k = 0; k < primitiveCount; k++)
-        {
-            switch (poly.primitive->type)
-            {
-                case TypeG3:
-                    coords = poly.g3->coords;
-
-                    col0 = (rsin(weapon->count * coords[0]) >> 5) + 128;
-                    col1 = (rsin(weapon->count * coords[1]) >> 5) + 128;
-                    col2 = (rsin(weapon->count * coords[2]) >> 5) + 128;
-
-                    if (col0 > 255)
-                        col0 = 255;
-                    if (col1 > 255)
-                        col1 = 255;
-                    if (col2 > 255)
-                        col2 = 255;
-
-                    poly.g3->colour[0].r = (uint8)(col0 >> 1);
-                    poly.g3->colour[1].r = (uint8)(col1 >> 1);
-                    poly.g3->colour[2].r = (uint8)(col2 >> 1);
-                    poly.g3->colour[0].g = 64;
-                    poly.g3->colour[1].g = 64;
-                    poly.g3->colour[2].g = 64;
-                    poly.g3->colour[0].b = 128;
-                    poly.g3->colour[1].b = 128;
-                    poly.g3->colour[2].b = 128;
-
-                    poly.g3 += 1;
-                    break;
-
-                case TypeG4:
-                    coords = poly.g4->coords;
-
-                    col0 = (rsin(weapon->count * coords[0]) >> 5) + 128;
-                    col1 = (rsin(weapon->count * coords[1]) >> 5) + 128;
-                    col2 = (rsin(weapon->count * coords[2]) >> 5) + 128;
-                    col3 = (rsin(weapon->count * coords[3]) >> 5) + 128;
-
-                    if (col0 > 255)
-                        col0 = 255;
-                    if (col1 > 255)
-                        col1 = 255;
-                    if (col2 > 255)
-                        col2 = 255;
-                    if (col3 > 255)
-                        col2 = 255;
-
-                    poly.g4->colour[0].r = (uint8)(col0 >> 1);
-                    poly.g4->colour[1].r = (uint8)(col1 >> 1);
-                    poly.g4->colour[2].r = (uint8)(col2 >> 1);
-                    poly.g4->colour[3].r = (uint8)(col3 >> 1);
-                    poly.g4->colour[0].g = 64;
-                    poly.g4->colour[1].g = 64;
-                    poly.g4->colour[2].g = 64;
-                    poly.g4->colour[3].g = 64;
-                    poly.g4->colour[0].b = 128;
-                    poly.g4->colour[1].b = 128;
-                    poly.g4->colour[2].b = 128;
-                    poly.g4->colour[3].b = 128;
-
-                    poly.g4 += 1;
-                    break;
-            }
-        }
-
-        shieldID = weapon->currentWeapon - SHIELD_OFFSET;
+#ifdef OLD_SHIELD
+        UpdateShieldColors(weaponShapes[weapon->currentWeapon].shapePtr, weapon->count);
+#endif
     }
 }
 

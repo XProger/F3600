@@ -50,7 +50,7 @@ short shipOrder[8];
 
 void SetSpread(ShipData* shipIndex, ConfigData* gameData, int position, int i);
 
-void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamera camera)
+void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 {
     int i;
     VECTOR distance;
@@ -76,11 +76,12 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
         toCentre.vz = (shipIndex[i].pos.vz + ctrlcamera.camPos->relative.t[2]);
         RotTrans(matrix, &toCentre, &v2, &flag);
 
-        if (mag < 2000)
+        if (mag < SHIP_VIS_DIST)
             shipIndex[i].attr |= VISIBLE;
 
-        if ((mag < 2000) && (v2.vz > 0) || (i == camShip))
+        if ((mag < SHIP_VIS_DIST) && (v2.vz > 0) || (i == camShip))
         {
+        #ifdef USE_SHIP_LODS
             if (shipIndex[ownShip].attr & RACING)
             {
                 if (mag < 1600)
@@ -89,17 +90,18 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
                     obj = shipShapes[shipIndex[i].lowResTableIndex];
             }
             else
+        #endif
             {
                 obj = shipShapes[shipIndex[i].highResTableIndex];
             }
+
 
             if (((shipIndex[i].attr & VIEW_IN) == 0) || (shipIndex[i].attr & REMOTE_VIEW))
             {
                 /*TODO disable AI ships for TIME TRIAL!*/
                 if ((i == ownShip) || (raceType != TIME_TRIAL))
                 {
-                    renderSetColor(shipIndex[i].color);
-                    DrawObject(obj, shipIndex[i].pos.vx, shipIndex[i].pos.vy, shipIndex[i].pos.vz, shipIndex[i].hdg, shipIndex[i].pitch, shipIndex[i].roll);
+                    DrawShip(obj, shipIndex + i);
                 }
             }
         }
@@ -108,8 +110,6 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, TrackCamer
             shipIndex[i].attr &= ~VISIBLE;
         }
     }
-
-    renderSetColor(0xFFFFFFFF);
 }
 
 void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
@@ -124,13 +124,13 @@ void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
     /******************************************************/
 
     shipTextures = TextureTableCount;
-    LoadCompressedTextureSequence("wipeout\\common\\allsh.cmp");
+    LoadCompressedTextureSequence("wipeout\\common\\allsh.cmp", 1);
 
     colTextures = TextureTableCount;
-    LoadCompressedTextureSequence("wipeout\\common\\alcol.cmp");
+    LoadCompressedTextureSequence("wipeout\\common\\alcol.cmp", 1);
 
     droidTextures = TextureTableCount;
-    LoadCompressedTextureSequence("wipeout\\common\\rescu.cmp");
+    LoadCompressedTextureSequence("wipeout\\common\\rescu.cmp", 1);
 
     obj = LoadPrm("wipeout\\common\\allsh.prm", shipTextures);
 

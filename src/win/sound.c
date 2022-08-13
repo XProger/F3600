@@ -273,6 +273,11 @@ int MusicIsPlaying()
     return music.playing;
 }
 
+int MusicGetTrack()
+{
+    return music.track;
+}
+
 void MusicPlay(int musicTrack)
 {
     FILE* f;

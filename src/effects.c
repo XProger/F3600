@@ -21,7 +21,8 @@ void InitEffects(Skeleton* camPos)
 
     tablePos = TextureTableCount;
 
-    LoadCompressedTextureSequence("wipeout\\common\\effects.cmp");
+    LoadCompressedTextureSequence("wipeout\\common\\effects.cmp", 1);
+
     gEffectTextures[FX_FIRE] = TextureTable[tablePos++];
     gEffectTextures[FX_FIRE_WHITE] = TextureTable[tablePos++];
     gEffectTextures[FX_SMOKE] = TextureTable[tablePos++];

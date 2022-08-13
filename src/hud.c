@@ -22,7 +22,7 @@ Texture* speedoTex;
 
 Texture* gWeaponIconTextures[NO_OF_WEAPON_TYPES];
 
-void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, const Texture* tex)
+void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, uint32 color, const Texture* tex)
 {
     Quad quad;
 
@@ -34,36 +34,33 @@ void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, const T
     quad.v0 = v0;
     quad.u1 = u1;
     quad.v1 = v1;
+    quad.color = color;
     quad.texture = tex;
 
     renderQuad(&quad);
 }
 
-void AddGlyph(int x, int y, int w, int h, int u, int v, const Texture* tex)
+void AddGlyph(int x, int y, int w, int h, int u, int v, uint32 color, const Texture* tex)
 {
-    AddQuad(x, y, w, h, u, v, u + w, v + h, tex);
+    AddQuad(x, y, w, h, u, v, u + w, v + h, color, tex);
 }
 
 void InitText(void)
 {
     int i;
-    extern int FontLoadHack;
 
     /**********************************************************/
     /***        Initialise In Game Character Set            ***/
     /**********************************************************/
-    FontLoadHack = 1;
 
     ASSERT(TextureTableCount == 0);
 
-    LoadCompressedTextureSequence("wipeout\\textures\\drfonts.cmp");
+    LoadCompressedTextureSequence("wipeout\\textures\\drfonts.cmp", 0);
 
     ASSERT(TextureTableCount <= FontTextureTableMax);
     for (i = 0; i < TextureTableCount; i++)
         FontTextureTable[i] = TextureTable[i];
     TextureTableCount = 0;
-
-    FontLoadHack = 0;
 }
 
 typedef struct 
@@ -112,9 +109,9 @@ void fill_speedo(int speed, int thrust)
     {
         renderSetBlend(BLEND_ADD);
 
-        q.r0 = q.r1 = q.r2 = q.r3 = 128;
-        q.g0 = q.g1 = q.g2 = q.g3 = 0;
-        q.b0 = q.b1 = q.b2 = q.b3 = 0;
+        q.color[0].r = q.color[1].r = q.color[2].r = q.color[3].r = 64;
+        q.color[0].g = q.color[1].g = q.color[2].g = q.color[3].g = 0;
+        q.color[0].b = q.color[1].b = q.color[2].b = q.color[3].b = 0;
 
         for (i = 0; i < NUM_BARS; i++)
         {
@@ -148,7 +145,7 @@ void fill_speedo(int speed, int thrust)
                 break;
         }
 
-        renderSetBlend(BLEND_NONE);
+        renderSetBlend(BLEND_ALPHA);
     }
 
     if (speed)
@@ -157,12 +154,12 @@ void fill_speedo(int speed, int thrust)
         {
             p = gBarPoint + i;
 
-            q.r0 = q.r3 = p[0].r;
-            q.g0 = q.g3 = p[0].g;
-            q.b0 = q.b3 = p[0].b;
-            q.r1 = q.r2 = p[1].r;
-            q.g1 = q.g2 = p[1].g;
-            q.b1 = q.b2 = p[1].b;
+            q.color[0].r = q.color[3].r = p[0].r >> 1;
+            q.color[0].g = q.color[3].g = p[0].g >> 1;
+            q.color[0].b = q.color[3].b = p[0].b >> 1;
+            q.color[1].r = q.color[2].r = p[1].r >> 1;
+            q.color[1].g = q.color[2].g = p[1].g >> 1;
+            q.color[1].b = q.color[2].b = p[1].b >> 1;
 
             q.x0 = sx + p[0].tx;
             q.y0 = sy + p[0].ty;
@@ -194,7 +191,7 @@ void fill_speedo(int speed, int thrust)
     }
 }
 
-void AddTime(int time, TEXT_DATA* pos_data, int colour)
+void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
 {
     int j;
     int digit[20];
@@ -231,9 +228,6 @@ void AddTime(int time, TEXT_DATA* pos_data, int colour)
             break;
     }
 
-    if (colour != WhiteText)
-        charTex += DRTEXT_CLUT;
-
     tenths = (time / FR6) % 10;
     time = time / FR60;
 
@@ -256,14 +250,14 @@ void AddTime(int time, TEXT_DATA* pos_data, int colour)
         charNum = (digit[j] + 26);
         currLett = charSet[charNum].width;
 
-        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, *charTex);
+        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, colour, *charTex);
 
         x += currLett;
     }
 
     currLett = charSet[36].width;
 
-    AddGlyph(x, y, currLett, size, charSet[36].vramX, charSet[36].vramY, *charTex);
+    AddGlyph(x, y, currLett, size, charSet[36].vramX, charSet[36].vramY, colour, *charTex);
 
     x += currLett;
 
@@ -281,14 +275,14 @@ void AddTime(int time, TEXT_DATA* pos_data, int colour)
         charNum = (digit[j] + 26);
         currLett = charSet[charNum].width;
 
-        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, *charTex);
+        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, colour, *charTex);
 
         x += currLett;
     }
 
     currLett = charSet[37].width;
 
-    AddGlyph(x, y, currLett, size, charSet[37].vramX, charSet[37].vramY, *charTex);
+    AddGlyph(x, y, currLett, size, charSet[37].vramX, charSet[37].vramY, colour, *charTex);
 
     x += currLett;
 
@@ -303,12 +297,12 @@ void AddTime(int time, TEXT_DATA* pos_data, int colour)
 
     currLett = charSet[(tenths + 26)].width;
 
-    AddGlyph(x, y, currLett, size, charSet[tenths + 26].vramX, charSet[tenths + 26].vramY, *charTex);
+    AddGlyph(x, y, currLett, size, charSet[tenths + 26].vramX, charSet[tenths + 26].vramY, TEXT_COLOR_WHITE, *charTex);
 
     x += currLett;
 }
 
-void AddText(const char* text_ptr, TEXT_DATA* pos_data, int colour)
+void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
 {
     uint8 letter = 0;
     char AValue = 0;
@@ -343,9 +337,6 @@ void AddText(const char* text_ptr, TEXT_DATA* pos_data, int colour)
             break;
     }
 
-    if (colour != WhiteText)
-        charTex += DRTEXT_CLUT;
-
     while (1)
     {
         letter = *text_ptr;
@@ -364,7 +355,7 @@ void AddText(const char* text_ptr, TEXT_DATA* pos_data, int colour)
 
             currLett = charSet[j].width;
 
-            AddGlyph(x, y, currLett, size, charSet[j].vramX, charSet[j].vramY, *charTex);
+            AddGlyph(x, y, currLett, size, charSet[j].vramX, charSet[j].vramY, colour, *charTex);
 
             x += currLett;
         }
@@ -375,7 +366,7 @@ void AddText(const char* text_ptr, TEXT_DATA* pos_data, int colour)
     }
 }
 
-void AddNumber(int num, TEXT_DATA* pos_data, int colour)
+void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
 {
     int i, j;
     int digit[12];
@@ -408,9 +399,6 @@ void AddNumber(int num, TEXT_DATA* pos_data, int colour)
             break;
     }
 
-    if (colour != WhiteText)
-        charTex += DRTEXT_CLUT;
-
     for (i = 0; i < 12; i++)
     {
         digit[i] = num % 10;
@@ -424,7 +412,7 @@ void AddNumber(int num, TEXT_DATA* pos_data, int colour)
         charNum = (digit[j] + 26);
         currLett = charSet[charNum].width;
 
-        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, *charTex);
+        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, colour, *charTex);
 
         x += currLett;
     }
@@ -450,10 +438,8 @@ void AddDelEnd(char dispChar, TEXT_DATA* pos_data, int colour)
     }
 
     charTex = endTex;
-    if (colour != WhiteText)
-        charTex += DRTEXT_CLUT;
 
-    AddGlyph(x, y, 24, size, 0, 0, *charTex);
+    AddGlyph(x, y, 24, size, 0, 0, colour, *charTex);
 }
 
 void SetCharTextures(char size)
@@ -910,7 +896,7 @@ void ScreenFooter(int x, int y, int colour)
                                     x, y+16,
                                     x+20, y+16) ;
 
-             AddText ("SELECT",text_data (x+22,y+4, 8),WhiteText) ;
+             AddText ("SELECT",text_data (x+22,y+4, 8),TEXT_COLOR_WHITE) ;
 
           }
           else
@@ -920,7 +906,7 @@ void ScreenFooter(int x, int y, int colour)
                                     x+offSet, y+16,
                                     x+20+offSet, y+16) ;
 
-             AddText ("BACK",text_data (x+22+offSet,y+4, 8),WhiteText) ;
+             AddText ("BACK",text_data (x+22+offSet,y+4, 8),TEXT_COLOR_WHITE) ;
           }
 
           setUV4(&(symbols[i]),
@@ -931,7 +917,7 @@ void ScreenFooter(int x, int y, int colour)
 
           setTPage(&(symbols[i]),0,0,symbolTex->textureX,symbolTex->textureY);
 
-          if (colour == WhiteText)
+          if (colour == TEXT_COLOR_WHITE)
              symbols[i].clut = symbolTex->cba;
           else
           {
@@ -946,7 +932,7 @@ void ScreenFooter(int x, int y, int colour)
     */
 }
 
-void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, int colour)
+void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
 {
     uint8 letter = 0;
     char AValue = 0;
@@ -981,9 +967,6 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, int colour)
             charTex = FontTextureTable + DRTEXT_8;
             break;
     }
-
-    if (colour != WhiteText)
-        charTex += DRTEXT_CLUT;
 
     tmpPtr = the_text_ptr;
 
@@ -1026,7 +1009,7 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, int colour)
 
             currLett = charSet[j].width;
 
-            AddGlyph(x, y, currLett, size, charSet[j].vramX, charSet[j].vramY, *charTex);
+            AddGlyph(x, y, currLett, size, charSet[j].vramX, charSet[j].vramY, colour, *charTex);
 
             x += currLett;
         }
@@ -1044,7 +1027,7 @@ void DisplayLives(ConfigData* gameData)
 
     for (i = 0; i < gameData->Lives; i++)
     {
-        AddGlyph(speedo_x + 115 - (13 * i), speedo_y - 5, 11, 9, 0, 0, *livesTex);
+        AddGlyph(speedo_x + 115 - (13 * i), speedo_y - 5, 11, 9, 0, 0, TEXT_COLOR_WHITE, *livesTex);
     }
 }
 
@@ -1072,13 +1055,13 @@ void DisplayChampTable(void)
 {
     short i;
 
-    CentreText("CHAMPIONSHIP TABLE", text_data(60, 40, 8), RedText);
-    AddText("PILOT NAME", text_data(85, 65, 8), RedText);
-    AddText("POINTS", text_data(240, 65, 8), RedText);
+    CentreText("CHAMPIONSHIP TABLE", text_data(60, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText("PILOT NAME", text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText("POINTS", text_data(240, 65, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        int color = ((gFrameIndex & 1) || (i != ownShip)) ? WhiteText : RedText;
+        int color = ((gFrameIndex & 1) || (i != ownShip)) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
 
         AddText(winTable[i].pilot, text_data(35, 80 + ((winTable[i].position) * 15), 8), color);
         AddNumber(winTable[i].points, text_data(255, 80 + ((winTable[i].position) * 15), 8), color);
@@ -1089,13 +1072,13 @@ void DisplayRacePoints(void)
 {
     short i;
 
-    CentreText("RACE POINTS", text_data(60, 40, 8), RedText);
-    AddText("PILOT NAME", text_data(85, 65, 8), RedText);
-    AddText("POINTS", text_data(240, 65, 8), RedText);
+    CentreText("RACE POINTS", text_data(60, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText("PILOT NAME", text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText("POINTS", text_data(240, 65, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        int color = ((gFrameIndex & 1) || (i != ownShip)) ? WhiteText : RedText;
+        int color = ((gFrameIndex & 1) || (i != ownShip)) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
 
         AddText(winTable[i].pilot, text_data(35, 80 + ((winTable[i].racePosition) * 15), 8), color);
         AddNumber(winTable[i].racePoints, text_data(255, 80 + ((winTable[i].racePosition) * 15), 8), color);
@@ -1113,7 +1096,7 @@ void InitScreenTex(Texture** screenTex, const char* fileName)
 
     tablePos = TextureTableCount;
 
-    LoadCompressedTextureSequence(modelFile);
+    LoadCompressedTextureSequence(modelFile, 0);
 
     screenTex[0] = TextureTable[tablePos++];
     screenTex[1] = TextureTable[tablePos++];
@@ -1123,7 +1106,7 @@ void InitWeaponSprtIcons(void)
 {
     int tablePos = TextureTableCount;
 
-    LoadCompressedTextureSequence("wipeout\\common\\wicons.cmp");
+    LoadCompressedTextureSequence("wipeout\\common\\wicons.cmp", 0);
 
     gWeaponIconTextures[MINE - 1] = TextureTable[tablePos++];
     gWeaponIconTextures[MISSILE - 1] = TextureTable[tablePos++];
@@ -1143,46 +1126,46 @@ void DrawWeaponSprtIcons(ShipData* playerShip)
     if (icon != NO_WEAPON)
     {
         icon -= 1;
-        AddGlyph(144, 20, 32, 32, 0, 0, gWeaponIconTextures[icon]);
+        AddGlyph(144, 20, 32, 32, 0, 0, TEXT_COLOR_WHITE, gWeaponIconTextures[icon]);
     }
 }
 
 void DisplayPicture(Texture* pic, short x, short y, short width, short height)
 {
-    AddQuad(x, y, width, height, 0, 0, width, height, pic);
+    AddQuad(x, y, width, height, 0, 0, width, height, TEXT_COLOR_WHITE, pic);
 }
 
 void DisplayVenomComplete(void)
 {
-    CentreText("WELL DONE", text_data(60, 40, 8), WhiteText);
+    CentreText("WELL DONE", text_data(60, 40, 8), TEXT_COLOR_WHITE);
 
-    CentreText("VENOM CLASS", text_data(85, 65, 8), WhiteText);
-    CentreText("COMPETENCE ACHIEVED", text_data(85, 77, 8), WhiteText);
-    CentreText("YOU HAVE NOW QUALIFIED", text_data(240, 89, 8), WhiteText);
-    CentreText("FOR THE ULTRA FAST", text_data(240, 101, 8), WhiteText);
-    CentreText("RAPIER CLASS", text_data(240, 125, 8), WhiteText);
-    CentreText("WE RECOMMEND YOU", text_data(240, 200, 8), WhiteText);
-    CentreText("SAVE YOUR CURRENT GAME", text_data(240, 212, 8), WhiteText);
+    CentreText("VENOM CLASS", text_data(85, 65, 8), TEXT_COLOR_WHITE);
+    CentreText("COMPETENCE ACHIEVED", text_data(85, 77, 8), TEXT_COLOR_WHITE);
+    CentreText("YOU HAVE NOW QUALIFIED", text_data(240, 89, 8), TEXT_COLOR_WHITE);
+    CentreText("FOR THE ULTRA FAST", text_data(240, 101, 8), TEXT_COLOR_WHITE);
+    CentreText("RAPIER CLASS", text_data(240, 125, 8), TEXT_COLOR_WHITE);
+    CentreText("WE RECOMMEND YOU", text_data(240, 200, 8), TEXT_COLOR_WHITE);
+    CentreText("SAVE YOUR CURRENT GAME", text_data(240, 212, 8), TEXT_COLOR_WHITE);
 }
 
 void DisplayAllVenomComplete(void)
 {
-    CentreText("AMAZING", text_data(60, 40, 8), RedText);
+    CentreText("AMAZING", text_data(60, 40, 8), TEXT_COLOR_HIGHLIGHT);
 
-    CentreText("YOU HAVE COMPLETED THE FULL", text_data(85, 65, 8), WhiteText);
-    CentreText("VENOM CLASS CHAMPIONSHIP", text_data(240, 77, 8), WhiteText);
-    CentreText("WELL DONE", text_data(240, 89, 8), WhiteText);
-    CentreText("YOU ARE A GREAT PILOT", text_data(240, 114, 8), WhiteText);
-    CentreText("NOW TAKE ON THE FULL", text_data(240, 126, 8), WhiteText);
-    CentreText("RAPIER CLASS CHAMPIONSHIP", text_data(240, 138, 8), WhiteText);
-    CentreText("KEEP GOING", text_data(240, 162, 8), WhiteText);
+    CentreText("YOU HAVE COMPLETED THE FULL", text_data(85, 65, 8), TEXT_COLOR_WHITE);
+    CentreText("VENOM CLASS CHAMPIONSHIP", text_data(240, 77, 8), TEXT_COLOR_WHITE);
+    CentreText("WELL DONE", text_data(240, 89, 8), TEXT_COLOR_WHITE);
+    CentreText("YOU ARE A GREAT PILOT", text_data(240, 114, 8), TEXT_COLOR_WHITE);
+    CentreText("NOW TAKE ON THE FULL", text_data(240, 126, 8), TEXT_COLOR_WHITE);
+    CentreText("RAPIER CLASS CHAMPIONSHIP", text_data(240, 138, 8), TEXT_COLOR_WHITE);
+    CentreText("KEEP GOING", text_data(240, 162, 8), TEXT_COLOR_WHITE);
 }
 
 void InitTrackTex(Texture** trackTex)
 {
     int tablePos = TextureTableCount;
 
-    LoadCompressedTextureSequence("wipeout\\textures\\track.cmp");
+    LoadCompressedTextureSequence("wipeout\\textures\\track.cmp", 0);
 
     trackTex[0] = TextureTable[tablePos++];
     trackTex[1] = TextureTable[tablePos++];
@@ -1197,17 +1180,17 @@ void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)
 {
     short i;
 
-    AddText("RACE STATISTICS", text_data(15, 80, 8), RedText);
+    AddText("RACE STATISTICS", text_data(15, 80, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < 3; i++)
     {
-        AddText("LAP", text_data(25, 95 + (i * 12), 8), RedText);
-        AddNumber((i + 1), text_data(65, 95 + (i * 12), 8), RedText);
-        AddTime(tempLapTimes[i], text_data(85, 95 + (i * 12), 8), WhiteText);
+        AddText("LAP", text_data(25, 95 + (i * 12), 8), TEXT_COLOR_HIGHLIGHT);
+        AddNumber((i + 1), text_data(65, 95 + (i * 12), 8), TEXT_COLOR_HIGHLIGHT);
+        AddTime(tempLapTimes[i], text_data(85, 95 + (i * 12), 8), TEXT_COLOR_WHITE);
     }
 
-    AddText("RACE POSITION", text_data(15, 50, 8), RedText);
-    AddNumber(gameData->Position, text_data(155, 50, 8), WhiteText);
+    AddText("RACE POSITION", text_data(15, 50, 8), TEXT_COLOR_HIGHLIGHT);
+    AddNumber(gameData->Position, text_data(155, 50, 8), TEXT_COLOR_WHITE);
 
     /*TODO make some beauty*/
     if (gameData->gameType == SINGLE_RACE)
@@ -1216,14 +1199,14 @@ void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)
         {
             if (BLINK_SLOW)
             {
-                AddText("RACE RECORD", text_data(15, 170, 8), RedText);
-                AddTime(hiScoreData->bestLap, text_data(25, 182, 8), WhiteText);
+                AddText("RACE RECORD", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+                AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
             }
         }
         else
         {
-            AddText("RACE TIME", text_data(15, 170, 8), RedText);
-            AddTime(hiScoreData->bestLap, text_data(25, 182, 8), WhiteText);
+            AddText("RACE TIME", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+            AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
         }
     }
     else if (gameData->gameType == CHAMPIONSHIP)
@@ -1232,14 +1215,14 @@ void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)
         {
             if (BLINK_SLOW)
             {
-                AddText("RACE RECORD", text_data(15, 170, 8), RedText);
-                AddTime(hiScoreData->bestLap, text_data(25, 182, 8), WhiteText);
+                AddText("RACE RECORD", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+                AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
             }
         }
         else
         {
-            AddText("RACE TIME", text_data(15, 170, 8), RedText);
-            AddTime(hiScoreData->bestLap, text_data(25, 182, 8), WhiteText);
+            AddText("RACE TIME", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+            AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
         }
     }
     else if (gameData->gameType == TIME_TRIAL)
@@ -1248,14 +1231,14 @@ void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)
         {
             if (BLINK_SLOW)
             {
-                AddText("RACE RECORD", text_data(15, 170, 8), RedText);
-                AddTime(hiScoreData->bestLap, text_data(25, 182, 8), WhiteText);
+                AddText("RACE RECORD", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+                AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
             }
         }
         else
         {
-            AddText("RACE TIME", text_data(15, 170, 8), RedText);
-            AddTime(hiScoreData->bestLap, text_data(25, 182, 8), WhiteText);
+            AddText("RACE TIME", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+            AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
         }
     }
     else
@@ -1264,66 +1247,39 @@ void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)
         {
             if (BLINK_SLOW)
             {
-                AddText("RACE RECORD", text_data(15, 170, 8), RedText);
-                AddTime(hiScoreData->bestLap, text_data(25, 182, 8), WhiteText);
+                AddText("RACE RECORD", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+                AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
             }
         }
         else
         {
-            AddText("RACE TIME", text_data(15, 170, 8), RedText);
-            AddTime(hiScoreData->bestLap, text_data(25, 182, 8), WhiteText);
+            AddText("RACE TIME", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+            AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
         }
     }
 
     if (gameData->gameType == CHAMPIONSHIP)
     {
-        if (gameData->newLapRecord == 1)
+        if ((gameData->newLapRecord != 1) || BLINK_SLOW)
         {
-            if (BLINK_SLOW)
-            {
-                AddText("LAP RECORD", text_data(15, 194, 8), RedText);
-                if (gameData->Position >= 1 && gameData->Position <= 3)
-                    AddTime(scoreTable[((gameData->trackNum - 1) - gameData->trackInc)].lapRecord, text_data(25, 206, 8), WhiteText);
-                else
-                    AddTime(scoreTable[((gameData->trackNum - 1) - gameData->trackInc)].lapRecord, text_data(25, 206, 8), WhiteText);
-            }
-        }
-        else
-        {
-            AddText("LAP RECORD", text_data(15, 194, 8), RedText);
-            AddTime(scoreTable[((gameData->trackNum - 1) - gameData->trackInc)].lapRecord, text_data(25, 206, 8), WhiteText);
+            AddText("LAP RECORD", text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
+            AddTime(scoreTable[((gameData->trackNum - 1) - gameData->trackInc)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
     else if (gameData->gameType == TIME_TRIAL)
     {
-        if (gameData->newLapRecord == 1)
+        if ((gameData->newLapRecord != 1) || BLINK_SLOW)
         {
-            if (BLINK_SLOW)
-            {
-                AddText("LAP RECORD", text_data(15, 194, 8), RedText);
-                AddTime(scoreTable[((gameData->trackNum - 1) + HiScoreTracks)].lapRecord, text_data(25, 206, 8), WhiteText);
-            }
-        }
-        else
-        {
-            AddText("LAP RECORD", text_data(15, 194, 8), RedText);
-            AddTime(scoreTable[((gameData->trackNum - 1) + HiScoreTracks)].lapRecord, text_data(25, 206, 8), WhiteText);
+            AddText("LAP RECORD", text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
+            AddTime(scoreTable[((gameData->trackNum - 1) + HiScoreTracks)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
     else
     {
-        if (gameData->newLapRecord == 1)
+        if ((gameData->newLapRecord != 1) || BLINK_SLOW)
         {
-            if (BLINK_SLOW)
-            {
-                AddText("LAP RECORD", text_data(15, 194, 8), RedText);
-                AddTime(scoreTable[(gameData->trackNum - 1)].lapRecord, text_data(25, 206, 8), WhiteText);
-            }
-        }
-        else
-        {
-            AddText("LAP RECORD", text_data(15, 194, 8), RedText);
-            AddTime(scoreTable[(gameData->trackNum - 1)].lapRecord, text_data(25, 206, 8), WhiteText);
+            AddText("LAP RECORD", text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
+            AddTime(scoreTable[(gameData->trackNum - 1)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
 }
@@ -1344,9 +1300,9 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
         if (playerShip->attr & RACING) // in race mode
         {
             if (playerShip->lapNo < END_LAP + 1) // not the last lap
-                AddTime(playerShip->lapTimes[playerShip->lapNo - 1], text_data(16 - gBorder, 210, 16), WhiteText);
+                AddTime(playerShip->lapTimes[playerShip->lapNo - 1], text_data(16 - gBorder, 210, 16), TEXT_COLOR_WHITE);
             else
-                AddTime(playerShip->lapTimes[2], text_data(16 - gBorder, 210, 16), WhiteText);
+                AddTime(playerShip->lapTimes[2], text_data(16 - gBorder, 210, 16), TEXT_COLOR_WHITE);
         }
     }
     if (playerShip->attr & RACING)
@@ -1357,7 +1313,7 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
             {
                 if (i < END_LAP)
                 {
-                    AddTime(playerShip->lapTimes[i - 1], text_data(16 - gBorder, 205 - (10 * i), 8), RedText);
+                    AddTime(playerShip->lapTimes[i - 1], text_data(16 - gBorder, 205 - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
                 }
             }
         }
@@ -1365,37 +1321,37 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 
     if (playerShip->attr & RACING)
     {
-        AddText("LAP", text_data(15 - gBorder, 8, 8), RedText); // PCwipeout
-        AddNumber(playerShip->lapNo, text_data(10 - gBorder, 19, 16), WhiteText); // PCwipeout
+        AddText("LAP", text_data(15 - gBorder, 8, 8), TEXT_COLOR_HIGHLIGHT); // PCwipeout
+        AddNumber(playerShip->lapNo, text_data(10 - gBorder, 19, 16), TEXT_COLOR_WHITE); // PCwipeout
 
         width = Text16[(playerShip->lapNo + 26)] % 100;
 
-        AddText("OF", text_data((10 + width) - gBorder, 27, 8), RedText);
+        AddText("OF", text_data((10 + width) - gBorder, 27, 8), TEXT_COLOR_HIGHLIGHT);
 
         width += 22;
 
-        AddNumber(END_LAP, text_data((10 + width) - gBorder, 19, 16), WhiteText);
+        AddNumber(END_LAP, text_data((10 + width) - gBorder, 19, 16), TEXT_COLOR_WHITE);
 
         if (raceType != TIME_TRIAL)
         {
-            AddText("POSITION", text_data(230 + gBorder, 8, 8), RedText);
-            AddNumber(winTable[ownShip].racePosition, text_data(260 + gBorder, 19, 16), WhiteText);
+            AddText("POSITION", text_data(230 + gBorder, 8, 8), TEXT_COLOR_HIGHLIGHT);
+            AddNumber(winTable[ownShip].racePosition, text_data(260 + gBorder, 19, 16), TEXT_COLOR_WHITE);
         }
 
-        AddText("LAP RECORD", text_data(15 - gBorder, 43, 8), RedText);
+        AddText("LAP RECORD", text_data(15 - gBorder, 43, 8), TEXT_COLOR_HIGHLIGHT);
         if (gameData->gameType == TIME_TRIAL)
-            AddTime(scoreTable[((gameData->trackNum - 1) + HiScoreTracks)].lapRecord, text_data(15 - gBorder, 55, 8), WhiteText);
+            AddTime(scoreTable[((gameData->trackNum - 1) + HiScoreTracks)].lapRecord, text_data(15 - gBorder, 55, 8), TEXT_COLOR_WHITE);
         else
-            AddTime(scoreTable[(gameData->trackNum - 1)].lapRecord, text_data(15 - gBorder, 55, 8), WhiteText);
+            AddTime(scoreTable[(gameData->trackNum - 1)].lapRecord, text_data(15 - gBorder, 55, 8), TEXT_COLOR_WHITE);
         if ((playerShip->attr & DIRECTION) == 0)
         {
-            CentreText("WRONG WAY", text_data(0, 110, 16), RedText);
+            CentreText("WRONG WAY", text_data(0, 110, 16), TEXT_COLOR_HIGHLIGHT);
         }
     }
 
     if (playerShip->attr & RACING)
     {
         fill_speedo(playerShip->speed, playerShip->thrust_mag);
-        AddGlyph(speedo_x, speedo_y, SPEEDO_WIDTH, SPEEDO_HEIGHT, 0, 0, speedoTex);
+        AddGlyph(speedo_x, speedo_y, SPEEDO_WIDTH, SPEEDO_HEIGHT, 0, 0, TEXT_COLOR_WHITE, speedoTex);
     }
 }

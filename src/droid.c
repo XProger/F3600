@@ -370,3 +370,8 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
 
     rescueDroid->droidUpdate = UpdateDroidStart;
 }
+
+void DrawDroid(Object* droid, const RescueData* rescueData)
+{
+    DrawObject(droid, rescueData->pos.vx, rescueData->pos.vy, rescueData->pos.vz, rescueData->hdg, rescueData->pitch, rescueData->roll);
+}

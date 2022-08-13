@@ -1,5 +1,8 @@
 #include "game.h"
 
+#define LOOK_BACK 3
+#define LOOK_AHEAD 6
+
 int SectionSearch(ShipData* playerShip)
 {
     TrackSection *trk, *nearest_section;
@@ -88,7 +91,9 @@ int SectionSearch(ShipData* playerShip)
         playerShip->attr |= FLYING;
     }
     else
+    {
         playerShip->attr &= ~FLYING;
+    }
 
     playerShip->nearTrkSect = nearest_section;
     return (smallest_mag);

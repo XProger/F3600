@@ -1,7 +1,12 @@
 #include "game.h"
 
+extern long ctrlmode;
+
 void ForceFeedback(int mag)
 {
+    if (ctrlmode == ATTRACT)
+        return;
+
     int rumble = mag >> 3;
     if (rumble > 255)
         rumble = 255;

@@ -61,6 +61,7 @@ int ctrlnearShip;
 
 int HACK_LOAD_TRACK;
 int HACK_LOAD_SHADOW;
+int HACK_TEX_FILTER;
 
 /**************************************************/
 /******           Stu additions               *****/
@@ -243,7 +244,8 @@ void raceInit(ConfigData* gameData)
         trackNo = gameData->actTrackNum;
     }
 
-    showLoadingScreen();
+    /*TODO loading screen*/
+    //showLoadingScreen();
 
     trackNum = gameData->trackNum; // for restoring - SJR
 
@@ -374,7 +376,7 @@ void raceInit(ConfigData* gameData)
     HACK_LOAD_TRACK = 1;
     ctrllibraryTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\library.cmp");
-    LoadCompressedTextureSequence(trackPath);
+    LoadCompressedTextureSequence(trackPath, 0);
     HACK_LOAD_TRACK = 0;
 
     ctrlsection = track->sections;
@@ -535,7 +537,7 @@ void raceCtrl(ConfigData* gameData)
     ctrlNeedInSingleGameConfirm = 0;
     ctrlNeedTargetIcon = 0;
 
-    //ctrlshipIndex[ownShip].weaponType = ROCKET; // fx debug
+    //ctrlshipIndex[ownShip].weaponType = SHIELD; // fx debug
 
     UpdatePad();
 
@@ -613,6 +615,10 @@ void raceCtrl(ConfigData* gameData)
                 else if (GetMenuKey(M_RIGHT))
                 {
                     GoNextMusic();
+                }
+                else if (GetMenuKey(M_SELECT) && !gMusicTrack)
+                {
+                    MusicStop();
                 }
             }
         }
@@ -1274,28 +1280,6 @@ void raceCtrl(ConfigData* gameData)
     }
 }
 
-void BackPoly(int x, int y, int w, int h)
-{
-    ColorQuad q;
-    q.x0 = x;
-    q.y0 = y;
-    q.x1 = x + w;
-    q.y1 = y;
-    q.x2 = x + w;
-    q.y2 = y + h;
-    q.x3 = x;
-    q.y3 = y + h;
-    q.r0 = q.g0 = q.b0 =
-    q.r1 = q.g1 = q.b1 =
-    q.r2 = q.g2 = q.b2 =
-    q.r3 = q.g3 = q.b3 = 128;
-
-    renderNextLayer();
-    renderSetBlend(BLEND_MUL);
-    renderColorQuad(&q);
-    renderSetBlend(BLEND_NONE);
-}
-
 void raceLoop(ConfigData* gameData)
 {
     int i, count;
@@ -1336,32 +1320,17 @@ void raceLoop(ConfigData* gameData)
     }
     
     ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
+    AddEffects(ctrlweaponIndex, ctrlshipIndex);
 
     renderSetMode(RENDER_MODE_3D);
 
-    // The Sky
-    ctrlprm[ctrlsky]->skeleton->update = 1;
     renderSky(ctrlprm[ctrlsky]);
-
-    // LANDSCAPE
     DrawLandscape(&(ctrlshipIndex[ownShip]), &ctrlcamera);
-
-    // TRACK
     renderTrack();
-
     DrawShadows(ctrlshipIndex);
-
-    // SHIPS
-    DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip, ctrlcamera);
-
-    // DROID
-    DrawObject(ctrlshipShapes[RESCUE_DROID], ctrlrescueDroid.pos.vx, ctrlrescueDroid.pos.vy, ctrlrescueDroid.pos.vz, ctrlrescueDroid.hdg, ctrlrescueDroid.pitch, ctrlrescueDroid.roll);
-
-    // WEAPONS
+    DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip);
+    DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
-
-    // Effects
-    AddEffects(ctrlweaponIndex, ctrlshipIndex);
     DrawEffects();
 
     renderSetMode(RENDER_MODE_2D);
@@ -1375,22 +1344,22 @@ void raceLoop(ConfigData* gameData)
     }
 
     if (ctrlNeedDeSelectScreen)
-        BackPoly(-gBorder, 0, 320 + gBorder * 2, 240);
+        renderBackFill(-gBorder, 0, 320 + gBorder * 2, 240);
 
     if (ctrlNeedBackPoly)
-        BackPoly(180, 50, 128, 140);
+        renderBackFill(180, 50, 128, 140);
     
     if (ctrlmode == ATTRACT)
     {
         if (ctrlplayCredits == 1)
             ShowCredits(attractDelay);
         else
-            CentreText("DEMO MODE", text_data(60, 14, 8), RedText);
+            CentreText("DEMO MODE", text_data(60, 14, 8), TEXT_COLOR_HIGHLIGHT);
     }
 
     // All game overs
     if ((ctrlshowGameOver == 1) || (gameData->showGameOver == 1) || (gameData->lostGame == 1))
-        CentreText("GAME OVER", text_data(60, 112, 16), RedText);
+        CentreText("GAME OVER", text_data(60, 112, 16), TEXT_COLOR_HIGHLIGHT);
 
     // Text at end.
     if (ctrlNeedEndText)
@@ -1398,16 +1367,16 @@ void raceLoop(ConfigData* gameData)
         switch (ctrlNeedEndTextVar)
         {
             case 1:
-                CentreText("CONGRATULATIONS", text_data(15, 20, 8), RedText);
+                CentreText("CONGRATULATIONS", text_data(15, 20, 8), TEXT_COLOR_HIGHLIGHT);
                 break;
             case 2:
-                CentreText("BAD LUCK", text_data(15, 20, 8), RedText);
+                CentreText("BAD LUCK", text_data(15, 20, 8), TEXT_COLOR_HIGHLIGHT);
                 break;
             case 3:
-                CentreText("FAILED TO QUALIFY", text_data(15, 20, 8), RedText);
+                CentreText("FAILED TO QUALIFY", text_data(15, 20, 8), TEXT_COLOR_HIGHLIGHT);
                 break;
             default:
-                CentreText("LOST THE VARIABLE", text_data(15, 20, 8), RedText);
+                CentreText("LOST THE VARIABLE", text_data(15, 20, 8), TEXT_COLOR_HIGHLIGHT);
                 break;
         }
     }

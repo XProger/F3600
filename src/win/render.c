@@ -1,43 +1,66 @@
 #include <windows.h>
 #include <gl/GL.h>
 #include <gl/glu.h>
+#include <gl/glext.h>
+#include <gl/wglext.h>
 
 #include "game.h"
 
-#ifndef GL_UNSIGNED_SHORT_5_6_5
-    #define GL_UNSIGNED_SHORT_5_6_5 0x8363
-#endif
+//#define DEBUG_RENDER
 
-#ifndef GL_UNSIGNED_SHORT_5_5_5_1
-    #define GL_UNSIGNED_SHORT_5_5_5_1 0x8034
-#endif
-
-#ifndef GL_UNSIGNED_SHORT_1_5_5_5_REV
-    #define GL_UNSIGNED_SHORT_1_5_5_5_REV 0x8366
-#endif
-
-#ifndef GL_CLAMP_TO_EDGE
-    #define GL_CLAMP_TO_EDGE 0x812F
-#endif
-
-#define GL_COMBINE      0x8570
-#define GL_COMBINE_RGB  0x8571
-#define GL_SOURCE0_RGB  0x8580
-#define GL_SOURCE1_RGB  0x8581
-#define GL_PREVIOUS     0x8578
-#define GL_RGB_SCALE    0x8573
-
-#define i32     (1.0f / 32.0f)
-#define i64     (1.0f / 64.0f)
 #define i255    (1.0f / 255.0f)
-#define i256    (1.0f / 256.0f)
-#define i212    (1.0f / 212.0f)
 #define i4096   (1.0f / 4096.0f)
-#define IDEG    (360.0f / 4096.0f)
 
 #define PI      3.14159265358979323846f
 #define DEG2RAD (PI / 180.0f)
 #define RAD2DEG (180.0f / PI)
+
+void* GetProc(const char *name)
+{
+    return (void*)wglGetProcAddress(name);
+}
+
+#define GetProcOGL(x) x=GetProc(#x)
+
+// Textures
+PFNGLGENERATEMIPMAPPROC             glGenerateMipmap;
+
+// Shader
+PFNGLCREATEPROGRAMPROC              glCreateProgram;
+PFNGLDELETEPROGRAMPROC              glDeleteProgram;
+PFNGLLINKPROGRAMPROC                glLinkProgram;
+PFNGLUSEPROGRAMPROC                 glUseProgram;
+PFNGLGETPROGRAMINFOLOGPROC          glGetProgramInfoLog;
+PFNGLCREATESHADERPROC               glCreateShader;
+PFNGLDELETESHADERPROC               glDeleteShader;
+PFNGLSHADERSOURCEPROC               glShaderSource;
+PFNGLATTACHSHADERPROC               glAttachShader;
+PFNGLCOMPILESHADERPROC              glCompileShader;
+PFNGLGETSHADERINFOLOGPROC           glGetShaderInfoLog;
+PFNGLGETUNIFORMLOCATIONPROC         glGetUniformLocation;
+PFNGLUNIFORM1IVPROC                 glUniform1iv;
+PFNGLUNIFORM1FVPROC                 glUniform1fv;
+PFNGLUNIFORM2FVPROC                 glUniform2fv;
+PFNGLUNIFORM3FVPROC                 glUniform3fv;
+PFNGLUNIFORM4FVPROC                 glUniform4fv;
+PFNGLUNIFORMMATRIX4FVPROC           glUniformMatrix4fv;
+PFNGLBINDATTRIBLOCATIONPROC         glBindAttribLocation;
+PFNGLENABLEVERTEXATTRIBARRAYPROC    glEnableVertexAttribArray;
+PFNGLDISABLEVERTEXATTRIBARRAYPROC   glDisableVertexAttribArray;
+PFNGLVERTEXATTRIBPOINTERPROC        glVertexAttribPointer;
+PFNGLGETPROGRAMIVPROC               glGetProgramiv;
+
+// Mesh
+PFNGLGENBUFFERSARBPROC      glGenBuffers;
+PFNGLDELETEBUFFERSARBPROC   glDeleteBuffers;
+PFNGLBINDBUFFERARBPROC      glBindBuffer;
+PFNGLBUFFERDATAARBPROC      glBufferData;
+PFNGLBUFFERSUBDATAARBPROC   glBufferSubData;
+
+// Vertex Arrays
+PFNGLGENVERTEXARRAYSPROC    glGenVertexArrays;
+PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+PFNGLBINDVERTEXARRAYPROC    glBindVertexArray;
 
 typedef struct
 {
@@ -54,7 +77,7 @@ typedef struct
     int32 y;
     int32 z;
     float s, t;
-    float r, g, b, a;
+    uint8 r, g, b, a;
 } VertexGL;
 
 typedef uint16 IndexGL;
@@ -71,12 +94,36 @@ typedef struct Mesh
     struct Mesh* next;
 } Mesh;
 
+typedef enum
+{
+    aCoord,
+    aTexCoord,
+    aColor,
+    aMAX
+} AttribType;
+
+typedef enum
+{
+    uProjMatrix,
+    uViewMatrix,
+    uColor,
+    uMAX
+} UniformType;
+
+typedef struct
+{
+    GLuint id;
+    GLint uid[uMAX];
+} Shader;
+
 typedef struct
 {
     Mesh* mesh;
+    const Shader* shader;
     const TextureGL* texture;
     int32 projMatrix;
     int32 viewMatrix;
+    uint32 color;
     int32 layer;
     BlendMode blend;
     uint8 depthWrite;
@@ -104,10 +151,12 @@ int32 gMatricesCount;
 int32 gMeshesCount;
 int32 gStatesCount;
 
+int32 gMaxAniso;
+
 uint16 tempData[320 * 240];
 
-extern Texture* TextureTable[];
 const TextureGL* gTexture;
+GLuint whiteTex;
 
 extern HWND hWnd;
 HDC hDC;
@@ -124,7 +173,15 @@ int gWidth, gHeight, gBorder;
 
 int gCylX, gCylZ;
 
-float gR, gG, gB;
+GLuint VAO;
+GLuint VBO[2];
+Shader shaderTrack;
+Shader shaderObject;
+Shader shaderShip;
+Shader shaderShield;
+Shader shaderSky;
+Shader shaderBlob;
+Shader shaderGUI;
 
 #define MAX_TRACK_TEX   22
 TextureGL gTrackTex[MAX_TRACK_TEX];
@@ -134,6 +191,225 @@ extern TrackData* track;
 extern TexTemplate* ctrltexTemplate;
 extern short ctrllibraryTextures;
 extern short ctrlnumLib;
+
+const CVECTOR colorGrey = { 128, 128, 128, 255 };
+const CVECTOR colorWhite = { 255, 255, 255, 255 };
+
+const char* GLSL_HEADER_VERT_GL3 = 
+    "#version 150\n"
+    "#define VERTEX\n"
+    "#define varying out\n"
+    "#define attribute in\n"
+    "#define texture2D texture\n";
+
+const char* GLSL_HEADER_FRAG_GL3 = 
+    "#version 150\n"
+    "#define FRAGMENT\n"
+    "#define varying in\n"
+    "#define texture2D texture\n"
+    "out vec4 fragColor;\n";
+
+const char* sh_track =
+    "varying vec2 vTexCoord;\n"
+    "varying vec4 vColor;\n"
+
+    "#ifdef VERTEX\n"
+        "uniform mat4 uProjMatrix;\n"
+        "uniform mat4 uViewMatrix;\n"
+
+        "attribute vec3 aCoord;\n"
+        "attribute vec2 aTexCoord;\n"
+        "attribute vec4 aColor;\n"
+
+        "void main() {\n"
+            "vTexCoord = aTexCoord;\n"
+            "vColor = aColor * vec4(2.0, 2.0, 2.0, 1.0);\n"
+            "gl_Position = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
+        "}\n"
+
+    "#else\n"
+
+        "uniform sampler2D sDiffuse;\n"
+
+        "void main() {\n"
+            "fragColor = texture2D(sDiffuse, vTexCoord) * vColor;\n"
+            "if (fragColor.a <= 0.0) discard;\n"
+        "}\n"
+
+    "#endif\n";
+
+const char* sh_object =
+    "varying vec2 vTexCoord;\n"
+    "varying vec4 vColor;\n"
+
+    "#ifdef VERTEX\n"
+        "uniform mat4 uProjMatrix;\n"
+        "uniform mat4 uViewMatrix;\n"
+
+        "attribute vec3 aCoord;\n"
+        "attribute vec2 aTexCoord;\n"
+        "attribute vec4 aColor;\n"
+
+        "void main() {\n"
+            "vTexCoord = aTexCoord;\n"
+            "vColor = aColor * vec4(2.0, 2.0, 2.0, 1.0);\n"
+            "gl_Position = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
+        "}\n"
+
+    "#else\n"
+
+        "uniform sampler2D sDiffuse;\n"
+
+        "void main() {\n"
+            "fragColor = texture2D(sDiffuse, vTexCoord) * vColor;\n"
+            "if (fragColor.a <= 0.0) discard;\n"
+        "}\n"
+
+    "#endif\n";
+
+const char* sh_ship =
+    "varying vec2 vTexCoord;\n"
+    "varying vec4 vColor;\n"
+
+    "#ifdef VERTEX\n"
+        "uniform mat4 uProjMatrix;\n"
+        "uniform mat4 uViewMatrix;\n"
+        "uniform vec4 uColor;\n"
+
+        "attribute vec3 aCoord;\n"
+        "attribute vec2 aTexCoord;\n"
+        "attribute vec4 aColor;\n"
+
+        "void main() {\n"
+            "vTexCoord = aTexCoord;\n"
+            "vec4 ambient = min(vec4(1.0), uColor * 2.0 + 0.1);\n"
+            "vColor = aColor * ambient * vec4(2.0, 2.0, 2.0, 1.0);\n"
+            "gl_Position = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
+        "}\n"
+
+    "#else\n"
+
+        "uniform sampler2D sDiffuse;\n"
+
+        "void main() {\n"
+            "fragColor = texture2D(sDiffuse, vTexCoord) * vColor;\n"
+        "}\n"
+
+    "#endif\n";
+
+const char* sh_shield =
+    "varying vec4 vColor;\n"
+
+    "#ifdef VERTEX\n"
+        "uniform mat4 uProjMatrix;\n"
+        "uniform mat4 uViewMatrix;\n"
+        "uniform vec4 uColor;\n"
+
+        "attribute vec3 aCoord;\n"
+
+        "void main() {\n"
+            "float v = aCoord.x + aCoord.y + aCoord.z;\n"
+            "float a = sin(v + uColor.r * 64.0) * 0.5 + 0.5;\n"
+            "float b = sin(aCoord.z + uColor.r * 128.0) * 0.5 + 0.5;\n"
+            "vec3 pos = aCoord;\n"
+            "pos.x += sign(pos.x) * a * 8.0;\n"
+            "pos.y += sign(pos.y) * b * 8.0;\n"
+            "b *= 0.25;\n"
+            "vColor = vec4(a * 0.5 + b, 0.25 + b, 0.5 + b, 1.0) * 0.75;\n"
+            "gl_Position = uProjMatrix * (uViewMatrix * vec4(pos, 1.0));\n"
+        "}\n"
+
+    "#else\n"
+
+        "void main() {\n"
+            "fragColor = vec4(vColor.xyz, 1.0);\n"
+        "}\n"
+
+    "#endif\n";
+
+/*TODO aurora*/
+const char* sh_sky =
+    "varying vec2 vTexCoord;\n"
+    "varying vec4 vColor;\n"
+
+    "#ifdef VERTEX\n"
+        "uniform mat4 uProjMatrix;\n"
+        "uniform mat4 uViewMatrix;\n"
+
+        "attribute vec3 aCoord;\n"
+        "attribute vec2 aTexCoord;\n"
+        "attribute vec4 aColor;\n"
+
+        "void main() {\n"
+            "vTexCoord = aTexCoord;\n"
+            "vColor = aColor * vec4(2.0, 2.0, 2.0, 1.0);\n"
+            "gl_Position = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
+        "}\n"
+
+    "#else\n"
+
+        "uniform sampler2D sDiffuse;\n"
+
+        "void main() {\n"
+            "fragColor = texture2D(sDiffuse, vTexCoord) * vColor;\n"
+        "}\n"
+
+    "#endif\n";
+
+const char* sh_blob =
+    "varying vec2 vTexCoord;\n"
+    "varying float vIntensity;\n"
+
+    "#ifdef VERTEX\n"
+        "uniform mat4 uProjMatrix;\n"
+        "uniform mat4 uViewMatrix;\n"
+
+        "attribute vec3 aCoord;\n"
+        "attribute vec2 aTexCoord;\n"
+        "attribute vec4 aColor;\n"
+
+        "void main() {\n"
+            "vTexCoord = aTexCoord;\n"
+            "vIntensity = aColor.a * 4.0;\n"
+            "gl_Position = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
+        "}\n"
+
+    "#else\n"
+
+        "uniform sampler2D sDiffuse;\n"
+
+        "void main() {\n"
+            "fragColor = vec4(0.0, 0.0, 0.0, texture2D(sDiffuse, vTexCoord).r * vIntensity);\n"
+        "}\n"
+
+    "#endif\n";
+
+const char* sh_gui =
+    "varying vec2 vTexCoord;\n"
+    "varying vec4 vColor;\n"
+
+    "#ifdef VERTEX\n"
+        "uniform mat4 uProjMatrix;\n"
+
+        "attribute vec2 aCoord;\n"
+        "attribute vec2 aTexCoord;\n"
+        "attribute vec4 aColor;\n"
+
+        "void main() {\n"
+            "vTexCoord = aTexCoord;\n"
+            "vColor = vec4(aColor.xyz + aColor.xyz, 1.0);\n"
+            "gl_Position = uProjMatrix * vec4(aCoord, 0.0, 1.0);\n"
+        "}\n"
+
+    "#else\n"
+
+        "uniform sampler2D sDiffuse;\n"
+
+        "void main() {\n"
+            "fragColor = texture2D(sDiffuse, vTexCoord) * vColor;\n"
+        "}\n"
+
+    "#endif\n";
 
 void matrixIdentity(Matrix* m)
 {
@@ -184,9 +460,11 @@ void matrixPerspective(Matrix* m, float fov, float aspect, float xoff, float yof
 
 int32 stateCmp(const RenderState* a, const RenderState* b)
 {
-    return (a->texture == b->texture) && 
+    return (a->shader == b->shader) &&
+           (a->texture == b->texture) && 
            (a->projMatrix == b->projMatrix) &&
            (a->viewMatrix == b->viewMatrix) &&
+           (a->color == b->color) &&
            (a->layer == b->layer) &&
            (a->blend == b->blend) &&
            (a->depthWrite == b->depthWrite) &&
@@ -226,18 +504,27 @@ void stateCheck()
     gStatePtr->mesh = mesh;
 }
 
-void setTexFilter(int bilinear)
+void setTexFilter(int bilinear, int mipmap)
 {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmap ? (bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST) : (bilinear ? GL_LINEAR : GL_NEAREST));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 2);
+    if (mipmap && gMaxAniso)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gMaxAniso);
+    }
+}
+
+GLuint genTex(uint32 color)
+{
+    GLuint id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color);
+    setTexFilter(0, 0);
+    return id;
 }
 
 int UnloadTexture(TextureGL* pTex)
@@ -252,9 +539,68 @@ int UnloadTexture(TextureGL* pTex)
     return TRUE;
 }
 
+void compileShader(Shader* shader, const char* text)
+{
+    int32 i;
+    GLchar info[1024];
+    GLuint obj;
+    const GLenum type[2] = { GL_VERTEX_SHADER, GL_FRAGMENT_SHADER };
+
+    const GLchar *code[2][3] = {
+        { GLSL_HEADER_VERT_GL3, "#line 0\n", text },
+        { GLSL_HEADER_FRAG_GL3, "#line 0\n", text }
+    };
+
+    shader->id = glCreateProgram();
+
+    for (i = 0; i < 2; i++)
+    {
+        obj = glCreateShader(type[i]);
+        glShaderSource(obj, 3, code[i], NULL);
+        glCompileShader(obj);
+
+        glGetShaderInfoLog(obj, sizeof(info), NULL, info);
+        if (info[0] && strlen(info) > 8)
+        {
+            OutputDebugString(info);
+            ASSERT(0);
+        }
+
+        glAttachShader(shader->id, obj);
+        glDeleteShader(obj);
+    }
+
+    glBindAttribLocation(shader->id, aCoord, "aCoord");
+    glBindAttribLocation(shader->id, aTexCoord, "aTexCoord");
+    glBindAttribLocation(shader->id, aColor, "aColor");
+
+    glLinkProgram(shader->id);
+
+    glGetProgramInfoLog(shader->id, sizeof(info), NULL, info);
+    if (info[0] && strlen(info) > 8)
+    {
+        OutputDebugString(info);
+        ASSERT(0);
+    }
+
+
+    i = 0;
+    glUseProgram(shader->id);
+    glUniform1iv(glGetUniformLocation(shader->id, "sDiffuse"), 1, &i);
+
+    shader->uid[uProjMatrix] = glGetUniformLocation(shader->id, "uProjMatrix");
+    shader->uid[uViewMatrix] = glGetUniformLocation(shader->id, "uViewMatrix");
+    shader->uid[uColor] = glGetUniformLocation(shader->id, "uColor");
+}
+
 void renderInit(void)
 {
+    VertexGL* v = NULL;
+    int format;
     PIXELFORMATDESCRIPTOR pfd;
+    PFNWGLCHOOSEPIXELFORMATARBPROC    wglChoosePixelFormatARB    = NULL;
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
+
     memset(&pfd, 0, sizeof(pfd));
     pfd.nSize = sizeof(pfd);
     pfd.nVersion = 1;
@@ -266,11 +612,62 @@ void renderInit(void)
     pfd.cAlphaBits = 8;
     pfd.cDepthBits = 24;
 
+    {
+        HWND fWnd = CreateWindow("static", NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
+        HDC fDC = GetDC(fWnd);
+
+        int format = ChoosePixelFormat(fDC, &pfd);
+        SetPixelFormat(fDC, format, &pfd);
+        HGLRC fRC = wglCreateContext(fDC);
+        wglMakeCurrent(fDC, fRC);
+
+        wglChoosePixelFormatARB    = GetProcOGL(wglChoosePixelFormatARB);
+        wglCreateContextAttribsARB = GetProcOGL(wglCreateContextAttribsARB);
+
+        wglMakeCurrent(0, 0);
+        ReleaseDC(fWnd, fDC);
+        wglDeleteContext(fRC);
+        DestroyWindow(fWnd);
+    }
+
     hDC = GetDC(hWnd);
 
-    int format = ChoosePixelFormat(hDC, &pfd);
-    SetPixelFormat(hDC, format, &pfd);
-    hRC = wglCreateContext(hDC);
+    if (wglChoosePixelFormatARB && wglCreateContextAttribsARB)
+    {
+        const int pixelAttribs[] = {
+            WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+            WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+            WGL_DOUBLE_BUFFER_ARB,  GL_TRUE,
+            WGL_PIXEL_TYPE_ARB,     WGL_TYPE_RGBA_ARB,
+            WGL_ACCELERATION_ARB,   WGL_FULL_ACCELERATION_ARB,
+            WGL_COLOR_BITS_ARB,     32,
+            WGL_ALPHA_BITS_ARB,     8,
+            WGL_DEPTH_BITS_ARB,     24,
+            0
+        };
+
+        int format;
+        UINT numFormats;
+        int status = wglChoosePixelFormatARB(hDC, pixelAttribs, NULL, 1, &format, &numFormats);
+        ASSERT(status && numFormats > 0);
+
+        DescribePixelFormat(hDC, format, sizeof(pfd), &pfd);
+        SetPixelFormat(hDC, format, &pfd);
+
+        int contextAttribs[] = {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+            WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
+        };
+
+        hRC = wglCreateContextAttribsARB(hDC, 0, contextAttribs);
+    } else {
+        int format = ChoosePixelFormat(hDC, &pfd);
+        SetPixelFormat(hDC, format, &pfd);
+        hRC = wglCreateContext(hDC);
+        ASSERT(0);
+    }
 
     wglMakeCurrent(hDC, hRC);
 
@@ -278,16 +675,79 @@ void renderInit(void)
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.0f);
-
-    glEnable(GL_TEXTURE_2D);
-
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    GetProcOGL(glGenerateMipmap);
+
+    GetProcOGL(glCreateProgram);
+    GetProcOGL(glDeleteProgram);
+    GetProcOGL(glLinkProgram);
+    GetProcOGL(glUseProgram);
+    GetProcOGL(glGetProgramInfoLog);
+    GetProcOGL(glCreateShader);
+    GetProcOGL(glDeleteShader);
+    GetProcOGL(glShaderSource);
+    GetProcOGL(glAttachShader);
+    GetProcOGL(glCompileShader);
+    GetProcOGL(glGetShaderInfoLog);
+    GetProcOGL(glGetUniformLocation);
+    GetProcOGL(glUniform1iv);
+    GetProcOGL(glUniform1fv);
+    GetProcOGL(glUniform2fv);
+    GetProcOGL(glUniform3fv);
+    GetProcOGL(glUniform4fv);
+    GetProcOGL(glUniformMatrix4fv);
+    GetProcOGL(glBindAttribLocation);
+    GetProcOGL(glEnableVertexAttribArray);
+    GetProcOGL(glDisableVertexAttribArray);
+    GetProcOGL(glVertexAttribPointer);
+    GetProcOGL(glGetProgramiv);
+
+    GetProcOGL(glGenBuffers);
+    GetProcOGL(glDeleteBuffers);
+    GetProcOGL(glBindBuffer);
+    GetProcOGL(glBufferData);
+    GetProcOGL(glBufferSubData);
+
+    GetProcOGL(glGenVertexArrays);
+    GetProcOGL(glDeleteVertexArrays);
+    GetProcOGL(glBindVertexArray);
+
+    compileShader(&shaderTrack, sh_track);
+    compileShader(&shaderObject, sh_object);
+    compileShader(&shaderShip, sh_ship);
+    compileShader(&shaderShield, sh_shield);
+    compileShader(&shaderSky, sh_sky);
+    compileShader(&shaderBlob, sh_blob);
+    compileShader(&shaderGUI, sh_gui);
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(2, VBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_RENDER_INDICES * sizeof(IndexGL), NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, MAX_RENDER_VERTICES * sizeof(VertexGL), NULL, GL_DYNAMIC_DRAW);
+
+    glEnableVertexAttribArray(aCoord);
+    glEnableVertexAttribArray(aTexCoord);
+    glEnableVertexAttribArray(aColor);
+
+    glVertexAttribPointer(aCoord, 3, GL_INT, GL_FALSE, sizeof(*v), &v->x);
+    glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(*v), &v->s);
+    glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(*v), &v->r);
+
+    whiteTex = genTex(0xFFFFFFFF);
+
+    glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gMaxAniso);
 }
 
 void renderFree(void)
 {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(2, VBO);
     wglMakeCurrent(0, 0);
     wglDeleteContext(hRC);
     ReleaseDC(hWnd, hDC);
@@ -344,15 +804,11 @@ void renderDepthTest(int enable)
 
 void renderSetColor(uint32 color)
 {
-    gR = 0.1f + 2.0f * i256 * (0xFF & (color));
-    gG = 0.1f + 2.0f * i256 * (0xFF & (color >> 8));
-    gB = 0.1f + 2.0f * i256 * (0xFF & (color >> 16));
-    if (gR > 1.0f) gR = 1.0f;
-    if (gG > 1.0f) gG = 1.0f;
-    if (gB > 1.0f) gB = 1.0f;
-    gR *= i256;
-    gG *= i256;
-    gB *= i256;
+    if (gCurState.color != color)
+    {
+        gCurState.color = color;
+        gStatePtr = NULL;
+    }
 }
 
 void renderNextLayer()
@@ -369,6 +825,16 @@ void renderSetTexture(const TextureGL* texture)
         gStatePtr = NULL;
     }
 }
+
+void renderSetShader(const Shader* shader)
+{
+    if (gCurState.shader != shader)
+    {
+        gCurState.shader = shader;
+        gStatePtr = NULL;
+    }
+}
+
 
 void renderClear(void)
 {
@@ -401,7 +867,7 @@ void addQuad()
     gStatePtr->mesh->iCount += 6;
 }
 
-void addVertex(int32 x, int32 y, int32 z, float s, float t, float r, float g, float b, float a)
+void addVertex(int32 x, int32 y, int32 z, float s, float t, const CVECTOR* color)
 {
     ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
 
@@ -411,10 +877,42 @@ void addVertex(int32 x, int32 y, int32 z, float s, float t, float r, float g, fl
     v->z = z;
     v->s = s;
     v->t = t;
-    v->r = r;
-    v->g = g;
-    v->b = b;
-    v->a = a;
+    v->r = color->r;
+    v->g = color->g;
+    v->b = color->b;
+    v->a = 255;
+}
+
+void addVertexI(const VECTOR* pos, float s, float t, const CVECTOR* color)
+{
+    ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
+
+    VertexGL* v = gVertices + gVerticesCount++;
+    v->x = pos->vx;
+    v->y = pos->vy;
+    v->z = pos->vz;
+    v->s = s;
+    v->t = t;
+    v->r = color->r;
+    v->g = color->g;
+    v->b = color->b;
+    v->a = 255;
+}
+
+void addVertexS(const SVECTOR* pos, float s, float t, const CVECTOR* color)
+{
+    ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
+
+    VertexGL* v = gVertices + gVerticesCount++;
+    v->x = pos->vx;
+    v->y = pos->vy;
+    v->z = pos->vz;
+    v->s = s;
+    v->t = t;
+    v->r = color->r;
+    v->g = color->g;
+    v->b = color->b;
+    v->a = 255;
 }
 
 void renderQuad(const Quad* q)
@@ -433,25 +931,31 @@ void renderQuad(const Quad* q)
     stateCheck();
 
     addQuad();
-    addVertex(x0, y0, 0, u0, v0, 0.5f, 0.5f, 0.5f, 1.0f);
-    addVertex(x1, y0, 0, u1, v0, 0.5f, 0.5f, 0.5f, 1.0f);
-    addVertex(x1, y1, 0, u1, v1, 0.5f, 0.5f, 0.5f, 1.0f);
-    addVertex(x0, y1, 0, u0, v1, 0.5f, 0.5f, 0.5f, 1.0f);
+    addVertex(x0, y0, 0, u0, v0, (CVECTOR*)&q->color);
+    addVertex(x1, y0, 0, u1, v0, (CVECTOR*)&q->color);
+    addVertex(x1, y1, 0, u1, v1, (CVECTOR*)&q->color);
+    addVertex(x0, y1, 0, u0, v1, (CVECTOR*)&q->color);
 }
 
 void renderShadow(const Shadow* s)
 {
     TextureGL* t = (TextureGL*)s->texture;
-    float intensity = s->intensity * i255;
+    CVECTOR color = { 255, 255, 255, 255 };
 
+    renderSetShader(&shaderBlob);
     renderSetTexture(t);
     stateCheck();
 
     addQuad();
-    addVertex(s->x0, s->y0, s->z0, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, intensity);
-    addVertex(s->x1, s->y1, s->z1, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, intensity);
-    addVertex(s->x2, s->y2, s->z2, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, intensity);
-    addVertex(s->x3, s->y3, s->z3, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, intensity);
+    addVertex(s->x0, s->y0, s->z0, 0.0f, 0.0f, &color);
+    addVertex(s->x1, s->y1, s->z1, 1.0f, 0.0f, &color);
+    addVertex(s->x2, s->y2, s->z2, 1.0f, 1.0f, &color);
+    addVertex(s->x3, s->y3, s->z3, 0.0f, 1.0f, &color);
+
+    gVertices[gVerticesCount - 3].a =
+    gVertices[gVerticesCount - 2].a =
+    gVertices[gVerticesCount - 1].a =
+    gVertices[gVerticesCount - 0].a = s->intensity;
 }
 
 void renderColorQuad(const ColorQuad* q)
@@ -460,10 +964,10 @@ void renderColorQuad(const ColorQuad* q)
     stateCheck();
 
     addQuad();
-    addVertex(q->x0, q->y0, 0, 0.0f, 0.0f, q->r0 * i255, q->g0 * i255, q->b0 * i255, 1.0f);
-    addVertex(q->x1, q->y1, 0, 0.0f, 0.0f, q->r1 * i255, q->g1 * i255, q->b1 * i255, 1.0f);
-    addVertex(q->x2, q->y2, 0, 0.0f, 0.0f, q->r2 * i255, q->g2 * i255, q->b2 * i255, 1.0f);
-    addVertex(q->x3, q->y3, 0, 0.0f, 0.0f, q->r3 * i255, q->g3 * i255, q->b3 * i255, 1.0f);
+    addVertex(q->x0, q->y0, 0, 0.0f, 0.0f, q->color + 0);
+    addVertex(q->x1, q->y1, 0, 0.0f, 0.0f, q->color + 1);
+    addVertex(q->x2, q->y2, 0, 0.0f, 0.0f, q->color + 2);
+    addVertex(q->x3, q->y3, 0, 0.0f, 0.0f, q->color + 3);
 }
 
 void renderBillboard(const Billboard* b)
@@ -480,10 +984,32 @@ void renderBillboard(const Billboard* b)
     stateCheck();
 
     addQuad();
-    addVertex(b->x - sx, b->y - sy, b->z - sz, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f);
-    addVertex(b->x + sx, b->y - sy, b->z + sz, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f);
-    addVertex(b->x + sx, b->y + sy, b->z + sz, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f);
-    addVertex(b->x - sx, b->y + sy, b->z - sz, 0.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f);
+    addVertex(b->x - sx, b->y - sy, b->z - sz, 0.0f, 0.0f, &colorGrey);
+    addVertex(b->x + sx, b->y - sy, b->z + sz, 1.0f, 0.0f, &colorGrey);
+    addVertex(b->x + sx, b->y + sy, b->z + sz, 1.0f, 1.0f, &colorGrey);
+    addVertex(b->x - sx, b->y + sy, b->z - sz, 0.0f, 1.0f, &colorGrey);
+}
+
+void renderBackFill(int x, int y, int w, int h)
+{
+    ColorQuad q;
+    q.x0 = x;
+    q.y0 = y;
+    q.x1 = x + w;
+    q.y1 = y;
+    q.x2 = x + w;
+    q.y2 = y + h;
+    q.x3 = x;
+    q.y3 = y + h;
+    q.color[0].r = q.color[0].g = q.color[0].b =
+    q.color[1].r = q.color[1].g = q.color[1].b =
+    q.color[2].r = q.color[2].g = q.color[2].b =
+    q.color[3].r = q.color[3].g = q.color[3].b = 64;
+
+    renderNextLayer();
+    renderSetBlend(BLEND_MUL);
+    renderColorQuad(&q);
+    renderSetBlend(BLEND_ALPHA);
 }
 
 void prepareTrack(void)
@@ -495,8 +1021,13 @@ void prepareTrack(void)
     {
         glGenTextures(1, &gTrackTex[i].id);
         glBindTexture(GL_TEXTURE_2D, gTrackTex[i].id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, gTrackTexData[i]);
-        setTexFilter(0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, gTrackTexData[i]);
+
+        setTexFilter(1, glGenerateMipmap != 0);
+        if (glGenerateMipmap)
+        {
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
     }
 }
 
@@ -538,6 +1069,16 @@ void renderFrameBegin(void)
     gCylX = rcos(-ctrlcamera.hdg);
     gCylZ = rsin(-ctrlcamera.hdg);
 
+    gCurState.texture = NULL;
+    gCurState.blend = BLEND_NONE;
+    gCurState.projMatrix = 1;
+    gCurState.viewMatrix = 0;
+    gCurState.layer = 0;
+    gCurState.blend = BLEND_NONE;
+    gCurState.depthWrite = 1;
+    gCurState.depthTest = 0;
+    gStatePtr = NULL;
+
     gRenderMode = RENDER_MODE_3D;
     renderSetMode(RENDER_MODE_2D);
     renderSetColor(0xFFFFFFFF);
@@ -551,16 +1092,6 @@ void renderFrameBegin(void)
     matrixOrtho(m, -gBorder, 320 + gBorder, 240, 0, 0, 1);
 
     gMatricesCount = 2;
-
-    gCurState.texture = NULL;
-    gCurState.blend = BLEND_NONE;
-    gCurState.projMatrix = 1;
-    gCurState.viewMatrix = 0;
-    gCurState.layer = 0;
-    gCurState.blend = BLEND_NONE;
-    gCurState.depthWrite = 1;
-    gCurState.depthTest = 0;
-    gStatePtr = NULL;
 }
 
 void renderFrameEnd(void)
@@ -569,30 +1100,16 @@ void renderFrameEnd(void)
     const RenderState* state;
     const Mesh* mesh;
 
+    const Shader* shader = NULL;
     const TextureGL* texture = NULL;
-    int32 projMatrix = 1;
-    int32 viewMatrix = 0;
+    int32 projMatrix = -1;
+    int32 viewMatrix = -1;
     int32 depthTest = 0;
     int32 depthWrite = 1;
     BlendMode blend = BLEND_NONE;
+    uint32 color = 0xBAAAAAAD;
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf((GLfloat*)(gMatrices + projMatrix));
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf((GLfloat*)(gMatrices + viewMatrix));
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-
-    glVertexPointer(3, GL_INT, sizeof(VertexGL), &gVertices->x);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(VertexGL), &gVertices->s);
-    glColorPointer(4, GL_FLOAT, sizeof(VertexGL), &gVertices->r);
+    GLfloat colorValue[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
     count = 0;
     for (i = 0; i < gStatesCount; i++)
@@ -615,30 +1132,70 @@ void renderFrameEnd(void)
         state->mesh->iCount = count - start;
     }
 
+    glBindTexture(GL_TEXTURE_2D, whiteTex);
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, gIndicesCount * sizeof(IndexGL), gIndicesMerged);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, gVerticesCount * sizeof(VertexGL), gVertices);
+
     for (i = 0; i < gStatesCount; i++)
     {
         state = gStates + i;
+
+        // set shader
+        if (shader != state->shader)
+        {
+            shader = state->shader;
+            // need to reset all uniforms for the shader
+            projMatrix = -1;
+            viewMatrix = -1;
+            color = 0xBAAAAAAD;
+            glUseProgram(shader->id);
+        }
 
         // set texture
         if (texture != state->texture)
         {
             texture = state->texture;
-            glBindTexture(GL_TEXTURE_2D, texture ? texture->id : 0);
+            glBindTexture(GL_TEXTURE_2D, texture ? texture->id : whiteTex);
         }
 
         // set proj matrix
         if (projMatrix != state->projMatrix)
         {
             projMatrix = state->projMatrix;
-            glMatrixMode(GL_PROJECTION);
-            glLoadMatrixf((GLfloat*)(gMatrices + projMatrix));
+            ASSERT(shader);
+            if (shader->uid[uProjMatrix] > -1)
+            {
+                glUniformMatrix4fv(shader->uid[uProjMatrix], 1, GL_FALSE, (GLfloat*)(gMatrices + projMatrix));
+            }
         }
 
+        // set view matrix
         if (viewMatrix != state->viewMatrix)
         {
             viewMatrix = state->viewMatrix;
-            glMatrixMode(GL_MODELVIEW);
-            glLoadMatrixf((GLfloat*)(gMatrices + viewMatrix));
+            ASSERT(shader);
+            if (shader->uid[uViewMatrix] > -1)
+            {
+                glUniformMatrix4fv(shader->uid[uViewMatrix], 1, GL_FALSE, (GLfloat*)(gMatrices + viewMatrix));
+            }
+        }
+
+        // set color (ships only)
+        if (color != state->color)
+        {
+            color = state->color;
+
+            if (shader->uid[uColor] > -1)
+            {
+                colorValue[0] = i255 * (0xFF & (color));
+                colorValue[1] = i255 * (0xFF & (color >> 8));
+                colorValue[2] = i255 * (0xFF & (color >> 16));
+                glUniform4fv(shader->uid[uColor], 1, colorValue);
+            }
         }
 
         // set depth test
@@ -661,22 +1218,27 @@ void renderFrameEnd(void)
         // set blending
         if (blend != state->blend)
         {
+            if (blend == BLEND_NONE)
+            {
+                glEnable(GL_BLEND);
+            }
             blend = state->blend;
+
             switch (blend)
             {
                 case BLEND_NONE:
                     glDisable(GL_BLEND);
                     break;
+                case BLEND_ALPHA:
+                    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                    break;
                 case BLEND_ADD:
-                    glEnable(GL_BLEND);
                     glBlendFunc(GL_ONE, GL_ONE);
                     break;
                 case BLEND_SUB:
-                    glEnable(GL_BLEND);
                     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
                     break;
                 case BLEND_MUL:
-                    glEnable(GL_BLEND);
                     glBlendFunc(GL_DST_COLOR, GL_ZERO);
                     break;
             }
@@ -685,12 +1247,8 @@ void renderFrameEnd(void)
         mesh = state->mesh;
         ASSERT(mesh);
         ASSERT(mesh->next == NULL);
-        glDrawElements(GL_TRIANGLES, mesh->iCount, GL_UNSIGNED_SHORT, gIndicesMerged + mesh->iStart);
+        glDrawElements(GL_TRIANGLES, mesh->iCount, GL_UNSIGNED_SHORT, (GLvoid*)(mesh->iStart * sizeof(IndexGL)));
     }
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
 
 #ifdef DEBUG_RENDER
     {
@@ -758,7 +1316,10 @@ void renderSection(const TrackSection* section)
     const VECTOR* vertices = track->vertices;
     const VECTOR* v;
     int i;
-    float r, g, b, u0, u1;
+    float u0, u1;
+    CVECTOR color;
+    
+    color.cd = 255;
 
     for (i = 0; i < section->faceCount; i++, face++)
     {
@@ -771,9 +1332,9 @@ void renderSection(const TrackSection* section)
         renderSetTexture(gTrackTex + face->texture);
         stateCheck();
 
-        r = i255 * face->red;
-        g = i255 * face->green;
-        b = i255 * face->blue;
+        color.r = face->red;
+        color.g = face->green;
+        color.b = face->blue;
 
         if (face->flags & FLIP_TEXTURE)
         {
@@ -787,14 +1348,10 @@ void renderSection(const TrackSection* section)
         }
 
         addQuad();
-        v = vertices + face->vertex[3];
-        addVertex(v->vx, v->vy, v->vz, u0, 1.0f, r, g, b, 1.0f);
-        v = vertices + face->vertex[2];
-        addVertex(v->vx, v->vy, v->vz, u1, 1.0f, r, g, b, 1.0f);
-        v = vertices + face->vertex[1];
-        addVertex(v->vx, v->vy, v->vz, u1, 0.0f, r, g, b, 1.0f);
-        v = vertices + face->vertex[0];
-        addVertex(v->vx, v->vy, v->vz, u0, 0.0f, r, g, b, 1.0f);
+        addVertexI(vertices + face->vertex[3], u0, 1.0f, &color);
+        addVertexI(vertices + face->vertex[2], u1, 1.0f, &color);
+        addVertexI(vertices + face->vertex[1], u1, 0.0f, &color);
+        addVertexI(vertices + face->vertex[0], u0, 0.0f, &color);
     }
 }
 
@@ -823,6 +1380,7 @@ void renderTrack(void)
     cz = ctrlcamera.camPos->absolute.t[2];
 
     renderSetSkeleton(ctrlcamera.camPos->super, cx, cy, cz);
+    renderSetShader(&shaderTrack);
 
     switch (dir)
     {
@@ -868,28 +1426,15 @@ void renderTrack(void)
 #endif
 }
 
-void renderObject(const Object* object)
+void renderMesh(const SVECTOR* vertices, Primitive* prim, int32 count)
 {
-    const MATRIX* matrix;
-    Prm poly;
-    const SVECTOR* vertices;
-    const SVECTOR* v;
     int i;
-    int cx, cy, cz;
-    float r, g, b;
+    Prm poly;
+    const SVECTOR* v;
 
-    matrix = GetSkeletonMatrix(object->skeleton);
+    poly.primitive = prim;
 
-    cx = matrix->t[0];
-    cy = matrix->t[1];
-    cz = matrix->t[2];
-
-    renderSetSkeleton(object->skeleton, cx, cy, cz);
-
-    vertices = object->vertices;
-    poly.primitive = object->primitives;
-
-    for (i = 0; i < object->primitiveCount; i++)
+    for (i = 0; i < count; i++)
     {
         switch (poly.primitive->type)
         {
@@ -897,20 +1442,13 @@ void renderObject(const Object* object)
             {
                 const F3* f = poly.f3++;
 
-                r = gR * f->colour.r;
-                g = gG * f->colour.g;
-                b = gB * f->colour.b;
-
                 renderSetTexture(NULL);
                 stateCheck();
 
                 addTriangle();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
+                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, &f->colour);
                 break;
             }
 
@@ -918,20 +1456,13 @@ void renderObject(const Object* object)
             {
                 const LSF3* f = poly.lsf3++;
 
-                r = gR * f->colour.r;
-                g = gG * f->colour.g;
-                b = gB * f->colour.b;
-
                 renderSetTexture(NULL);
                 stateCheck();
 
                 addTriangle();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
+                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, &f->colour);
                 break;
             }
 
@@ -940,34 +1471,32 @@ void renderObject(const Object* object)
                 const FT3* f = poly.ft3++;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
+                renderSetTexture(t);
+
                 if (f->flag & ShipEngine)
                 {
+                    uint32 color = gCurState.color;
+
+                    renderSetColor(0xFFFFFFFF);
                     renderSetBlend(BLEND_ADD);
-                    r = 1.0f;
-                    g = 1.0f;
-                    b = 1.0f;
+                    stateCheck();
+
+                    addTriangle();
+                    addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &colorWhite);
+                    addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &colorWhite);
+                    addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &colorWhite);
+
+                    renderSetBlend(BLEND_NONE);
+                    renderSetColor(color);
                 }
                 else
                 {
-                    r = gR * f->colour.r;
-                    g = gG * f->colour.g;
-                    b = gB * f->colour.b;
-                }
+                    stateCheck();
 
-                renderSetTexture(t);
-                stateCheck();
-
-                addTriangle();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, r, g, b, 1.0f);
-
-                if (f->flag & ShipEngine)
-                {
-                    renderSetBlend(BLEND_NONE);
+                    addTriangle();
+                    addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &f->colour);
+                    addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &f->colour);
+                    addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &f->colour);
                 }
                 break;
             }
@@ -977,20 +1506,13 @@ void renderObject(const Object* object)
                 const LSFT3* f = poly.lsft3++;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
-                r = gR * f->colour.r;
-                g = gG * f->colour.g;
-                b = gB * f->colour.b;
-
                 renderSetTexture(t);
                 stateCheck();
 
                 addTriangle();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, r, g, b, 1.0f);
+                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &f->colour);
+                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &f->colour);
+                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &f->colour);
                 break;
             }
 
@@ -998,22 +1520,14 @@ void renderObject(const Object* object)
             {
                 const F4* f = poly.f4++;
 
-                r = gR * f->colour.r;
-                g = gG * f->colour.g;
-                b = gB * f->colour.b;
-
                 renderSetTexture(NULL);
                 stateCheck();
 
                 addQuad();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[3];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
+                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[3], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, &f->colour);
                 break;
             }
 
@@ -1021,22 +1535,14 @@ void renderObject(const Object* object)
             {
                 const LSF4* f = poly.lsf4++;
 
-                r = gR * f->colour.r;
-                g = gG * f->colour.g;
-                b = gB * f->colour.b;
-
                 renderSetTexture(NULL);
                 stateCheck();
 
                 addQuad();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[3];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, r, g, b, 1.0f);
+                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[3], 0.0f, 0.0f, &f->colour);
+                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, &f->colour);
                 break;
             }
 
@@ -1045,22 +1551,14 @@ void renderObject(const Object* object)
                 const FT4* f = poly.ft4++;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
-                r = gR * f->colour.r;
-                g = gG * f->colour.g;
-                b = gB * f->colour.b;
-
                 renderSetTexture(t);
                 stateCheck();
 
                 addQuad();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[3];
-                addVertex(v->vx, v->vy, v->vz, f->u3 * t->iw, f->v3 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, r, g, b, 1.0f);
+                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &f->colour);
+                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &f->colour);
+                addVertexS(vertices + f->coords[3], f->u3 * t->iw, f->v3 * t->ih, &f->colour);
+                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &f->colour);
                 break;
             }
 
@@ -1069,22 +1567,14 @@ void renderObject(const Object* object)
                 const LSFT4* f = poly.lsft4++;
                 TextureGL* t = (TextureGL*)TextureTable[f->texture];
 
-                r = gR * f->colour.r;
-                g = gG * f->colour.g;
-                b = gB * f->colour.b;
-
                 renderSetTexture(t);
                 stateCheck();
 
                 addQuad();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[3];
-                addVertex(v->vx, v->vy, v->vz, f->u3 * t->iw, f->v3 * t->ih, r, g, b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, r, g, b, 1.0f);
+                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &f->colour);
+                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &f->colour);
+                addVertexS(vertices + f->coords[3], f->u3 * t->iw, f->v3 * t->ih, &f->colour);
+                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &f->colour);
                 break;
             }
 
@@ -1096,12 +1586,9 @@ void renderObject(const Object* object)
                 stateCheck();
 
                 addTriangle();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b, 1.0f);
+                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, f->colour + 0);
+                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, f->colour + 1);
+                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, f->colour + 2);
                 break;
             }
 
@@ -1113,12 +1600,9 @@ void renderObject(const Object* object)
                 stateCheck();
 
                 addTriangle();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b, 1.0f);
+                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, f->colour + 0);
+                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, f->colour + 1);
+                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, f->colour + 2);
                 break;
             }
 
@@ -1131,30 +1615,28 @@ void renderObject(const Object* object)
 
                 if (f->flag & ShipEngine)
                 {
+                    uint32 color = gCurState.color;
+
+                    renderSetColor(0xFFFFFFFF);
                     renderSetBlend(BLEND_ADD);
                     stateCheck();
 
                     addTriangle();
-                    v = vertices + f->coords[0];
-                    addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, 1.0f, 1.0f, 1.0f, 1.0f);
-                    v = vertices + f->coords[1];
-                    addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, 1.0f, 1.0f, 1.0f, 1.0f);
-                    v = vertices + f->coords[2];
-                    addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, 1.0f, 1.0f, 1.0f, 1.0f);
+                    addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &colorWhite);
+                    addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &colorWhite);
+                    addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &colorWhite);
 
                     renderSetBlend(BLEND_NONE);
+                    renderSetColor(color);
                 }
                 else
                 {
                     stateCheck();
 
                     addTriangle();
-                    v = vertices + f->coords[0];
-                    addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b, 1.0f);
-                    v = vertices + f->coords[1];
-                    addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b, 1.0f);
-                    v = vertices + f->coords[2];
-                    addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b, 1.0f);
+                    addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, f->colour + 0);
+                    addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, f->colour + 1);
+                    addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, f->colour + 2);
                 }
                 break;
             }
@@ -1168,12 +1650,9 @@ void renderObject(const Object* object)
                 stateCheck();
 
                 addTriangle();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b, 1.0f);
+                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, f->colour + 0);
+                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, f->colour + 1);
+                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, f->colour + 2);
                 break;
             }
 
@@ -1185,14 +1664,10 @@ void renderObject(const Object* object)
                 stateCheck();
 
                 addQuad();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b, 1.0f);
-                v = vertices + f->coords[3];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[3].r, gG * f->colour[3].g, gB * f->colour[3].b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b, 1.0f);
+                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, f->colour + 0);
+                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, f->colour + 1);
+                addVertexS(vertices + f->coords[3], 0.0f, 0.0f, f->colour + 3);
+                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, f->colour + 2);
                 break;
             }
 
@@ -1204,14 +1679,10 @@ void renderObject(const Object* object)
                 stateCheck();
 
                 addQuad();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b, 1.0f);
-                v = vertices + f->coords[3];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[3].r, gG * f->colour[3].g, gB * f->colour[3].b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, 0.0f, 0.0f, gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b, 1.0f);
+                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, f->colour + 0);
+                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, f->colour + 1);
+                addVertexS(vertices + f->coords[3], 0.0f, 0.0f, f->colour + 3);
+                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, f->colour + 2);
                 break;
             }
 
@@ -1224,14 +1695,10 @@ void renderObject(const Object* object)
                 stateCheck();
 
                 addQuad();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b, 1.0f);
-                v = vertices + f->coords[3];
-                addVertex(v->vx, v->vy, v->vz, f->u3 * t->iw, f->v3 * t->ih, gR * f->colour[3].r, gG * f->colour[3].g, gB * f->colour[3].b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b, 1.0f);
+                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, f->colour + 0);
+                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, f->colour + 1);
+                addVertexS(vertices + f->coords[3], f->u3 * t->iw, f->v3 * t->ih, f->colour + 3);
+                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, f->colour + 2);
                 break;
             }
 
@@ -1244,14 +1711,10 @@ void renderObject(const Object* object)
                 stateCheck();
 
                 addQuad();
-                v = vertices + f->coords[0];
-                addVertex(v->vx, v->vy, v->vz, f->u0 * t->iw, f->v0 * t->ih, gR * f->colour[0].r, gG * f->colour[0].g, gB * f->colour[0].b, 1.0f);
-                v = vertices + f->coords[1];
-                addVertex(v->vx, v->vy, v->vz, f->u1 * t->iw, f->v1 * t->ih, gR * f->colour[1].r, gG * f->colour[1].g, gB * f->colour[1].b, 1.0f);
-                v = vertices + f->coords[3];
-                addVertex(v->vx, v->vy, v->vz, f->u3 * t->iw, f->v3 * t->ih, gR * f->colour[3].r, gG * f->colour[3].g, gB * f->colour[3].b, 1.0f);
-                v = vertices + f->coords[2];
-                addVertex(v->vx, v->vy, v->vz, f->u2 * t->iw, f->v2 * t->ih, gR * f->colour[2].r, gG * f->colour[2].g, gB * f->colour[2].b, 1.0f);
+                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, f->colour + 0);
+                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, f->colour + 1);
+                addVertexS(vertices + f->coords[3], f->u3 * t->iw, f->v3 * t->ih, f->colour + 3);
+                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, f->colour + 2);
                 break;
             }
 
@@ -1281,18 +1744,14 @@ void renderObject(const Object* object)
                 sx = gCylX * w >> 12;
                 sz = gCylZ * w >> 12;
 
-                r = i255 * f->colour.r;
-                g = i255 * f->colour.g;
-                b = i255 * f->colour.b;
-
                 renderSetTexture(t);
                 stateCheck();
 
                 addQuad();
-                addVertex(v->vx - sx, v->vy - h0, v->vz - sz, 0.0f, 0.0f, r, g, b, 1.0f);
-                addVertex(v->vx + sx, v->vy - h0, v->vz + sz, 1.0f, 0.0f, r, g, b, 1.0f);
-                addVertex(v->vx + sx, v->vy + h1, v->vz + sz, 1.0f, 1.0f, r, g, b, 1.0f);
-                addVertex(v->vx - sx, v->vy + h1, v->vz - sz, 0.0f, 1.0f, r, g, b, 1.0f);
+                addVertex(v->vx - sx, v->vy - h0, v->vz - sz, 0.0f, 0.0f, &f->colour);
+                addVertex(v->vx + sx, v->vy - h0, v->vz + sz, 1.0f, 0.0f, &f->colour);
+                addVertex(v->vx + sx, v->vy + h1, v->vz + sz, 1.0f, 1.0f, &f->colour);
+                addVertex(v->vx - sx, v->vy + h1, v->vz - sz, 0.0f, 1.0f, &f->colour);
                 break;
             }
 
@@ -1315,10 +1774,83 @@ void renderObject(const Object* object)
     }
 }
 
+void renderObject(const Object* object)
+{
+    const MATRIX* matrix;
+    int cx, cy, cz;
+
+    matrix = GetSkeletonMatrix(object->skeleton);
+
+    cx = matrix->t[0];
+    cy = matrix->t[1];
+    cz = matrix->t[2];
+
+    renderSetSkeleton(object->skeleton, cx, cy, cz);
+    renderSetShader(&shaderObject);
+
+    renderMesh(object->vertices, object->primitives, object->primitiveCount);
+}
+
+void renderShip(const Object* object, uint32 color)
+{
+    const MATRIX* matrix;
+    int cx, cy, cz;
+
+    matrix = GetSkeletonMatrix(object->skeleton);
+
+    cx = matrix->t[0];
+    cy = matrix->t[1];
+    cz = matrix->t[2];
+
+    renderSetSkeleton(object->skeleton, cx, cy, cz);
+    renderSetShader(&shaderShip);
+    renderSetColor(color);
+
+    renderMesh(object->vertices, object->primitives, object->primitiveCount);
+
+    renderSetColor(0xFFFFFFFF);
+}
+
+void renderShield(const Object* object, int32 counter)
+{
+    const MATRIX* matrix;
+    int cx, cy, cz;
+
+    matrix = GetSkeletonMatrix(object->skeleton);
+
+    cx = matrix->t[0];
+    cy = matrix->t[1];
+    cz = matrix->t[2];
+
+    renderSetSkeleton(object->skeleton, cx, cy, cz);
+    renderSetShader(&shaderShield);
+    renderSetBlend(BLEND_ADD);
+    renderSetColor(counter);
+
+    renderMesh(object->vertices, object->primitives, object->primitiveCount);
+
+    renderSetBlend(BLEND_NONE);
+}
+
 void renderSky(const Object* object)
 {
+    object->skeleton->update = 1;
+
+    const MATRIX* matrix;
+    int cx, cy, cz;
+
+    matrix = GetSkeletonMatrix(object->skeleton);
+
+    cx = matrix->t[0];
+    cy = matrix->t[1];
+    cz = matrix->t[2];
+
+    renderSetSkeleton(object->skeleton, cx, cy, cz);
+    renderSetShader(&shaderSky);
     renderDepthTest(0);
-    renderObject(object);
+
+    renderMesh(object->vertices, object->primitives, object->primitiveCount);
+
     renderDepthTest(1);
 }
 
@@ -1331,18 +1863,23 @@ void renderSetMode(int renderMode)
     if (renderMode == RENDER_MODE_2D)
     {
         renderDepthTest(0);
+        renderSetBlend(BLEND_ALPHA);
+
         gCurState.viewMatrix = 0;
         gCurState.projMatrix = 1;
+        gCurState.shader = &shaderGUI;
         gStatePtr = NULL;
     }
     else
     {
         renderDepthTest(1);
+        renderSetBlend(BLEND_NONE);
 
         matrixPerspective(gMatrices + gMatricesCount, 75.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, (float)64, (float)(64 * 1024));
 
         gCurState.viewMatrix = 0;
         gCurState.projMatrix = gMatricesCount++;
+        gCurState.shader = NULL;
         gStatePtr = NULL;
     }
 }
@@ -1471,21 +2008,17 @@ Texture* renderCreateTexture(Tim* tim)
             uint8* dst = (uint8*)tempData;
             for (i = 0; i < w * h; i++)
             {
-                int32 alpha = ((*src++ >> 1) & 31) << 3;
-                alpha <<= 2;
-                if (alpha > 255)
-                    alpha = 255;
-                *dst++ = alpha;
+                *dst++ = ((*src++ >> 1) & 31) << 3;
             }
             // create alpha only texture for the shadow
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, tempData);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, tempData);
         }
         else
         {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
         }
 
-        setTexFilter(HACK_LOAD_SHADOW);
+        setTexFilter(HACK_LOAD_SHADOW || HACK_TEX_FILTER, 0);
 
         return (Texture*)tex;
     }

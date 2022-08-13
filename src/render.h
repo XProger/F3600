@@ -10,6 +10,7 @@ typedef struct
     int32 w, h;
     uint16 u0, v0;
     uint16 u1, v1;
+    uint32 color;
     const Texture* texture;
 } Quad;
 
@@ -29,10 +30,7 @@ typedef struct
     int16 x1, y1;
     int16 x2, y2;
     int16 x3, y3;
-    uint8 r0, g0, b0;
-    uint8 r1, g1, b1;
-    uint8 r2, g2, b2;
-    uint8 r3, g3, b3;
+    CVECTOR color[4];
 } ColorQuad;
 
 typedef struct
@@ -45,6 +43,7 @@ typedef struct
 typedef enum
 {
     BLEND_NONE,
+    BLEND_ALPHA,
     BLEND_ADD,
     BLEND_SUB,
     BLEND_MUL
@@ -69,6 +68,7 @@ void renderQuad(const Quad* q);
 void renderShadow(const Shadow* s);
 void renderColorQuad(const ColorQuad* q);
 void renderBillboard(const Billboard* b);
+void renderBackFill(int x, int y, int w, int h);
 
 void renderPrepare(void);
 void renderFrameBegin(void);
@@ -77,11 +77,12 @@ void renderSetMatrix(const MATRIX* matrix, int x, int y, int z);
 void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z);
 void renderTrack(void);
 void renderObject(const Object* object);
+void renderShip(const Object* object, uint32 color);
+void renderShield(const Object* object, int32 counter);
 void renderSky(const Object* object);
 void renderSetMode(int renderMode);
 void renderSetBlend(int blend);
 void renderDepthWrite(int enable);
-void renderSetColor(uint32 color);
 void renderNextLayer(void);
 Texture* renderCreateTexture(Tim* tim);
 

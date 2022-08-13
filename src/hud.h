@@ -37,14 +37,14 @@ typedef struct
 void InitText(void);
 void InitSpeedo(void);
 void fill_speedo(int, int);
-void AddNumber(int, TEXT_DATA*, int);
-void AddTime(int, TEXT_DATA*, int);
-void AddText(const char*, TEXT_DATA*, int);
+void AddNumber(int, TEXT_DATA*, uint32);
+void AddTime(int, TEXT_DATA*, uint32);
+void AddText(const char*, TEXT_DATA*, uint32);
 TEXT_DATA* text_data(int, int, int);
 void UpdateRaceHud(ShipData*, int, ConfigData*);
 void SetCharTextures(char);
 void AddDelEnd(char, TEXT_DATA*, int);
-void CentreText(const char*, TEXT_DATA*, int);
+void CentreText(const char*, TEXT_DATA*, uint32);
 void DisplayLives(ConfigData*); // PCwipeout
 int CalcPosition(ShipData* shipIndex);
 void ScreenFooter(int x, int y, int colour);
@@ -58,6 +58,6 @@ void DisplayAllVenomComplete(void);
 void InitTrackTex(Texture** trackTex);
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData);
 void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData);
-void AddGlyph(int x, int y, int w, int h, int u, int v, const Texture* tex);
+void AddGlyph(int x, int y, int w, int h, int u, int v, uint32 color, const Texture* tex);
 void InitWeaponSprtIcons(void);
 void DrawWeaponSprtIcons(ShipData* playerShip);

@@ -1714,11 +1714,11 @@ void ShowFireCongratulations(void)
         {
             if (con[i].colour == White)
             {
-                CentreText(con[i].words, text_data(0, lineY, con[i].size), WhiteText);
+                CentreText(con[i].words, text_data(0, lineY, con[i].size), TEXT_COLOR_WHITE);
             }
             else
             {
-                CentreText(con[i].words, text_data(0, lineY, con[i].size), RedText);
+                CentreText(con[i].words, text_data(0, lineY, con[i].size), TEXT_COLOR_HIGHLIGHT);
             }
         }
     }
@@ -1742,11 +1742,11 @@ void ShowIceCongratulations(void)
         {
             if (con[i].colour == White)
             {
-                CentreText(con[i].words, text_data(0, lineY, con[i].size), WhiteText);
+                CentreText(con[i].words, text_data(0, lineY, con[i].size), TEXT_COLOR_WHITE);
             }
             else
             {
-                CentreText(con[i].words, text_data(0, lineY, con[i].size), RedText);
+                CentreText(con[i].words, text_data(0, lineY, con[i].size), TEXT_COLOR_HIGHLIGHT);
             }
         }
     }

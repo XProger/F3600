@@ -1,9 +1,6 @@
 #include "game.h"
 
-int FontLoadHack;
-
 const int skyPos[15] = { -820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0 };
-const uint16 RED_TEXT_CLUT[] = { 0x0000, 0x0043, 0x0465, 0x0487, 0x04ca, 0x090c, 0x092e, 0x0970, 0x0db2, 0x0dd4, 0x0e16, 0x0e57, 0x0e79, 0x0e9a, 0x0edc, 0x0f1e };
 
 short InitScene(Object** prm, short* prmCount, Skeleton* camPos, ConfigData* gameData)
 {
@@ -16,11 +13,11 @@ short InitScene(Object** prm, short* prmCount, Skeleton* camPos, ConfigData* gam
 
     sceneTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\scene.cmp");
-    LoadCompressedTextureSequence(trackPath);
+    LoadCompressedTextureSequence(trackPath, 1);
 
     skyTextures = TextureTableCount;
     getPath(trackPath, gameData->actTrackNum, "\\sky.cmp");
-    LoadCompressedTextureSequence(trackPath);
+    LoadCompressedTextureSequence(trackPath, 1);
 
     getPath(trackPath, gameData->actTrackNum, "\\scene.prm");
 
@@ -90,19 +87,9 @@ void LoadCmpFiles(TIMlist* timPtr, int numTex)
     {
         TextureTable[TextureTableCount++] = renderCreateTexture((Tim*)(timPtr->memOffset[i]));
     }
-
-    if (FontLoadHack)
-    {
-        for (i = 0; i < 10; i++)
-        {
-            Tim4* tim = (Tim4*)(timPtr->memOffset[i]);
-            memcpy(tim->clut, RED_TEXT_CLUT, sizeof(RED_TEXT_CLUT));
-            TextureTable[TextureTableCount++] = renderCreateTexture((Tim*)tim);
-        }
-    }
 }
 
-void LoadCompressedTextureSequence(const char* fileName)
+void LoadCompressedTextureSequence(const char* fileName, int filter)
 {
     int texNum;
     int numTex;
@@ -152,7 +139,9 @@ void LoadCompressedTextureSequence(const char* fileName)
 
     free(fileBuffer); /* free compressed file memory */
 
+    HACK_TEX_FILTER = filter;
     LoadCmpFiles(&timList, numTex);
+    HACK_TEX_FILTER = 0;
 
     free(timList.memBase);
 }

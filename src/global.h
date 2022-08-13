@@ -1,23 +1,23 @@
 #include "pad.h"
 
-#define COMBAT 1
+//#define USE_SHIP_LODS
+#define SHIP_VIS_DIST 3000 // og 2000
 
 #define INTERACTIVE 0
-#define ATTRACT 1
-
-#define RedText     0
-#define WhiteText   1
+#define ATTRACT     1
 
 #define DRTEXT_16   0
 #define DRTEXT_12   1
 #define DRTEXT_8    2
 #define DRTEXT_RED  4
-#define DRTEXT_CLUT 10
 
-#define FontTextureTableMax 20
+#define TEXT_COLOR_WHITE        0xFF808080
+#define TEXT_COLOR_HIGHLIGHT    0xFF19668C
+
+#define FontTextureTableMax 10
 #define TextureTableMax 512
 
-#define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? WhiteText : RedText)
+#define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT)
 #define BLINK_SLOW ((gFrameIndex & 63) <= 42)
 
 extern int gWidth;
@@ -26,6 +26,7 @@ extern int gBorder;
 
 extern int HACK_LOAD_TRACK;
 extern int HACK_LOAD_SHADOW;
+extern int HACK_TEX_FILTER;
 
 #define SCREEN_Z 160
 
@@ -51,8 +52,8 @@ extern Object* startBoom[4];
 extern short startBoomCount;
 extern int crossedLine;
 
-extern Texture* FontTextureTable[];
-extern Texture* TextureTable[];
+extern Texture* FontTextureTable[FontTextureTableMax];
+extern Texture* TextureTable[TextureTableMax];
 extern short TextureTableCount;
 extern short gBaseTextureIndex;
 extern Object* objectTable[ObjectTableMax];

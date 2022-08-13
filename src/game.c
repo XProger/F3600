@@ -32,8 +32,8 @@ void titleLoop(void)
     renderClear();
     renderSetMode(RENDER_MODE_2D);
 
-    AddGlyph(0, 0, 320, 240, 0, 0, titleScreen);
-    CentreText("PRESS ANY KEY", text_data(0, 200, 8), WhiteText);
+    AddGlyph(0, 0, 320, 240, 0, 0, TEXT_COLOR_WHITE, titleScreen);
+    CentreText("PRESS ANY KEY", text_data(0, 200, 8), TEXT_COLOR_WHITE);
 
     if (xpad)
     {

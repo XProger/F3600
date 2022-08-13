@@ -62,7 +62,6 @@ void DisplayPadMenu2(const Menu* menu, int shapeNo);
 void DrawPilot(const Menu* menu, int shapeNo);
 void DrawTeams(const Menu* menu, int shapeNo);
 void DrawClass(const Menu* menu, int shapeNo);
-void DrawShip(const Menu* menu, int shapeNo);
 void DrawMainMenu(const Menu* menu, int shapeNo);
 void DrawPlayPad(const Menu* menu, int shapeNo);
 void DrawOptionMenus(const Menu* menu, int shapeNo);
@@ -83,7 +82,6 @@ void InitSelectData(SelectionData*);
 
 void DrawTeamShips(int, int, int, int, Object*);
 void InitButtons(char*);
-void DrawLine(int, int, int, int, int);
 void ShowTimeTrialScores(SelectionData*, ConfigData*);
 void QuitYesNo(SelectionData*, ConfigData*);
 void GraphicOptions(SelectionData*, ConfigData*);
@@ -98,7 +96,7 @@ typedef struct
     uint8 option;
 } MenuHistory;
 
-int gMenuHistoryIndex = 0;
+int gMenuHistoryIndex;
 MenuHistory gMenuHistory[MAX_MENU_HISTORY];
 
 const Menu gMenuSystem[] = {
@@ -293,19 +291,7 @@ void menuLoop(ConfigData* gameData)
     }
 
     if (gCurrMenu == CLASS_MENU && gCurrOption == 1 && (!gameData->RapierClass))
-        CentreText("NOT AVAILABLE", text_data(20, 190, 12), RedText);
-
-    /*** Serial link up within menu structure ***/
-
-    if (selectData.combatComplete == 32)
-    {
-        gCurrMenu = MAIN_MENU;
-        gCurrOption = 0;
-        selectData.combatInit = 0;
-        selectData.combatComplete = 0;
-    }
-
-    /********************************************/
+        CentreText("NOT AVAILABLE", text_data(20, 190, 12), TEXT_COLOR_HIGHLIGHT);
 
     selectData.trackNum = gameData->trackNum;
 
@@ -327,7 +313,7 @@ void GoMenu(int menu)
 {
     MenuHistory* h = gMenuHistory + (gMenuHistoryIndex++);
  
-    ASSERT(gMenuHistoryIndex < MAX_MENU_HISTORY);
+    ASSERT(gMenuHistoryIndex <= MAX_MENU_HISTORY);
 
     h->menu = gCurrMenu;
     h->option = gCurrOption;
@@ -343,7 +329,7 @@ void GoBack(void)
 {
     MenuHistory* h = gMenuHistory + (--gMenuHistoryIndex);
 
-    ASSERT(gMenuHistoryIndex > 0);
+    ASSERT(gMenuHistoryIndex >= 0);
 
     gCurrMenu = h->menu;
     gCurrOption = h->option;
@@ -375,7 +361,7 @@ void GoNextMusic(void)
 void DisplayButtons(int x, int y, int buttType)
 {
     const Texture* tex = buttonTex[buttType];
-    AddGlyph(x, y, tex->width, tex->height, 0, 0, tex);
+    AddGlyph(x, y, tex->width, tex->height, 0, 0, TEXT_COLOR_WHITE, tex);
 }
 
 void DrawButtons(void)
@@ -538,7 +524,7 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
             }
             else
             {
-                GoMenu(MAIN_MENU);
+                GoBack();
             }
             break;
         }
@@ -574,9 +560,9 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
         DisplayPicture(trackTex[gCurrOption], 96, 50, 128, 74);
 
         if (gameData->Class == 0)
-            CentreText("VENOM CLASS", text_data(20, 40, 8), RedText);
+            CentreText("VENOM CLASS", text_data(20, 40, 8), TEXT_COLOR_HIGHLIGHT);
         else
-            CentreText("RAPIER CLASS", text_data(20, 40, 8), RedText);
+            CentreText("RAPIER CLASS", text_data(20, 40, 8), TEXT_COLOR_HIGHLIGHT);
 
         numOptions = NumTracks;
     }
@@ -612,11 +598,11 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
     }
 
     DrawButtons();
-    CentreText(menu->title, text_data(0, 21, 8), RedText);
+    CentreText(menu->title, text_data(0, 21, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < numOptions; i++)
     {
-        CentreText(menu->options[i], text_data(0, 127 + 12 * i, 8), (i == gCurrOption) ? BLINK_TEXT : WhiteText);
+        CentreText(menu->options[i], text_data(0, 127 + 12 * i, 8), (i == gCurrOption) ? BLINK_TEXT : TEXT_COLOR_WHITE);
     }
     
     if (menu->displayMenu != 0)
@@ -680,7 +666,7 @@ int LoadTexModel(Object** modelShapes, char* fileName)
     strcat(modelFile, fileName);
     strcat(modelFile, ".cmp");
     modelTextures = TextureTableCount;
-    LoadCompressedTextureSequence(modelFile);
+    LoadCompressedTextureSequence(modelFile, 0);
 
     strcpy(modelFile, "wipeout\\common\\");
     strcat(modelFile, fileName);
@@ -731,7 +717,15 @@ void DrawTeams(const Menu* menu, int shapeNo)
 
 void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
 {
-    DrawObject(shipModel, x, y, size, -heading, 0, 0);
+    ShipData shipData;
+    shipData.pos.vx = x;
+    shipData.pos.vy = y;
+    shipData.pos.vz = size;
+    shipData.hdg = -heading;
+    shipData.pitch = 0;
+    shipData.roll = 0;
+    shipData.color = 0xFFFFFFFF;
+    DrawShip(shipModel, &shipData);
 }
 
 void DrawPilot(const Menu* menu, int shapeNo)
@@ -748,13 +742,6 @@ void DrawPlayPad(const Menu* menu, int shapeNo)
     InitMenuDisplay(120);
     DrawObject(menu->menuModel[0], 0, -1140, 6220 + zoomInOut, modelHdg, 0, 0);
     DrawObject(menu->menuModel[1], 0, 2260 + downUp, 6670, 250, -3440, 10);
-}
-
-void DrawShip(const Menu* menu, int shipNo)
-{
-    int hdg = gFrameIndex * 5;
-
-    DrawObject(menu->menuModel[shipShapeOrder[shipNo]], 0, 0, MODELSIZE, hdg, 0, 0);
 }
 
 void DrawClass(const Menu* menu, int shipNo)
@@ -820,6 +807,7 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
     q.v0 = 0;
     q.u1 = q.w;
     q.v1 = q.h;
+    q.color = TEXT_COLOR_WHITE;
     renderQuad(&q);
 
     q.texture = slideTex;
@@ -831,12 +819,13 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
     q.v0 = 0;
     q.u1 = q.w;
     q.v1 = q.h;
+    q.color = TEXT_COLOR_WHITE;
     renderQuad(&q);
 
-    AddText("SFX", text_data(33, 51, 8), (selectData->optionNo == 0) ? BLINK_TEXT : WhiteText);
-    AddText("MUSIC", text_data(250, 139, 8), (selectData->optionNo == 0) ? BLINK_TEXT : WhiteText);
-    AddText("TRACK", text_data(33, 175, 8), (selectData->optionNo == 1) ? BLINK_TEXT : WhiteText);
-    AddText(GetMusicTrackName(gMusicTrack), text_data(130, 175, 8), RedText);
+    AddText("SFX", text_data(33, 51, 8), (selectData->optionNo == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText("MUSIC", text_data(250, 139, 8), (selectData->optionNo == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText("TRACK", text_data(33, 175, 8), (selectData->optionNo == 1) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText(GetMusicTrackName(gMusicTrack), text_data(130, 175, 8), TEXT_COLOR_HIGHLIGHT);
 
     if (selectData->optionNo == 0)
     {
@@ -941,11 +930,11 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
             actualTrack -= (NumTracks + 1);
         else
             actualTrack -= NumTracks;
-        CentreText("RAPIER", text_data(1, 40, 8), RedText);
+        CentreText("RAPIER", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
     }
     else
     {
-        CentreText("VENOM", text_data(1, 40, 8), RedText);
+        CentreText("VENOM", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
     }
 
     if (((gameData->RapierClass == 0) && (selectData->hiscoreTrack == (NumTracks - 1))) || ((gameData->RapierClass == 1) && (selectData->hiscoreTrack == (totalTracks - 1))))
@@ -966,12 +955,12 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
         DisplayButtons(20, 116, ARROWL);
     }
 
-    CentreText(gMenuSystem[TRACK_MENU].options[actualTrack], text_data(0, 127 - 70, 12), RedText);
+    CentreText(gMenuSystem[TRACK_MENU].options[actualTrack], text_data(0, 127 - 70, 12), TEXT_COLOR_HIGHLIGHT);
 
     if (BLINK_SLOW)
     {
-        AddText("LAP RECORD", text_data(40, 195, 8), WhiteText);
-        AddTime(scoreTable[selectData->hiscoreTrack].lapRecord, text_data(165, 188, 16), RedText);
+        AddText("LAP RECORD", text_data(40, 195, 8), TEXT_COLOR_WHITE);
+        AddTime(scoreTable[selectData->hiscoreTrack].lapRecord, text_data(165, 188, 16), TEXT_COLOR_HIGHLIGHT);
     }
 
     DisplayHiScore(selectData->hiscoreTrack);
@@ -1033,11 +1022,11 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
             actualTrack -= ((NumTracks + 1));
         else
             actualTrack -= (NumTracks);
-        CentreText("RAPIER", text_data(1, 40, 8), RedText);
+        CentreText("RAPIER", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
     }
     else
     {
-        CentreText("VENOM", text_data(1, 40, 8), RedText);
+        CentreText("VENOM", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
     }
 
     if (((gameData->RapierClass == 0) && ((selectData->hiscoreTrack - HiScoreTracks) == (NumTracks - 1))) || ((gameData->RapierClass == 1) && ((selectData->hiscoreTrack - HiScoreTracks) == (totalTracks - 1))))
@@ -1058,12 +1047,12 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
         DisplayButtons(20, 116, ARROWL);
     }
 
-    CentreText(gMenuSystem[TRACK_MENU].options[actualTrack], text_data(0, 127 - 70, 12), RedText);
+    CentreText(gMenuSystem[TRACK_MENU].options[actualTrack], text_data(0, 127 - 70, 12), TEXT_COLOR_HIGHLIGHT);
 
     if (BLINK_SLOW)
     {
-        AddText("LAP RECORD", text_data(40, 195, 8), WhiteText);
-        AddTime(scoreTable[selectData->hiscoreTrack].lapRecord, text_data(165, 188, 16), RedText);
+        AddText("LAP RECORD", text_data(40, 195, 8), TEXT_COLOR_WHITE);
+        AddTime(scoreTable[selectData->hiscoreTrack].lapRecord, text_data(165, 188, 16), TEXT_COLOR_HIGHLIGHT);
     }
 
     DisplayHiScore(selectData->hiscoreTrack);
@@ -1098,18 +1087,18 @@ void InitGameData(ConfigData* gameData)
 /*TODO lconfirm? xpad?*/
 void ContinueGameConfirm(char* confirm, short xpad, char* lConfirm)
 {
-    CentreText("CONTINUE QUALIFYING OR QUIT", text_data(77, 95, 8), WhiteText);
+    CentreText("CONTINUE QUALIFYING OR QUIT", text_data(77, 95, 8), TEXT_COLOR_WHITE);
 
-    AddText("QUIT", text_data(215, 120, 16), (*lConfirm) ? BLINK_TEXT : WhiteText);
-    AddText("QUALIFY", text_data(45, 120, 16), (*lConfirm) ? WhiteText : BLINK_TEXT);
+    AddText("QUIT", text_data(215, 120, 16), (*lConfirm) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText("QUALIFY", text_data(45, 120, 16), (*lConfirm) ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
 void RestartGameConfirm(char* confirm, short xpad, char* lConfirm)
 {
-    CentreText("RESTART RACE", text_data(77, 95, 16), WhiteText);
+    CentreText("RESTART RACE", text_data(77, 95, 16), TEXT_COLOR_WHITE);
 
-    AddText("NO", text_data(215, 120, 16), (*lConfirm) ? BLINK_TEXT : WhiteText);
-    AddText("YES", text_data(68, 120, 16), (*lConfirm) ? WhiteText : BLINK_TEXT);
+    AddText("NO", text_data(215, 120, 16), (*lConfirm) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText("YES", text_data(68, 120, 16), (*lConfirm) ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
 void SetNormPadPresets(ConfigData* gameData)
@@ -1279,7 +1268,7 @@ void InitButtons(char* fileName)
 
     tablePos = TextureTableCount;
 
-    LoadCompressedTextureSequence(fileName);
+    LoadCompressedTextureSequence(fileName, 0);
 
     for (i = 0; i < 18; i++)
     {
@@ -1288,206 +1277,28 @@ void InitButtons(char* fileName)
     }
 }
 
-void DrawLine(int x, int y, int x1, int y1, int lineNum)
-{
-    /*TODO draw line
-    SetPolyF4(&(line[lineNum]));
-    line[lineNum].r0=230 ;
-    line[lineNum].g0=0 ;
-    line[lineNum].b0=BLACK_NOT_DRAWN ;
-
-    setXY4(&(line[lineNum]),x, y, x+2, y,
-       x1, y1, x1+2,y1+2 ) ;
-
-    AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(line[lineNum]) );
-    */
-}
-
 void QuitYesNo(SelectionData* selectData, ConfigData* gameData)
 {
-    CentreText("ARE YOU SURE YOU", text_data(77, 95, 8), RedText);
-    CentreText("WANT TO QUIT", text_data(105, 105, 8), RedText);
+    CentreText("ARE YOU SURE YOU", text_data(77, 95, 8), TEXT_COLOR_HIGHLIGHT);
+    CentreText("WANT TO QUIT", text_data(105, 105, 8), TEXT_COLOR_HIGHLIGHT);
 
     if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
     {
         selectData->confirm ^= 1;
     }
 
-    AddText("YES", text_data(80, 120, 16), selectData->confirm ? BLINK_TEXT : WhiteText);
-    AddText("NO", text_data(210, 120, 16), selectData->confirm ? WhiteText : BLINK_TEXT);
+    AddText("YES", text_data(80, 120, 16), selectData->confirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText("NO", text_data(210, 120, 16), selectData->confirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
 void GraphicOptions(SelectionData* selectData, ConfigData* gameData)
 {
-    static char listpos = 0;
-    char x = 50, y = 140, l = 12;
-    char DrawStr[8];
-    char ResStr[8];
-    char SkyStr[8];
-    char TexStr[8];
-
-    if (GetMenuKey(M_DOWN))
-    {
-        if (listpos == 3)
-            listpos = 0;
-        else
-            listpos++;
-    }
-
-    if (GetMenuKey(M_UP))
-    {
-        if (listpos == 0)
-            listpos = 3;
-        else
-            listpos--;
-    }
-
-    if (GetMenuKey(M_LEFT))
-    {
-        PlayNote(SFX_MENU_SELECT);
-    }
-
-    if (GetMenuKey(M_RIGHT))
-    {
-        PlayNote(SFX_MENU_SELECT);
-    }
-
-    switch (listpos)
-    {
-        case 0:
-            AddText("DRAW DISTANCE", text_data(x, y, 8), RedText);
-            AddText("RESOLUTION", text_data(x, y + l, 8), WhiteText);
-            // AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
-            // AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
-            AddText("TEXTURE FILTER", text_data(x, y + (l * 2), 8), WhiteText);
-            // AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
-            AddText("SKY", text_data(x, y + (l * 3), 8), WhiteText);
-            break;
-        case 1:
-            AddText("RESOLUTION", text_data(x, y + l, 8), RedText);
-            AddText("DRAW DISTANCE", text_data(x, y, 8), WhiteText);
-            // AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
-            //          AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
-            AddText("TEXTURE FILTER", text_data(x, y + (l * 2), 8), WhiteText);
-            //          AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
-            AddText("SKY", text_data(x, y + (l * 3), 8), WhiteText);
-            break;
-#if 0
-   case 3:  //AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), RedText) ;
-      AddText ("DRAW DISTANCE", text_data (x, y, 8), WhiteText);
-      AddText ("RESOLUTION", text_data (x, y+l, 8), WhiteText) ;
-      AddText ("TEXTURE FILTER", text_data (x, y+(l*3), 8), WhiteText) ;
-      //AddText ("PERS CORR", text_data (x, y+(l*4), 8), WhiteText) ;
-      break;
-#endif
-        case 2:
-            AddText("TEXTURE FILTER", text_data(x, y + (l * 2), 8), RedText);
-            AddText("DRAW DISTANCE", text_data(x, y, 8), WhiteText);
-            AddText("RESOLUTION", text_data(x, y + l, 8), WhiteText);
-            // AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
-            // AddText ("SKY", text_data (x, y+(l*2), 8), WhiteText) ;
-            // AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
-            AddText("SKY", text_data(x, y + (l * 3), 8), WhiteText);
-            break;
-        case 3:
-            AddText("SKY", text_data(x, y + (l * 3), 8), RedText);
-            //       AddText ("MIP MAPPING", text_data (x, y+(l*2), 8), WhiteText) ;
-            AddText("DRAW DISTANCE", text_data(x, y, 8), WhiteText);
-            AddText("RESOLUTION", text_data(x, y + l, 8), WhiteText);
-            // AddText ("SCREEN SIZE", text_data (x, y+(l*2), 8), WhiteText) ;
-            AddText("TEXTURE FILTER", text_data(x, y + (l * 2), 8), WhiteText);
-            break;
-    }
-
-    strcpy(ResStr, "320X240");
-
-    AddText(DrawStr, text_data(x + 180, y, 8), RedText);
-    AddText(ResStr, text_data(x + 180, y + l, 8), RedText);
-    // AddText (ScreenStr, text_data (x+190, y+(l*2), 8), RedText) ;
-    AddText(SkyStr, text_data(x + 180, y + (l * 3), 8), RedText);
-    AddText(TexStr, text_data(x + 180, y + (l * 2), 8), RedText);
-    //    AddText (PCStr, text_data (x+180, y+(l*3), 8), RedText) ;
+    // TODO
 }
 
 void ControllerOptions(SelectionData* selectData, ConfigData* gameData)
 {
-    /*
-    char controllerstring[20];
-    char configstring[20];
-    char colour1;
-    char colour2;
-    */
-
-    /*TODO input menu
-       if (GetMenuKey(M_UP)||GetMenuKey(M_DOWN))
-       {
-          if (orig_controller != _JOYSTICK1)
-          {
-             if (changecontroller)
-                changecontroller=0;
-             else
-                changecontroller=1;
-          }
-       }
-
-       if (changecontroller)
-       {
-          colour1=RedText;
-          colour2=WhiteText;
-          if (GetMenuKey(M_LEFT))
-          {
-             PlayNote(SFX_MENU_MOVE);
-             if (orig_controller==_KEYBOARD) orig_controller=_JOYSTICK1;
-             else
-                if (orig_controller==_MOUSE1) orig_controller=_KEYBOARD;
-                else
-                   if (orig_controller==_JOYSTICK1) orig_controller=_MOUSE1;
-          }
-
-          if (GetMenuKey(M_RIGHT))
-          {
-             PlayNote(SFX_MENU_MOVE);
-             if (orig_controller==_KEYBOARD) orig_controller=_MOUSE1;
-             else
-                if (orig_controller==_MOUSE1) orig_controller=_JOYSTICK1;
-                else
-                   if (orig_controller==_JOYSTICK1) orig_controller=_KEYBOARD;
-          }
-
-       }
-       else
-       {
-          if (orig_controller != _JOYSTICK1)
-          {
-             colour1=WhiteText;
-             colour2=RedText;
-          }
-       }
-
-       switch (orig_controller)
-       {
-       case _KEYBOARD: strcpy(configstring, "CONFIGURE KEYBOARD");
-                      strcpy(controllerstring, "KEYBOARD");
-                      CentreText (configstring, text_data (0, 170, 8), colour2) ;
-                      break;
-       case _MOUSE1: strcpy(configstring, "CONFIGURE MOUSE");
-          strcpy(controllerstring, "MOUSE");
-                      CentreText (configstring, text_data (0, 170, 8), colour2) ;
-                      break;
-       case _JOYSTICK1:
-          if (!JJSJoyConfig())
-          {
-             colour1=WhiteText;
-             colour2=RedText;
-             strcpy(configstring, "NO JOYSTICK DETECTED");
-             CentreText (configstring, text_data (0, 170, 8), colour2) ;
-          }
-          strcpy(controllerstring, "JOYSTICK");
-
-          break;
-       }
-       CentreText (controllerstring, text_data (0, 50, 8), colour1) ;
-    */
+    // TODO
 }
 
 void ControllerEdit(SelectionData* selectData, ConfigData* gameData)
@@ -1498,288 +1309,12 @@ void ControllerEdit(SelectionData* selectData, ConfigData* gameData)
 void DrawControllerMenu(const Menu* menu, int shapeNo)
 {
     InitMenuDisplay(110);
-    /*
-    switch (orig_controller)
-    {
-        case _KEYBOARD:
-            etc_Joystick1Switch = _DEVICE_OFF; // jjs quick and dirty
-            DrawObject(menu->menuModel[1], 0, 0, 3500, gFrameIndex * 20, 0, 0);
-            break;
-        case _MOUSE1:
-            DrawObject(menu->menuModel[0], 0, 0, 4500, gFrameIndex * 40, 75, 75);
-            break;
-        case _JOYSTICK1:
-            DrawObject(menu->menuModel[2], 0, 0, 3500, gFrameIndex * 40, -50, 0);
-            break;
-    }
-    */
+    // TODO
 }
 
 void KeyConfig(void)
 {
-    /*TODO input
-    char exists;
-    unsigned short KeyCode = 0;
-
-       CentreText ("PRESS KEY FOR", text_data (1, 6*12, 8), RedText) ;
-
-       switch(KeyToChange)
-       {
-       case NONE:
-          if(DelayCounter >= 15)
-          {
-             etc_KeyPressed = 0;
-             etc_Key = 0;
-             KeyToChange = LEFT;
-             DelayCounter = 0;
-          }
-          else
-             DelayCounter++;
-
-          break;
-
-       case LEFT:
-          CentreText ("LEFT", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[15] = KeyCode;
-                   NewOriginalKeyCodes[15] = KeyCode;
-                   SetKey(15, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case RIGHT:
-          CentreText ("RIGHT", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[13] = KeyCode;
-                   NewOriginalKeyCodes[13] = KeyCode;
-                   SetKey(13, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case UP:
-          CentreText ("UP", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[12] = KeyCode;
-                   NewOriginalKeyCodes[12] = KeyCode;
-                   SetKey(12, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case DOWN:
-          CentreText ("DOWN", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[14] = KeyCode;
-                   NewOriginalKeyCodes[14] = KeyCode;
-                   SetKey(14, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case BRAKEL:
-          CentreText ("LEFT AIRBRAKE", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[0] = KeyCode;
-                   NewOriginalKeyCodes[0] = KeyCode;
-                   SetKey(0, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case BRAKER:
-          CentreText ("RIGHT AIRBRAKE", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[1] = KeyCode;
-                   NewOriginalKeyCodes[1] = KeyCode;
-                   SetKey(1, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case ACCEL:
-          CentreText ("ACCELERATE", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[6] = KeyCode;
-                   NewOriginalKeyCodes[6] = KeyCode;
-                   SetKey(6, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case FIRE:
-          CentreText ("FIRE", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[5] = KeyCode;
-                   NewOriginalKeyCodes[5] = KeyCode;
-                   SetKey(5, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case VIEW_KEY:
-          CentreText ("CHANGE VIEW", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[4] = KeyCode;
-                   NewOriginalKeyCodes[4] = KeyCode;
-                   SetKey(4, KeyCode);
-                   KeyToChange++;
-                }
-             }
-          }
-
-          break;
-
-       case PAUSE_KEY:
-          CentreText ("PAUSE", text_data (1, 7*12, 8), WhiteText) ;
-
-          if(etc_KeyPressed)
-          {
-             KeyCode = GetKeyNoBlock();
-
-             if(KeyCode > 0)
-             {
-                exists = CheckKey(KeyCode);
-
-                if(exists)
-                {
-                   PlayNote(SFX_MENU_SELECT);
-                   OriginalKeyCodes[11] = KeyCode;
-                   NewOriginalKeyCodes[11] = KeyCode;
-                   SetKey(11, KeyCode);
-                   KeyToChange = NONE;
-                   davebodge = 2;
-                }
-             }
-          }
-
-          break;
-       }
-    */
+    // TODO
 }
 
 void DrawControllerEdit(const Menu* menu, int shapeNo)

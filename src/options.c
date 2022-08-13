@@ -14,33 +14,39 @@ void InGameReset(int choice, ConfigData* gameData, int* cdPause)
 
     if (BLINK_SLOW)
     {
-        CentreText("PAUSED", text_data(107, 90, 12), RedText);
+        CentreText("PAUSED", text_data(107, 90, 12), TEXT_COLOR_HIGHLIGHT);
     }
 
     for (i = 0; i < 4; i++)
     {
-        CentreText(gInGameMenu[i], text_data(0, 122 + (16 * i), 8), (i == choice) ? BLINK_TEXT : WhiteText);
+        CentreText(gInGameMenu[i], text_data(0, 122 + (16 * i), 8), (i == choice) ? BLINK_TEXT : TEXT_COLOR_WHITE);
     }
 
     if (choice == 3)
     {
-        CentreText(GetMusicTrackName(gMusicTrack), text_data(0, 122 + (16 * 4), 8), RedText);
+        CentreText(GetMusicTrackName(gMusicTrack), text_data(0, 122 + (16 * 4), 8), TEXT_COLOR_HIGHLIGHT);
+
+        if (gMusicTrack == 0) // show the actual track title for random
+        {
+            i = MusicGetTrack();
+            CentreText(GetMusicTrackName(i), text_data(0, 122 + (16 * 5), 8), TEXT_COLOR_HIGHLIGHT);
+        }
     }
 }
 
 void InGameConfirm(char* confirm, int choice, short xpad, char* lConfirm)
 {
-    CentreText("ARE YOU SURE YOU", text_data(0, 95, 8), WhiteText);
+    CentreText("ARE YOU SURE YOU", text_data(0, 95, 8), TEXT_COLOR_WHITE);
 
     if (choice == 1)
     {
-        CentreText("WANT TO RESTART", text_data(0, 105, 8), WhiteText);
+        CentreText("WANT TO RESTART", text_data(0, 105, 8), TEXT_COLOR_WHITE);
     }
     else
     {
-        CentreText("WANT TO QUIT", text_data(0, 105, 8), WhiteText);
+        CentreText("WANT TO QUIT", text_data(0, 105, 8), TEXT_COLOR_WHITE);
     }
 
-    AddText("YES", text_data(75, 120, 16), (*lConfirm) ? BLINK_TEXT : WhiteText);
-    AddText("NO", text_data(205, 120, 16), (*lConfirm) ? WhiteText : BLINK_TEXT);
+    AddText("YES", text_data(75, 120, 16), (*lConfirm) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText("NO", text_data(205, 120, 16), (*lConfirm) ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
