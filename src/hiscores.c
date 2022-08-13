@@ -173,7 +173,7 @@ void HighScore(ConfigData* gameData)
     highScore = 0;
 
 /*TODO highscores*/
-#if TODO
+#if 0
     for (j = 0; j < 3; j++)
     {
         bestLap += tempLapTimes[j];

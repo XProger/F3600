@@ -15,7 +15,7 @@ extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 extern ShipData ctrlshipIndex[NO_OF_SHIPS];
 extern const TrackCamera ctrlcamera;
 
-void titleInit()
+void titleInit(void)
 {
     titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim");
     if (ctrlfirsttime)
@@ -24,9 +24,8 @@ void titleInit()
         gTimeout = 60 * 5;
 }
 
-void titleLoop()
+void titleLoop(void)
 {
-    int i;
     UpdatePad();
 
     renderFrameBegin();

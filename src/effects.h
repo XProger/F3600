@@ -20,7 +20,7 @@ typedef struct Effect
 
 void InitEffects(Skeleton* camPos);
 void ResetEffects(void);
-void UpdateEffects();
+void UpdateEffects(void);
 void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex);
 void ColourStartBoom(int noToLight);
 void ResetStartBoom(void);
@@ -34,6 +34,6 @@ void AuroraBorialis(Object* object);
 void ColourRedLight(Object* redLight);
 void ColourDroidLights(Object* droid);
 void MoveDonkey(Object** donkey);
-void DrawEffects();
+void DrawEffects(void);
 void InitRedLight(Object** prm, short prmCount, Object** redLight);
 void InitDonkey(Object** prm, short prmCount, Object** donkey);

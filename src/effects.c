@@ -37,7 +37,7 @@ void ResetEffects(void)
     memset(gEffects, 0, sizeof(gEffects));
 }
 
-void UpdateEffects()
+void UpdateEffects(void)
 {
     int i;
 
@@ -64,7 +64,7 @@ void UpdateEffects()
     }
 }
 
-void DrawEffects()
+void DrawEffects(void)
 {
     int i;
     Billboard b;
@@ -353,7 +353,6 @@ void ColourDroidLights(Object* droid)
     short rf, gf, bf;
     int i;
     Prm prm;
-    short primitiveCount;
     short count = gFrameIndex * 70;
 
     rf = (rsin(count) >> 5) + 128;

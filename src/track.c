@@ -226,7 +226,7 @@ void InitViewList(char* file)
     long length;
     TrackSection* section;
     long total;
-    short i, j, k;
+    short i, j;
     int viewListCount;
 
     length = FileLength(file);

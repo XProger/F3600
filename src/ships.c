@@ -179,7 +179,6 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
     short position = 1;
     short used[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     int index;
-    int count;
 
     /***********************************************************************************/
     /**                     Ship ATTRIBUTES                                        *****/

@@ -6,6 +6,10 @@ uint16 vagSize[SFX_MAX];
 
 int32 SfxLoadBankVAB(const char* vh, const char* vb)
 {
+/*TODO 3DO*/
+#ifdef __3DO__
+    return 0;
+#else
     typedef struct
     {
         uint32 form;
@@ -53,6 +57,7 @@ int32 SfxLoadBankVAB(const char* vh, const char* vb)
     //dump_vags();
 
     return 1;
+#endif
 }
 
 int32 SfxLoadBankFx(const char* fileName)

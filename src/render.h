@@ -79,10 +79,10 @@ void renderTrack(void);
 void renderObject(const Object* object);
 void renderSky(const Object* object);
 void renderSetMode(int renderMode);
-void renderSetBlend(enum BlendMode mode);
+void renderSetBlend(int blend);
 void renderDepthWrite(int enable);
 void renderSetColor(uint32 color);
-void renderNextLayer();
+void renderNextLayer(void);
 Texture* renderCreateTexture(Tim* tim);
 
 #endif

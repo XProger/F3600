@@ -258,8 +258,6 @@ void menuInit(void)
 
 void menuLoop(ConfigData* gameData)
 {
-    int i;
-
     UpdatePad();
 
     renderFrameBegin();
@@ -327,9 +325,10 @@ void menuLoop(ConfigData* gameData)
 
 void GoMenu(int menu)
 {
+    MenuHistory* h = gMenuHistory + (gMenuHistoryIndex++);
+ 
     ASSERT(gMenuHistoryIndex < MAX_MENU_HISTORY);
 
-    MenuHistory* h = gMenuHistory + (gMenuHistoryIndex++);
     h->menu = gCurrMenu;
     h->option = gCurrOption;
 
@@ -342,9 +341,9 @@ void GoMenu(int menu)
 
 void GoBack(void)
 {
-    ASSERT(gMenuHistoryIndex > 0);
-
     MenuHistory* h = gMenuHistory + (--gMenuHistoryIndex);
+
+    ASSERT(gMenuHistoryIndex > 0);
 
     gCurrMenu = h->menu;
     gCurrOption = h->option;
@@ -390,9 +389,6 @@ void DrawButtons(void)
 
 void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
 {
-    short i;
-    long cardStatus, slotStatus;
-
     switch (gCurrMenu)
     {
         case MAIN_MENU:

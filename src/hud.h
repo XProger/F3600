@@ -59,5 +59,5 @@ void InitTrackTex(Texture** trackTex);
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData);
 void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData);
 void AddGlyph(int x, int y, int w, int h, int u, int v, const Texture* tex);
-void InitWeaponSprtIcons();
+void InitWeaponSprtIcons(void);
 void DrawWeaponSprtIcons(ShipData* playerShip);

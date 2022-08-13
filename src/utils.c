@@ -966,7 +966,6 @@ void ApplyMatrix(const MATRIX* m, const SVECTOR* v0, VECTOR* v1)
 
 void RotTrans(const MATRIX* m, const SVECTOR* v0, VECTOR* v1, long* flag)
 {
-    VECTOR r0;
     long x, y, z, f = 0;
 
     ApplyMatrix(m, v0, v1);

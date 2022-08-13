@@ -122,7 +122,7 @@ const char* const PILOT_NAMES[] =
 
 int InitCrowdSound(Object** prm, short prmCount, Object** lostad, int stadCount)
 {
-    int i, j;
+    int i;
     Object* obj;
 
     for (i = 0; i < prmCount; i++)

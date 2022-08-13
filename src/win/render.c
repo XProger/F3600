@@ -315,11 +315,11 @@ void renderOffset(int x, int y)
     yOffset = y;
 }
 
-void renderSetBlend(enum BlendMode mode)
+void renderSetBlend(int blend)
 {
-    if (gCurState.blend != mode)
+    if (gCurState.blend != blend)
     {
-        gCurState.blend = mode;
+        gCurState.blend = blend;
         gStatePtr = NULL;
     }
 }

@@ -825,7 +825,7 @@ int CalcPosition(ShipData* shipIndex)
     int tempPosition;
     VECTOR B, C, AB, AC, trackVect;
     int angleB, angleC, distanceB, distanceC;
-    int position;
+    int position = NO_OF_SHIPS;
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
@@ -1119,7 +1119,7 @@ void InitScreenTex(Texture** screenTex, const char* fileName)
     screenTex[1] = TextureTable[tablePos++];
 }
 
-void InitWeaponSprtIcons()
+void InitWeaponSprtIcons(void)
 {
     int tablePos = TextureTableCount;
 
