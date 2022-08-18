@@ -1067,7 +1067,7 @@ void InitGameData(ConfigData* gameData)
     gameData->Lives = 3;
     gameData->EndOfGame = 0;
     gameData->NumTracks = 1;
-    gameData->Position = 8;
+    gameData->Position = NO_OF_SHIPS;
     gameData->RapierClass = 0;
     gameData->gameComplete = 0;
     gameData->showPilotCount = 0;

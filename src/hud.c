@@ -755,28 +755,28 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
                     }
                 }
                 else
-
-                    if (gameData->trackNum == totalTracks)
                 {
-                    if (winTable[ownShip].position == 1)
+                    if (gameData->trackNum == totalTracks)
                     {
-                        gameData->gameComplete = 1;
-                        totalTracks = 14;
-                        NumTracks = 7;
-                        gameData->showBonusTrack = 1;
+                        if (winTable[ownShip].position == 1)
+                        {
+                            gameData->gameComplete = 1;
+                            totalTracks = 14;
+                            NumTracks = 7;
+                            gameData->showBonusTrack = 1;
+                        }
+                        else
+                        {
+                            gameData->lostGame = 1;
+                            gameData->trackInc = 0;
+                        }
                     }
                     else
                     {
-                        gameData->lostGame = 1;
-                        gameData->trackInc = 0;
+                        gameData->trackInc = 1;
+                        gameData->trackNum++;
+                        gameData->actTrackNum = gTrackList[(gameData->trackNum - 1)];
                     }
-                }
-
-                else
-                {
-                    gameData->trackInc = 1;
-                    gameData->trackNum++;
-                    gameData->actTrackNum = gTrackList[(gameData->trackNum - 1)];
                 }
             }
         }
@@ -811,7 +811,6 @@ int CalcPosition(ShipData* shipIndex)
     int tempPosition;
     VECTOR B, C, AB, AC, trackVect;
     int angleB, angleC, distanceB, distanceC;
-    int position = NO_OF_SHIPS;
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
@@ -864,13 +863,11 @@ int CalcPosition(ShipData* shipIndex)
             }
         }
 
-        if (i == ownShip)
-            position = tempPosition;
-
         if (shipIndex[i].attr & RACING)
             winTable[i].racePosition = tempPosition;
     }
-    return (position);
+
+    return winTable[ownShip].racePosition;
 }
 
 void ScreenFooter(int x, int y, int colour)

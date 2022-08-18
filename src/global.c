@@ -22,6 +22,9 @@ int tempLapTimes[5];
 int serialLapTimes[5];
 int attractDelay;
 
+int gCameraFOV = CAMERA_FOV;
+int gTargetFOV = CAMERA_FOV;
+
 Texture* FontTextureTable[FontTextureTableMax];
 Texture* TextureTable[TextureTableMax];
 short TextureTableCount;

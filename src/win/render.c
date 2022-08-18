@@ -1875,7 +1875,7 @@ void renderSetMode(int renderMode)
         renderDepthTest(1);
         renderSetBlend(BLEND_NONE);
 
-        matrixPerspective(gMatrices + gMatricesCount, 75.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, (float)64, (float)(64 * 1024));
+        matrixPerspective(gMatrices + gMatricesCount, gCameraFOV / 4096.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, (float)64, (float)(64 * 1024));
 
         gCurState.viewMatrix = 0;
         gCurState.projMatrix = gMatricesCount++;

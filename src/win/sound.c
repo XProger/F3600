@@ -188,6 +188,8 @@ void InitNotes(void)
         gSfxParams[i].loop = 0;
     }
 
+    gSfxParams[SFX_POWER_UP].pitch = SND_DEF_PITCH >> 1;
+
     gSfxParams[SFX_REMOTE_ENG].loop =
     gSfxParams[SFX_ENG_RUMBLE].loop =
     gSfxParams[SFX_ENG_AIR_INTAKE].loop =

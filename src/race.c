@@ -539,6 +539,10 @@ void raceCtrl(ConfigData* gameData)
 
     //ctrlshipIndex[ownShip].weaponType = SHIELD; // fx debug
 
+    if (gTargetFOV > CAMERA_FOV)
+        gTargetFOV -= (1 << 12);
+    gCameraFOV = gCameraFOV + ((gTargetFOV - gCameraFOV) >> 3);
+
     UpdatePad();
 
     if (ctrlfirsttime)
@@ -1276,7 +1280,6 @@ void raceCtrl(ConfigData* gameData)
         ctrlchoice = -1;
         QuitGame();
         ctrl_says_quit = 1;
-        return;
     }
 }
 
@@ -1285,22 +1288,23 @@ void raceLoop(ConfigData* gameData)
     int i, count;
     
     ctrlFramesCount += gFrameIndex - gLastFrameIndex;
+
+#ifdef ENABLE_60_FPS
+    count = ctrlFramesCount;
+    ctrlFramesCount -= count;
+#else
     count = ctrlFramesCount >> 1; // 60 -> 30 Hz
     ctrlFramesCount -= count << 1;
+#endif
+
+    if (count > 10) // max frame skip
+    {
+        count = 10;
+    }
 
     for (i = 0; i < count; i++)
     {
         raceCtrl(gameData);
-    }
-
-    if (ctrl_says_quit)
-    {
-        ctrlmode = INTERACTIVE;
-
-        ResetCone(&ctrlcone);
-        TextureTableCount = gBaseTextureIndex;
-        ctrlGameLoop = GAME_LOOP_TITLE_INIT;
-        return;
     }
 
     renderFrameBegin();
@@ -1417,6 +1421,16 @@ void raceLoop(ConfigData* gameData)
     }
 
     renderFrameEnd();
+
+    if (ctrl_says_quit)
+    {
+        ctrlmode = INTERACTIVE;
+
+        ResetCone(&ctrlcone);
+        TextureTableCount = gBaseTextureIndex;
+        ctrlGameLoop = (gameData->gameType == CHAMPIONSHIP) ? GAME_LOOP_RACE_INIT : GAME_LOOP_TITLE_INIT;
+        return;
+    }
 }
 
 void raceDemo(ConfigData* gameData)

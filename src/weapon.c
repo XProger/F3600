@@ -164,6 +164,7 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     {
                         PlayNote(SFX_MISS_LAUNCH);
                         SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH >> 2);
+                        gTargetFOV = CAMERA_FOV_EXTRA;
                     }
                     return;
             }

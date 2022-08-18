@@ -1,5 +1,7 @@
 #include "pad.h"
 
+//#define ENABLE_60_FPS
+
 //#define USE_SHIP_LODS
 #define SHIP_VIS_DIST 3000 // og 2000
 
@@ -20,9 +22,14 @@
 #define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT)
 #define BLINK_SLOW ((gFrameIndex & 63) <= 42)
 
+#define CAMERA_FOV          (75 << 12)
+#define CAMERA_FOV_EXTRA    (100 << 12)
+
 extern int gWidth;
 extern int gHeight;
 extern int gBorder;
+extern int gCameraFOV;
+extern int gTargetFOV;
 
 extern int HACK_LOAD_TRACK;
 extern int HACK_LOAD_SHADOW;
@@ -106,7 +113,12 @@ extern int32 gMasterBalance;
 #define AMBER_LIGHT_FADE 26
 #define GREEN_LIGHT_FADE 27
 
-#define frameRate30 30
+#ifdef ENABLE_60_FPS
+    #define frameRate30 60
+#else
+    #define frameRate30 30
+#endif
+
 #define FR30    (frameRate30)
 #define FR60    (frameRate30 * 2)
 #define FR50    (frameRate30 * 50 / 30)

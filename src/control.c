@@ -190,8 +190,8 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo, WeaponData* weaponInd
         revRight = 0;
     }
 
-    headingInc = playerShip->headingInc * gPadStickX >> 8;
-    vpitchInc = FR30U * gPadStickY >> 8;
+    headingInc = (playerShip->headingInc * gPadStickX * 30 / FR30) >> 8;
+    vpitchInc = (gPadStickY * 30 * 30 / FR30) >> 8;
 
     if (pad & pCon.left) /** Inc = 128 , max 2048 **/
     {

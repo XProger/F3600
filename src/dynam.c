@@ -17,6 +17,15 @@ void ShipCalcAmbient(ShipData* playerShip)
     playerShip->color = facePtr->red | (facePtr->green << 8) | (facePtr->blue << 16);
 }
 
+void ApplySpeedUp(ShipData* playerShip)
+{
+    playerShip->vel.vx += ((playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx) * 60) / FR60;
+    playerShip->vel.vy += ((playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy) * 60) / FR60;
+    playerShip->vel.vz += ((playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz) * 60) / FR60;
+
+    gTargetFOV = CAMERA_FOV_EXTRA;
+}
+
 void ShipTrkReaction(ShipData* playerShip)
 {
     int alpha, noseAlpha;
@@ -114,17 +123,13 @@ void ShipTrkReaction(ShipData* playerShip)
         {
             if (((facePtr->flags & SPEED_UP) && (playerShip->attr & LSIDE)))
             {
-                playerShip->vel.vx += ((playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx) * 60) / FR60;
-                playerShip->vel.vy += ((playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy) * 60) / FR60;
-                playerShip->vel.vz += ((playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz) * 60) / FR60;
+                ApplySpeedUp(playerShip);
             }
             facePtr++;
 
             if ((facePtr->flags & SPEED_UP) && ((playerShip->attr & LSIDE) == 0))
             {
-                playerShip->vel.vx += ((playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx) * 60) / FR60;
-                playerShip->vel.vy += ((playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy) * 60) / FR60;
-                playerShip->vel.vz += ((playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz) * 60) / FR60;
+                ApplySpeedUp(playerShip);
             }
             facePtr--;
         }
