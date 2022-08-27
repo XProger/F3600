@@ -78,6 +78,7 @@ typedef struct JoyDevice
     int32 time; // time when we can send vibration update
     int32 mask; // buttons mask
     int32 ready;
+    int32 readyLegacy;
 } JoyDevice;
 
 JoyDevice joyDevice[INPUT_JOY_COUNT];
@@ -142,9 +143,16 @@ void inputInit()
 
     for (int i = 0; i < INPUT_JOY_COUNT; i++)
     {
-        XINPUT_STATE state;
-        int res = _XInputGetState(i, &state);
-        joyDevice[i].ready = (_XInputGetState(i, &state) == ERROR_SUCCESS);
+        JOYINFOEX info;
+        info.dwSize  = sizeof(info);
+        info.dwFlags = JOY_RETURNALL;
+        joyDevice[i].readyLegacy = (joyGetPosEx(i, &info) == JOYERR_NOERROR);
+
+        if (_XInputGetState)
+        {
+            XINPUT_STATE state;
+            joyDevice[i].ready = (_XInputGetState(i, &state) == ERROR_SUCCESS);
+        }
     }
 }
 
@@ -171,6 +179,14 @@ void inputReset()
     gPad = 0;
 }
 
+enum JoyMode
+{
+    JOY_MODE_XINPUT,
+    JOY_MODE_NEGCON
+};
+
+int32 joyMode = JOY_MODE_XINPUT;
+
 void inputUpdate()
 {
     if (!isActive)
@@ -178,57 +194,139 @@ void inputUpdate()
 
     gPadStickX = gPadStickY = 256;
 
-    if (!_XInputGetState)
-        return;
-
     for (int i = 0; i < INPUT_JOY_COUNT; i++)
     {
-        if (!joyDevice[i].ready)
-            continue;
-
-        joyRumble(i);
-
-        XINPUT_STATE state;
-        if (_XInputGetState(i, &state) != ERROR_SUCCESS)
-        {
-            inputFree();
-            inputInit();
-            break;
-        }
-
-        static const int buttons[] = { IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_SELECT, IN_L, IN_R, IN_LB, IN_RB, 0, 0, IN_A, IN_B, IN_X, IN_Y, IN_LT, IN_RT };
-
-        int32 curMask = state.Gamepad.wButtons;
+        int32 curMask = 0;
         int32 oldMask = joyDevice[i].mask;
 
-        if (state.Gamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
-            curMask |= (1 << 16); // IN_LT
-
-        if (state.Gamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
-            curMask |= (1 << 17); // IN_RT
-
-        if (state.Gamepad.sThumbLY > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+        if (joyMode == JOY_MODE_NEGCON)
         {
-            curMask |= (1 << 0); // IN_UP
-            gPadStickY = state.Gamepad.sThumbLY >> 6;
+            JOYCAPS caps;
+            JOYINFOEX info;
+
+            if (!joyDevice[i].readyLegacy)
+                continue;
+
+            info.dwSize  = sizeof(info);
+            info.dwFlags = JOY_RETURNALL;
+
+            if (joyGetPosEx(i, &info) != JOYERR_NOERROR)
+                continue;
+
+            joyGetDevCaps(i, &caps, sizeof(caps));
+
+            if (caps.wNumAxes > 2)
+            {
+                float ax = ((info.dwXpos - caps.wXmin) / (float)(caps.wXmax - caps.wXmin)) * 2.0f - 1.0f;
+                float ay = ((info.dwYpos - caps.wYmin) / (float)(caps.wYmax - caps.wYmin)) * 2.0f - 1.0f;
+                float az = ((info.dwZpos - caps.wZmin) / (float)(caps.wZmax - caps.wZmin)) * 2.0f - 1.0f;
+
+            // twist
+                if (fabsf(ax) > 0.05f)
+                {
+                    if (ax < 0.0f)
+                    {
+                        curMask |= IN_LEFT;
+                        gPadStickX = (int32)(-ax * 256);
+                    }
+                    else
+                    {
+                        curMask |= IN_RIGHT;
+                        gPadStickX = (int32)(ax * 256);
+                    }
+                }
+
+            // accelerate / fire
+                if (fabsf(ay) > 0.01f)
+                {
+                    if (ay < 0.0f)
+                    {
+                        curMask |= IN_A;
+                    }
+                    else
+                    {
+                        curMask |= IN_B;
+                    }
+                }
+
+            // left air brake (analog)
+                if (az < 0.0f)
+                {
+                    curMask |= IN_LT;
+                }
+            }
+
+            uint32 p = ((caps.wCaps & JOYCAPS_HASPOV) && (info.dwPOV != JOY_POVCENTERED)) ? (1 + info.dwPOV / 4500) : 0;
+
+            if (p == 8 || p == 1 || p == 2) curMask |= IN_UP;
+            if (p == 6 || p == 7 || p == 8) curMask |= IN_LEFT;
+
+            if (!(curMask & (IN_LEFT | IN_RIGHT))) // if no twist - use d-pad
+            {
+                if (p == 2 || p == 3 || p == 4) curMask |= IN_RIGHT;
+                if (p == 4 || p == 5 || p == 6) curMask |= IN_DOWN;
+            }
+
+            if (info.dwButtons & (1 << 0)) curMask |= IN_B;
+            if (info.dwButtons & (1 << 1)) curMask |= IN_A;
+
+            if (info.dwButtons & (1 <<  9)) curMask |= IN_START;
+            if (info.dwButtons & (1 <<  7)) curMask |= IN_RT;
         }
-
-        if (state.Gamepad.sThumbLY < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+        else
         {
-            curMask |= (1 << 1); // IN_DOWN
-            gPadStickY = -state.Gamepad.sThumbLY >> 6;
-        }
+            XINPUT_STATE state;
 
-        if (state.Gamepad.sThumbLX < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
-        {
-            curMask |= (1 << 2); // IN_LEFT
-            gPadStickX = -state.Gamepad.sThumbLX >> 7;
-        }
+            if (!joyDevice[i].ready)
+                continue;
 
-        if (state.Gamepad.sThumbLX > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
-        {
-            curMask |= (1 << 3); // IN_RIGHT
-            gPadStickX = state.Gamepad.sThumbLX >> 7;
+            joyRumble(i);
+
+            if (_XInputGetState(i, &state) != ERROR_SUCCESS)
+            {
+                inputFree();
+                inputInit();
+                break;
+            }
+
+            static const int buttons[] = { IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_SELECT, IN_L, IN_R, IN_LB, IN_RB, 0, 0, IN_A, IN_B, IN_X, IN_Y, IN_LT, IN_RT };
+            for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++)
+            {
+                if (state.Gamepad.wButtons & (1 << i))
+                {
+                    curMask |= buttons[i];
+                }
+            }
+
+            if (state.Gamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
+                curMask |= IN_LT;
+
+            if (state.Gamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
+                curMask |= IN_RT;
+
+            if (state.Gamepad.sThumbLY > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+            {
+                curMask |= IN_UP;
+                gPadStickY = state.Gamepad.sThumbLY >> 6;
+            }
+
+            if (state.Gamepad.sThumbLY < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+            {
+                curMask |= IN_DOWN;
+                gPadStickY = -state.Gamepad.sThumbLY >> 6;
+            }
+
+            if (state.Gamepad.sThumbLX < -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+            {
+                curMask |= IN_LEFT;
+                gPadStickX = -state.Gamepad.sThumbLX >> 7;
+            }
+
+            if (state.Gamepad.sThumbLX > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+            {
+                curMask |= IN_RIGHT;
+                gPadStickX = state.Gamepad.sThumbLX >> 7;
+            }
         }
 
         if (gPadStickX > 256)
@@ -236,7 +334,7 @@ void inputUpdate()
         if (gPadStickY > 256)
             gPadStickY = 256;
 
-        for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++)
+        for (int i = 0; i < 18; i++)
         {
             int wasDown = (oldMask & (1 << i)) != 0;
             int isDown = (curMask & (1 << i)) != 0;
@@ -246,15 +344,16 @@ void inputUpdate()
 
             if (isDown && !wasDown)
             {
-                gPad |= buttons[i];
+                gPad |= (1 << i);
             }
             else
             {
-                gPad &= ~buttons[i];
+                gPad &= ~(1 << i);
             }
         }
 
         joyDevice[i].mask = curMask;
+        break;
     }
 }
 
