@@ -151,71 +151,27 @@ void PointersToIndex(void)
 
 void InitVertices(char* file)
 {
-    long length;
-
-    length = FileLength(file);
-    if (length <= 0)
-    {
-        ASSERT(0);
-    }
-
-    track->vertexCount = length / sizeof(VECTOR);
-
+    long size = osLoadFile(file, (char*)track->vertices);
+    track->vertexCount = size / sizeof(VECTOR);
     ASSERT(track->vertexCount <= MAX_VERTICES);
-
-    if (LoadFile(file, (char*)track->vertices) != length)
-    {
-        ASSERT(0);
-    }
-
     IntelVertex();
 }
 
 void InitFaces(char* file)
 {
-    long length;
-
-    length = FileLength(file);
-    if (length <= 0)
-    {
-        ASSERT(0);
-    }
-
-    track->faceCount = length / sizeof(Face);
-
+    long size = osLoadFile(file, (char*)track->faces);
+    track->faceCount = size / sizeof(Face);
     ASSERT(track->faceCount <= MAX_FACES);
-
-    if (LoadFile(file, (char*)track->faces) != length)
-    {
-        ASSERT(0);
-    }
-
     IntelFace();
 }
 
 void InitSections(char* file)
 {
-    long length;
-
-    length = FileLength(file);
-    if (length <= 0)
-    {
-        ASSERT(0);
-    }
-
-    track->sectionCount = length / sizeof(TrackSection);
-
+    long size = osLoadFile(file, (char*)track->sections);
+    track->sectionCount = size / sizeof(TrackSection);
     ASSERT(track->sectionCount <= MAX_SECTIONS);
-
-    if (LoadFile(file, (char*)track->sections) != length)
-    {
-        ASSERT(0);
-    }
-
     IntelSection();
-
     IndexToPointers();
-
 #if 1
     CheckVersion();
 #endif
@@ -223,26 +179,15 @@ void InitSections(char* file)
 
 void InitViewList(char* file)
 {
-    long length;
     TrackSection* section;
     long total;
     short i, j;
     int viewListCount;
 
-    length = FileLength(file);
-    if (length <= 0)
-    {
-        ASSERT(0);
-    }
-
-    viewListCount = length / 2;
+    long size = osLoadFile(file, (char*)track->viewList);
+    viewListCount = size / 2;
 
     ASSERT(viewListCount <= MAX_VIEWLIST);
-
-    if (LoadFile(file, (char*)track->viewList) != length)
-    {
-        ASSERT(0);
-    }
 
     for (i = 0; i < viewListCount; i++)
     {

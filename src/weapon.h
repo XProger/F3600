@@ -1,18 +1,14 @@
 /***** Weapon Defines *****/
 
-#define NO_OF_WEAPONS 29
-
-#define NO_OF_MINES     15
-#define NO_OF_ROCKETS   4
-#define NO_OF_MISSILES  4
-#define NO_OF_SHIELDS   3
-#define NO_OF_EBOLTS    3
-
-#define ROCKET_OFFSET   0
-#define MINE_OFFSET     4
-#define MISSILE_OFFSET  19
-#define SHIELD_OFFSET   23
-#define EBOLT_OFFSET    26
+enum WeaponShapeType
+{
+    WEAPON_SHAPE_ROCKET,
+    WEAPON_SHAPE_MINE,
+    WEAPON_SHAPE_MISSILE,
+    WEAPON_SHAPE_SHIELD,
+    WEAPON_SHAPE_EBOLT,
+    WEAPON_SHAPE_NAX
+};
 
 #define MINE_DURATION       (FR10 * 45)
 #define ROCKET_DURATION     (FR10 * 20)
@@ -54,7 +50,6 @@
 typedef struct WeaponShape
 {
     Object* shapePtr;
-    short used;
 } WeaponShape;
 
 typedef struct WeaponData
@@ -69,7 +64,6 @@ typedef struct WeaponData
     signed char targetShip;
     char fireShip;
     char type;
-    char availible;
     void (*updateWeapon)(ShipData*, WeaponShape*, struct WeaponData*, struct WeaponData*);
 } WeaponData;
 

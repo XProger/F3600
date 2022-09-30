@@ -1,6 +1,7 @@
 #include "game.h"
 
 extern short trackNum; // SJR
+extern long ctrlmode;
 extern long ctrlGameLoop;
 
 Texture* menuScreen;
@@ -297,6 +298,7 @@ void menuLoop(ConfigData* gameData)
 
     if (gCurrMenu == -1)
     {
+        ctrlmode = INTERACTIVE;
         ctrlGameLoop = GAME_LOOP_RACE_INIT;
         return;
     }

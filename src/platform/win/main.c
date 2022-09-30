@@ -460,6 +460,35 @@ void soundFill()
     curSoundBuffer ^= 1;
 }
 
+// filesystem
+long osLoadFile(const char* name, char* buffer)
+{
+    long size;
+    FILE* f = fopen(name, "rb");
+    if (!f)
+    {
+        ASSERT(0);
+        return 0;
+    }
+
+    fseek(f, 0, SEEK_END);
+    size = ftell(f);
+
+    if (buffer)
+    {
+        fseek(f, 0, SEEK_SET);
+        if (fread(buffer, 1, size, f) != size)
+        {
+            fclose(f);
+            ASSERT(0);
+            return 0;
+        }
+    }
+    fclose(f);
+    return size;
+}
+
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)

@@ -241,6 +241,11 @@ void* readFile(char* fileName, void* buffer, int32 bufferSize)
     return ptr;
 }*/
 
+long osLoadFile(const char* name, char* buffer)
+{
+    printf("load file %s\n", name);
+}
+
 int main(int argc, char *argv[])
 {
     uint8* memVRAM;

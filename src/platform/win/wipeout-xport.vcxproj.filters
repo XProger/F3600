@@ -10,7 +10,6 @@
     <ClCompile Include="..\..\droid.c" />
     <ClCompile Include="..\..\dynam.c" />
     <ClCompile Include="..\..\effects.c" />
-    <ClCompile Include="..\..\file.c" />
     <ClCompile Include="..\..\global.c" />
     <ClCompile Include="..\..\hiscores.c" />
     <ClCompile Include="..\..\hud.c" />
@@ -47,7 +46,6 @@
     <ClInclude Include="..\..\droid.h" />
     <ClInclude Include="..\..\dynam.h" />
     <ClInclude Include="..\..\effects.h" />
-    <ClInclude Include="..\..\file.h" />
     <ClInclude Include="..\..\global.h" />
     <ClInclude Include="..\..\hiscores.h" />
     <ClInclude Include="..\..\hud.h" />

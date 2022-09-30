@@ -89,33 +89,18 @@ void LoadCmpFiles(TIMlist* timPtr, int numTex)
     }
 }
 
+uint8 gCompBuffer[128 * 1024];
+
 void LoadCompressedTextureSequence(const char* fileName, int filter)
 {
     int texNum;
     int numTex;
-    char* fileBuffer;
-    long fileSize;
     static TIMlist timList;
     long timSize, timTotalSize;
 
-    fileSize = FileLength(fileName);
-    if (fileSize <= 0)
-    {
-        ASSERT(0);
-    }
+    osLoadFile(fileName, (char*)gCompBuffer);
 
-    fileBuffer = (char*)malloc(fileSize + 32);
-
-    if (!fileBuffer)
-    {
-        ASSERT(0);
-    }
-    if (LoadFile(fileName, (char*)fileBuffer) != fileSize)
-    {
-        ASSERT(0);
-    }
-
-    numTex = *(long*)fileBuffer;
+    numTex = *(long*)gCompBuffer;
 
     timTotalSize = 0;
 
@@ -124,7 +109,7 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
     for (texNum = 0; texNum < numTex; texNum++)
     {
         timList.memOffset[texNum] = timTotalSize;
-        timSize = *((long*)(fileBuffer + 4 + texNum * 4));
+        timSize = *((long*)(gCompBuffer + 4 + texNum * 4));
         timTotalSize += timSize;
     }
 
@@ -135,9 +120,7 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
         timList.memOffset[texNum] += (long)timList.memBase;
     }
 
-    ExpandData((uint8*)fileBuffer + 4 + numTex * 4, (uint8*)timList.memBase);
-
-    free(fileBuffer); /* free compressed file memory */
+    ExpandData((uint8*)gCompBuffer + 4 + numTex * 4, (uint8*)timList.memBase);
 
     HACK_TEX_FILTER = filter;
     LoadCmpFiles(&timList, numTex);
@@ -152,7 +135,7 @@ Texture* LoadTexture(const char* fileName)
     Tim* tim;
     Texture* tex;
 
-    length = FileLength(fileName);
+    length = osLoadFile(fileName, NULL);
     if (length <= 0)
     {
         ASSERT(0);
@@ -166,11 +149,7 @@ Texture* LoadTexture(const char* fileName)
         ASSERT(0);
     }
 
-    if (LoadFile(fileName, (char*)tim) != length)
-    {
-        /* File Error! */
-        ASSERT(0);
-    }
+    osLoadFile(fileName, (char*)tim);
 
     tex = renderCreateTexture(tim);
 

@@ -111,6 +111,7 @@ unsigned short GetKeyNoBlock(void);
 
 void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
+long osLoadFile(const char* name, char* buffer);
 
 enum ViewDir
 {
@@ -130,6 +131,8 @@ enum GameLoop
     GAME_LOOP_RACE_INIT,
     GAME_LOOP_RACE
 };
+
+#define GAME_LOOP_MAIN  GAME_LOOP_MENU_INIT
 
 typedef struct Texture
 {

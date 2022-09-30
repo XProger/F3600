@@ -30,7 +30,7 @@ void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
 
     for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
-        if ((weaponIndex[i].count > 0) && (weaponIndex[i].availible))
+        if (weaponIndex[i].count > 0)
         {
             weapon = weaponIndex + i;
             obj = weaponShapes[weapon->currentWeapon].shapePtr;
@@ -291,30 +291,21 @@ void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShap
     renderSetBlend(BLEND_ALPHA);
 }
 
-void InitWeaponObj(WeaponShape* weaponShapes, int textures, const char* name, int offset, int count)
+void InitWeaponObj(WeaponShape* weaponShapes, int textures, const char* name, int shapeIndex)
 {
-    long length;
     int i;
-    char* start;
     Prm prm;
     Object* object;
 
-    length = FileLength(name);
-    weaponShapes[offset].shapePtr = LoadPrm(name, textures);
-    for (i = offset + 1; i < offset + count; i++)
-    {
-        start = (char*)malloc(length + 32);
-        prm.ptr = start;
-        weaponShapes[i].shapePtr = prm.object;
-        memcpy(start, weaponShapes[offset].shapePtr, length);
-        object = prm.object++;
-        object->skeleton = prm.skeleton++;
-        object->vertices = prm.svector;
-        prm.svector += object->vertexCount;
-        object->normals = prm.svector;
-        prm.svector += object->normalCount;
-        object->primitives = prm.primitive;
-    }
+    prm.object = LoadPrm(name, textures);
+    weaponShapes[shapeIndex].shapePtr = prm.object;
+    object = prm.object++;
+    object->skeleton = prm.skeleton++;
+    object->vertices = prm.svector;
+    prm.svector += object->vertexCount;
+    object->normals = prm.svector;
+    prm.svector += object->normalCount;
+    object->primitives = prm.primitive;
 }
 
 void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex)
@@ -328,15 +319,14 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapon
     weaponTextures = TextureTableCount;
     LoadCompressedTextureSequence("wipeout\\common\\mine.cmp", 1);
 
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\rock.prm", ROCKET_OFFSET, MINE_OFFSET - ROCKET_OFFSET);
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\mine.prm", MINE_OFFSET, MISSILE_OFFSET - MINE_OFFSET);
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\miss.prm", MISSILE_OFFSET, SHIELD_OFFSET - MISSILE_OFFSET);
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\shld.prm", SHIELD_OFFSET, NO_OF_SHIELDS);
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\ebolt.prm", EBOLT_OFFSET, NO_OF_EBOLTS);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\rock.prm", WEAPON_SHAPE_ROCKET);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\mine.prm", WEAPON_SHAPE_MINE);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\miss.prm", WEAPON_SHAPE_MISSILE);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\shld.prm", WEAPON_SHAPE_SHIELD);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\ebolt.prm", WEAPON_SHAPE_EBOLT);
 
-    for (i = 0; i < NO_OF_WEAPONS; i++)
+    for (i = 0; i < WEAPON_SHAPE_NAX; i++)
     {
-        weaponShapes[i].used = 0;
         obj = weaponShapes[i].shapePtr;
         while (obj)
         {
@@ -348,7 +338,6 @@ void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapon
     for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
         weaponIndex[i].count = 0;
-        weaponIndex[i].availible = 0;
         weaponIndex[i].type = NO_WEAPON;
     }
 }
@@ -395,12 +384,6 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
     weapon->count--;
 
-    if (weapon->count == 0)
-    {
-        weaponShapes[weapon->currentWeapon].used = 0;
-        weaponIndex[weapon->currentWeapon].availible = 0;
-    }
-
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
     /***********************************************************/
@@ -439,8 +422,6 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             }
             weapon->count = SHIP_EXPLODE;
             weapon->targetShip = i;
-            weaponShapes[weapon->currentWeapon].used = 0;
-            weaponIndex[weapon->currentWeapon].availible = 0;
 
             if (i != ownShip)
             {
@@ -470,8 +451,6 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             if (mag <= 0)
             {
                 weapon->count = TRACK_EXPLODE;
-                weaponShapes[weapon->currentWeapon].used = 0;
-                weaponIndex[weapon->currentWeapon].availible = 0;
                 PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
                 return;
             }
@@ -564,12 +543,6 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
 
     weapon->count--;
 
-    if (weapon->count == NON_ACTIVE)
-    {
-        weaponShapes[weapon->currentWeapon].used = 0;
-        weaponIndex[weapon->currentWeapon].availible = 0;
-    }
-
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
     /***********************************************************/
@@ -607,8 +580,6 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
             }
             weapon->count = SHIP_EXPLODE;
             weapon->targetShip = i;
-            weaponShapes[weapon->currentWeapon].used = 0;
-            weaponIndex[weapon->currentWeapon].availible = 0;
 
             PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
             return;
@@ -627,8 +598,6 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
         if (mag <= 0)
         {
             weapon->count = TRACK_EXPLODE;
-            weaponShapes[weapon->currentWeapon].used = 0;
-            weaponIndex[weapon->currentWeapon].availible = 0;
             PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
             return;
         }
@@ -660,44 +629,35 @@ void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
         weapon->count = MISSILE_DURATION;
     }
     weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-    for (i = 0; i < NO_OF_MISSILES; i++)
+
+    weapon->currentWeapon = WEAPON_SHAPE_MISSILE;
+    weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
+
+    facePtr = track->faces + shipIndex[weapon->fireShip].nearTrkSect->faceStart;
+
+    while ((facePtr->flags & TRACK_BASE) == 0)
     {
-        if (weaponShapes[MISSILE_OFFSET + i].used == 0)
-        {
-            weapon->currentWeapon = MISSILE_OFFSET + i;
-            weaponShapes[MISSILE_OFFSET + i].used = 1;
-            weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
-
-            facePtr = track->faces + shipIndex[weapon->fireShip].nearTrkSect->faceStart;
-
-            while ((facePtr->flags & TRACK_BASE) == 0)
-            {
-                facePtr++;
-            }
-
-            GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
-
-            weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-            weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-            weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
-
-            weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
-            weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
-            weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
-
-            weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-            weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-            weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
-
-            weapon->hdg = shipIndex[weapon->fireShip].hdg;
-            weapon->pitch = shipIndex[weapon->fireShip].pitch;
-
-            weapon->updateWeapon = UpdateMissile;
-            weapon->availible = 1; // AJY
-            return;
-        }
+        facePtr++;
     }
-    weapon->count = NON_ACTIVE;
+
+    GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
+
+    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
+    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
+    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+
+    weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
+    weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
+    weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
+
+    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
+    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
+    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+
+    weapon->hdg = shipIndex[weapon->fireShip].hdg;
+    weapon->pitch = shipIndex[weapon->fireShip].pitch;
+
+    weapon->updateWeapon = UpdateMissile;
 }
 
 void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
@@ -712,8 +672,6 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
     if (weapon->count == NON_ACTIVE)
     {
-        weaponShapes[weapon->currentWeapon].used = 0;
-        weaponIndex[weapon->currentWeapon].availible = 0;
         return;
     }
 
@@ -776,8 +734,6 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
                 }
             }
             weapon->count = SHIP_EXPLODE;
-            weaponShapes[weapon->currentWeapon].used = 0;
-            weaponIndex[weapon->currentWeapon].availible = 0;
             PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
             return;
         }
@@ -807,44 +763,33 @@ void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     }
 
     weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
+    weapon->currentWeapon = WEAPON_SHAPE_ROCKET;
 
-    for (i = 0; i < NO_OF_ROCKETS; i++)
+    facePtr = track->faces + shipIndex[weapon->fireShip].nearTrkSect->faceStart;
+
+    while ((facePtr->flags & TRACK_BASE) == 0)
     {
-        if (weaponShapes[ROCKET_OFFSET + i].used == 0)
-        {
-            weapon->currentWeapon = ROCKET_OFFSET + i;
-            weaponShapes[ROCKET_OFFSET + i].used = 1;
-
-            facePtr = track->faces + shipIndex[weapon->fireShip].nearTrkSect->faceStart;
-
-            while ((facePtr->flags & TRACK_BASE) == 0)
-            {
-                facePtr++;
-            }
-
-            GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
-
-            weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-            weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-            weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
-
-            weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
-            weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
-            weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
-
-            weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-            weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-            weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
-
-            weapon->hdg = shipIndex[weapon->fireShip].hdg;
-            weapon->pitch = shipIndex[weapon->fireShip].pitch;
-
-            weapon->updateWeapon = UpdateRocket;
-            weapon->availible = 1; // AJY
-            return;
-        }
+        facePtr++;
     }
-    weapon->count = NON_ACTIVE;
+
+    GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
+
+    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
+    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
+    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+
+    weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
+    weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
+    weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
+
+    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
+    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
+    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+
+    weapon->hdg = shipIndex[weapon->fireShip].hdg;
+    weapon->pitch = shipIndex[weapon->fireShip].pitch;
+
+    weapon->updateWeapon = UpdateRocket;
 }
 
 void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
@@ -928,12 +873,6 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
 
     weapon->count--;
 
-    if (weapon->count == NON_ACTIVE)
-    {
-        weaponShapes[weapon->currentWeapon].used = 0;
-        weaponIndex[weapon->currentWeapon].availible = 0;
-    }
-
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
     /***********************************************************/
@@ -958,8 +897,6 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
             }
             weapon->count = SHIP_EXPLODE;
             weapon->targetShip = i;
-            weaponShapes[weapon->currentWeapon].used = 0;
-            weaponIndex[weapon->currentWeapon].availible = 0;
             return;
         }
     }
@@ -978,8 +915,6 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
         if (mag <= 0)
         {
             weapon->count = TRACK_EXPLODE;
-            weaponShapes[weapon->currentWeapon].used = 0;
-            weaponIndex[weapon->currentWeapon].availible = 0;
             PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
             return;
         }
@@ -1010,38 +945,28 @@ void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     }
 
     weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-    for (i = 0; i < NO_OF_EBOLTS; i++)
-    {
-        if (weaponShapes[EBOLT_OFFSET + i].used == 0)
-        {
-            weapon->currentWeapon = EBOLT_OFFSET + i;
-            weaponShapes[EBOLT_OFFSET + i].used = 1;
-            weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
+    weapon->currentWeapon = WEAPON_SHAPE_EBOLT;
+    weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
 
-            weapon->acc.vx = shipIndex[weapon->fireShip].unitVecNose.vx >> 8;
-            weapon->acc.vy = shipIndex[weapon->fireShip].unitVecNose.vy >> 8;
-            weapon->acc.vz = shipIndex[weapon->fireShip].unitVecNose.vz >> 8;
+    weapon->acc.vx = shipIndex[weapon->fireShip].unitVecNose.vx >> 8;
+    weapon->acc.vy = shipIndex[weapon->fireShip].unitVecNose.vy >> 8;
+    weapon->acc.vz = shipIndex[weapon->fireShip].unitVecNose.vz >> 8;
 
-            weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-            weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-            weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
+    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
+    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
 
-            weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
-            weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
-            weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
+    weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
+    weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
+    weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
 
-            weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-            weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-            weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
+    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
+    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
 
-            weapon->hdg = shipIndex[weapon->fireShip].hdg;
-            weapon->pitch = shipIndex[weapon->fireShip].pitch;
-            weapon->updateWeapon = UpdateElecBolt;
-            weapon->availible = 1; // AJY
-            return;
-        }
-    }
-    weapon->count = NON_ACTIVE;
+    weapon->hdg = shipIndex[weapon->fireShip].hdg;
+    weapon->pitch = shipIndex[weapon->fireShip].pitch;
+    weapon->updateWeapon = UpdateElecBolt;
 }
 
 void InitSpecial(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
@@ -1056,7 +981,6 @@ void InitSpecial(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
             shipIndex[i].specialCount = SPECIAL_DURATION;
         }
     }
-    weapon->availible = 1; // AJY
 }
 
 void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
@@ -1081,38 +1005,28 @@ void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     }
 
     weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-    for (i = 0; i < NO_OF_EBOLTS; i++)
-    {
-        if (weaponShapes[EBOLT_OFFSET + i].used == 0)
-        {
-            weapon->currentWeapon = EBOLT_OFFSET + i;
-            weaponShapes[EBOLT_OFFSET + i].used = 1;
-            weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
+    weapon->currentWeapon = WEAPON_SHAPE_EBOLT;
+    weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
 
-            weapon->acc.vx = shipIndex[weapon->fireShip].unitVecNose.vx >> 8;
-            weapon->acc.vy = shipIndex[weapon->fireShip].unitVecNose.vy >> 8;
-            weapon->acc.vz = shipIndex[weapon->fireShip].unitVecNose.vz >> 8;
+    weapon->acc.vx = shipIndex[weapon->fireShip].unitVecNose.vx >> 8;
+    weapon->acc.vy = shipIndex[weapon->fireShip].unitVecNose.vy >> 8;
+    weapon->acc.vz = shipIndex[weapon->fireShip].unitVecNose.vz >> 8;
 
-            weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-            weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-            weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
+    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
+    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
 
-            weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
-            weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
-            weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
+    weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
+    weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
+    weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
 
-            weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-            weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-            weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
+    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
+    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
 
-            weapon->hdg = shipIndex[weapon->fireShip].hdg;
-            weapon->pitch = shipIndex[weapon->fireShip].pitch;
-            weapon->updateWeapon = UpdateRevCon;
-            weapon->availible = 1; // AJY
-            return;
-        }
-    }
-    weapon->count = NON_ACTIVE;
+    weapon->hdg = shipIndex[weapon->fireShip].hdg;
+    weapon->pitch = shipIndex[weapon->fireShip].pitch;
+    weapon->updateWeapon = UpdateRevCon;
 }
 
 void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
@@ -1196,12 +1110,6 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
     weapon->count--;
 
-    if (weapon->count == NON_ACTIVE)
-    {
-        weaponShapes[weapon->currentWeapon].used = 0;
-        weaponIndex[weapon->currentWeapon].availible = 0;
-    }
-
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
     /***********************************************************/
@@ -1234,8 +1142,6 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
             }
             weapon->count = SHIP_EXPLODE;
             weapon->targetShip = i;
-            weaponShapes[weapon->currentWeapon].used = 0;
-            weaponIndex[weapon->currentWeapon].availible = 0;
             return;
         }
     }
@@ -1254,8 +1160,6 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         if (mag <= 0)
         {
             weapon->count = TRACK_EXPLODE;
-            weaponShapes[weapon->currentWeapon].used = 0;
-            weaponIndex[weapon->currentWeapon].availible = 0;
             PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
             return;
         }
@@ -1271,29 +1175,17 @@ void InitMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon
     if (weapon->count == 1)
     {
         weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-
-        for (i = 0; i < NO_OF_MINES; i++)
+        weapon->currentWeapon = WEAPON_SHAPE_MINE;
+        weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
+        weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
+        weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+        weapon->hdg = 0;
+        if (weapon->fireShip == ownShip)
         {
-            if (weaponShapes[MINE_OFFSET + i].used == 0)
-            {
-                weapon->currentWeapon = MINE_OFFSET + i;
-                weaponShapes[MINE_OFFSET + i].used = 1;
-                weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-                weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-                weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
-                weapon->hdg = 0;
-                if (weapon->fireShip == ownShip)
-                {
-                    PlayNote(SFX_MINE_DROP);
-                }
-                weapon->updateWeapon = UpdateMine;
-                weapon->count = MINE_DURATION;
-                weapon->availible = 1; // AJY
-
-                return;
-            }
+            PlayNote(SFX_MINE_DROP);
         }
-        weapon->count = NON_ACTIVE;
+        weapon->updateWeapon = UpdateMine;
+        weapon->count = MINE_DURATION;
     }
     else if (weapon->count > 0)
         weapon->count--;
@@ -1304,31 +1196,21 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     int i;
 
     weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-    for (i = 0; i < NO_OF_SHIELDS; i++)
+    weapon->currentWeapon = WEAPON_SHAPE_SHIELD;
+
+    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
+    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
+    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+
+    weapon->hdg = shipIndex[weapon->fireShip].hdg;
+    weapon->pitch = shipIndex[weapon->fireShip].pitch;
+
+    if (weapon->fireShip == ownShip)
     {
-        if (weaponShapes[SHIELD_OFFSET + i].used == 0)
-        {
-            weapon->currentWeapon = SHIELD_OFFSET + i;
-            weaponShapes[SHIELD_OFFSET + i].used = 1;
-
-            weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-            weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-            weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
-
-            weapon->hdg = shipIndex[weapon->fireShip].hdg;
-            weapon->pitch = shipIndex[weapon->fireShip].pitch;
-
-            if (weapon->fireShip == ownShip)
-            {
-                PlayNote(SFX_SHIELDS);
-                SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
-            }
-            weapon->updateWeapon = UpdateShield;
-            weapon->availible = 1; // AJY
-            return;
-        }
+        PlayNote(SFX_SHIELDS);
+        SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
     }
-    weapon->count = NON_ACTIVE;
+    weapon->updateWeapon = UpdateShield;
 }
 
 void UpdateShieldColors(Object* object, int32 counter)
@@ -1428,9 +1310,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
     if (weapon->count == 0)
     {
-        weaponShapes[weapon->currentWeapon].used = 0;
-        weaponIndex[weapon->currentWeapon].availible = 0;
-
         if (weapon->fireShip == ownShip)
         {
             KillNote(SFX_SHIELDS);
@@ -1443,10 +1322,6 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     {
         weapon->hdg = shipIndex[weapon->fireShip].hdg;
         weapon->pitch = shipIndex[weapon->fireShip].pitch;
-
-#ifdef OLD_SHIELD
-        UpdateShieldColors(weaponShapes[weapon->currentWeapon].shapePtr, weapon->count);
-#endif
     }
 }
 
@@ -1596,9 +1471,7 @@ void Weapon2Mine(WeaponData* weapon, WeaponData* weaponIndex, WeaponShape* weapo
             if (mag < 30)
             {
                 weaponIndex->count = NON_ACTIVE;
-                weaponShapes[weaponIndex->currentWeapon].used = 0;
                 weapon->count = TRACK_EXPLODE;
-                weaponShapes[weapon->currentWeapon].used = 0;
                 PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
                 return;
             }

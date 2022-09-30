@@ -35,7 +35,7 @@ Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 ShipData ctrlshipIndex[NO_OF_SHIPS];
 RescueData ctrlrescueDroid;
 
-WeaponShape ctrlweaponShapes[NO_OF_WEAPONS];
+WeaponShape ctrlweaponShapes[WEAPON_SHAPE_NAX];
 WeaponData ctrlweaponIndex[NO_ACTIVE_WEAPONS];
 
 WeaponGrid ctrlweaponGrid[64];
@@ -199,10 +199,6 @@ void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex,
     {
         weaponIndex[i].count = 0;
         weaponIndex[i].type = NO_WEAPON;
-    }
-    for (i = 0; i < NO_OF_WEAPONS; i++)
-    {
-        weaponShapes[i].used = 0;
     }
 
     ResetEffects();
@@ -1428,7 +1424,7 @@ void raceLoop(ConfigData* gameData)
 
         ResetCone(&ctrlcone);
         TextureTableCount = gBaseTextureIndex;
-        ctrlGameLoop = (gameData->gameType == CHAMPIONSHIP) ? GAME_LOOP_RACE_INIT : GAME_LOOP_TITLE_INIT;
+        ctrlGameLoop = (gameData->gameType == CHAMPIONSHIP) ? GAME_LOOP_RACE_INIT : GAME_LOOP_MAIN;
         return;
     }
 }

@@ -227,7 +227,7 @@ Object* LoadPrm(const char* name, short textureStart)
     char* start;
     char* finish;
 
-    length = FileLength(name);
+    length = osLoadFile(name, NULL);
 
     if (length <= 0)
     {
@@ -243,7 +243,7 @@ Object* LoadPrm(const char* name, short textureStart)
         ASSERT(0);
     }
 
-    if (LoadFile(name, start) != length)
+    if (osLoadFile(name, start) != length)
     {
         /* File Error! */
         ASSERT(0);

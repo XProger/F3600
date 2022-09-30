@@ -18,10 +18,6 @@ extern const TrackCamera ctrlcamera;
 void titleInit(void)
 {
     titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim");
-    if (ctrlfirsttime)
-        gTimeout = 60 * 30;
-    else
-        gTimeout = 60 * 5;
 }
 
 void titleLoop(void)
@@ -38,7 +34,6 @@ void titleLoop(void)
     if (xpad)
     {
         PlayNote(SFX_MENU_SELECT);
-        ctrlmode = INTERACTIVE;
         ctrlGameLoop = GAME_LOOP_MENU_INIT;
     }
 
@@ -93,15 +88,18 @@ void gameInit(void)
 
     ctrltimeout = FR30 * 120;
 
-    ctrlmode = ATTRACT;
-
     SetCharTextures(8);
     SetCharTextures(12);
     SetCharTextures(16);
 
     trackNum = 16; // SJR
 
-    ctrlGameLoop = GAME_LOOP_TITLE_INIT;
+    ctrlGameLoop = GAME_LOOP_MAIN;
+
+    if (ctrlfirsttime)
+        gTimeout = 60 * 30;
+    else
+        gTimeout = 60 * 5;
 
     loadShipData(ctrlshipIndex, ctrlshipShapes, &gCamPos);
 

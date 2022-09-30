@@ -9,26 +9,14 @@ char gTTF[TTF_SIZE_MAX];
 
 TexTemplate* LoadTtfFile(char* file, short* count, short libraryTextures)
 {
-    long length;
     short* tex;
     short i;
 
-    length = FileLength(file);
-    if (length <= 0)
-    {
-        ASSERT(0);
-    }
-
-    ASSERT(length <= TTF_SIZE_MAX);
-
-    if (LoadFile(file, gTTF) != length)
-    {
-        /* File Error! */
-        ASSERT(0);
-    }
+    long size = osLoadFile(file, gTTF);
+    ASSERT(size <= TTF_SIZE_MAX);
 
     tex = (short*)gTTF;
-    while (tex < ((short*)(gTTF + length)))
+    while (tex < ((short*)(gTTF + size)))
     {
         for (i = 0; i < 21; i++)
         {

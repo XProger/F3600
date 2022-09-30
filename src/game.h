@@ -5,7 +5,6 @@
 #include "tim.h"
 #include "object.h"
 #include "render.h"
-#include "file.h"
 #include "skeleton.h"
 #include "track.h"
 #include "ttf.h"
