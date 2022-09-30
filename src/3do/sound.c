@@ -11,5 +11,6 @@ void SetVolume(enum SfxType id, int32 volL, int32 volR) {}
 void FillNotes(int16* samples, int32 count) {}
 
 int MusicIsPlaying(void) { return 0; }
+int MusicGetTrack(void) { return 0; }
 void MusicPlay(int track) {}
 void MusicStop(void) {}

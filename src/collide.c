@@ -4,12 +4,17 @@ extern long ctrlmode;
 
 void ForceFeedback(int mag)
 {
+    int rumble;
+
     if (ctrlmode == ATTRACT)
         return;
 
-    int rumble = mag >> 3;
+    rumble = mag >> 3;
     if (rumble > 255)
+    {
         rumble = 255;
+    }
+
     osJoyVibrate(0, rumble, rumble);
 }
 

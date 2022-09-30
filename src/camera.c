@@ -126,6 +126,7 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
     pos.vx = camShip->pos.vx - (camShip->unitVecNose.vx >> 2);
     pos.vy = camShip->pos.vy - (camShip->unitVecNose.vy >> 2);
     pos.vz = camShip->pos.vz - (camShip->unitVecNose.vz >> 2);
+    pos.pad = 0;
 
     pos.vx += ((rsin((camShip->updateCount - SWITCH_TO_RACE_VIEW) * 3)));
     pos.vy -= (2 * (camShip->updateCount - SWITCH_TO_RACE_VIEW)) + 200;

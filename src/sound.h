@@ -76,6 +76,6 @@ void SetVolume(enum SfxType id, int32 volL, int32 volR);
 void FillNotes(int16* samples, int32 count);
 
 int MusicIsPlaying(void);
-int MusicGetTrack();
+int MusicGetTrack(void);
 void MusicPlay(int track);
 void MusicStop(void);

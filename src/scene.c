@@ -180,9 +180,11 @@ void IntelPrim(Prm prm)
 
 void IntelLong(long* lvalue)
 {
+#ifndef CPU_BIG_ENDIAN
     char* cvalue;
     char temp;
 
+    ASSERT(((int32)lvalue & 3) == 0);
     cvalue = (char*)lvalue;
 
     temp = cvalue[0];
@@ -192,18 +194,22 @@ void IntelLong(long* lvalue)
     temp = cvalue[1];
     cvalue[1] = cvalue[2];
     cvalue[2] = temp;
+#endif
 }
 
 void IntelShort(short* svalue)
 {
+#ifndef CPU_BIG_ENDIAN
     char* cvalue;
     char temp;
 
+    ASSERT(((int16)svalue & 1) == 0);
     cvalue = (char*)svalue;
 
     temp = cvalue[0];
     cvalue[0] = cvalue[1];
     cvalue[1] = temp;
+#endif
 }
 
 Object* LoadPrm(const char* name, short textureStart)

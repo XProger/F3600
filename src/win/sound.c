@@ -270,12 +270,12 @@ void SetVolume(enum SfxType id, int32 volL, int32 volR)
     gSfxParams[id].volR = volR;
 }
 
-int MusicIsPlaying()
+int MusicIsPlaying(void)
 {
     return music.playing;
 }
 
-int MusicGetTrack()
+int MusicGetTrack(void)
 {
     return music.track;
 }

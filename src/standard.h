@@ -31,6 +31,8 @@
     #include <celutils.h>
     #include <timerutils.h>
     #include <hardware.h>
+
+    #define CPU_BIG_ENDIAN
 #else
     #include <stdio.h>
 #endif

@@ -1,7 +1,7 @@
 SDK        = C:/Projects/3do-devkit
 FILESYSTEM = CD
 EXENAME	   = $(FILESYSTEM)/LaunchMe
-ISONAME    = wipEout.iso
+ISONAME    = wipeout.iso
 STACKSIZE  = 4096
 BANNER	   = banner.bmp
 
@@ -59,7 +59,7 @@ iso:
 	$(3DOENCRYPT) genromtags $(ISONAME)
 
 run:
-	/c/RetroArch/retroarch.exe -L C:\RetroArch\cores\opera_libretro.dll C:\Projects\wipeout-xport\src\3do\wipEout.iso
+	/c/RetroArch/retroarch.exe -L C:\RetroArch\cores\opera_libretro.dll C:\Projects\wipeout-xport\src\3do\wipeout.iso
 
 builddir:
 	mkdir -p build/
