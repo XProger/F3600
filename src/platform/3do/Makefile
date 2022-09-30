@@ -19,7 +19,7 @@ OPT      = -O2
 CFLAGS   = $(OPT) -bi -za1 -zas1 -wn -ff -fa -d __3DO__=1 -cpu ARM6
 CXXFLAGS = $(CFLAGS)
 ASFLAGS	 = -BI -i $(SDK)/include/3do
-INCPATH	 = -I $(SDK)/include/3do -I $(SDK)/include/ttl -I ..
+INCPATH	 = -I $(SDK)/include/3do -I $(SDK)/include/ttl -I ../..
 LIBPATH	 = $(SDK)/lib/3do
 LDFLAGS	 = -aif -reloc -ro-base 0 -libpath $(LIBPATH) -nodebug -remove -info Sizes
 STARTUP	 = $(LIBPATH)/cstartup.o
@@ -38,7 +38,7 @@ LIBS = \
 
 SRC_S   = $(wildcard *.s)
 SRC_C   = $(wildcard *.c)
-SRC_C  += $(wildcard ../*.c)
+SRC_C  += $(wildcard ../../*.c)
 
 OBJ += $(SRC_S:%.s=%.s.o)
 OBJ += $(SRC_C:%.c=%.c.o)
@@ -59,7 +59,7 @@ iso:
 	$(3DOENCRYPT) genromtags $(ISONAME)
 
 run:
-	/c/RetroArch/retroarch.exe -L C:\RetroArch\cores\opera_libretro.dll C:\Projects\wipeout-xport\src\3do\wipeout.iso
+	/c/RetroArch/retroarch.exe -L C:\RetroArch\cores\opera_libretro.dll C:\Projects\wipeout-xport\src\platform\3do\wipeout.iso
 
 builddir:
 	mkdir -p build/
