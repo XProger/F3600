@@ -188,20 +188,14 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
 
 void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex, WeaponShape* weaponShapes, RescueData* rescueDroid, Object** shipShapes)
 {
-    int i;
-
     KillNotes();
     initShipData(track->sections, shipIndex, gameData);
     InitRescueDroid(rescueDroid, shipShapes, &(shipIndex[ownShip]));
     cameraPtr->section = shipIndex[ownShip].nearTrkSect;
-    ResetStartBoom();
-    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
-    {
-        weaponIndex[i].count = 0;
-        weaponIndex[i].type = NO_WEAPON;
-    }
 
+    ResetWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
     ResetEffects();
+    ResetStartBoom();
 
     CameraUpdate = UpdateCameraRaceStart;
 }
@@ -217,7 +211,7 @@ void showLoadingScreen()
     char loadNo[3];
 
     /* load screen stuff */
-    strcpy(loadPath, "wipeout\\textures\\load");
+    strcpy(loadPath, "wipeout/textures/load");
     getTrackStrNo(loadNo, ctrlConfigData.actTrackNum);
     strcat(loadPath, loadNo);
     strcat(loadPath, ".tim");
@@ -301,13 +295,13 @@ void raceInit(ConfigData* gameData)
     /**********************************************************/
     /***                 Initialise Track                   ***/
     /**********************************************************/
-    getPath(trackPath, gameData->actTrackNum, "\\track.trv");
+    getPath(trackPath, gameData->actTrackNum, "/track.trv");
     InitVertices(trackPath);
-    getPath(trackPath, gameData->actTrackNum, "\\track.trf");
+    getPath(trackPath, gameData->actTrackNum, "/track.trf");
     InitFaces(trackPath);
-    getPath(trackPath, gameData->actTrackNum, "\\track.trs");
+    getPath(trackPath, gameData->actTrackNum, "/track.trs");
     InitSections(trackPath);
-    getPath(trackPath, gameData->actTrackNum, "\\track.vew");
+    getPath(trackPath, gameData->actTrackNum, "/track.vew");
     InitViewList(trackPath);
 
     extroLevel = 0;
@@ -317,28 +311,28 @@ void raceInit(ConfigData* gameData)
     {
         extroLevel = 14;
 
-        camSpline[0] = LoadPrm("wipeout\\common\\cam1s.prm", 0);
+        camSpline[0] = LoadPrm("wipeout/common/cam1s.prm", 0);
         camSpline[0]->skeleton->super = ctrlcamera.camPos;
 
-        shipSpline[0] = LoadPrm("wipeout\\common\\shp1s.prm", 0);
+        shipSpline[0] = LoadPrm("wipeout/common/shp1s.prm", 0);
         shipSpline[0]->skeleton->super = ctrlcamera.camPos;
 
-        camSpline[1] = LoadPrm("wipeout\\common\\cam2s.prm", 0);
+        camSpline[1] = LoadPrm("wipeout/common/cam2s.prm", 0);
         camSpline[1]->skeleton->super = ctrlcamera.camPos;
 
-        shipSpline[1] = LoadPrm("wipeout\\common\\shp2s.prm", 0);
+        shipSpline[1] = LoadPrm("wipeout/common/shp2s.prm", 0);
         shipSpline[1]->skeleton->super = ctrlcamera.camPos;
 
-        camSpline[2] = LoadPrm("wipeout\\common\\cam3s.prm", 0);
+        camSpline[2] = LoadPrm("wipeout/common/cam3s.prm", 0);
         camSpline[2]->skeleton->super = ctrlcamera.camPos;
 
-        shipSpline[2] = LoadPrm("wipeout\\common\\shp3s.prm", 0);
+        shipSpline[2] = LoadPrm("wipeout/common/shp3s.prm", 0);
         shipSpline[2]->skeleton->super = ctrlcamera.camPos;
 
-        camSpline[3] = LoadPrm("wipeout\\common\\cam4s.prm", 0);
+        camSpline[3] = LoadPrm("wipeout/common/cam4s.prm", 0);
         camSpline[3]->skeleton->super = ctrlcamera.camPos;
 
-        shipSpline[3] = LoadPrm("wipeout\\common\\shp4s.prm", 0);
+        shipSpline[3] = LoadPrm("wipeout/common/shp4s.prm", 0);
         shipSpline[3]->skeleton->super = ctrlcamera.camPos;
     }
 
@@ -347,31 +341,31 @@ void raceInit(ConfigData* gameData)
     {
         extroLevel = 13;
 
-        camSpline[4] = LoadPrm("wipeout\\common\\cam5s.prm", 0);
+        camSpline[4] = LoadPrm("wipeout/common/cam5s.prm", 0);
         camSpline[4]->skeleton->super = ctrlcamera.camPos;
 
-        shipSpline[4] = LoadPrm("wipeout\\common\\shp5s.prm", 0);
+        shipSpline[4] = LoadPrm("wipeout/common/shp5s.prm", 0);
         shipSpline[4]->skeleton->super = ctrlcamera.camPos;
 
-        camSpline[5] = LoadPrm("wipeout\\common\\cam6s.prm", 0);
+        camSpline[5] = LoadPrm("wipeout/common/cam6s.prm", 0);
         camSpline[5]->skeleton->super = ctrlcamera.camPos;
 
-        shipSpline[5] = LoadPrm("wipeout\\common\\shp6s.prm", 0);
+        shipSpline[5] = LoadPrm("wipeout/common/shp6s.prm", 0);
         shipSpline[5]->skeleton->super = ctrlcamera.camPos;
 
-        camSpline[6] = LoadPrm("wipeout\\common\\cam7s.prm", 0);
+        camSpline[6] = LoadPrm("wipeout/common/cam7s.prm", 0);
         camSpline[6]->skeleton->super = ctrlcamera.camPos;
 
-        shipSpline[6] = LoadPrm("wipeout\\common\\shp7s.prm", 0);
+        shipSpline[6] = LoadPrm("wipeout/common/shp7s.prm", 0);
         shipSpline[6]->skeleton->super = ctrlcamera.camPos;
     }
 
-    getPath(trackPath, gameData->actTrackNum, "\\library.ttf");
+    getPath(trackPath, gameData->actTrackNum, "/library.ttf");
     ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
 
     HACK_LOAD_TRACK = 1;
     ctrllibraryTextures = TextureTableCount;
-    getPath(trackPath, gameData->actTrackNum, "\\library.cmp");
+    getPath(trackPath, gameData->actTrackNum, "/library.cmp");
     LoadCompressedTextureSequence(trackPath, 0);
     HACK_LOAD_TRACK = 0;
 
@@ -409,12 +403,9 @@ void raceInit(ConfigData* gameData)
             ctrlcheck = 0;
     }
 
-    InitSpeedo();
-
     ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
 
     InitStartBoom(ctrlprm, ctrlprmCount);
-    ResetStartBoom();
 
     ctrlstadCount = InitCrowdSound(ctrlprm, ctrlprmCount, ctrllostad, ctrlstadCount);
 
@@ -430,21 +421,19 @@ void raceInit(ConfigData* gameData)
 
     InitCamera(&ctrlcamera, track->sections);
 
-    InitShadow(ctrlcamera.camPos);
+    InitShadow();
 
     if (trackNo == 13)
         InitAuroraBorialis(ctrlprm[ctrlsky]);
-
-    InitWeaponSprtIcons();
 
     InitScreenTex(ctrlwinLose, PILOT_NAMES[gameData->shipNum]);
 
     initShipData(track->sections, ctrlshipIndex, gameData);
     InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
 
-    initWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
-
-    InitEffects(ctrlcamera.camPos);
+    ResetWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
+    ResetEffects();
+    ResetStartBoom();
 
     CameraUpdate = UpdateCameraRaceStart;
 

@@ -15,13 +15,11 @@ const char tranny_table[] = {
     WHITE8_TRANSL,          // FX_HALO NOT USED
     PURPLE_TRANSL };        // FX_GREENY (NOT USED?) WAS REV_CON SO USE FOR FX_EBOLT EXPLODE
 
-void InitEffects(Skeleton* camPos)
+void InitEffects(void)
 {
-    int tablePos;
+    int tablePos = TextureTableCount;
 
-    tablePos = TextureTableCount;
-
-    LoadCompressedTextureSequence("wipeout\\common\\effects.cmp", 1);
+    LoadCompressedTextureSequence("wipeout/common/effects.cmp", 1);
 
     gEffectTextures[FX_FIRE] = TextureTable[tablePos++];
     gEffectTextures[FX_FIRE_WHITE] = TextureTable[tablePos++];
@@ -29,8 +27,6 @@ void InitEffects(Skeleton* camPos)
     gEffectTextures[FX_EBOLT] = TextureTable[tablePos++];
     gEffectTextures[FX_HALO] = TextureTable[tablePos++];
     gEffectTextures[FX_GREENY] = TextureTable[tablePos++];
-
-    ResetEffects();
 }
 
 void ResetEffects(void)
@@ -447,18 +443,18 @@ void MoveDonkey(Object** donkey)
     }
 }
 
-void InitShadow(Skeleton* camPos)
+void InitShadow(void)
 {
     HACK_LOAD_SHADOW = 1;
 
     if (ownShip < 2)
-        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad1.tim");
+        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout/textures/shad1.tim");
     else if (ownShip < 4)
-        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad2.tim");
+        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout/textures/shad2.tim");
     else if (ownShip < 6)
-        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad3.tim");
+        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout/textures/shad3.tim");
     else if (ownShip < 8)
-        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout\\textures\\shad4.tim");
+        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout/textures/shad4.tim");
 
     HACK_LOAD_SHADOW = 0;
 }

@@ -1,3 +1,5 @@
+extern WeaponShape ctrlweaponShapes[WEAPON_SHAPE_NAX];
+
 void raceInit(ConfigData* gameData);
 void raceCtrl(ConfigData* gameData);
 void raceLoop(ConfigData* gameData);

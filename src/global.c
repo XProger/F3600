@@ -47,3 +47,28 @@ int32 gMusicTrack;
 int32 gMasterBalance;
 
 const char gTrackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
+
+char* gDRAM;
+char* gVRAM;
+char* pDRAM;
+char* pVRAM;
+
+char* allocDRAM(int size)
+{
+    char* ret = pDRAM;
+    size = (size + 3) & ~3;
+    pDRAM += size;
+    ASSERT(pDRAM - gDRAM <= DRAM_SIZE);
+    printf("D alloc %d (%d kb)\n", size, (pDRAM - gDRAM) / 1024);
+    return ret;
+}
+
+char* allocVRAM(int size)
+{
+    char* ret = pVRAM;
+    size = (size + 3) & ~3;
+    pVRAM += size;
+    ASSERT(pVRAM - gVRAM <= VRAM_SIZE);
+    printf("V alloc %d (%d kb)\n", size, (pVRAM - gVRAM) / 1024);
+    return ret;
+}

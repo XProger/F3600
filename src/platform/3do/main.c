@@ -4,12 +4,7 @@ void* RAM_CEL;
 void* RAM_SND;
 
 #include "game.h"
-
-#define BLOCK_SIZE_DRAM     (32 * 1024)
-#define BLOCK_SIZE_VRAM     (16 * 1024)
-
-#define MAX_RAM_DRAM        (BLOCK_SIZE_DRAM * 29)
-#define MAX_RAM_VRAM        (BLOCK_SIZE_VRAM * 44)
+#include <filefunctions.h>
 
 Item irqVBL;
 Item irqVRAM;
@@ -181,56 +176,79 @@ void inputUpdate()
     if (joyMask & ControlStart)      gPad |= IN_START;
     if (joyMask & ControlX)          gPad |= IN_SELECT;
 }
-/*
-#include <filefunctions.h>
-void* readFile(char* fileName, void* buffer, int32 bufferSize)
+
+
+#if 1
+long osLoadFile(const char* name, char* buffer)
+{
+    Stream* fs;
+    int32 size;
+
+    printf("load file %s\n", name);
+
+    fs = OpenDiskStream((char*)name, buffer ? 2048 : 0);
+    if (!fs)
+    {
+        printf("failed to open file\n");
+        return 0;
+    }
+    size = fs->st_FileLength;
+    printf("size = %d\n", size);
+
+    if (ReadDiskStream(fs, buffer, size) < 0)
+    {
+        printf("failed to read file\n");
+        return 0;
+    }
+
+    CloseDiskStream(fs);
+    return size;
+}
+#else
+long osLoadFile(const char* name, char* buffer)
 {
     Item f;
+    Item req;
+    long size;
     IOInfo params;
     DeviceStatus ds;
-    Item req;
-    void* ptr;
-    int size;
+    int filesize;
+    Stream *fs;
 
-    printf("readFile %s\n", fileName);
 
-    f = OpenDiskFile(fileName);
+
+
+
+
+    f = OpenDiskFile((char*)name);
 
     if (f < 0) {
-        printf("failed to open file %s\n", fileName);
-        return NULL;
+        printf("failed to open file %s\n", name);
+        return 0;
     }
 
     req = CreateIOReq(NULL, 0, f, 0);
     memset(&params, 0, sizeof(IOInfo));
     memset(&ds, 0, sizeof(DeviceStatus));
     params.ioi_Command = CMD_STATUS;
-    params.ioi_Recv.iob_Buffer = &ds;
     params.ioi_Recv.iob_Len = sizeof(DeviceStatus);
-
-    ptr = buffer;
+    params.ioi_Recv.iob_Buffer = &ds;
 
     if (DoIO(req, &params) >= 0)
     {
         size = ds.ds_DeviceBlockCount * ds.ds_DeviceBlockSize;
+        printf("size = %d\n", size);
 
-        if (bufferSize < size)
-        {
-            printf("not enough buffer size for %s. %d bytes required!\n", fileName, size);
-            ptr = NULL;
-        }
-
-        if (ptr != NULL)
+        if (buffer)
         {
             memset(&params, 0, sizeof(IOInfo));
             params.ioi_Command = CMD_READ;
             params.ioi_Recv.iob_Len = size;
-            params.ioi_Recv.iob_Buffer = ptr;
+            params.ioi_Recv.iob_Buffer = buffer;
 
             if (DoIO(req, &params) < 0)
             {
                 printf("can't get file content!\n");
-                ptr = NULL;
             }
         }
     }
@@ -238,26 +256,33 @@ void* readFile(char* fileName, void* buffer, int32 bufferSize)
     DeleteIOReq(req);
     CloseDiskFile(f);
 
-    return ptr;
-}*/
-
-long osLoadFile(const char* name, char* buffer)
-{
-    printf("load file %s\n", name);
+    return size;
 }
+#endif
 
-int main(int argc, char *argv[])
+void memCheck(void)
 {
-    uint8* memVRAM;
-    uint8* memDRAM;
-    int32 i;
     MemInfo memInfoVRAM;
-
-    printf("wipEout 3DO\n");
     AvailMem(&memInfoVRAM, MEMTYPE_DRAM);
     printf("DRAM: %d\n", (int)memInfoVRAM.minfo_SysFree);
     AvailMem(&memInfoVRAM, MEMTYPE_VRAM);
     printf("VRAM: %d\n", (int)memInfoVRAM.minfo_SysFree);
+}
+
+void EnableSuperClipping()
+{
+    int32 i;
+    for (i = 0; i < 2; i++)
+    {
+        SetCEControl(screen.sc_BitmapItems[i], 0xFFFFFFFF, ASCALL);
+        DisableHAVG(screen.sc_BitmapItems[i]);
+        DisableVAVG(screen.sc_BitmapItems[i]);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    printf("wipEout 3DO\n");
 
     OpenMathFolio();
     OpenGraphicsFolio();
@@ -265,36 +290,24 @@ int main(int argc, char *argv[])
     InitEventUtility(1, 0, LC_Observer);
     CreateBasicDisplay(&screen, DI_TYPE_DEFAULT, 2);
 
-    for (i = 0; i < 2; i++)
-    {
-        //SetCEControl(screen.sc_BitmapItems[i], 0xFFFFFFFF, ASCALL); // -5 ms but perf spikes and total blackout :(
-        //DisableHAVG(screen.sc_BitmapItems[i]);
-        //DisableVAVG(screen.sc_BitmapItems[i]);
-    }
+    //EnableSuperClipping(); // -5 ms but perf spikes and total blackout :(
 
     irqVBL = GetVBLIOReq();
     irqVRAM = GetVRAMIOReq();
     irqTimer = GetTimerIOReq();
 
-    memVRAM = (uint8*)AllocMem(MAX_RAM_VRAM, MEMTYPE_VRAM);
-    memDRAM = (uint8*)AllocMem(MAX_RAM_DRAM, MEMTYPE_DRAM);
-
-    if (!memVRAM) printf("VRAM failed!\n");
-    if (!memDRAM) printf("DRAM failed!\n");
-    /*
-    RAM_TEX = memVRAM;
-    RAM_LVL = memDRAM;
-    RAM_CEL = memDRAM + MAX_RAM_LVL;
-    RAM_SND = memDRAM + MAX_RAM_LVL + MAX_RAM_CEL;
-    */
     //sndInit();
+    memCheck();
+
+    gDRAM = pDRAM = (char*)AllocMem(DRAM_SIZE, MEMTYPE_DRAM);
+    gVRAM = pVRAM = (char*)AllocMem(VRAM_SIZE, MEMTYPE_VRAM);
+
+    if (!gDRAM) printf("DRAM failed!\n");
+    if (!gVRAM) printf("VRAM failed!\n");
+
+    memCheck();
 
     gameInit();
-
-    AvailMem(&memInfoVRAM, MEMTYPE_DRAM);
-    printf("DRAM: %d\n", (int)memInfoVRAM.minfo_SysFree);
-    AvailMem(&memInfoVRAM, MEMTYPE_VRAM);
-    printf("VRAM: %d\n", (int)memInfoVRAM.minfo_SysFree);
 
     QueryGraphics(QUERYGRAF_TAG_FIELDCOUNT, &gFrameIndex);
 
@@ -310,7 +323,7 @@ int main(int argc, char *argv[])
 
         screenItem = screen.sc_ScreenItems[screenPage];
 
-        //gameCtrl();
+        gameCtrl();
 
         drawInt(320 - 8, 4 + 16, rand() % 255);
 

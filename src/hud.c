@@ -55,7 +55,7 @@ void InitText(void)
 
     ASSERT(TextureTableCount == 0);
 
-    LoadCompressedTextureSequence("wipeout\\textures\\drfonts.cmp", 0);
+    LoadCompressedTextureSequence("wipeout/textures/drfonts.cmp", 0);
 
     ASSERT(TextureTableCount <= FontTextureTableMax);
     for (i = 0; i < TextureTableCount; i++)
@@ -88,7 +88,7 @@ const BarPoint gBarPoint[NUM_BARS + 1] = {
 
 void InitSpeedo(void)
 {
-    speedoTex = LoadTexture("wipeout\\textures\\speedo.tim");
+    speedoTex = LoadTexture("wipeout/textures/speedo.tim");
 }
 
 #define BAR_THRUST      70
@@ -1087,7 +1087,7 @@ void InitScreenTex(Texture** screenTex, const char* fileName)
     int tablePos;
     char modelFile[64];
 
-    strcpy(modelFile, "wipeout\\textures\\");
+    strcpy(modelFile, "wipeout/textures/");
     strcat(modelFile, fileName);
     strcat(modelFile, ".cmp");
 
@@ -1103,7 +1103,7 @@ void InitWeaponSprtIcons(void)
 {
     int tablePos = TextureTableCount;
 
-    LoadCompressedTextureSequence("wipeout\\common\\wicons.cmp", 0);
+    LoadCompressedTextureSequence("wipeout/common/wicons.cmp", 0);
 
     gWeaponIconTextures[MINE - 1] = TextureTable[tablePos++];
     gWeaponIconTextures[MISSILE - 1] = TextureTable[tablePos++];
@@ -1162,7 +1162,7 @@ void InitTrackTex(Texture** trackTex)
 {
     int tablePos = TextureTableCount;
 
-    LoadCompressedTextureSequence("wipeout\\textures\\track.cmp", 0);
+    LoadCompressedTextureSequence("wipeout/textures/track.cmp", 0);
 
     trackTex[0] = TextureTable[tablePos++];
     trackTex[1] = TextureTable[tablePos++];

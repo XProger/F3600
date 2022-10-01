@@ -51,8 +51,6 @@ void HighScore(ConfigData* gameData)
     int count = 0;
     int padDelay = 0;
 
-    /* timInfo = Load16BitTexture ("c:\\wipeout\\textures\\hiscore.tim", VRAM) ;
-     */
     if (firstUsed)
     {
         for (j = 0; j < (HiScoreTracks * 2); j++)

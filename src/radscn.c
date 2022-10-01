@@ -164,7 +164,8 @@ void SceneRadiusCheck(Object* objects)
             allCount++;
         }
 
-        section->objects = (short*)malloc(objectCount * sizeof(short));
+        section->objects = (short*)allocDRAM(objectCount * sizeof(short));
+
         if (!section->objects)
         {
             ASSERT(0);

@@ -19,4 +19,10 @@ void RotTrans(const MATRIX* m, const SVECTOR* v0, VECTOR* v1, long* flag);
 long RotTransPers(const MATRIX* m, const SVECTOR* v0, DVECTOR* sxy, long* flag);
 void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret);
 
+
+int32 SwapLE32(int32 x);
+int16 SwapLE16(int16 x);
+void IntelLong(long* lvalue);
+void IntelShort(short* svalue);
+
 #endif

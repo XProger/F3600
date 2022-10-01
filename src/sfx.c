@@ -72,10 +72,10 @@ int32 SfxLoadBankFx(const char* fileName)
 
 void SfxInit(void)
 {
-    if (SfxLoadBankVAB("wipeout\\sound\\wipeout.vh", "wipeout\\sound\\wipeout.vb"))
+    if (SfxLoadBankVAB("wipeout/sound/wipeout.vh", "wipeout/sound/wipeout.vb"))
         return;
 
-    if (SfxLoadBankFx("wipeout\\wipeout.fx"))
+    if (SfxLoadBankFx("wipeout/wipeout.fx"))
         return;
 
     ASSERT(0); // no banks found

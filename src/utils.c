@@ -1118,3 +1118,63 @@ long RotTransPers(const MATRIX* m, const SVECTOR* v0, DVECTOR* sxy, long* flag)
 
     return r0.vz >> 2;
 }
+
+uint16 swap16(uint16 x) {
+    return ((x & 0x00FF) << 8) | ((x & 0xFF00) >> 8);
+}
+
+uint32 swap32(uint32 x) {
+    return ((x & 0x000000FF) << 24) | ((x & 0x0000FF00) << 8) | ((x & 0x00FF0000) >> 8) | ((x & 0xFF000000) >> 24);
+}
+
+int32 SwapLE32(int32 x)
+{
+#ifdef CPU_BIG_ENDIAN
+    return swap32(x);
+#else
+    return x;
+#endif
+}
+
+int16 SwapLE16(int16 x)
+{
+#ifdef CPU_BIG_ENDIAN
+    return swap32(x);
+#else
+    return x;
+#endif
+}
+
+void IntelLong(long* lvalue)
+{
+#ifndef CPU_BIG_ENDIAN
+    char* cvalue;
+    char temp;
+
+    ASSERT(((int32)lvalue & 3) == 0);
+    cvalue = (char*)lvalue;
+
+    temp = cvalue[0];
+    cvalue[0] = cvalue[3];
+    cvalue[3] = temp;
+
+    temp = cvalue[1];
+    cvalue[1] = cvalue[2];
+    cvalue[2] = temp;
+#endif
+}
+
+void IntelShort(short* svalue)
+{
+#ifndef CPU_BIG_ENDIAN
+    char* cvalue;
+    char temp;
+
+    ASSERT(((int16)svalue & 1) == 0);
+    cvalue = (char*)svalue;
+
+    temp = cvalue[0];
+    cvalue[0] = cvalue[1];
+    cvalue[1] = temp;
+#endif
+}

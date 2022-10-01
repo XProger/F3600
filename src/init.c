@@ -12,14 +12,14 @@ short InitScene(Object** prm, short* prmCount, Skeleton* camPos, ConfigData* gam
     char trackPath[64];
 
     sceneTextures = TextureTableCount;
-    getPath(trackPath, gameData->actTrackNum, "\\scene.cmp");
+    getPath(trackPath, gameData->actTrackNum, "/scene.cmp");
     LoadCompressedTextureSequence(trackPath, 1);
 
     skyTextures = TextureTableCount;
-    getPath(trackPath, gameData->actTrackNum, "\\sky.cmp");
+    getPath(trackPath, gameData->actTrackNum, "/sky.cmp");
     LoadCompressedTextureSequence(trackPath, 1);
 
-    getPath(trackPath, gameData->actTrackNum, "\\scene.prm");
+    getPath(trackPath, gameData->actTrackNum, "/scene.prm");
 
     /*
        objectTable = LoadPrm( trackPath , sceneTextures );
@@ -37,7 +37,7 @@ short InitScene(Object** prm, short* prmCount, Skeleton* camPos, ConfigData* gam
     }
 
     sky = *prmCount;
-    getPath(trackPath, gameData->actTrackNum, "\\sky.prm");
+    getPath(trackPath, gameData->actTrackNum, "/sky.prm");
     prm[(*prmCount)++] = LoadPrm(trackPath, skyTextures);
     obj = prm[sky];
     /*   while ( obj )   */
@@ -71,7 +71,7 @@ void getPath(char* trackPath, char trackNo, char* name)
 {
     char No[3];
 
-    strcpy(trackPath, "wipeout\\track");
+    strcpy(trackPath, "wipeout/track");
     getTrackStrNo(No, trackNo);
     strcat(trackPath, No);
     strcat(trackPath, name);
@@ -99,8 +99,7 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
     long timSize, timTotalSize;
 
     osLoadFile(fileName, (char*)gCompBuffer);
-
-    numTex = *(long*)gCompBuffer;
+    numTex = SwapLE32(*(int*)gCompBuffer);
 
     timTotalSize = 0;
 
@@ -109,11 +108,11 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
     for (texNum = 0; texNum < numTex; texNum++)
     {
         timList.memOffset[texNum] = timTotalSize;
-        timSize = *((long*)(gCompBuffer + 4 + texNum * 4));
+        timSize = SwapLE32(*(int*)(gCompBuffer + 4 + texNum * 4));
         timTotalSize += timSize;
     }
 
-    timList.memBase = (char*)malloc(timTotalSize);
+    timList.memBase = allocVRAM(timTotalSize);
 
     for (texNum = 0; texNum < numTex; texNum++)
     {
@@ -125,8 +124,6 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
     HACK_TEX_FILTER = filter;
     LoadCmpFiles(&timList, numTex);
     HACK_TEX_FILTER = 0;
-
-    free(timList.memBase);
 }
 
 Texture* LoadTexture(const char* fileName)
@@ -135,25 +132,16 @@ Texture* LoadTexture(const char* fileName)
     Tim* tim;
     Texture* tex;
 
-    length = osLoadFile(fileName, NULL);
+    length = osLoadFile(fileName, pVRAM);
     if (length <= 0)
     {
         ASSERT(0);
         return NULL;
     }
 
-    tim = (Tim*)malloc(length + 32);
-
-    if (!tim)
-    {
-        ASSERT(0);
-    }
-
-    osLoadFile(fileName, (char*)tim);
+    tim = (Tim*)allocVRAM(length);
 
     tex = renderCreateTexture(tim);
-
-    free(tim);
 
     return tex;
 }

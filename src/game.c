@@ -15,9 +15,12 @@ extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 extern ShipData ctrlshipIndex[NO_OF_SHIPS];
 extern const TrackCamera ctrlcamera;
 
+char* pDRAM_checkpoint;
+char* pVRAM_checkpoint;
+
 void titleInit(void)
 {
-    titleScreen = LoadTexture("wipeout\\textures\\wiptitle.tim");
+    titleScreen = LoadTexture("wipeout/textures/wiptitle.tim");
 }
 
 void titleLoop(void)
@@ -48,6 +51,8 @@ void titleLoop(void)
 
 void gameInit(void)
 {
+    printf("init game\n");
+
     InitGameDisplay();
 
     SfxInit();
@@ -102,8 +107,16 @@ void gameInit(void)
         gTimeout = 60 * 5;
 
     loadShipData(ctrlshipIndex, ctrlshipShapes, &gCamPos);
+    InitSpeedo();
+    printf("done speedo\n");
+    InitWeaponSprtIcons();
+    InitEffects();
+    InitWeapons(ctrlweaponShapes);
 
     gBaseTextureIndex = TextureTableCount;
+
+    pDRAM_checkpoint = pDRAM;
+    pVRAM_checkpoint = pVRAM;
 }
 
 void gameCtrl(void)
@@ -118,6 +131,8 @@ void gameCtrl(void)
             break;
 
         case GAME_LOOP_MENU_INIT:
+            pDRAM = pDRAM_checkpoint;
+            pVRAM = pVRAM_checkpoint;
             menuInit();
             ctrlGameLoop = GAME_LOOP_MENU;
         case GAME_LOOP_MENU:
@@ -125,6 +140,8 @@ void gameCtrl(void)
             break;
 
         case GAME_LOOP_RACE_INIT:
+            pDRAM = pDRAM_checkpoint;
+            pVRAM = pVRAM_checkpoint;
             raceInit(&ctrlConfigData);
             renderPrepare();
             ctrlGameLoop = GAME_LOOP_RACE;

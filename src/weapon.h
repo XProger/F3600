@@ -79,7 +79,8 @@ typedef struct WeaponGrid
 void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex);
 void FireWeapon(ShipData*, WeaponData*, int, char);
 void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes);
-void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex);
+void InitWeapons(WeaponShape* weaponShapes);
+void ResetWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex);
 
 void UpdateRocket(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
 void InitRocket(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);

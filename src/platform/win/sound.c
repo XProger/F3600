@@ -135,7 +135,7 @@ void dump_vags()
         wav.dataSize = (size / 16) * 28 * sizeof(int16);
         wav.rSize = sizeof(WaveHeader) - 8 + wav.dataSize;
 
-        sprintf(buf, "wipeout\\sound\\vags\\%d.wav", i);
+        sprintf(buf, "wipeout/sound/vags/%d.wav", i);
 
         f = fopen(buf, "wb");
         ASSERT(f != 0);
@@ -306,7 +306,7 @@ void MusicPlay(int musicTrack)
         music.data = NULL;
     }
 
-    strcpy(path, "audio\\");
+    strcpy(path, "audio/");
     getTrackStrNo(path + 6, musicTrack + 1);
     strcat(path, ".ogg");
 

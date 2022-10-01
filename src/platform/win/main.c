@@ -463,8 +463,11 @@ void soundFill()
 // filesystem
 long osLoadFile(const char* name, char* buffer)
 {
+    FILE* f;
     long size;
-    FILE* f = fopen(name, "rb");
+
+    ASSERT(buffer);
+    f = fopen(name, "rb");
     if (!f)
     {
         ASSERT(0);
@@ -474,16 +477,15 @@ long osLoadFile(const char* name, char* buffer)
     fseek(f, 0, SEEK_END);
     size = ftell(f);
 
-    if (buffer)
+    printf("load file %s\n", name);
+    fseek(f, 0, SEEK_SET);
+    if (fread(buffer, 1, size, f) != size)
     {
-        fseek(f, 0, SEEK_SET);
-        if (fread(buffer, 1, size, f) != size)
-        {
-            fclose(f);
-            ASSERT(0);
-            return 0;
-        }
+        fclose(f);
+        ASSERT(0);
+        return 0;
     }
+
     fclose(f);
     return size;
 }
@@ -573,6 +575,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+#ifdef _DEBUG
+    AllocConsole();
+    FILE* fp = NULL;
+    freopen_s(&fp, "CONIN$", "r", stdin);
+    freopen_s(&fp, "CONOUT$", "w", stdout);
+    freopen_s(&fp, "CONOUT$", "w", stderr);
+#endif
+
+    gDRAM = pDRAM = (char*)malloc(DRAM_SIZE);
+    gVRAM = pVRAM = (char*)malloc(VRAM_SIZE);
+
     MSG msg;
     RECT r = { 0, 0, WND_WIDTH, WND_HEIGHT };
 
@@ -616,6 +629,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     SfxFree();
 
     DestroyWindow(hWnd);
+
+    free(gDRAM);
+    free(gVRAM);
 
     return 0;
 }

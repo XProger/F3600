@@ -124,15 +124,15 @@ void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
     /******************************************************/
 
     shipTextures = TextureTableCount;
-    LoadCompressedTextureSequence("wipeout\\common\\allsh.cmp", 1);
+    LoadCompressedTextureSequence("wipeout/common/allsh.cmp", 1);
 
     colTextures = TextureTableCount;
-    LoadCompressedTextureSequence("wipeout\\common\\alcol.cmp", 1);
+    LoadCompressedTextureSequence("wipeout/common/alcol.cmp", 1);
 
     droidTextures = TextureTableCount;
-    LoadCompressedTextureSequence("wipeout\\common\\rescu.cmp", 1);
+    LoadCompressedTextureSequence("wipeout/common/rescu.cmp", 1);
 
-    obj = LoadPrm("wipeout\\common\\allsh.prm", shipTextures);
+    obj = LoadPrm("wipeout/common/allsh.prm", shipTextures);
 
     while (obj)
     {
@@ -145,7 +145,7 @@ void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
         obj = obj->next;
     }
 
-    shipShapes[NO_OF_SHIPS] = LoadPrm("wipeout\\common\\alcol.prm", colTextures);
+    shipShapes[NO_OF_SHIPS] = LoadPrm("wipeout/common/alcol.prm", colTextures);
     obj = shipShapes[NO_OF_SHIPS];
 
     while (obj)
@@ -158,7 +158,7 @@ void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
         obj = obj->next;
     }
 
-    shipShapes[RESCUE_DROID] = LoadPrm("wipeout\\common\\rescu.prm", droidTextures);
+    shipShapes[RESCUE_DROID] = LoadPrm("wipeout/common/rescu.prm", droidTextures);
 
     obj = shipShapes[RESCUE_DROID];
     while (obj)

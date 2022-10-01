@@ -24,7 +24,6 @@ void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
 void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex)
 {
     int i;
-    int16 roll;
     WeaponData* weapon;
     Object* obj;
 
@@ -293,7 +292,6 @@ void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShap
 
 void InitWeaponObj(WeaponShape* weaponShapes, int textures, const char* name, int shapeIndex)
 {
-    int i;
     Prm prm;
     Object* object;
 
@@ -308,22 +306,24 @@ void InitWeaponObj(WeaponShape* weaponShapes, int textures, const char* name, in
     object->primitives = prm.primitive;
 }
 
-void initWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex)
+void InitWeapons(WeaponShape* weaponShapes)
+{
+    int weaponTextures = TextureTableCount;
+    LoadCompressedTextureSequence("wipeout/common/mine.cmp", 1);
+
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout/common/rock.prm", WEAPON_SHAPE_ROCKET);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout/common/mine.prm", WEAPON_SHAPE_MINE);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout/common/miss.prm", WEAPON_SHAPE_MISSILE);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout/common/shld.prm", WEAPON_SHAPE_SHIELD);
+    InitWeaponObj(weaponShapes, weaponTextures, "wipeout/common/ebolt.prm", WEAPON_SHAPE_EBOLT);
+
+    targetTexture = LoadTexture("wipeout/textures/target2.tim");
+}
+
+void ResetWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex)
 {
     int i;
     Object* obj;
-    int weaponTextures;
-
-    targetTexture = LoadTexture("wipeout\\textures\\target2.tim");
-
-    weaponTextures = TextureTableCount;
-    LoadCompressedTextureSequence("wipeout\\common\\mine.cmp", 1);
-
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\rock.prm", WEAPON_SHAPE_ROCKET);
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\mine.prm", WEAPON_SHAPE_MINE);
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\miss.prm", WEAPON_SHAPE_MISSILE);
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\shld.prm", WEAPON_SHAPE_SHIELD);
-    InitWeaponObj(weaponShapes, weaponTextures, "wipeout\\common\\ebolt.prm", WEAPON_SHAPE_EBOLT);
 
     for (i = 0; i < WEAPON_SHAPE_NAX; i++)
     {
@@ -609,7 +609,6 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
 
 void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    int i;
     Face* facePtr;
 
     if (weapon->fireShip != ownShip)
@@ -794,10 +793,11 @@ void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
 void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
+    int i;
     VECTOR distance;
     VECTOR targetVector;
     Face* facePtr;
-    int i, mag, temp, vhdg, vpitch;
+    int mag, temp, vhdg, vpitch;
     const VECTOR* facePoint;
     int alpha;
 
@@ -925,8 +925,6 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
 
 void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    int i;
-
     if (weapon->fireShip != ownShip)
     {
         if (weapon->count > 1)
@@ -985,8 +983,6 @@ void InitSpecial(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
 
 void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    int i;
-
     if (weapon->fireShip != ownShip)
     {
         if (weapon->count > 1)
@@ -1193,8 +1189,6 @@ void InitMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon
 
 void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    int i;
-
     weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
     weapon->currentWeapon = WEAPON_SHAPE_SHIELD;
 
@@ -1322,6 +1316,10 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     {
         weapon->hdg = shipIndex[weapon->fireShip].hdg;
         weapon->pitch = shipIndex[weapon->fireShip].pitch;
+
+#ifdef OLD_SHIELD
+        UpdateShieldColors(weaponShapes[weapon->currentWeapon].shapePtr, weapon->count);
+#endif
     }
 }
 

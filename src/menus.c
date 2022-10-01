@@ -209,6 +209,8 @@ const Menu gMenuSystem[] = {
 
 void menuInit(void)
 {
+    printf("\ninit menu\n");
+
     LoadTexModel(pilotShapes, "pilot");
     LoadTexModel(audioShapes, "cdobj");
 
@@ -228,15 +230,16 @@ void menuInit(void)
 
     InitTrackTex(trackTex);
 
+    InitButtons("wipeout/textures/buttons.cmp");
+    slideTex = LoadTexture("wipeout/textures/slider1.tim");
+    sliderTex = LoadTexture("wipeout/textures/slide1.tim");
+    menuScreen = LoadTexture("wipeout/textures/wipeout1.tim");
+
     gMenuHistoryIndex = 0;
 
     trackNum = 15; // pretend track for restoring - SJR
 
-    slideTex = LoadTexture("wipeout\\textures\\slider1.tim");
-    sliderTex = LoadTexture("wipeout\\textures\\slide1.tim");
-
     InitMenuDisplay(90);
-    InitButtons("wipeout\\textures\\buttons.cmp");
 
     if (ctrlfirsttime)
         InitSelectData(&selectData);
@@ -245,8 +248,6 @@ void menuInit(void)
     selectData.select = 0;
     selectData.combatInit = 0;
     selectData.combatComplete = 0;
-
-    menuScreen = LoadTexture("wipeout\\textures\\wipeout1.tim");
 
     gCurrMenu = 0;
     gCurrOption = 0;
@@ -636,7 +637,7 @@ int LoadModel(Object** modelShapes, char* fileName)
     int count = 0;
     char modelFile[64];
 
-    strcpy(modelFile, "wipeout\\common\\");
+    strcpy(modelFile, "wipeout/common/");
     strcat(modelFile, fileName);
     strcat(modelFile, ".prm");
 
@@ -664,13 +665,13 @@ int LoadTexModel(Object** modelShapes, char* fileName)
     /** temporary memory to be allocated                 **/
     /******************************************************/
 
-    strcpy(modelFile, "wipeout\\common\\");
+    strcpy(modelFile, "wipeout/common/");
     strcat(modelFile, fileName);
     strcat(modelFile, ".cmp");
     modelTextures = TextureTableCount;
     LoadCompressedTextureSequence(modelFile, 0);
 
-    strcpy(modelFile, "wipeout\\common\\");
+    strcpy(modelFile, "wipeout/common/");
     strcat(modelFile, fileName);
     strcat(modelFile, ".prm");
 

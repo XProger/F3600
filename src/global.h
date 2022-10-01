@@ -133,3 +133,15 @@ extern int32 gMasterBalance;
 
 extern char trackdir[];
 extern const char gTrackList[15];
+
+#define BLOCK_SIZE (32 * 1024)
+
+#define DRAM_SIZE (19 * BLOCK_SIZE)
+#define VRAM_SIZE (19 * BLOCK_SIZE)
+
+extern char* gDRAM;
+extern char* gVRAM;
+extern char* pDRAM;
+extern char* pVRAM;
+char* allocDRAM(int size);
+char* allocVRAM(int size);

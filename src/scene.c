@@ -178,40 +178,6 @@ void IntelPrim(Prm prm)
     }
 }
 
-void IntelLong(long* lvalue)
-{
-#ifndef CPU_BIG_ENDIAN
-    char* cvalue;
-    char temp;
-
-    ASSERT(((int32)lvalue & 3) == 0);
-    cvalue = (char*)lvalue;
-
-    temp = cvalue[0];
-    cvalue[0] = cvalue[3];
-    cvalue[3] = temp;
-
-    temp = cvalue[1];
-    cvalue[1] = cvalue[2];
-    cvalue[2] = temp;
-#endif
-}
-
-void IntelShort(short* svalue)
-{
-#ifndef CPU_BIG_ENDIAN
-    char* cvalue;
-    char temp;
-
-    ASSERT(((int16)svalue & 1) == 0);
-    cvalue = (char*)svalue;
-
-    temp = cvalue[0];
-    cvalue[0] = cvalue[1];
-    cvalue[1] = temp;
-#endif
-}
-
 Object* LoadPrm(const char* name, short textureStart)
 {
     Object* object;
@@ -227,36 +193,18 @@ Object* LoadPrm(const char* name, short textureStart)
     char* start;
     char* finish;
 
-    length = osLoadFile(name, NULL);
+    length = osLoadFile(name, pDRAM);
+    printf("length = %d\n", length);
 
-    if (length <= 0)
-    {
-        ASSERT(0);
-    }
-
-    start = malloc(length + 32);
-    finish = start + length;
-
-    if (!start)
-    {
-        /* Memory Allocation Failed! */
-        ASSERT(0);
-    }
-
-    if (osLoadFile(name, start) != length)
-    {
-        /* File Error! */
-        ASSERT(0);
-    }
+    start = allocDRAM(length);
 
     prm.ptr = start;
     firstObject = prm.object;
     lastObject = NULL;
 
-    while (prm.ptr < finish)
+    while (prm.ptr < (start + length))
     {
         /* Object */
-
         object = prm.object++;
 
         IntelShort(&object->vertexCount);

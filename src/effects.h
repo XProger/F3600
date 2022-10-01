@@ -18,14 +18,14 @@ typedef struct Effect
     short size;
 } Effect;
 
-void InitEffects(Skeleton* camPos);
+void InitEffects(void);
 void ResetEffects(void);
 void UpdateEffects(void);
 void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex);
 void ColourStartBoom(int noToLight);
 void ResetStartBoom(void);
 void InitStartBoom(Object** prm, short prmCount);
-void InitShadow(Skeleton* camPos);
+void InitShadow(void);
 void DrawShadows(ShipData* shipIndex);
 void SetShake(int duration);
 void ShakeScreen(void);
