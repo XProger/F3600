@@ -8,7 +8,7 @@ const char* GetMusicTrackName(int musicTrack)
     return gMusicTrackNames[musicTrack];
 }
 
-void InGameReset(int choice, ConfigData* gameData, int* cdPause)
+void InGameReset(int choice)
 {
     int i;
 

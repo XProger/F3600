@@ -59,7 +59,7 @@ char* allocDRAM(int size)
     size = (size + 3) & ~3;
     pDRAM += size;
     ASSERT(pDRAM - gDRAM <= DRAM_SIZE);
-    printf("D alloc %d (%d kb)\n", size, (pDRAM - gDRAM) / 1024);
+    printf("D alloc %d (%d kb left)\n", size, (DRAM_SIZE - (pDRAM - gDRAM)) / 1024);
     return ret;
 }
 
@@ -69,6 +69,6 @@ char* allocVRAM(int size)
     size = (size + 3) & ~3;
     pVRAM += size;
     ASSERT(pVRAM - gVRAM <= VRAM_SIZE);
-    printf("V alloc %d (%d kb)\n", size, (pVRAM - gVRAM) / 1024);
+    printf("V alloc %d (%d kb left)\n", size, (VRAM_SIZE - (pVRAM - gVRAM)) / 1024);
     return ret;
 }

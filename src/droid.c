@@ -144,6 +144,10 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     short targetHdg;
     short quickestTurn, turn;
 
+#ifdef __3DO__ // TODO optimize
+    return;
+#endif
+
     nextSection = rescueDroid->section->nextSection.ptr;
 
     target.vx = (rescueDroid->section->centre.vx + nextSection->centre.vx) >> 1;
@@ -373,5 +377,7 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
 
 void DrawDroid(Object* droid, const RescueData* rescueData)
 {
+#ifndef __3DO__ // TODO
     DrawObject(droid, rescueData->pos.vx, rescueData->pos.vy, rescueData->pos.vz, rescueData->hdg, rescueData->pitch, rescueData->roll);
+#endif
 }

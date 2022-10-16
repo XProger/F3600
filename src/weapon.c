@@ -23,6 +23,7 @@ void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
 
 void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex)
 {
+#ifndef __3DO__ // TODO
     int i;
     WeaponData* weapon;
     Object* obj;
@@ -46,6 +47,7 @@ void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
             }
         }
     }
+#endif
 }
 
 void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char decision)
@@ -286,7 +288,7 @@ void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShap
         return;
 
     renderSetBlend(BLEND_ADD);
-    AddGlyph(sxy.vx - (targetTexture->width >> 1), sxy.vy - (targetTexture->height >> 1), targetTexture->width, targetTexture->height, 0, 0, TEXT_COLOR_WHITE, targetTexture);
+    renderImage(targetTexture, sxy.vx - (targetTexture->width >> 1), sxy.vy - (targetTexture->height >> 1));
     renderSetBlend(BLEND_ALPHA);
 }
 
@@ -1327,6 +1329,10 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
 {
     int i, j;
     Face* facePtr;
+
+#ifdef __3DO__ // TODO optimize
+    return;
+#endif
 
     for (i = 0; i < noWeaponGrids; i++)
     {

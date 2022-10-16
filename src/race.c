@@ -56,7 +56,6 @@ Object* ctrldonkey[2];
 int ctrldoneExtro;
 int ctrlplayCredits;
 int ctrlgameOverTime;
-int ctrlcdPause;
 int ctrlnearShip;
 
 int HACK_LOAD_TRACK;
@@ -152,6 +151,10 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
     int smallestMag;
     VECTOR pos;
 
+#ifdef __3DO__ // TODO optimize
+    return;
+#endif
+
     smallestMag = 10000;
     chosen = -1;
 
@@ -234,8 +237,7 @@ void raceInit(ConfigData* gameData)
         trackNo = gameData->actTrackNum;
     }
 
-    /*TODO loading screen*/
-    //showLoadingScreen();
+    showLoading(ctrlConfigData.actTrackNum);
 
     trackNum = gameData->trackNum; // for restoring - SJR
 
@@ -263,7 +265,6 @@ void raceInit(ConfigData* gameData)
     ctrlplayCredits = 0;
     ctrldoneExtro = START_EXTRO;
     ctrlgameOverTime = 0;
-    ctrlcdPause = 0;
     ctrlframe_cnt = 1;
     ctrlshowMenu = 1;
     ctrlconfirm = 0;
@@ -361,7 +362,7 @@ void raceInit(ConfigData* gameData)
     }
 
     getPath(trackPath, gameData->actTrackNum, "/library.ttf");
-    ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib, ctrllibraryTextures);
+    ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib);
 
     HACK_LOAD_TRACK = 1;
     ctrllibraryTextures = TextureTableCount;
@@ -497,9 +498,6 @@ void raceInit(ConfigData* gameData)
 
     UpdateEffects();
 
-    raceCtrl(gameData);
-    raceCtrl(gameData);
-    raceCtrl(gameData);
     ctrlFramesCount = 1;
 }
 
@@ -755,12 +753,13 @@ void raceCtrl(ConfigData* gameData)
 
         CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
 
+        UpdateEffects();
+
         SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
+
         AdjustEngineSound(&(ctrlshipIndex[ownShip]), &ctrlcamera);
         AdjustCrowdSound(ctrllostad, ctrlstadCount);
         AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes, &ctrlcamera );
-
-        UpdateEffects();
 
         if (raceType != TIME_TRIAL)
         {
@@ -779,7 +778,6 @@ void raceCtrl(ConfigData* gameData)
             return;
         }
     }
-
     else if (attractDelay > 0)
     {
         attractDelay--;
@@ -1253,19 +1251,6 @@ void raceCtrl(ConfigData* gameData)
     {
         UpdateRaceHud(ctrlshipIndex, ctrlchoice, gameData);
     }
-
-    /*********************************************************************/
-    /**** Draw, Mesh, AutoMesh, Reject, Don`t reject, Nurse, Bend Over  **/
-    /**** Abuse & Call a Naughty boy  TRACK CODE                        **/
-    /*********************************************************************/
-    if (ctrlshipIndex[ownShip].haveFired == QUIT)
-    {
-        ctrlquitTwoPlayer = 0;
-        ctrlactivated = 0;
-        ctrlchoice = -1;
-        QuitGame();
-        ctrl_says_quit = 1;
-    }
 }
 
 void raceLoop(ConfigData* gameData)
@@ -1296,7 +1281,9 @@ void raceLoop(ConfigData* gameData)
     renderClear();
 
     if (trackNo == 13)
+    {
         AuroraBorialis(ctrlprm[ctrlsky]);
+    }
 
     if ((trackNo == 8) || (trackNo == 11))
     {
@@ -1312,6 +1299,8 @@ void raceLoop(ConfigData* gameData)
     AddEffects(ctrlweaponIndex, ctrlshipIndex);
 
     renderSetMode(RENDER_MODE_3D);
+
+    GetSkeletonMatrix(ctrlcamera.camPos);
 
     renderSky(ctrlprm[ctrlsky]);
     DrawLandscape(&(ctrlshipIndex[ownShip]), &ctrlcamera);
@@ -1372,7 +1361,7 @@ void raceLoop(ConfigData* gameData)
     // Pictures at end
     if (ctrlNeedWinLose)
     {
-        DisplayPicture(ctrlwinLose[ctrlNeedWinLoseVar], 180, 50, 128, 140);
+        renderImage(ctrlwinLose[ctrlNeedWinLoseVar], 180, 50);
     }
     // High score bollox
     if (ctrlNeedRaceInfo)
@@ -1392,7 +1381,7 @@ void raceLoop(ConfigData* gameData)
     if (ctrlNeedInSingleGameConfirm)
         RestartGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm));
     if (ctrlNeedInGameReset)
-        InGameReset(ctrlchoice, gameData, &ctrlcdPause);
+        InGameReset(ctrlchoice);
     if (ctrlNeedInGameConfirm)
         InGameConfirm(&ctrlconfirm, ctrlchoice, xpad, &ctrllConfirm);
 

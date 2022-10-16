@@ -10,23 +10,7 @@
 #define MAX_CD_TRACKS 11
 #define MAX_GAMES 15
 
-#define CARD_FULL       101
-#define DUP_NAME        102
-#define LOAD_ERROR      103
-#define SAVE_ERROR      104
-#define RENAME_ERROR    105
-#define NO_CARD         106
-#define NO_FILES        107
-#define NO_FORMAT       108
-#define FORMAT_ERROR    109
 
-#define FORMATTED       0
-#define UNFORMATTED     1
-#define NORMPAD_PRESETS 8
-#define NEGCON_PRESETS  5
-#define NORM            1
-#define OVERWRITE       2
-#define RENAME          3
 
 /* BUTTON TYPE */
 #define PSELECT     0
@@ -46,7 +30,6 @@
 #define RBRAKE      14
 #define ARROWL      15
 #define ARROWR      16
-#define DOTT        17
 
 enum MenuScreen
 {
@@ -162,30 +145,10 @@ typedef struct ConfigData
 
 typedef struct SelectionData
 {
-    // short       currSliderPos;
-    signed char slotRow;
-    signed char slotColumn;
     signed char optionNo;
-    char slotsFilled;
     char select;
-    char firstTime;
-    char nameEntered[9];
-    char numCardFiles;
-    char trackNum;
-    char fadeHeight;
     char confirm;
-    signed char speechMode;
     signed char hiscoreTrack;
-    uint32 toggle;
-    char combatInit;
-    char combatComplete;
-    int cardNum;
-    char card1;
-    char card2;
-    char formatCard;
-    char formatConfirm;
-    char calledMenu;
-    char saveType;
 } SelectionData;
 
 typedef struct ChampionShip

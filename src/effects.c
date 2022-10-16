@@ -38,6 +38,10 @@ void UpdateEffects(void)
 {
     int i;
 
+#ifdef __3DO__ // TODO optimize
+    return;
+#endif
+
     for (i = 0; i < NO_OF_EFFECTS; i++)
     {
         Effect* fx = gEffects + i;
@@ -63,6 +67,7 @@ void UpdateEffects(void)
 
 void DrawEffects(void)
 {
+#ifndef __3DO__ // TODO
     int i;
     Billboard b;
     int cx, cy, cz;
@@ -93,6 +98,7 @@ void DrawEffects(void)
 
     renderDepthWrite(1);
     renderSetBlend(BLEND_NONE);
+#endif
 }
 
 void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
@@ -461,6 +467,7 @@ void InitShadow(void)
 
 void DrawShadows(ShipData* shipIndex)
 {
+#ifndef __3DO__ // TODO
     const Face* facePtr;
     Shadow s;
     int i, j, px, py, pz, cx, cy, cz, nx, nz, wx, wz;
@@ -567,6 +574,7 @@ void DrawShadows(ShipData* shipIndex)
     }
 
     renderSetBlend(BLEND_NONE);
+#endif
 }
 
 int shakeCount = 0;
@@ -657,6 +665,7 @@ void InitAuroraBorialis(Object* object)
 
 void AuroraBorialis(Object* object)
 {
+#ifndef __3DO__ // TODO
     int i;
 
     Prm poly;
@@ -692,5 +701,6 @@ void AuroraBorialis(Object* object)
             abPtr[i]->colour[3].b = (rsin(coords[3] * (abPhase + 39)) >> 6) + 190;
         }
     }
+#endif
 }
 

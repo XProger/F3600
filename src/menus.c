@@ -6,7 +6,6 @@ extern long ctrlGameLoop;
 
 Texture* menuScreen;
 
-extern TexChar CharSet16[];
 extern HiScores scoreTable[];
 
 extern const short shipShapeOrder[];
@@ -102,7 +101,12 @@ MenuHistory gMenuHistory[MAX_MENU_HISTORY];
 
 const Menu gMenuSystem[] = {
 // MAIN_MENU
-    { "WIPEOUT MAIN MENU", ctrlshipShapes, gameShapes, DrawMainMenu, 0, 3,
+    { "WIPEOUT MAIN MENU", ctrlshipShapes, gameShapes, DrawMainMenu, 0, 
+    #ifdef MENU_HAS_QUIT
+        3,
+    #else
+        2,
+    #endif
         { 
             "START GAME",
             "OPTIONS",
@@ -209,8 +213,6 @@ const Menu gMenuSystem[] = {
 
 void menuInit(void)
 {
-    printf("\ninit menu\n");
-
     LoadTexModel(pilotShapes, "pilot");
     LoadTexModel(audioShapes, "cdobj");
 
@@ -244,10 +246,7 @@ void menuInit(void)
     if (ctrlfirsttime)
         InitSelectData(&selectData);
 
-    selectData.fadeHeight = 0;
     selectData.select = 0;
-    selectData.combatInit = 0;
-    selectData.combatComplete = 0;
 
     gCurrMenu = 0;
     gCurrOption = 0;
@@ -264,7 +263,7 @@ void menuLoop(ConfigData* gameData)
     renderClear();
     renderSetMode(RENDER_MODE_2D);
 
-    DisplayPicture(menuScreen, 0, 0, 320, 240);
+    renderBackground(menuScreen);
 
     if (gCurrMenu >= 0)
         CallMenuSelector(ctrlshipShapes, gameData, &selectData);
@@ -294,8 +293,6 @@ void menuLoop(ConfigData* gameData)
 
     if (gCurrMenu == CLASS_MENU && gCurrOption == 1 && (!gameData->RapierClass))
         CentreText("NOT AVAILABLE", text_data(20, 190, 12), TEXT_COLOR_HIGHLIGHT);
-
-    selectData.trackNum = gameData->trackNum;
 
     if (gCurrMenu == -1)
     {
@@ -363,8 +360,7 @@ void GoNextMusic(void)
 
 void DisplayButtons(int x, int y, int buttType)
 {
-    const Texture* tex = buttonTex[buttType];
-    AddGlyph(x, y, tex->width, tex->height, 0, 0, TEXT_COLOR_WHITE, tex);
+    renderImage(buttonTex[buttType], x, y);
 }
 
 void DrawButtons(void)
@@ -560,7 +556,7 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
 
     if (gCurrMenu == TRACK_MENU)
     {
-        DisplayPicture(trackTex[gCurrOption], 96, 50, 128, 74);
+        renderImage(trackTex[gCurrOption], 96, 50);
 
         if (gameData->Class == 0)
             CentreText("VENOM CLASS", text_data(20, 40, 8), TEXT_COLOR_HIGHLIGHT);
@@ -764,27 +760,13 @@ void DrawClass(const Menu* menu, int shipNo)
 
 void InitSelectData(SelectionData* selectData)
 {
-    selectData->slotRow = 0;
     selectData->optionNo = 0;
-    selectData->slotColumn = 0;
-    selectData->slotsFilled = 0;
     selectData->select = 0;
-    selectData->firstTime = 1;
-    selectData->numCardFiles = 0;
     selectData->hiscoreTrack = 0;
-    selectData->speechMode = 0;
-    selectData->toggle = 0;
-    selectData->cardNum = 0;
-    selectData->card1 = FORMATTED;
-    selectData->card2 = FORMATTED;
-    selectData->formatCard = 0;
-    selectData->formatConfirm = 0;
 }
 
 void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
 {
-    Quad q;
-
     if (xpad & IN_UP)
     {
         PlayNote(SFX_MENU_MOVE);
@@ -801,29 +783,8 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
             selectData->optionNo = 0;
     }
 
-    q.texture = sliderTex;
-    q.x = 39 + (gMasterBalance * 218 >> 8);
-    q.y = 61;
-    q.w = sliderTex->width;
-    q.h = sliderTex->height;
-    q.u0 = 0;
-    q.v0 = 0;
-    q.u1 = q.w;
-    q.v1 = q.h;
-    q.color = TEXT_COLOR_WHITE;
-    renderQuad(&q);
-
-    q.texture = slideTex;
-    q.x = 48;
-    q.y = 85;
-    q.w = slideTex->width;
-    q.h = slideTex->height;
-    q.u0 = 0;
-    q.v0 = 0;
-    q.u1 = q.w;
-    q.v1 = q.h;
-    q.color = TEXT_COLOR_WHITE;
-    renderQuad(&q);
+    renderImage(sliderTex, 39 + (gMasterBalance * 218 >> 8), 61);
+    renderImage(slideTex, 48, 85);
 
     AddText("SFX", text_data(33, 51, 8), (selectData->optionNo == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
     AddText("MUSIC", text_data(250, 139, 8), (selectData->optionNo == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
@@ -840,9 +801,7 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
                 SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
                 SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
-            gMasterBalance -= (gFrameIndex - gLastFrameIndex);
-            if (gMasterBalance < 0)
-                gMasterBalance = 0;
+            SetMasterBalance(gMasterBalance - (gFrameIndex - gLastFrameIndex));
         }
         else if (pad & IN_RIGHT)
         {
@@ -852,9 +811,7 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
                 SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
                 SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
-            gMasterBalance += (gFrameIndex - gLastFrameIndex);
-            if (gMasterBalance > 256)
-                gMasterBalance = 256;
+            SetMasterBalance(gMasterBalance + (gFrameIndex - gLastFrameIndex));
         }
         else
         {

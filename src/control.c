@@ -25,10 +25,12 @@ void UpdateShips(ShipData* shipIndex, WeaponData* weaponIndex)
     {
         (shipIndex[i].update)(shipIndex, i, weaponIndex);
 
+    #ifdef USE_SHIP_AMBIENT
         if (shipIndex[i].attr & VISIBLE)
         {
             ShipCalcAmbient(shipIndex + i);
         }
+    #endif
     }
 }
 
@@ -416,6 +418,10 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
     Vector path1, path2;
     int gap_mag, decide;
     short DPASectDiff;
+
+#ifdef __3DO__
+    return;
+#endif
 
     offSetVector.vx = 0;
     offSetVector.vy = 0;
@@ -874,9 +880,16 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         if (alpha < 50)
             alpha = 50;
 
+    #if 0
+        alpha = TRACK_MAGNET * (TARGETHEIGHT - alpha) / alpha;
+        remoteShip->acc.vx = (facePtr->normal.vx * alpha) >> 8;
+        remoteShip->acc.vy = (facePtr->normal.vy * alpha) >> 8;
+        remoteShip->acc.vz = (facePtr->normal.vz * alpha) >> 8;
+    #else
         remoteShip->acc.vx = (((facePtr->normal.vx * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vx * TRACK_MAGNET)) >> 8;
         remoteShip->acc.vy = (((facePtr->normal.vy * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vy * TRACK_MAGNET)) >> 8;
         remoteShip->acc.vz = (((facePtr->normal.vz * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vz * TRACK_MAGNET)) >> 8;
+    #endif
 
         remoteShip->vel.vx += remoteShip->acc.vx;
         remoteShip->vel.vy += remoteShip->acc.vy;

@@ -2,16 +2,18 @@
 
 #define END_LAP 3
 
-TexChar CharSet16[40];
-TexChar CharSet12[40];
-TexChar CharSet8[40];
-
 #define speedo_x    (179 + gBorder)
 #define speedo_y    (195)
 
-const uint16 Text16[] = { 25, 24, 17, 24, 24, 17, 25, 18, 7, 17, 117, 117, 128, 117, 124, 124, 126, 124, 118, 117, 217, 217, 229, 224, 217, 218, 224, 210, 218, 217, 218, 318, 318, 318, 322, 325, 307, 307 };
-const uint16 Text12[] = { 19, 19, 14, 19, 19, 13, 19, 14, 6, 13, 14, 14, 122, 114, 119, 118, 120, 119, 115, 114, 113, 113, 122, 219, 213, 214, 219, 208, 215, 213, 214, 215, 214, 215, 218, 219, 205, 205 };
-const uint16 Text8[] = { 13, 13, 10, 13, 13, 9, 13, 10, 4, 9, 10, 10, 16, 10, 13, 13, 14, 113, 110, 109, 109, 109, 116, 114, 109, 110, 113, 106, 111, 110, 110, 111, 110, 110, 112, 114, 104, 104 };
+const uint16 glyphPos[3][40] = { // 8, 12, 16
+    { 13, 13, 10, 13, 13, 9, 13, 10, 4, 9, 10, 10, 16, 10, 13, 13, 14, 113, 110, 109, 109, 109, 116, 114, 109, 110, 113, 106, 111, 110, 110, 111, 110, 110, 112, 114, 104, 104 },
+    { 19, 19, 14, 19, 19, 13, 19, 14, 6, 13, 14, 14, 122, 114, 119, 118, 120, 119, 115, 114, 113, 113, 122, 219, 213, 214, 219, 208, 215, 213, 214, 215, 214, 215, 218, 219, 205, 205 },
+    { 25, 24, 17, 24, 24, 17, 25, 18, 7, 17, 117, 117, 128, 117, 124, 124, 126, 124, 118, 117, 217, 217, 229, 224, 217, 218, 224, 210, 218, 217, 218, 318, 318, 318, 322, 325, 307, 307 }
+};
+
+Glyph glyphs[3][40]; // 8, 12, 16
+Glyph glyphEnd;
+Glyph glyphDel;
 
 extern HiScores scoreTable[];
 extern ChampionShip winTable[];
@@ -22,36 +24,9 @@ Texture* speedoTex;
 
 Texture* gWeaponIconTextures[NO_OF_WEAPON_TYPES];
 
-void AddQuad(int x, int y, int w, int h, int u0, int v0, int u1, int v1, uint32 color, const Texture* tex)
-{
-    Quad quad;
-
-    quad.x = x;
-    quad.y = y;
-    quad.w = w;
-    quad.h = h;
-    quad.u0 = u0;
-    quad.v0 = v0;
-    quad.u1 = u1;
-    quad.v1 = v1;
-    quad.color = color;
-    quad.texture = tex;
-
-    renderQuad(&quad);
-}
-
-void AddGlyph(int x, int y, int w, int h, int u, int v, uint32 color, const Texture* tex)
-{
-    AddQuad(x, y, w, h, u, v, u + w, v + h, color, tex);
-}
-
 void InitText(void)
 {
     int i;
-
-    /**********************************************************/
-    /***        Initialise In Game Character Set            ***/
-    /**********************************************************/
 
     ASSERT(TextureTableCount == 0);
 
@@ -59,8 +34,26 @@ void InitText(void)
 
     ASSERT(TextureTableCount <= FontTextureTableMax);
     for (i = 0; i < TextureTableCount; i++)
+    {
         FontTextureTable[i] = TextureTable[i];
+    }
     TextureTableCount = 0;
+
+    SetCharTextures(8);
+    SetCharTextures(12);
+    SetCharTextures(16);
+
+    glyphEnd.x = 0;
+    glyphEnd.y = 0;
+    glyphEnd.w = 24;
+    glyphEnd.h = 16;
+    glyphEnd.texture = FontTextureTable[DRTEXT_RED + 3];
+
+    glyphDel.x = 0;
+    glyphDel.y = 0;
+    glyphDel.w = 24;
+    glyphDel.h = 16;
+    glyphDel.texture = FontTextureTable[DRTEXT_RED + 4];
 }
 
 typedef struct 
@@ -197,11 +190,9 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
     int digit[20];
     int x, y;
     int mins = 0, secs = 0, tenths = 0;
-    Texture **charTex;
     int small_num_size;
     int size, charNum;
-    uint16 currLett = 0;
-    TexChar* charSet;
+    Glyph* charSet;
 
     x = pos_data->start_pos_x;
     y = pos_data->start_pos_y;
@@ -209,24 +200,7 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
     size = pos_data->size;
     small_num_size = size >> 1;
 
-    switch (size)
-    {
-        case 16:
-            charSet = &(CharSet16[0]);
-            charTex = FontTextureTable + DRTEXT_16;
-            break;
-
-        case 12:
-            charSet = &(CharSet12[0]);
-            charTex = FontTextureTable + DRTEXT_12;
-            break;
-
-        case 8:
-        default:
-            charSet = &(CharSet8[0]);
-            charTex = FontTextureTable + DRTEXT_8;
-            break;
-    }
+    charSet = glyphs[(size - 8) >> 2];
 
     tenths = (time / FR6) % 10;
     time = time / FR60;
@@ -246,20 +220,13 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
 
     for (j = 1; j >= 0; j--)
     {
-
-        charNum = (digit[j] + 26);
-        currLett = charSet[charNum].width;
-
-        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, colour, *charTex);
-
-        x += currLett;
+        charNum = digit[j] + 26;
+        renderGlyph(charSet + charNum, x, y, colour);
+        x += charSet[charNum].w;
     }
 
-    currLett = charSet[36].width;
-
-    AddGlyph(x, y, currLett, size, charSet[36].vramX, charSet[36].vramY, colour, *charTex);
-
-    x += currLett;
+    renderGlyph(charSet + 36, x, y, colour);
+    x += charSet[36].w;
 
     digit[0] = secs % 10;
     if (secs > 9)
@@ -272,22 +239,15 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
 
     for (j = 1; j >= 0; j--)
     {
-        charNum = (digit[j] + 26);
-        currLett = charSet[charNum].width;
-
-        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, colour, *charTex);
-
-        x += currLett;
+        charNum = digit[j] + 26;
+        renderGlyph(charSet + charNum, x, y, colour);
+        x += charSet[charNum].w;
     }
 
-    currLett = charSet[37].width;
+    renderGlyph(charSet + 37, x, y, colour);
+    x += charSet[37].w;
 
-    AddGlyph(x, y, currLett, size, charSet[37].vramX, charSet[37].vramY, colour, *charTex);
-
-    x += currLett;
-
-    charSet = &(CharSet8[0]);
-    charTex = FontTextureTable + DRTEXT_8;
+    charSet = glyphs[0]; // 8
 
     if (size != 8)
     {
@@ -295,47 +255,23 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
         y += 8;
     }
 
-    currLett = charSet[(tenths + 26)].width;
-
-    AddGlyph(x, y, currLett, size, charSet[tenths + 26].vramX, charSet[tenths + 26].vramY, TEXT_COLOR_WHITE, *charTex);
-
-    x += currLett;
+    renderGlyph(charSet + tenths + 26, x, y, TEXT_COLOR_WHITE);
 }
 
 void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
 {
-    uint8 letter = 0;
-    char AValue = 0;
-    Texture** charTex;
+    uint8 letter;
     int size;
     int x, y;
-    short j = 0;
-    uint16 currLett = 0;
-    TexChar* charSet;
+    short j;
+    Glyph* charSet;
 
     x = pos_data->start_pos_x;
     y = pos_data->start_pos_y;
 
     size = pos_data->size;
 
-    switch (size)
-    {
-        case 16:
-            charSet = &(CharSet16[0]);
-            charTex = FontTextureTable + DRTEXT_16;
-            break;
-
-        case 12:
-            charSet = &(CharSet12[0]);
-            charTex = FontTextureTable + DRTEXT_12;
-            break;
-
-        case 8:
-        default:
-            charSet = &(CharSet8[0]);
-            charTex = FontTextureTable + DRTEXT_8;
-            break;
-    }
+    charSet = glyphs[(size - 8) >> 2];
 
     while (1)
     {
@@ -347,17 +283,13 @@ void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
             if (letter == 0)
                 return;
 
-            AValue = 'A';
             if (letter >= '0' && letter <= '9')
                 j = letter - '0' + 26;
             else
-                j = letter - AValue;
+                j = letter - 'A';
 
-            currLett = charSet[j].width;
-
-            AddGlyph(x, y, currLett, size, charSet[j].vramX, charSet[j].vramY, colour, *charTex);
-
-            x += currLett;
+            renderGlyph(charSet + j, x, y, colour);
+            x += charSet[j].w;
         }
         else
         {
@@ -371,33 +303,15 @@ void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
     int i, j;
     int digit[12];
     int x, y;
-    Texture** charTex;
     int size, charNum;
     uint16 currLett = 0;
-    TexChar* charSet;
+    Glyph* charSet;
 
     x = pos_data->start_pos_x;
     y = pos_data->start_pos_y;
     size = pos_data->size;
 
-    switch (size)
-    {
-        case 16:
-            charSet = &(CharSet16[0]);
-            charTex = FontTextureTable + DRTEXT_16;
-            break;
-
-        case 12:
-            charSet = &(CharSet12[0]);
-            charTex = FontTextureTable + DRTEXT_12;
-            break;
-
-        case 8:
-        default:
-            charSet = &(CharSet8[0]);
-            charTex = FontTextureTable + DRTEXT_8;
-            break;
-    }
+    charSet = glyphs[(size - 8) >> 2];
 
     for (i = 0; i < 12; i++)
     {
@@ -410,65 +324,45 @@ void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
     for (j = i; j >= 0; j--)
     {
         charNum = (digit[j] + 26);
-        currLett = charSet[charNum].width;
-
-        AddGlyph(x, y, currLett, size, charSet[charNum].vramX, charSet[charNum].vramY, colour, *charTex);
-
-        x += currLett;
+        renderGlyph(charSet + charNum, x, y, colour);
+        x += charSet[charNum].w;
     }
 }
 
-void AddDelEnd(char dispChar, TEXT_DATA* pos_data, int colour)
+void AddDelEnd(char dispChar, int32 x, int32 y, uint32 colour)
 {
-    Texture** endTex;
-    Texture** charTex;
-    int size;
-    int x, y;
-
-    x = pos_data->start_pos_x;
-    y = pos_data->start_pos_y;
-
-    size = pos_data->size;
-
-    endTex = FontTextureTable + DRTEXT_RED + 3;
-
-    if (!dispChar)
-    {
-        endTex = FontTextureTable + DRTEXT_RED + 4; // delTex
-    }
-
-    charTex = endTex;
-
-    AddGlyph(x, y, 24, size, 0, 0, colour, *charTex);
+    renderGlyph(dispChar ? &glyphEnd : &glyphDel, x, y, colour);
 }
 
-void SetCharTextures(char size)
+void SetCharTextures(int32 size)
 {
     short currLett;
     short i, j;
     short vramY, vramX;
     short searchLett, vramRow;
-    const uint16* charSet;
+    const Texture* texture;
+    const uint16* pos;
+    Glyph* glyph;
 
-    switch (size)
+    if (size == 8)
     {
-        case 8:
-            charSet = &(Text8[0]);
-            break;
-
-        case 12:
-            charSet = &(Text12[0]);
-            break;
-
-        case 16:
-        default:
-            charSet = &(Text16[0]);
-            break;
+        texture = FontTextureTable[DRTEXT_8];
     }
+    else if (size == 12)
+    {
+        texture = FontTextureTable[DRTEXT_12];
+    }
+    else
+    {
+        texture = FontTextureTable[DRTEXT_16];
+    }
+
+    pos = glyphPos[(size - 8) >> 2];
+    glyph = glyphs[(size - 8) >> 2];
 
     for (j = 0; j < 40; j++)
     {
-        currLett = charSet[j];
+        currLett = pos[j];
 
         vramY = 0;
 
@@ -477,31 +371,19 @@ void SetCharTextures(char size)
         vramY += (vramRow * size);
         vramX = 0;
 
+        // TODO WTF?
         for (i = 0; i < j; i++)
         {
-            searchLett = charSet[i];
+            searchLett = pos[i];
             if ((searchLett / 100) == vramRow)
                 vramX += (searchLett % 100);
         }
 
-        switch (size)
-        {
-            case 8:
-                CharSet8[j].vramX = vramX;
-                CharSet8[j].vramY = vramY;
-                CharSet8[j].width = (currLett % 100);
-                break;
-            case 12:
-                CharSet12[j].vramX = vramX;
-                CharSet12[j].vramY = vramY;
-                CharSet12[j].width = (currLett % 100);
-                break;
-            case 16:
-                CharSet16[j].vramX = vramX;
-                CharSet16[j].vramY = vramY;
-                CharSet16[j].width = (currLett % 100);
-                break;
-        }
+        glyph[j].x = vramX;
+        glyph[j].y = vramY;
+        glyph[j].w = currLett % 100;
+        glyph[j].h = size;
+        glyph[j].texture = texture;
     }
 }
 
@@ -932,38 +814,15 @@ void ScreenFooter(int x, int y, int colour)
 void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
 {
     uint8 letter = 0;
-    char AValue = 0;
     const char* tmpPtr;
-    Texture** charTex;
-    int size;
     int x, y;
     short j = 0;
-    uint16 currLett = 0;
-    TexChar* charSet;
+    Glyph* charSet;
     short totSize = 0;
 
     y = pos_data->start_pos_y;
 
-    size = pos_data->size;
-
-    switch (size)
-    {
-        case 16:
-            charSet = &(CharSet16[0]);
-            charTex = FontTextureTable + DRTEXT_16;
-            break;
-
-        case 12:
-            charSet = &(CharSet12[0]);
-            charTex = FontTextureTable + DRTEXT_12;
-            break;
-
-        case 8:
-        default:
-            charSet = &(CharSet8[0]);
-            charTex = FontTextureTable + DRTEXT_8;
-            break;
-    }
+    charSet = glyphs[(pos_data->size - 8) >> 2];
 
     tmpPtr = the_text_ptr;
 
@@ -977,7 +836,7 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
             j = letter - 'A';
 
         if (letter != 32)
-            totSize += charSet[j].width;
+            totSize += charSet[j].w;
         else
             totSize += 8;
 
@@ -997,18 +856,13 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
             if (letter == 0)
                 return;
 
-            AValue = 'A';
-
             if (letter >= '0' && letter <= '9')
                 j = letter - '0' + 26;
             else
-                j = letter - AValue;
+                j = letter - 'A';
 
-            currLett = charSet[j].width;
-
-            AddGlyph(x, y, currLett, size, charSet[j].vramX, charSet[j].vramY, colour, *charTex);
-
-            x += currLett;
+            renderGlyph(charSet + j, x, y, colour);
+            x += charSet[j].w;
         }
         else
         {
@@ -1020,11 +874,11 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
 void DisplayLives(ConfigData* gameData)
 {
     int i;
-    Texture** livesTex = FontTextureTable + DRTEXT_RED + 5;
+    const Texture* livesTex = FontTextureTable[DRTEXT_RED + 5];
 
     for (i = 0; i < gameData->Lives; i++)
     {
-        AddGlyph(speedo_x + 115 - (13 * i), speedo_y - 5, 11, 9, 0, 0, TEXT_COLOR_WHITE, *livesTex);
+        renderImage(livesTex, speedo_x + 115 - (13 * i), speedo_y - 5);
     }
 }
 
@@ -1050,7 +904,7 @@ void InitChampTable(void)
 
 void DisplayChampTable(void)
 {
-    short i;
+    int i;
 
     CentreText("CHAMPIONSHIP TABLE", text_data(60, 40, 8), TEXT_COLOR_HIGHLIGHT);
     AddText("PILOT NAME", text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
@@ -1067,7 +921,7 @@ void DisplayChampTable(void)
 
 void DisplayRacePoints(void)
 {
-    short i;
+    int i;
 
     CentreText("RACE POINTS", text_data(60, 40, 8), TEXT_COLOR_HIGHLIGHT);
     AddText("PILOT NAME", text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
@@ -1123,13 +977,8 @@ void DrawWeaponSprtIcons(ShipData* playerShip)
     if (icon != NO_WEAPON)
     {
         icon -= 1;
-        AddGlyph(144, 20, 32, 32, 0, 0, TEXT_COLOR_WHITE, gWeaponIconTextures[icon]);
+        renderImage(gWeaponIconTextures[icon], 144, 20);
     }
-}
-
-void DisplayPicture(Texture* pic, short x, short y, short width, short height)
-{
-    AddQuad(x, y, width, height, 0, 0, width, height, TEXT_COLOR_WHITE, pic);
 }
 
 void DisplayVenomComplete(void)
@@ -1318,10 +1167,10 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 
     if (playerShip->attr & RACING)
     {
-        AddText("LAP", text_data(15 - gBorder, 8, 8), TEXT_COLOR_HIGHLIGHT); // PCwipeout
-        AddNumber(playerShip->lapNo, text_data(10 - gBorder, 19, 16), TEXT_COLOR_WHITE); // PCwipeout
+        AddText("LAP", text_data(15 - gBorder, 8, 8), TEXT_COLOR_HIGHLIGHT);
+        AddNumber(playerShip->lapNo, text_data(10 - gBorder, 19, 16), TEXT_COLOR_WHITE);
 
-        width = Text16[(playerShip->lapNo + 26)] % 100;
+        width = glyphPos[2][(playerShip->lapNo + 26)] % 100; // 16
 
         AddText("OF", text_data((10 + width) - gBorder, 27, 8), TEXT_COLOR_HIGHLIGHT);
 
@@ -1349,6 +1198,6 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
     if (playerShip->attr & RACING)
     {
         fill_speedo(playerShip->speed, playerShip->thrust_mag);
-        AddGlyph(speedo_x, speedo_y, SPEEDO_WIDTH, SPEEDO_HEIGHT, 0, 0, TEXT_COLOR_WHITE, speedoTex);
+        renderImage(speedoTex, speedo_x, speedo_y);
     }
 }

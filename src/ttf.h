@@ -6,4 +6,4 @@ typedef struct
     short tex1[1];
 } TexTemplate;
 
-TexTemplate* LoadTtfFile(char* file, short* count, short libraryTextures);
+TexTemplate* LoadTtfFile(char* file, short* count);

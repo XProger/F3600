@@ -16,15 +16,6 @@ typedef struct
     int16 block[28];
 } Channel;
 
-typedef struct
-{
-    int32 volL, volR;
-    int32 loop;
-    int32 pitch;
-} SfxParam;
-
-SfxParam gSfxParams[SFX_MAX];
-
 int32 gFrames[SND_SAMPLES * 2];
 Channel gChannels[MAX_CHANNELS];
 
@@ -178,27 +169,6 @@ int IsPlaying(int channel)
 
 void InitNotes(void)
 {
-    int32 i;
-
-    for (i = 0; i < SFX_MAX; i++)
-    {
-        gSfxParams[i].volL = SND_MAX_VOLUME;
-        gSfxParams[i].volR = SND_MAX_VOLUME;
-        gSfxParams[i].pitch = SND_DEF_PITCH;
-        gSfxParams[i].loop = 0;
-    }
-
-    gSfxParams[SFX_POWER_UP].pitch = SND_DEF_PITCH >> 1;
-
-    gSfxParams[SFX_REMOTE_ENG].loop =
-    gSfxParams[SFX_ENG_RUMBLE].loop =
-    gSfxParams[SFX_ENG_AIR_INTAKE].loop =
-    gSfxParams[SFX_ENG_THRUST].loop =
-    gSfxParams[SFX_TURBULENCE].loop =
-    gSfxParams[SFX_CROWD].loop =
-    gSfxParams[SFX_TRACTOR_BEAM].loop =
-    gSfxParams[SFX_SHIELDS].loop = 1;
-
     music.alloc.alloc_buffer_length_in_bytes = sizeof(music.temp);
     music.alloc.alloc_buffer = music.temp;
 }
@@ -249,6 +219,19 @@ int PlayNote(enum SfxType id)
     }
 
     return -1;
+}
+
+void SetMasterBalance(int32 value)
+{
+    if (value < 0)
+    {
+        value = 0;
+    }
+    else if (value > 256)
+    {
+        value = 256;
+    }
+    gMasterBalance = value;
 }
 
 void SetPitch(enum SfxType id, int32 pitch)
@@ -329,6 +312,11 @@ void MusicPlay(int musicTrack)
 void MusicStop()
 {
     music.playing = 0;
+}
+
+void MusicReset(void)
+{
+    //MusicStop(); // music isn't CD based so we don't need to stop streaming during loading time
 }
 
 void RenderVAG(Channel* channel, int32 count, int32 volume)

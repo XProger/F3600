@@ -18,6 +18,47 @@ extern const TrackCamera ctrlcamera;
 char* pDRAM_checkpoint;
 char* pVRAM_checkpoint;
 
+void showLoading(int32 track)
+{
+    Texture* loadingScreen;
+    char* vramPtr = pVRAM;
+    
+    if (track == -1)
+    {
+        loadingScreen = LoadTexture("wipeout/textures/wiptitle.tim");
+    }
+    else
+    {
+        char path[32];
+        strcpy(path, "wipeout/textures/load");
+        if (track <= 9)
+        {
+            path[21] = '0' + track;
+            path[22] = 0;
+        }
+        else
+        {
+            path[21] = '1';
+            path[22] = '0' + (track - 10);
+            path[23] = 0;
+        }
+        strcat(path, ".tim");
+
+        loadingScreen = LoadTexture(path);
+    }
+
+    renderFrameBegin();
+    renderSetMode(RENDER_MODE_2D);
+    renderBackground(loadingScreen);
+    CentreText("LOADING", text_data(0, 200, 8), TEXT_COLOR_WHITE);
+    renderFrameEnd();
+    renderSwap();
+
+    renderDeleteTexture(loadingScreen);
+
+    pVRAM = vramPtr;
+}
+
 void titleInit(void)
 {
     titleScreen = LoadTexture("wipeout/textures/wiptitle.tim");
@@ -31,7 +72,8 @@ void titleLoop(void)
     renderClear();
     renderSetMode(RENDER_MODE_2D);
 
-    AddGlyph(0, 0, 320, 240, 0, 0, TEXT_COLOR_WHITE, titleScreen);
+    renderBackground(titleScreen);
+
     CentreText("PRESS ANY KEY", text_data(0, 200, 8), TEXT_COLOR_WHITE);
 
     if (xpad)
@@ -51,24 +93,24 @@ void titleLoop(void)
 
 void gameInit(void)
 {
-    printf("init game\n");
+    renderInit();
 
     InitGameDisplay();
 
+    TextureTableCount = 0;
+    InitText();
+
+    showLoading(-1);
+
+    soundInit();
     SfxInit();
     InitNotes();
 
     gMusicTracksCount = 11;
     gMusicTrack = 0; // random
-    gMasterBalance = 160; // ~60%
 
-    SetCharTextures(8);
-    SetCharTextures(12);
-    SetCharTextures(16);
+    SetMasterBalance(160); // ~60%
     HighScore(0);
-
-    TextureTableCount = 0;
-    InitText();
 
     InitGameData(&ctrlConfigData);
 
@@ -93,10 +135,6 @@ void gameInit(void)
 
     ctrltimeout = FR30 * 120;
 
-    SetCharTextures(8);
-    SetCharTextures(12);
-    SetCharTextures(16);
-
     trackNum = 16; // SJR
 
     ctrlGameLoop = GAME_LOOP_MAIN;
@@ -108,7 +146,6 @@ void gameInit(void)
 
     loadShipData(ctrlshipIndex, ctrlshipShapes, &gCamPos);
     InitSpeedo();
-    printf("done speedo\n");
     InitWeaponSprtIcons();
     InitEffects();
     InitWeapons(ctrlweaponShapes);
@@ -119,11 +156,18 @@ void gameInit(void)
     pVRAM_checkpoint = pVRAM;
 }
 
+void gameFree(void)
+{
+    renderFree();
+    SfxFree();
+}
+
 void gameCtrl(void)
 {
     switch (ctrlGameLoop)
     {
         case GAME_LOOP_TITLE_INIT:
+            MusicReset();
             titleInit();
             ctrlGameLoop = GAME_LOOP_TITLE;
         case GAME_LOOP_TITLE:
@@ -133,6 +177,7 @@ void gameCtrl(void)
         case GAME_LOOP_MENU_INIT:
             pDRAM = pDRAM_checkpoint;
             pVRAM = pVRAM_checkpoint;
+            MusicReset();
             menuInit();
             ctrlGameLoop = GAME_LOOP_MENU;
         case GAME_LOOP_MENU:
@@ -142,6 +187,7 @@ void gameCtrl(void)
         case GAME_LOOP_RACE_INIT:
             pDRAM = pDRAM_checkpoint;
             pVRAM = pVRAM_checkpoint;
+            MusicReset();
             raceInit(&ctrlConfigData);
             renderPrepare();
             ctrlGameLoop = GAME_LOOP_RACE;

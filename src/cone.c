@@ -175,6 +175,7 @@ void ResetCone(Cone* cone)
 
 void UpdateCone(Cone* cone)
 {
+#ifndef __3DO__ // TODO optimize
     short disp;
     short i, j;
 
@@ -204,4 +205,5 @@ void UpdateCone(Cone* cone)
             }
         }
     }
+#endif
 }

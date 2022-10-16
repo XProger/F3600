@@ -572,7 +572,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 #define WND_WIDTH 1280
 #define WND_HEIGHT 720
+/*
+#define DIV_TABLE_SIZE (4096 + 1)
 
+uint16 divTable[DIV_TABLE_SIZE];
+
+void initDivTable()
+{
+    divTable[0] = 0xFFFF;
+    divTable[1] = 0xFFFF;
+    for (uint32 i = 2; i < DIV_TABLE_SIZE; i++) {
+        divTable[i] = (1 << 16) / i;
+    }
+
+    ASSERT((DIV_TABLE_SIZE & 8) == 0);
+
+    printf("const uint16 divTable[DIV_TABLE_SIZE] = {\n");
+    for (int i = 0; i < DIV_TABLE_SIZE; i += 8) {
+        printf("    0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X,\n", 
+            divTable[i + 0], divTable[i + 1], divTable[i + 2], divTable[i + 3],
+            divTable[i + 4], divTable[i + 5], divTable[i + 6], divTable[i + 7]);
+    }
+    printf("};\n");
+}
+*/
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 #ifdef _DEBUG
@@ -582,6 +605,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     freopen_s(&fp, "CONOUT$", "w", stdout);
     freopen_s(&fp, "CONOUT$", "w", stderr);
 #endif
+    //initDivTable();
 
     gDRAM = pDRAM = (char*)malloc(DRAM_SIZE);
     gVRAM = pVRAM = (char*)malloc(VRAM_SIZE);
@@ -600,11 +624,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     timerInit();
     inputInit();
-    soundInit();
 
     srand((int)gTimerStart.QuadPart);
-
-    renderInit();
 
     gameInit();
 
@@ -625,8 +646,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     } while (msg.message != WM_QUIT);
 
     inputFree();
-    renderFree();
-    SfxFree();
+    gameFree();
 
     DestroyWindow(hWnd);
 

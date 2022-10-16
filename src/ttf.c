@@ -7,7 +7,7 @@
 
 char gTTF[TTF_SIZE_MAX];
 
-TexTemplate* LoadTtfFile(char* file, short* count, short libraryTextures)
+TexTemplate* LoadTtfFile(char* file, short* count)
 {
     short* tex;
     short i;

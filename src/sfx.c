@@ -1,15 +1,23 @@
 #include "game.h"
 
+SfxParam gSfxParams[SFX_MAX];
+
+#ifdef __3DO__
+uint8* sdxData;
+
+int32 SfxLoadBankSDX(const char* fileName)
+{
+    int32 size = osLoadFile(fileName, pDRAM);
+    sdxData = (uint8*)allocDRAM(size);
+    return 1;
+}
+#else
 uint8 vagData[29 * 16 * 1024]; // should be enough
 uint16 vagOffset[SFX_MAX];
 uint16 vagSize[SFX_MAX];
 
 int32 SfxLoadBankVAB(const char* vh, const char* vb)
 {
-/*TODO 3DO*/
-#ifdef __3DO__
-    return 0;
-#else
     typedef struct
     {
         uint32 form;
@@ -57,7 +65,6 @@ int32 SfxLoadBankVAB(const char* vh, const char* vb)
     //dump_vags();
 
     return 1;
-#endif
 }
 
 int32 SfxLoadBankFx(const char* fileName)
@@ -69,14 +76,41 @@ int32 SfxLoadBankFx(const char* fileName)
 
     return 0;
 }
+#endif
 
 void SfxInit(void)
 {
+    int32 i;
+
+    for (i = 0; i < SFX_MAX; i++)
+    {
+        gSfxParams[i].volL = SND_MAX_VOLUME;
+        gSfxParams[i].volR = SND_MAX_VOLUME;
+        gSfxParams[i].pitch = SND_DEF_PITCH;
+        gSfxParams[i].loop = 0;
+    }
+
+    gSfxParams[SFX_POWER_UP].pitch = SND_DEF_PITCH >> 1;
+
+    gSfxParams[SFX_REMOTE_ENG].loop =
+    gSfxParams[SFX_ENG_RUMBLE].loop =
+    gSfxParams[SFX_ENG_AIR_INTAKE].loop =
+    gSfxParams[SFX_ENG_THRUST].loop =
+    gSfxParams[SFX_TURBULENCE].loop =
+    gSfxParams[SFX_CROWD].loop =
+    gSfxParams[SFX_TRACTOR_BEAM].loop =
+    gSfxParams[SFX_SHIELDS].loop = 1;
+
+#ifdef __3DO__
+    if (SfxLoadBankSDX("wipeout/sound/wipeout.sdx"))
+        return;
+#else
     if (SfxLoadBankVAB("wipeout/sound/wipeout.vh", "wipeout/sound/wipeout.vb"))
         return;
 
     if (SfxLoadBankFx("wipeout/wipeout.fx"))
         return;
+#endif
 
     ASSERT(0); // no banks found
 }
@@ -86,7 +120,7 @@ void SfxFree(void)
 
 }
 
-short AdjustDirectionalNote(enum SfxType vagID, const VECTOR* pos)
+short AdjustDirectionalNote(enum SfxType id, const VECTOR* pos)
 {
     VECTOR distance;
     int mag;
@@ -122,11 +156,11 @@ short AdjustDirectionalNote(enum SfxType vagID, const VECTOR* pos)
 
     if ((voll > 0) && (volr > 0))
     {
-        SetVolume(vagID, voll, volr);
+        SetVolume(id, voll, volr);
     }
     else
     {
-        SetVolume(vagID, 0, 0);
+        SetVolume(id, 0, 0);
     }
 
     return 1;
@@ -142,6 +176,10 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
     short angle;
     VECTOR dopler;
     int doplerMag;
+
+#ifdef __3DO__ // TODO optimize
+    return;
+#endif
 
     smallestMag = 14000;
     ident = -1;
@@ -226,6 +264,10 @@ void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
 {
     short vol;
     short pitch;
+
+#ifdef __3DO__ // TODO optimize
+    return;
+#endif
 
     /******************************************/
     /****             ENGINE 2             ****/

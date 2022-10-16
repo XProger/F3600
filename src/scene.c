@@ -194,7 +194,6 @@ Object* LoadPrm(const char* name, short textureStart)
     char* finish;
 
     length = osLoadFile(name, pDRAM);
-    printf("length = %d\n", length);
 
     start = allocDRAM(length);
 

@@ -35,6 +35,7 @@ char TrackDirection(const TrackCamera* camera)
 
 void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
 {
+#ifndef __3DO__ // TODO
     short i;
     VECTOR result;
     long flag;
@@ -78,6 +79,7 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
             }
         }
     }
+#endif
 }
 
 void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short roll)

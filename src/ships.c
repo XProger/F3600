@@ -48,7 +48,57 @@ short championOrder[8];
 short raceOrder[8];
 short shipOrder[8];
 
-void SetSpread(ShipData* shipIndex, ConfigData* gameData, int position, int i);
+void SetSpread(ShipData* shipIndex, ConfigData* gameData, int position, int i)
+{
+    switch (gameData->actTrackNum)
+    {
+        case 1:
+            shipIndex[i].numtospeed = (position - 1) * (60 + ((position - 1) * 11));
+            break;
+        case 2:
+            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 20));
+            break;
+        case 3:
+            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 11));
+            break;
+        case 4:
+            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
+            break;
+        case 5:
+            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
+            break;
+        case 6:
+            shipIndex[i].numtospeed = (position - 1) * (60 + ((position - 1) * 8));
+            break;
+        case 7:
+            shipIndex[i].numtospeed = (position - 1) * (30 + ((position - 1) * 11));
+            break;
+        case 8:
+            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 15));
+            break;
+        case 9:
+            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
+            break;
+        case 10:
+            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
+            break;
+        case 11:
+            shipIndex[i].numtospeed = (position - 1) * (30 + ((position - 1) * 11));
+            break;
+        case 12:
+            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
+            break;
+        case 13:
+            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
+            break;
+        case 14:
+            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
+            break;
+    }
+
+    shipIndex[i].numtospeed = (shipIndex[i].numtospeed * FR60) / 60;
+}
+
 
 void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 {
@@ -446,56 +496,4 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         targetVector.vz = nextSection->centre.vz - startSection[position]->centre.vz;
         shipIndex[i].hdg = -ratan2(targetVector.vx, targetVector.vz);
     }
-}
-
-void SetSpread(ShipData* shipIndex, ConfigData* gameData, int position, int i)
-{
-    switch (gameData->actTrackNum)
-    {
-        case 1:
-            shipIndex[i].numtospeed = (position - 1) * (60 + ((position - 1) * 11));
-            break;
-        case 2:
-            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 20));
-            break;
-        case 4:
-            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
-            break;
-        case 8:
-            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 15));
-            break;
-        case 9:
-            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
-            break;
-        case 12:
-            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
-            break;
-        case 10:
-            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
-            break;
-
-        case 3:
-            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 11));
-            break;
-        case 5:
-            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
-            break;
-        case 6:
-            shipIndex[i].numtospeed = (position - 1) * (60 + ((position - 1) * 8));
-            break;
-        case 7:
-            shipIndex[i].numtospeed = (position - 1) * (30 + ((position - 1) * 11));
-            break;
-        case 11:
-            shipIndex[i].numtospeed = (position - 1) * (30 + ((position - 1) * 11));
-            break;
-        case 13:
-            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
-            break;
-        case 14:
-            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
-            break;
-    }
-
-    shipIndex[i].numtospeed = (shipIndex[i].numtospeed * FR60) / 60;
 }

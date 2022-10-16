@@ -915,26 +915,54 @@ void addVertexS(const SVECTOR* pos, float s, float t, const CVECTOR* color)
     v->a = 255;
 }
 
-void renderQuad(const Quad* q)
+void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
 {
-    TextureGL* t = (TextureGL*)q->texture;
-    float u0 = q->u0 * t->iw;
-    float v0 = q->v0 * t->ih;
-    float u1 = q->u1 * t->iw;
-    float v1 = q->v1 * t->ih;
-    int x0 = q->x;
-    int y0 = q->y;
-    int x1 = q->x + q->w;
-    int y1 = q->y + q->h;
+    TextureGL* t = (TextureGL*)g->texture;
+    float u0 = g->x * t->iw;
+    float v0 = g->y * t->ih;
+    float u1 = (g->x + g->w) * t->iw;
+    float v1 = (g->y + g->h) * t->ih;
+    int x0 = x;
+    int y0 = y;
+    int x1 = x + g->w;
+    int y1 = y + g->h;
 
     renderSetTexture(t);
     stateCheck();
 
     addQuad();
-    addVertex(x0, y0, 0, u0, v0, (CVECTOR*)&q->color);
-    addVertex(x1, y0, 0, u1, v0, (CVECTOR*)&q->color);
-    addVertex(x1, y1, 0, u1, v1, (CVECTOR*)&q->color);
-    addVertex(x0, y1, 0, u0, v1, (CVECTOR*)&q->color);
+    addVertex(x0, y0, 0, u0, v0, (CVECTOR*)&color);
+    addVertex(x1, y0, 0, u1, v0, (CVECTOR*)&color);
+    addVertex(x1, y1, 0, u1, v1, (CVECTOR*)&color);
+    addVertex(x0, y1, 0, u0, v1, (CVECTOR*)&color);
+}
+
+void renderImage(const Texture* t, int32 x, int32 y)
+{
+    const uint32 color = 0xFF808080;
+
+    float u0 = 0;
+    float v0 = 0;
+    float u1 = 1.0f;
+    float v1 = 1.0f;
+    int x0 = x;
+    int y0 = y;
+    int x1 = x + t->width;
+    int y1 = y + t->height;
+
+    renderSetTexture((TextureGL*)t);
+    stateCheck();
+
+    addQuad();
+    addVertex(x0, y0, 0, u0, v0, (CVECTOR*)&color);
+    addVertex(x1, y0, 0, u1, v0, (CVECTOR*)&color);
+    addVertex(x1, y1, 0, u1, v1, (CVECTOR*)&color);
+    addVertex(x0, y1, 0, u0, v1, (CVECTOR*)&color);
+}
+
+void renderBackground(const Texture* t)
+{
+    renderImage(t, 0, 0);
 }
 
 void renderShadow(const Shadow* s)
@@ -1357,9 +1385,7 @@ void renderSection(const TrackSection* section)
 
 void renderTrack(void)
 {
-    const VECTOR* vertices = track->vertices;
-    const Face* face;
-    int i, j, s, id;
+    int i, j, s;
     int cx, cy, cz;
     int dir;
     short* counts;
@@ -1908,6 +1934,60 @@ uint16 RGB555(uint16 c)
     return c;
 }
 
+void dumpBitmap(const char* fileName, int32 width, int32 height, uint8* data32)
+{
+    struct BITMAPFILEHEADER {
+        uint32  bfSize;
+        uint16  bfReserved1;
+        uint16  bfReserved2;
+        uint32  bfOffBits;
+    } fhdr;
+
+    struct BITMAPINFOHEADER{
+        uint32 biSize;
+        uint32 biWidth;
+        uint32 biHeight;
+        uint16 biPlanes;
+        uint16 biBitCount;
+        uint32 biCompression;
+        uint32 biSizeImage;
+        uint32 biXPelsPerMeter;
+        uint32 biYPelsPerMeter;
+        uint32 biClrUsed;
+        uint32 biClrImportant;
+    } ihdr;
+
+    memset(&fhdr, 0, sizeof(fhdr));
+    memset(&ihdr, 0, sizeof(ihdr));
+
+    ihdr.biSize      = sizeof(ihdr);
+    ihdr.biWidth     = width;
+    ihdr.biHeight    = height;
+    ihdr.biPlanes    = 1;
+    ihdr.biBitCount  = 16;
+    ihdr.biSizeImage = width * height * 2;
+
+    fhdr.bfOffBits   = 2 + sizeof(fhdr) + ihdr.biSize;
+    fhdr.bfSize      = fhdr.bfOffBits + ihdr.biSizeImage;
+
+    FILE* f = fopen(fileName, "wb");
+    ASSERT(f);
+
+    uint16 tag = 'B' + ('M' << 8);
+    fwrite(&tag, sizeof(tag), 1, f);
+    fwrite(&fhdr, sizeof(fhdr), 1, f);
+    fwrite(&ihdr, sizeof(ihdr), 1, f);
+
+    data32 += width * height * 2;
+    for (int32 i = 0; i < height; i++)
+    {
+        data32 -= width * 2;
+        fwrite(data32, 1, width * 2, f);
+    }
+
+    fclose(f);
+}
+
 Texture* renderCreateTexture(Tim* tim)
 {
     TextureGL* tex;
@@ -1962,6 +2042,8 @@ Texture* renderCreateTexture(Tim* tim)
                 *dst++ = t->clut[*src++];
             }
         }
+
+        //dumpBitmap("test.bmp", w, h, tempData);
     }
     else if (TimType(tim) == TIM_16)
     {
@@ -2022,4 +2104,9 @@ Texture* renderCreateTexture(Tim* tim)
 
         return (Texture*)tex;
     }
+}
+
+void renderDeleteTexture(Texture* texture)
+{
+    // TODO
 }

@@ -62,7 +62,7 @@ void getTrackStrNo(char* trackStr, char trackNo)
     else
     {
         trackStr[0] = '1';
-        trackStr[1] = '0' + (trackNo % 10);
+        trackStr[1] = '0' + (trackNo - 10);
     }
     trackStr[2] = 0;
 }
@@ -77,69 +77,41 @@ void getPath(char* trackPath, char trackNo, char* name)
     strcat(trackPath, name);
 }
 
-void LoadCmpFiles(TIMlist* timPtr, int numTex)
+void LoadCompressedTextureSequence(const char* fileName, int filter)
 {
     int i;
+    int numTex;
+    long timSize, timTotalSize;
+    char* compBuffer = pDRAM; // use available DRAM as scratch buffer
+
+    osLoadFile(fileName, compBuffer);
+    numTex = SwapLE32(*(int*)compBuffer);
 
     ASSERT(TextureTableCount + numTex <= TextureTableMax);
 
-    for (i = 0; i < numTex; i++)
-    {
-        TextureTable[TextureTableCount++] = renderCreateTexture((Tim*)(timPtr->memOffset[i]));
-    }
-}
-
-uint8 gCompBuffer[128 * 1024];
-
-void LoadCompressedTextureSequence(const char* fileName, int filter)
-{
-    int texNum;
-    int numTex;
-    static TIMlist timList;
-    long timSize, timTotalSize;
-
-    osLoadFile(fileName, (char*)gCompBuffer);
-    numTex = SwapLE32(*(int*)gCompBuffer);
+    ExpandData((uint8*)compBuffer + 4 + numTex * 4, (uint8*)pVRAM);
 
     timTotalSize = 0;
-
-    /***** Set offsets from timList.memBase & allocate memory for all tims *****/
-
-    for (texNum = 0; texNum < numTex; texNum++)
+    HACK_TEX_FILTER = filter;
+    for (i = 0; i < numTex; i++)
     {
-        timList.memOffset[texNum] = timTotalSize;
-        timSize = SwapLE32(*(int*)(gCompBuffer + 4 + texNum * 4));
+        TextureTable[TextureTableCount++] = renderCreateTexture((Tim*)(pVRAM + timTotalSize));
+        timSize = SwapLE32(*(int*)(compBuffer + 4 + i * 4));
         timTotalSize += timSize;
     }
-
-    timList.memBase = allocVRAM(timTotalSize);
-
-    for (texNum = 0; texNum < numTex; texNum++)
-    {
-        timList.memOffset[texNum] += (long)timList.memBase;
-    }
-
-    ExpandData((uint8*)gCompBuffer + 4 + numTex * 4, (uint8*)timList.memBase);
-
-    HACK_TEX_FILTER = filter;
-    LoadCmpFiles(&timList, numTex);
     HACK_TEX_FILTER = 0;
+
+    allocVRAM(timTotalSize);
 }
 
 Texture* LoadTexture(const char* fileName)
 {
-    long length;
+    long size;
     Tim* tim;
     Texture* tex;
 
-    length = osLoadFile(fileName, pVRAM);
-    if (length <= 0)
-    {
-        ASSERT(0);
-        return NULL;
-    }
-
-    tim = (Tim*)allocVRAM(length);
+    size = osLoadFile(fileName, pVRAM);
+    tim = (Tim*)allocVRAM(size);
 
     tex = renderCreateTexture(tim);
 

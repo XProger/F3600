@@ -2,7 +2,6 @@
 
 //#define ENABLE_60_FPS
 
-//#define USE_SHIP_LODS
 #define SHIP_VIS_DIST 3000 // og 2000
 
 #define INTERACTIVE 0
@@ -136,8 +135,8 @@ extern const char gTrackList[15];
 
 #define BLOCK_SIZE (32 * 1024)
 
-#define DRAM_SIZE (19 * BLOCK_SIZE)
-#define VRAM_SIZE (19 * BLOCK_SIZE)
+#define DRAM_SIZE (28 * BLOCK_SIZE)
+#define VRAM_SIZE (21 * BLOCK_SIZE)
 
 extern char* gDRAM;
 extern char* gVRAM;

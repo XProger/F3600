@@ -5,7 +5,3 @@
 #define ToUnix 1
 
 Object* LoadPrm(const char* name, short textureStart);
-
-void IntelShort(short* svalue);
-
-void IntelLong(long* lvalue);

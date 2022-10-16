@@ -36,6 +36,7 @@
 #include "options.h"
 
 void gameInit(void);
+void gameFree(void);
 void gameCtrl(void);
 
 #endif

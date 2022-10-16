@@ -6,6 +6,15 @@
 
 typedef struct
 {
+    int32 x;
+    int32 y;
+    int32 w;
+    int32 h;
+    const Texture* texture;
+} Glyph;
+
+typedef struct
+{
     int32 x, y;
     int32 w, h;
     uint16 u0, v0;
@@ -64,7 +73,9 @@ void renderSwap(void);
 void renderResize(int width, int height);
 void renderOffset(int x, int y);
 void renderClear(void);
-void renderQuad(const Quad* q);
+void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color);
+void renderImage(const Texture* t, int32 x, int32 y);
+void renderBackground(const Texture* t);
 void renderShadow(const Shadow* s);
 void renderColorQuad(const ColorQuad* q);
 void renderBillboard(const Billboard* b);
@@ -85,5 +96,6 @@ void renderSetBlend(int blend);
 void renderDepthWrite(int enable);
 void renderNextLayer(void);
 Texture* renderCreateTexture(Tim* tim);
+void renderDeleteTexture(Texture* texture);
 
 #endif

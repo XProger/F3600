@@ -65,12 +65,15 @@ typedef struct SampRec
     int16 PlayID;
 } SampRec;
 
+void InitSamples(const uint8* data);
+
 int WhatChannel(enum SfxType id);
 int IsPlaying(int channel);
 void InitNotes(void);
 void KillNote(enum SfxType id);
 void KillNotes(void);
 int PlayNote(enum SfxType id);
+void SetMasterBalance(int32 value);
 void SetPitch(enum SfxType id, int32 pitch);
 void SetVolume(enum SfxType id, int32 volL, int32 volR);
 void FillNotes(int16* samples, int32 count);
@@ -79,3 +82,4 @@ int MusicIsPlaying(void);
 int MusicGetTrack(void);
 void MusicPlay(int track);
 void MusicStop(void);
+void MusicReset(void);

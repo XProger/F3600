@@ -1,6 +1,6 @@
 #include "game.h"
 
-extern TexChar CharSet16[];
+extern Glyph glyphs[3][40];
 
 HiScores scoreTable[(HiScoreTracks * 2)];
 extern ChampionShip winTable[];
@@ -208,14 +208,14 @@ void HighScore(ConfigData* gameData)
                 if ((toggleDisplay % 3) == 0)
                 {
                     if (charVal == 26 || charVal == 27)
-                        AddDelEnd((charVal - 26), text_data(charX, charY, 16), TEXT_COLOR_WHITE);
+                        AddDelEnd((charVal - 26), charX, charY, TEXT_COLOR_WHITE);
                     else
                         AddText(&(dispChar[0]), text_data(charX, charY, 16), TEXT_COLOR_WHITE);
                 }
                 else
                 {
                     if (charVal == 26 || charVal == 27)
-                        AddDelEnd((charVal - 26), text_data(charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
+                        AddDelEnd((charVal - 26), charX, charY, TEXT_COLOR_HIGHLIGHT);
                     else
                         AddText(&(dispChar[0]), text_data(charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
                 }
@@ -532,7 +532,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
             {
                 PlayNote(SFX_MENU_SELECT);
                 hiScoreData->numChars--;
-                hiScoreData->charX -= CharSet16[(hiScoreData->nameEntered[hiScoreData->numChars] - 'A')].width;
+                hiScoreData->charX -= glyphs[2][(hiScoreData->nameEntered[hiScoreData->numChars] - 'A')].w; // 16
                 hiScoreData->nameEntered[hiScoreData->numChars] = 0;
                 hiScoreData->charVal = 0;
             }
@@ -547,7 +547,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
                 hiScoreData->nameEntered[hiScoreData->numChars] = hiScoreData->currChar;
                 hiScoreData->nameEntered[hiScoreData->numChars + 1] = 0;
                 hiScoreData->numChars++;
-                hiScoreData->charX += CharSet16[hiScoreData->charVal].width;
+                hiScoreData->charX += glyphs[2][hiScoreData->charVal].w; // 16
                 if (hiScoreData->numChars == 3)
                 {
                     hiScoreData->charVal = 27;
@@ -621,14 +621,14 @@ void NewHighScoreDraw(ConfigData* gameData, HiScoreData* hiScoreData)
             if ((hiScoreData->toggleDisplay % 3) == 0)
             {
                 if (hiScoreData->charVal == 26 || hiScoreData->charVal == 27)
-                    AddDelEnd((hiScoreData->charVal - 26), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_WHITE);
+                    AddDelEnd((hiScoreData->charVal - 26), hiScoreData->charX, charY, TEXT_COLOR_WHITE);
                 else
                     AddText(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_WHITE);
             }
             else
             {
                 if (hiScoreData->charVal == 26 || hiScoreData->charVal == 27)
-                    AddDelEnd((hiScoreData->charVal - 26), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
+                    AddDelEnd((hiScoreData->charVal - 26), hiScoreData->charX, charY, TEXT_COLOR_HIGHLIGHT);
                 else
                     AddText(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
             }

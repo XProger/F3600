@@ -33,8 +33,13 @@
     #include <hardware.h>
 
     #define CPU_BIG_ENDIAN
+    #define USE_SHIP_LODS
+    #define USE_DIV_TABLE
 #else
     #include <stdio.h>
+
+    #define USE_SHIP_AMBIENT
+    #define MENU_HAS_QUIT
 #endif
 
 #ifndef __3DO__
@@ -80,12 +85,6 @@ typedef struct
     short vx, vy;
 } DVECTOR;
 
-#define PAUSE       0x30
-#define CONT        0x31
-#define RETIRE      0x32
-#define QUIT        0x33
-#define NULLDATA    0x34
-
 #ifndef NULL
     #define NULL 0
 #endif
@@ -112,6 +111,8 @@ unsigned short GetKeyNoBlock(void);
 void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
 long osLoadFile(const char* name, char* buffer);
+
+void showLoading(int32 track);
 
 enum ViewDir
 {
