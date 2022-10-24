@@ -3,8 +3,6 @@
 extern int32 screenPage;
 extern ScreenContext screen;
 extern TrackCamera ctrlcamera;
-extern TexTemplate* ctrltexTemplate;
-extern short ctrllibraryTextures;
 
 Item irqVBL;
 Item irqVRAM;
@@ -24,14 +22,36 @@ int gCylX, gCylZ;
 #define FRAME_WIDTH         320
 #define FRAME_HEIGHT        240
 
-#define MAX_VERTICES_BUFFER 96
+#define MAX_VERTICES_BUFFER 4096
 
 VECTOR vBuffer[MAX_VERTICES_BUFFER];
 
 #define OT_SHIFT    4
 #define OT_SIZE     4096
 
-typedef struct CCB FaceCEL;
+typedef struct FaceCEL
+{
+    uint32 ccb_Flags;
+
+    struct FaceCEL* ccb_NextPtr;
+    void* ccb_SourcePtr;
+    void* ccb_PLUTPtr;
+
+    int32 ccb_XPos;
+    int32 ccb_YPos;
+    int32 ccb_HDX;
+    int32 ccb_HDY;
+    int32 ccb_VDX;
+    int32 ccb_VDY;
+    int32 ccb_HDDX;
+    int32 ccb_HDDY;
+    int32 ccb_PIXC;
+    uint32 ccb_PRE0;
+    uint32 ccb_PRE1;
+    // we don't need this
+    //int32 ccb_Width;
+    //int32 ccb_Height;
+} FaceCEL;
 
 typedef struct {
     FaceCEL* head;
@@ -145,7 +165,7 @@ void drawChar(int32 x, int32 y, int32 c)
     for (i = 0; i < 5; i++)
     {
         for (j = 0; j < 4; j++)
-        {
+        {                                                       
             if (chars[c][i * 4 + j])
             {
                 ptr[j * 2] = 0xFFFF;
@@ -187,7 +207,7 @@ void renderInit(void)
         0x0000, 0x0C40, 0x1461, 0x1C81,
         0x28C1, 0x3102, 0x3922, 0x4162,
         0x49A3, 0x51C3, 0x5A03, 0x5E43,
-        0x6663, 0x6A83, 0x72C3, 0x7B03 };
+        0x6663, 0x6A83, 0x72C3, 0x7B03 }; // shadow color
 
     irqVBL = GetVBLIOReq();
     irqVRAM = GetVRAMIOReq();
@@ -221,25 +241,6 @@ void renderOffset(int x, int y)
 
 void renderClear(void) {}
 
-#define RGB16(r, g, b) (r | (g << 5) | (b << 10))
-
-const uint16 gPalette[] = 
-{
-    RGB16(31, 0, 0),
-    RGB16(0, 31, 0),
-    RGB16(0, 0, 31),
-    RGB16(31, 0, 31),
-    RGB16(31, 31, 0),
-    RGB16(0, 31, 31),
-    RGB16(31, 31, 31),
-    RGB16(15, 15, 15),
-// dummy
-    RGB16(15, 15, 15),
-    RGB16(15, 15, 15),
-    RGB16(15, 15, 15),
-    RGB16(15, 15, 15)
-};
-
 FaceCEL* faceAdd(int32 depth)
 {
     FaceCEL* face = gFacesBase++;
@@ -270,11 +271,11 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
     if (!t->plut)
         return; // TODO temporary for 8-bpp and 16-bpp
 
-    woffset = ((t->tex.width << 2) + 31) >> 5;
+    woffset = ((t->tex.width << 2) + 31) >> 5; // bitmap pitch in 32-bit words
     skipx = g->x & 7;
 
     face = faceAdd(0);
-    face->ccb_SourcePtr = (CelData*)((uint32*)t->data + (g->x >> 3) + g->y * woffset);
+    face->ccb_SourcePtr = (uint8*)((uint32*)t->data + (g->x >> 3) + g->y * woffset);
     face->ccb_PLUTPtr = (color == TEXT_COLOR_HIGHLIGHT) ? gHighlightTextPLUT : t->plut;
     face->ccb_PRE0 = ((g->h - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4 | (skipx << PRE0_SKIPX_SHIFT);
     face->ccb_PRE1 = ((g->w + skipx - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
@@ -307,29 +308,20 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
 
 void renderImage(const Texture* t, int32 x, int32 y)
 {
-    // Texture must be 4-bpp >= 16 px width
-    int32 woffset;
+    uint32 woffset, flags, pre0, pre1;
     FaceCEL* face;
 
-    if (!((TextureCEL*)t)->plut)
-        return; // TODO temporary for 8-bpp and 16-bpp
-
-    woffset = ((t->width << 2) + 31) >> 5;
-
     face = faceAdd(0);
-    face->ccb_SourcePtr = (CelData*)(((TextureCEL*)t)->data);
-    face->ccb_PLUTPtr = ((TextureCEL*)t)->plut;
-    face->ccb_PRE0 = ((t->height - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
-    face->ccb_PRE1 = ((t->width - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
 
-    face->ccb_Flags =
+    face->ccb_SourcePtr = ((TextureCEL*)t)->data;
+
+    flags =
         CCB_NPABS  |
         CCB_SPABS  |
         CCB_PPABS  |
         CCB_LDSIZE |
         CCB_LDPRS  |
         CCB_LDPPMP |
-        CCB_LDPLUT |
         CCB_CCBPRE |
         CCB_YOXY   |
         CCB_ACSC   | CCB_ALSC |
@@ -337,6 +329,23 @@ void renderImage(const Texture* t, int32 x, int32 y)
         CCB_ACE    |
         CCB_NOBLK;
 
+    if (((TextureCEL*)t)->plut)
+    {
+        face->ccb_PLUTPtr = ((TextureCEL*)t)->plut;
+        flags |= CCB_LDPLUT;
+
+        woffset = t->width >> 3; // 8 px per word
+        pre0 = ((t->height - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
+        pre1 = ((t->width - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
+    }
+    else
+    {
+        woffset = t->width >> 1; // 2 px per word
+        pre0 = ((t->height - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_16 | PRE0_LINEAR;
+        pre1 = ((t->width - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET10_SHIFT);
+    }
+
+    face->ccb_Flags = flags;
     face->ccb_XPos = x << 16;
     face->ccb_YPos = y << 16;
     face->ccb_HDX = 1 << 20;
@@ -346,14 +355,15 @@ void renderImage(const Texture* t, int32 x, int32 y)
     face->ccb_HDDX = 0;
     face->ccb_HDDY = 0;
     face->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8;
+    face->ccb_PRE0 = pre0;
+    face->ccb_PRE1 = pre1;
 }
 
 void renderBackground(const Texture* t)
 {
     // Texture must be 320x240 16-bpp
-    // TODO use SPORT
     FaceCEL* face = faceAdd(OT_SIZE - 1);
-    face->ccb_SourcePtr = (CelData*)(((TextureCEL*)t)->data);
+    face->ccb_SourcePtr = ((TextureCEL*)t)->data;
     face->ccb_PRE0 = ((240 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_16 | PRE0_LINEAR | PRE0_BGND;
     face->ccb_PRE1 = ((320 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((160 - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET10_SHIFT);
 
@@ -386,7 +396,44 @@ void renderBackground(const Texture* t)
 void renderShadow(const Shadow* s) {}
 void renderColorQuad(const ColorQuad* q) {}
 void renderBillboard(const Billboard* b) {}
-void renderBackFill(int x, int y, int w, int h) {}
+
+void renderBackFill(int x, int y, int w, int h)
+{
+    // TODO compare with 16-bpp
+    FaceCEL* face;
+
+    face = faceAdd(0);
+    face->ccb_SourcePtr = (uint8*)(gHighlightTextPLUT);
+    face->ccb_PLUTPtr = gHighlightTextPLUT;
+
+    face->ccb_Flags =
+        CCB_NPABS  |
+        CCB_SPABS  |
+        CCB_PPABS  |
+        CCB_LDSIZE |
+        CCB_LDPRS  |
+        CCB_LDPPMP |
+        CCB_LDPLUT |
+        CCB_CCBPRE |
+        CCB_YOXY   |
+        CCB_ACSC   | CCB_ALSC |
+        CCB_ACW    | CCB_ACCW |
+        CCB_ACE    |
+        CCB_NOBLK  |
+        CCB_BGND;
+
+    face->ccb_XPos = x << 16;
+    face->ccb_YPos = y << 16;
+    face->ccb_HDX = w << 20;
+    face->ccb_HDY = 0;
+    face->ccb_VDX = 0;
+    face->ccb_VDY = h << 16;
+    face->ccb_HDDX = 0;
+    face->ccb_HDDY = 0;
+    face->ccb_PIXC = PPMPC_1S_CFBD | PPMPC_SF_8 | PPMPC_2S_PDC | (3 << PPMPC_MF_SHIFT);
+    face->ccb_PRE0 = PRE0_BGND | PRE0_BPP_4;
+    face->ccb_PRE1 = PRE1_TLLSB_PDC0;
+}
 
 void renderPrepare(void) {}
 
@@ -455,10 +502,65 @@ int cx, cy, cz;
     }
 
 #define AVG(p, a, b) {\
-        p.vx = (a.vx + b.vx) >> 1;\
-        p.vy = (a.vy + b.vy) >> 1;\
-        p.vz = (a.vz + b.vz) >> 1;\
+        p->vx = (a->vx + b->vx) >> 1;\
+        p->vy = (a->vy + b->vy) >> 1;\
+        p->vz = (a->vz + b->vz) >> 1;\
     }
+
+int32 cross(const VECTOR *a, const VECTOR *b, const VECTOR *c)
+{
+    return (b->vx - a->vx) * (c->vy - a->vy) -
+           (c->vx - a->vx) * (b->vy - a->vy);
+}
+
+void ccbMap4_track(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, const VECTOR* v3, uint8* data, uint8* plut)
+{
+    int32 x0 = v0->vx;
+    int32 y0 = v0->vy;
+    int32 x1 = v1->vx;
+    int32 x2 = v2->vx;
+    int32 y2 = v2->vy;
+    int32 y1 = v1->vy;
+    int32 x3 = v3->vx;
+    int32 y3 = v3->vy;
+
+    int32 hdx0 = (x1 - x0) << (20 - 5);
+    int32 hdy0 = (y1 - y0) << (20 - 5);
+    int32 hdx1 = (x2 - x3) << (20 - 5);
+    int32 hdy1 = (y2 - y3) << (20 - 5);
+    int32 vdx0 = (x3 - x0) << (16 - 5);
+    int32 vdy0 = (y3 - y0) << (16 - 5);
+
+    f->ccb_Flags =
+        CCB_NPABS  |
+        CCB_SPABS  |
+        CCB_PPABS  |
+        CCB_LDSIZE |
+        CCB_LDPRS  |
+        CCB_LDPPMP |
+        CCB_LDPLUT |
+        CCB_CCBPRE |
+        CCB_YOXY   |
+        CCB_ACSC   | CCB_ALSC |
+        CCB_ACW    | CCB_ACCW |
+        CCB_ACE    |
+        CCB_NOBLK  |
+        CCB_BGND;
+
+    f->ccb_SourcePtr = data;
+    f->ccb_PLUTPtr = plut;
+    f->ccb_XPos = (x0 + xOffset) << 16;
+    f->ccb_YPos = (y0 + yOffset) << 16;
+    f->ccb_HDX = hdx0;
+    f->ccb_HDY = hdy0;
+    f->ccb_VDX = vdx0;
+    f->ccb_VDY = vdy0;
+    f->ccb_HDDX = (hdx1 - hdx0) >> 5;
+    f->ccb_HDDY = (hdy1 - hdy0) >> 5;
+    f->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8;// | PPMPC_2S_PDC;
+    f->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
+    f->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((4 - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
+}
 
 void ccbMap4(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, const VECTOR* v3, uint32 texIndex)
 {
@@ -499,7 +601,7 @@ void ccbMap4(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, c
     f->ccb_HDDX = hddx;
     f->ccb_HDDY = hddy;
 
-    f->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8;
+    f->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8 | PPMPC_2D_2;
 
     f->ccb_Flags =
         CCB_NPABS  |
@@ -519,7 +621,7 @@ void ccbMap4(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, c
 
     f->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
     f->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
-    f->ccb_SourcePtr = (CelData*)texture->data;
+    f->ccb_SourcePtr = texture->data;
     f->ccb_PLUTPtr = texture->plut;
 }
 
@@ -558,7 +660,7 @@ void ccbMap3(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, u
     f->ccb_HDDX = hddx;
     f->ccb_HDDY = hddy;
 
-    f->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8;
+    f->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8 | PPMPC_2D_2;
 
     f->ccb_Flags =
         CCB_NPABS  |
@@ -578,7 +680,7 @@ void ccbMap3(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, u
 
     f->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
     f->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
-    f->ccb_SourcePtr = (CelData*)texture->data;
+    f->ccb_SourcePtr = texture->data;
     f->ccb_PLUTPtr = texture->plut;
 }
 
@@ -590,9 +692,9 @@ void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
     cz = z;
 }
 
-#define ZNEAR 128
+#define ZNEAR 64
 
-void renderSectionLow(const TrackSection* section, uint32 color)
+void renderSectionLow(const TrackSection* section)
 {
     const Face* trackFace = track->faces + section->faceStart;
     const VECTOR* vertices = track->vertices;
@@ -600,6 +702,7 @@ void renderSectionLow(const TrackSection* section, uint32 color)
     VECTOR p0, p1, p2, p3;
     FaceCEL* face;
     int i, maxZ;
+    const TextureCEL* texture;
 
     for (i = 0; i < section->faceCount; i++, trackFace++)
     {
@@ -628,6 +731,9 @@ void renderSectionLow(const TrackSection* section, uint32 color)
         PROJECT(p2);
         PROJECT(p3);
 
+        //if (cross(&p0, &p1, &p3) > 0)
+        //    continue;
+
         maxZ = p0.vz;
         if (maxZ < p1.vz) maxZ = p1.vz;
         if (maxZ < p2.vz) maxZ = p2.vz;
@@ -635,182 +741,268 @@ void renderSectionLow(const TrackSection* section, uint32 color)
 
         face = faceAdd(maxZ >> OT_SHIFT);
         
+        texture = (TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex1[0] + ctrllibraryTextures];
+
         if (trackFace->flags & FLIP_TEXTURE)
         {
-            ccbMap4(face, &p0, &p1, &p2, &p3, ctrltexTemplate[trackFace->texture].tex1[0] + ctrllibraryTextures);
+            ccbMap4_track(face, &p0, &p1, &p2, &p3, texture->data, trackFace->plut);
         }
         else
         {
-            ccbMap4(face, &p1, &p0, &p3, &p2, ctrltexTemplate[trackFace->texture].tex1[0] + ctrllibraryTextures);
+            ccbMap4_track(face, &p1, &p0, &p3, &p2, texture->data, trackFace->plut);
         }
     }
 }
 
-void renderSectionMed(const TrackSection* section, uint32 color)
+void TransProjTrackVertices(const VECTOR* vertex, int32 start, int32 count)
 {
-    const Face* trackFace = track->faces + section->faceStart;
-    const VECTOR* vertices = track->vertices;
-    const VECTOR *v0, *v1, *v2, *v3;
-    VECTOR p0, p1, p2, p3, p01, p12, p23, p30, pM;
-    int i, maxZ;
-    int mask;
+    const VECTOR* end = vertex + start + count;
+    VECTOR* out = vBuffer + start;
+    int32 vx, vy, vz;
+    int32 px, py, pz;
+    int32 z;
 
-    for (i = 0; i < section->faceCount; i++, trackFace++)
+    px = cx;
+    py = cy;
+    pz = cz;
+    
+    vertex += start;
+
+    while (vertex < end)
     {
-        v0 = vertices + trackFace->vertex[0];
-        v1 = vertices + trackFace->vertex[1];
-        v2 = vertices + trackFace->vertex[2];
-        v3 = vertices + trackFace->vertex[3];
+        vx = DP3(0, vertex) + px;
+        vy = DP3(1, vertex) + py;
+        vz = DP3(2, vertex) + pz;
 
-        TRANSFORM(p0, v0);
-        TRANSFORM(p1, v1);
-        TRANSFORM(p2, v2);
-        TRANSFORM(p3, v3);
-
-        mask = 0;
-
-        if (p0.vz <= ZNEAR)
+        if (vz < ZNEAR)
         {
-            mask |= 1;
-            p0.vz = ZNEAR;
+            vz = ZNEAR;
         }
 
-        if (p1.vz <= ZNEAR)
+        z = vz >> 3;
+        if (z >= DIV_TABLE_SIZE) z = DIV_TABLE_SIZE - 1;
+        z = FixedInvU(z);
+        out->vx = (vx * z) >> 12;
+        out->vy = (vy * z) >> 12;
+        out->vz = vz;
+
+        out++;
+        vertex++;
+    }
+}
+
+void TransTrackVertices(const VECTOR* vertex, int32 start, int32 count)
+{
+    const VECTOR* end = vertex + start + count;
+    VECTOR* out = vBuffer + start;
+    int32 vx, vy, vz;
+    int32 px, py, pz;
+
+    px = cx;
+    py = cy;
+    pz = cz;
+    
+    vertex += start;
+
+    while (vertex < end)
+    {
+        vx = DP3(0, vertex) + px;
+        vy = DP3(1, vertex) + py;
+        vz = DP3(2, vertex) + pz;
+
+        out->vx = vx;
+        out->vy = vy;
+        out->vz = vz;
+
+        out++;
+        vertex++;
+    }
+}
+
+void ProjTrackVertices(VECTOR* vertex, int32 start, int32 count)
+{
+    VECTOR* end = vertex + start + count;
+    int32 vx, vy, vz;
+    int32 z;
+
+    vertex += start;
+
+    while (vertex < end)
+    {
+        vx = vertex->vx;
+        vy = vertex->vy;
+        vz = vertex->vz;
+
+        if (vz < ZNEAR)
         {
-            mask |= 2;
-            p1.vz = ZNEAR;
+            vz = ZNEAR;
         }
 
-        if (p2.vz <= ZNEAR)
-        {
-            mask |= 4;
-            p2.vz = ZNEAR;
-        }
+        z = vz >> 3;
+        if (z >= DIV_TABLE_SIZE) z = DIV_TABLE_SIZE - 1;
+        z = FixedInvU(z);
 
-        if (p3.vz <= ZNEAR)
-        {
-            mask |= 8;
-            p3.vz = ZNEAR;
-        }
+        vertex->vx = (vx * z) >> 12;
+        vertex->vy = (vy * z) >> 12;
+        vertex->vz = vz;
 
-        AVG(p01, p0, p1);
-        AVG(p12, p1, p2);
-        AVG(p23, p2, p3);
-        AVG(p30, p3, p0);
-        AVG(pM, p01, p23);
+        vertex++;
+    }
+}
 
-        PROJECT(p0);
-        PROJECT(p1);
-        PROJECT(p2);
-        PROJECT(p3);
+void renderSectionsMed(const TrackRange* ranges)
+{
+    const Face* trackFace;
+    VECTOR *p0, *p1, *p2, *p3, *p01, *p12, *p23, *p30, *pM;
+    int i, j, maxZ;
+    VECTOR* p;
 
-        PROJECT(p01);
-        PROJECT(p12);
-        PROJECT(p23);
-        PROJECT(p30);
-        PROJECT(pM);
+    for (j = 0; j < 2; j++, ranges++)
+    {
+        if (!ranges->fCount)
+            break;
+
+        TransTrackVertices(track->vertices, ranges->vStart, ranges->vCount);
         
-        maxZ = p0.vz;
-        if (maxZ < p1.vz) maxZ = p1.vz;
-        if (maxZ < p2.vz) maxZ = p2.vz;
-        if (maxZ < p3.vz) maxZ = p3.vz;
-
-        maxZ >>= OT_SHIFT;
-
-        if (trackFace->flags & FLIP_TEXTURE)
+        p = vBuffer + ranges->vStart + ranges->vCount;
+        trackFace = track->faces + ranges->fStart;
+        for (i = 0; i < ranges->fCount; i++, trackFace++, p += 5)
         {
-            if (!(mask & 1)) ccbMap4(faceAdd(maxZ), &p0, &p01, &pM, &p30, ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures);
-            if (!(mask & 2)) ccbMap4(faceAdd(maxZ), &p01, &p1, &p12, &pM, ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures);
-            if (!(mask & 4)) ccbMap4(faceAdd(maxZ), &pM, &p12, &p2, &p23, ctrltexTemplate[trackFace->texture].tex4[3] + ctrllibraryTextures);
-            if (!(mask & 8)) ccbMap4(faceAdd(maxZ), &p30, &pM, &p23, &p3, ctrltexTemplate[trackFace->texture].tex4[2] + ctrllibraryTextures);
+            p0 = vBuffer + trackFace->vertex[0];
+            p1 = vBuffer + trackFace->vertex[1];
+            p2 = vBuffer + trackFace->vertex[2];
+            p3 = vBuffer + trackFace->vertex[3];
+
+            p01 = p + 0;
+            p12 = p + 1;
+            p23 = p + 2;
+            p30 = p + 3;
+            pM = p + 4;
+
+            AVG(p01, p0, p1);
+            AVG(p12, p1, p2);
+            AVG(p23, p2, p3);
+            AVG(p30, p3, p0);
+            AVG(pM, p01, p23);
         }
-        else
+        
+        ProjTrackVertices(vBuffer, ranges->vStart, ranges->vCount + ranges->fCount * 5);
+
+        p = vBuffer + ranges->vStart + ranges->vCount;
+        trackFace = track->faces + ranges->fStart;
+        for (i = 0; i < ranges->fCount; i++, trackFace++, p += 5)
         {
-            if (!(mask & 1)) ccbMap4(faceAdd(maxZ), &p01, &p0, &p30, &pM, ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures);
-            if (!(mask & 2)) ccbMap4(faceAdd(maxZ), &p1, &p01, &pM, &p12, ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures);
-            if (!(mask & 4)) ccbMap4(faceAdd(maxZ), &p12, &pM, &p23, &p2, ctrltexTemplate[trackFace->texture].tex4[2] + ctrllibraryTextures);
-            if (!(mask & 8)) ccbMap4(faceAdd(maxZ), &pM, &p30, &p3, &p23, ctrltexTemplate[trackFace->texture].tex4[3] + ctrllibraryTextures);
+            p0 = vBuffer + trackFace->vertex[0];
+            p1 = vBuffer + trackFace->vertex[1];
+            p2 = vBuffer + trackFace->vertex[2];
+            p3 = vBuffer + trackFace->vertex[3];
+
+            if (p0->vz <= ZNEAR && p1->vz <= ZNEAR && p2->vz <= ZNEAR && p3->vz <= ZNEAR)
+                continue;
+
+            p01 = p + 0;
+            p12 = p + 1;
+            p23 = p + 2;
+            p30 = p + 3;
+            pM = p + 4;
+
+            //if (cross(&p0, &p1, &p3) > 0)
+            //    continue;
+
+            maxZ = p0->vz;
+            if (maxZ < p1->vz) maxZ = p1->vz;
+            if (maxZ < p2->vz) maxZ = p2->vz;
+            if (maxZ < p3->vz) maxZ = p3->vz;
+
+            maxZ >>= OT_SHIFT;
+
+            if (trackFace->flags & FLIP_TEXTURE)
+            {
+                ccbMap4_track(faceAdd(maxZ), p0, p01, pM, p30, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures])->data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p01, p1, p12, pM, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures])->data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), pM, p12, p2, p23, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[3] + ctrllibraryTextures])->data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p30, pM, p23, p3, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[2] + ctrllibraryTextures])->data, trackFace->plut);
+            }
+            else
+            {
+                ccbMap4_track(faceAdd(maxZ), p01, p0, p30, pM, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures])->data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p1, p01, pM, p12, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures])->data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p12, pM, p23, p2, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[2] + ctrllibraryTextures])->data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), pM, p30, p3, p23, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[3] + ctrllibraryTextures])->data, trackFace->plut);
+            }
+        }
+    }
+}
+
+void renderSectionsLow(const TrackRange* ranges)
+{
+    const Face* trackFace;
+    VECTOR *p0, *p1, *p2, *p3;
+    FaceCEL* face;
+    int i, j, maxZ;
+    const TextureCEL* texture;
+
+    for (j = 0; j < 2; j++, ranges++)
+    {
+        if (!ranges->fCount)
+            break;
+
+        TransProjTrackVertices(track->vertices, ranges->vStart, ranges->vCount);
+
+        trackFace = track->faces + ranges->fStart;
+
+        for (i = 0; i < ranges->fCount; i++, trackFace++)
+        {
+            p0 = vBuffer + trackFace->vertex[0];
+            p1 = vBuffer + trackFace->vertex[1];
+            p2 = vBuffer + trackFace->vertex[2];
+            p3 = vBuffer + trackFace->vertex[3];
+
+            //if (p0->vz <= ZNEAR || p1->vz <= ZNEAR || p2->vz <= ZNEAR || p3->vz <= ZNEAR)
+            //    continue;
+
+            //if (cross(&p0, &p1, &p3) > 0)
+            //    continue;
+
+            maxZ = p0->vz;
+            //if (maxZ < p1->vz) maxZ = p1->vz;
+            //if (maxZ < p2->vz) maxZ = p2->vz;
+            //if (maxZ < p3->vz) maxZ = p3->vz;
+
+            face = faceAdd(maxZ >> OT_SHIFT);
+        
+            texture = (TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex1[0] + ctrllibraryTextures];
+
+            if (trackFace->flags & FLIP_TEXTURE)
+            {
+                ccbMap4_track(face, p0, p1, p2, p3, texture->data, trackFace->plut);
+            }
+            else
+            {
+                ccbMap4_track(face, p1, p0, p3, p2, texture->data, trackFace->plut);
+            }
         }
     }
 }
 
 void renderTrack(void)
 {
-    int i, j, s;
-    int dir;
-    short* counts;
-    const short* const * sections;
-    TrackSection* section;
-    uint32 color;
-
-    dir = TrackDirection(&ctrlcamera);
-
     renderSetSkeleton(
         ctrlcamera.camPos->super,
         ctrlcamera.camPos->absolute.t[0],
         ctrlcamera.camPos->absolute.t[1],
         ctrlcamera.camPos->absolute.t[2]);
 
-    switch (dir)
-    {
-        case VIEW_DIR_NORTH:
-            counts = ctrlcamera.section->northViewCount;
-            sections = ctrlcamera.section->northViewSection;
-            break;
-        case VIEW_DIR_SOUTH:
-            counts = ctrlcamera.section->southViewCount;
-            sections = ctrlcamera.section->southViewSection;
-            break;
-        case VIEW_DIR_WEST:
-            counts = ctrlcamera.section->westViewCount;
-            sections = ctrlcamera.section->westViewSection;
-            break;
-        default: // VIEW_DIR_EAST
-            counts = ctrlcamera.section->eastViewCount;
-            sections = ctrlcamera.section->eastViewSection;
-    }
-
-    color = sections[0][0];
-
-    section = track->sections + sections[0][0];
-    //renderSectionLow(section->prevSection.ptr, cx, cy, cz, color++);
-
-    for (i = 0; i < 3; i++)
-    {
-        for (j = 0; j < 2 /* counts[i]*/; j += 2) // TODO better visibility indexing
-        {
-            section = track->sections + sections[i][j];
-
-            for (s = 0; s < sections[i][j + 1]; s++)
-            {
-                if (i == 0)
-                {
-                    renderSectionMed(section, color++);
-                }
-                else
-                {
-                    renderSectionLow(section, color++);
-                }
-                section = section->nextSection.ptr;
-            }
-        }
-    }
+    renderSectionsMed(ctrlcamera.section->visRange[0]);
+    yOffset++; // HACK to hide gaps between LODs (precision problem)
+    renderSectionsLow(ctrlcamera.section->visRange[1]);
+    yOffset--;
 }
-
 
 #define DP3_XYZ(row) ((gMatrix->m[row][0] * x + gMatrix->m[row][1] * y + gMatrix->m[row][2] * z) >> 12)
 
-#define PROJECT(p) {\
-        int32 z = p.vz >> 3;\
-        if (z >= DIV_TABLE_SIZE) z = DIV_TABLE_SIZE - 1;\
-        z = FixedInvU(z);\
-        p.vx = (p.vx * z) >> 12;\
-        p.vy = (p.vy * z) >> 12;\
-    }
-
 void transformMesh(const SVECTOR* vertices, int32 count)
 {
-    int32 i;
     VECTOR* dst = vBuffer;
     const SVECTOR* end = vertices + count;
     int32 mx = cx;
@@ -849,12 +1041,6 @@ void transformMesh(const SVECTOR* vertices, int32 count)
 
         vertices++;
     }
-}
-
-int32 cross(const VECTOR *a, const VECTOR *b, const VECTOR *c)
-{
-    return (b->vx - a->vx) * (c->vy - a->vy) -
-           (c->vx - a->vx) * (b->vy - a->vy);
 }
 
 void renderQuadFace(const int16* indices, int32 texIndex)
@@ -1269,7 +1455,20 @@ void renderMesh(Primitive* prim, int32 count)
     }
 }
 
-void renderObject(const Object* object) {}
+void renderObject(const Object* object)
+{
+    /*
+    const MATRIX* matrix;
+
+    matrix = GetSkeletonMatrix(object->skeleton);
+
+    renderSetSkeleton(object->skeleton, matrix->t[0], matrix->t[1], matrix->t[2]);
+
+    transformMesh(object->vertices, object->vertexCount);
+
+    renderMesh(object->primitives, object->primitiveCount);
+    */
+}
 
 void renderShip(const Object* object, uint32 color)
 {
@@ -1284,74 +1483,37 @@ void renderShip(const Object* object, uint32 color)
     renderMesh(object->primitives, object->primitiveCount);
 }
 
-
 void renderShield(const Object* object, int32 counter) {}
-void renderSky(const Object* object) {}
+
+void renderSky(const Object* object)
+{
+    //renderObject(object);
+}
+
 void renderSetMode(int renderMode) {}
 void renderSetBlend(int blend) {}
 void renderDepthWrite(int enable) {}
 void renderNextLayer(void) {}
 
-Texture* renderCreateTexture(Tim* tim)
+Texture* renderCreateTexture(uint8* ptr)
 {
-    int32 i;
     TextureCEL* tex = gTextureBase++;
+    uint32 info = *(uint32*)ptr;
 
-    tim->header.flags = SwapLE32(tim->header.flags);
+    tex->tex.width = GET_TEX_WIDTH(info);
+    tex->tex.height = GET_TEX_HEIGHT(info);
 
-    if (TimType(tim) == TIM_4)
+    info = GET_TEX_TYPE(info);
+
+    if (info == TEX_TYPE_4)
     {
-        uint8* src;
-
-        Tim4* t = &tim->tim4;
-        tex->tex.width = SwapLE16(t->textureW) * 4;
-        tex->tex.height = SwapLE16(t->textureH);
-        tex->plut = t->clut;
-        tex->data = (uint8*)(t + 1);
-
-        for (i = 0; i < 16; i++)
-        {
-            uint16 p = SwapLE16(tex->plut[i]);
-            uint8 r = p & 31;
-            uint8 g = (p >> 5) & 31;
-            uint8 b = (p >> 10) & 31;
-            tex->plut[i] = b | (g << 5) | (r << 10);
-        }
-
-        src = tex->data;
-        for (i = 0; i < tex->tex.width * tex->tex.height / 2; i++)
-        {
-            uint8 p = *src;
-            *src++ = ((p & 15) << 4) | (p >> 4);
-        }
+        tex->plut = (uint16*)(ptr + 4);
+        tex->data = ptr + sizeof(uint32) + 16 * sizeof(uint16);
     }
-    else if (TimType(tim) == TIM_8)
+    else if (info == TEX_TYPE_16)
     {
-        Tim8* t = &tim->tim8;
-        tex->tex.width = SwapLE16(t->textureW) * 2;
-        tex->tex.height = SwapLE16(t->textureH);
-        tex->plut = NULL;//t->clut;
-        tex->data = NULL;//(uint8*)(t + 1);
-    }
-    else if (TimType(tim) == TIM_16)
-    {
-        uint16* src;
-
-        Tim16* t = &tim->tim16;
-        tex->tex.width = SwapLE16(t->textureW);
-        tex->tex.height = SwapLE16(t->textureH);
         tex->plut = NULL;
-        tex->data = (uint8*)(t + 1);
-
-        src = (uint16*)tex->data;
-        for (i = 0; i < tex->tex.width * tex->tex.height; i++)
-        {
-            uint16 p = SwapLE16(*src);
-            uint8 r = p & 31;
-            uint8 g = (p >> 5) & 31;
-            uint8 b = (p >> 10) & 31;
-            *src++ = b | (g << 5) | (r << 10);
-        }
+        tex->data = ptr + sizeof(uint32);
     }
 
     return &tex->tex;

@@ -402,7 +402,6 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 {
     int i, j;
     int position = NO_OF_SHIPS;
-    int ownSecNo;
     int secNo;
     SortTable sortTable[NO_OF_SHIPS];
     char tempShip;
@@ -466,11 +465,6 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
         shipIndex[i].DPASectDiff = secNo;
     }
 
-    if (shipIndex[ownShip].nearSecNo <= startLinePos[trackNo])
-        ownSecNo = shipIndex[ownShip].nearSecNo + track->sectionCount;
-    else
-        ownSecNo = shipIndex[ownShip].nearSecNo;
-
     position = CalcPosition(shipIndex);
 
     if (shipIndex[ownShip].lapNo > 0)
@@ -502,7 +496,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
         }
     }
 
-    if (shipIndex[ownShip].lapNo > END_LAP /*&& ownSecNo == (startLinePos[ trackNo ]+1))*/ && (shipIndex[ownShip].attr & RACING))
+    if (shipIndex[ownShip].lapNo > END_LAP && (shipIndex[ownShip].attr & RACING))
     {
         gameData->Position = winTable[ownShip].racePosition;
 
@@ -724,9 +718,9 @@ int CalcPosition(ShipData* shipIndex)
                 AC.vy = C.vy - shipIndex[j].nearTrkSect->centre.vy;
                 AC.vz = C.vz - shipIndex[j].nearTrkSect->centre.vz;
 
-                trackVect.vx = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vx - shipIndex[i].nearTrkSect->centre.vx;
-                trackVect.vy = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vy - shipIndex[i].nearTrkSect->centre.vy;
-                trackVect.vz = shipIndex[i].nearTrkSect->nextSection.ptr->centre.vz - shipIndex[i].nearTrkSect->centre.vz;
+                trackVect.vx = shipIndex[i].nearTrkSect->nextSection->centre.vx - shipIndex[i].nearTrkSect->centre.vx;
+                trackVect.vy = shipIndex[i].nearTrkSect->nextSection->centre.vy - shipIndex[i].nearTrkSect->centre.vy;
+                trackVect.vz = shipIndex[i].nearTrkSect->nextSection->centre.vz - shipIndex[i].nearTrkSect->centre.vz;
 
                 angleB = GetAng(&AB, &trackVect);
                 angleC = GetAng(&AC, &trackVect);

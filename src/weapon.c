@@ -208,7 +208,7 @@ void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
 
                 for (distance = 0; distance < 10; distance++)
                 {
-                    section = section->nextSection.ptr;
+                    section = section->nextSection;
                     if (shipIndex[i].nearTrkSect == section)
                     {
                         if ((distance < shortestDistance) && (distance > 0))
@@ -228,13 +228,13 @@ void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
                 section = playerShip->nearTrkSect;
                 for (distance = 0; distance < 10; distance++)
                 {
-                    if (section->junction.index != -1)
+                    if (section->junction)
                     {
-                        section = section->junction.ptr;
+                        section = section->junction;
                     }
                     else
                     {
-                        section = section->nextSection.ptr;
+                        section = section->nextSection;
                     }
                     if (shipIndex[i].nearTrkSect == section)
                     {
@@ -1415,16 +1415,20 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
 
         if (weaponGrid[i].attr & WEAPON_GRID_LEFT)
         {
+        #ifndef __3DO__ // TODO track attribs
             facePtr->red = weaponGrid[i].colour.r;
             facePtr->green = weaponGrid[i].colour.g;
             facePtr->blue = weaponGrid[i].colour.b;
+        #endif
         }
         if (weaponGrid[i].attr & WEAPON_GRID_RIGHT)
         {
             facePtr++;
+        #ifndef __3DO__ // TODO track attribs
             facePtr->red = weaponGrid[i].colour.r;
             facePtr->green = weaponGrid[i].colour.g;
             facePtr->blue = weaponGrid[i].colour.b;
+        #endif
         }
     }
 }
@@ -1537,7 +1541,7 @@ void SetTargetShip(ShipData* shipIndex, int shipNo)
 
                 for (distance = 0; distance < 10; distance++)
                 {
-                    section = section->nextSection.ptr;
+                    section = section->nextSection;
                     if (shipIndex[i].nearTrkSect == section)
                     {
                         if ((distance < shortestDistance) && (distance > 0))
@@ -1557,13 +1561,13 @@ void SetTargetShip(ShipData* shipIndex, int shipNo)
                 section = shipIndex[shipNo].nearTrkSect;
                 for (distance = 0; distance < 10; distance++)
                 {
-                    if (section->junction.index != -1)
+                    if (section->junction)
                     {
-                        section = section->junction.ptr;
+                        section = section->junction;
                     }
                     else
                     {
-                        section = section->nextSection.ptr;
+                        section = section->nextSection;
                     }
                     if (shipIndex[i].nearTrkSect == section)
                     {

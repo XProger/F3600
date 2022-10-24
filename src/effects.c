@@ -6,15 +6,6 @@ Texture* gEffectTextures[NO_OF_EFFECT_TEXTURES];
 extern int gFrameIndex;
 extern const TrackCamera ctrlcamera;
 
-const char tranny_table[] = {
-    YELLOW_WHITE_TRANSL,    // MISSILE/ROCKET EXPLODE HIT NOTHING
-    WHITE2_TRANSL,          // MISSILE/ROCKET TRAIL
-    YELLOW_TRANSL,          // MISSILE/ROCKEY EXPLODE HIT SHIP
-    WHITE8_TRANSL,          // FX_SHADOW NOT USED
-    BLUE_TRANSL,            // FX_EBOLT TRAIL
-    WHITE8_TRANSL,          // FX_HALO NOT USED
-    PURPLE_TRANSL };        // FX_GREENY (NOT USED?) WAS REV_CON SO USE FOR FX_EBOLT EXPLODE
-
 void InitEffects(void)
 {
     int tablePos = TextureTableCount;

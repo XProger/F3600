@@ -3,6 +3,7 @@
 /************************************************************/
 #include "game.h"
 
+#ifdef USE_SHIP_AMBIENT
 void ShipCalcAmbient(ShipData* playerShip)
 {
     Face* facePtr;
@@ -16,12 +17,13 @@ void ShipCalcAmbient(ShipData* playerShip)
 
     playerShip->color = facePtr->red | (facePtr->green << 8) | (facePtr->blue << 16);
 }
+#endif
 
 void ApplySpeedUp(ShipData* playerShip)
 {
-    playerShip->vel.vx += ((playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx) * 60) / FR60;
-    playerShip->vel.vy += ((playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy) * 60) / FR60;
-    playerShip->vel.vz += ((playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz) * 60) / FR60;
+    playerShip->vel.vx += ((playerShip->nearTrkSect->nextSection->centre.vx - playerShip->nearTrkSect->centre.vx) * 60) / FR60;
+    playerShip->vel.vy += ((playerShip->nearTrkSect->nextSection->centre.vy - playerShip->nearTrkSect->centre.vy) * 60) / FR60;
+    playerShip->vel.vz += ((playerShip->nearTrkSect->nextSection->centre.vz - playerShip->nearTrkSect->centre.vz) * 60) / FR60;
 
     gTargetFOV = CAMERA_FOV_EXTRA;
 }
@@ -248,7 +250,7 @@ void ShipTrkReaction(ShipData* playerShip)
         /***              Detect the need for a rescue droid                  ***/
         /************************************************************************/
 
-        nextSection = playerShip->nearTrkSect->nextSection.ptr;
+        nextSection = playerShip->nearTrkSect->nextSection;
 
         GetTargetPos(&bestPath, &playerShip->pos, &nextSection->centre, &playerShip->nearTrkSect->centre);
 
@@ -324,15 +326,15 @@ void ShipTrkReaction(ShipData* playerShip)
     playerShip->pitch = ang(playerShip->pitch);
     playerShip->roll = ang(playerShip->roll);
 
-    nextSection = playerShip->nearTrkSect->prevSection.ptr;
+    nextSection = playerShip->nearTrkSect->prevSection;
 
     if ((playerShip->attr & DIRECTION) == 0)
     {
         if (nextSection->flags & Jump)
         {
-            repulseVector.vx = playerShip->nearTrkSect->nextSection.ptr->centre.vx - playerShip->nearTrkSect->centre.vx;
-            repulseVector.vy = playerShip->nearTrkSect->nextSection.ptr->centre.vy - playerShip->nearTrkSect->centre.vy;
-            repulseVector.vz = playerShip->nearTrkSect->nextSection.ptr->centre.vz - playerShip->nearTrkSect->centre.vz;
+            repulseVector.vx = playerShip->nearTrkSect->nextSection->centre.vx - playerShip->nearTrkSect->centre.vx;
+            repulseVector.vy = playerShip->nearTrkSect->nextSection->centre.vy - playerShip->nearTrkSect->centre.vy;
+            repulseVector.vz = playerShip->nearTrkSect->nextSection->centre.vz - playerShip->nearTrkSect->centre.vz;
 
             playerShip->vel.vx += repulseVector.vx << 1;
             playerShip->vel.vy += repulseVector.vy << 1;
@@ -469,9 +471,11 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     {
         if (raceType != TIME_TRIAL)
         {
+        #ifndef __3DO__ // TODO track attribs
             facePtr->red = 0xff;
             facePtr->green = 0x23;
             facePtr->blue = 0x75;
+        #endif
         }
         weaponGrid[noWeaponGrids].section = section;
         weaponGrid[noWeaponGrids].count = 0;
@@ -482,9 +486,11 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     }
     else if (facePtr->flags & SPEED_UP)
     {
+    #ifndef __3DO__ // TODO track attribs
         facePtr->red = 0;
         facePtr->green = 0;
         facePtr->blue = 255;
+    #endif
     }
 
     facePtr++;
@@ -493,9 +499,11 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     {
         if (raceType != TIME_TRIAL)
         {
+        #ifndef __3DO__ // TODO track attribs
             facePtr->red = 0x54;
             facePtr->green = 0xee;
             facePtr->blue = 0x75;
+        #endif
         }
         weaponGrid[noWeaponGrids].section = section;
         weaponGrid[noWeaponGrids].count = 0;
@@ -505,9 +513,11 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     }
     else if (facePtr->flags & SPEED_UP)
     {
+    #ifndef __3DO__ // TODO track attribs
         facePtr->red = 0;
         facePtr->green = 0;
         facePtr->blue = 255;
+    #endif
     }
 
     return (noWeaponGrids);

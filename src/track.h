@@ -27,22 +27,27 @@ typedef struct SVector
 #define START_GRID          16
 #define SPEED_UP            32
 
+#ifdef __3DO__
 typedef struct Face
 {
-    short vertex[4];
+    int16 vertex[4];
     SVector normal;
-    char texture;
-    char flags;
+    uint8 flags;
+    uint8 texture;
+    uint8* plut;
+} Face;
+#else
+typedef struct Face
+{
+    int16 vertex[4];
+    SVector normal;
+    uint8 texture;
+    uint8 flags;
     uint8 red;
     uint8 green;
     uint8 blue;
 } Face;
-
-typedef union
-{
-    struct TrackSection* ptr;
-    long index;
-} SectionPtr;
+#endif
 
 /* TrackSection Flags */
 #define Jump            1
@@ -53,17 +58,48 @@ typedef union
 #define ObjectTableMax  512 // 464
 #define TrackTextures   24
 
+typedef struct TrackRange
+{
+    uint16 vStart;
+    uint16 vCount;
+    uint16 fStart;
+    uint16 fCount;
+} TrackRange;
+
+#ifdef __3DO__
 typedef struct TrackSection
 {
-    SectionPtr junction;
-
-    SectionPtr prevSection;
-    SectionPtr nextSection;
+    struct TrackSection* junction;
+    struct TrackSection* prevSection;
+    struct TrackSection* nextSection;
 
     Vector centre;
 
-    short version;
-    short pad;
+    uint16 faceStart;
+    uint16 faceCount;
+
+    int16* objects;
+    uint32 objectCount;
+
+    uint16 globalRadius;
+    uint16 localRadius;
+
+    uint16 flags;
+    uint16 secNo;
+
+    TrackRange visRange[2][2];
+} TrackSection;
+#else
+typedef struct TrackSection
+{
+    struct TrackSection* junction;
+    struct TrackSection* prevSection;
+    struct TrackSection* nextSection;
+
+    Vector centre;
+
+    short unused_version;
+    short unused_pad;
 
     short* objects;
     short objectCount;
@@ -81,27 +117,16 @@ typedef struct TrackSection
 
     short unused[8];
 
-    short faceStart;
-    short faceCount;
+    uint16 faceStart;
+    uint16 faceCount;
 
-    short globalRadius;
-    short localRadius;
+    uint16 globalRadius;
+    uint16 localRadius;
 
-    short flags;
-    short secNo;
+    uint16 flags;
+    uint16 secNo;
 } TrackSection;
-
-typedef struct colors
-{
-    char red;
-    char green;
-    char blue;
-} Colors;
-
-#define MAX_VERTICES    (32 * 104)
-#define MAX_FACES       (32 * 88)
-#define MAX_SECTIONS    (32 * 19)
-#define MAX_VIEWLIST    (32 * 933)
+#endif
 
 typedef struct TrackData
 {
@@ -109,10 +134,10 @@ typedef struct TrackData
     long faceCount;
     long sectionCount;
 
-    VECTOR vertices[MAX_VERTICES];
-    Face faces[MAX_FACES];
-    TrackSection sections[MAX_SECTIONS];
-    short viewList[MAX_VIEWLIST];
+    VECTOR* vertices;
+    Face* faces;
+    TrackSection* sections;
+    int16* viewList;
 } TrackData;
 
 typedef struct TrackCamera
@@ -124,21 +149,14 @@ typedef struct TrackCamera
     SVECTOR vel;
 } TrackCamera;
 
-#define MaxAutos 256
-
-void IntelVertex(void);
-void IntelFace(void);
-void IntelSection(void);
-
-void CheckVersion(void);
-
-void IndexToPointers(void);
-void PointersToIndex(void);
-
-void InitVertices(char* file);
-void InitFaces(char* file);
-void InitViewList(char* file);
-void InitSections(char* file);
+#ifdef __3DO__
+void InitTrackShade(char* file);
+#endif
 
 TrackSection* NextIndexSection(TrackSection* section);
-TrackSection* PrevIndexSection(TrackSection* section);
+
+void LoadTrack(int32 trackNum);
+
+#ifdef _DEBUG
+void convertTrack3DO(int32 trackNum);
+#endif

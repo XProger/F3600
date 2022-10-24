@@ -117,7 +117,7 @@ void SceneRadiusCheck(Object* objects)
                             withinLocal = 1;
                         }
                     }
-                    visSection = visSection->nextSection.ptr;
+                    visSection = visSection->nextSection;
                 }
 
                 /* Check distance backwards along the track */
@@ -144,7 +144,7 @@ void SceneRadiusCheck(Object* objects)
                             withinLocal = 1;
                         }
                     }
-                    visSection = visSection->prevSection.ptr;
+                    visSection = visSection->prevSection;
                 }
             }
 

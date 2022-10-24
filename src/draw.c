@@ -6,7 +6,7 @@ char TrackDirection(const TrackCamera* camera)
     long angle;
     const TrackSection* nextSection;
 
-    nextSection = camera->section->nextSection.ptr;
+    nextSection = camera->section->nextSection;
 
     reference.vx = (short)(nextSection->centre.vx - camera->section->centre.vx);
     reference.vy = (short)(nextSection->centre.vy - camera->section->centre.vy);

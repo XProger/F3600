@@ -1,3 +1,6 @@
+#include <standard.h>
+
+#ifdef USE_COMPRESSION
 /******************************************
  *
  * General Non-Lossy File Decompression.
@@ -127,3 +130,4 @@ void ExpandData(unsigned char* inData, unsigned char* outData)
 }
 
 /***************************************************************************/
+#endif

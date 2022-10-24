@@ -7,13 +7,19 @@
 
 char gTTF[TTF_SIZE_MAX];
 
-TexTemplate* LoadTtfFile(char* file, short* count)
+TexTemplate* ctrltexTemplate;
+short ctrlnumLib;
+short ctrllibraryTextures;
+
+TexTemplate* LoadTtfFile(char* file)
 {
     short* tex;
     short i;
 
     long size = osLoadFile(file, gTTF);
     ASSERT(size <= TTF_SIZE_MAX);
+
+    ctrlnumLib = 0;
 
     tex = (short*)gTTF;
     while (tex < ((short*)(gTTF + size)))
@@ -23,7 +29,7 @@ TexTemplate* LoadTtfFile(char* file, short* count)
             IntelShort(tex);
             tex += 1;
         }
-        (*count)++; /* count of textures */
+        ctrlnumLib++; /* count of textures */
     }
 
     return ((TexTemplate*)gTTF);

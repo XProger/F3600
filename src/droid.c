@@ -18,20 +18,20 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
     if (playerShip->updateCount == 500)
     {
-        section = playerShip->nearTrkSect->prevSection.ptr;
-        section = section->prevSection.ptr;
-        section = section->prevSection.ptr;
-        section = section->prevSection.ptr;
+        section = playerShip->nearTrkSect->prevSection;
+        section = section->prevSection;
+        section = section->prevSection;
+        section = section->prevSection;
         for (i = 0; i < 10; i++)
         {
-            section = section->nextSection.ptr;
+            section = section->nextSection;
             if (section->flags & Jump)
             {
                 break;
             }
         }
         playerShip->nearTrkSect = section;
-        nextSection = section->nextSection.ptr;
+        nextSection = section->nextSection;
 
         target.vx = (section->centre.vx + nextSection->centre.vx) >> 1;
         target.vy = ((section->centre.vy + nextSection->centre.vy) >> 1) - 2000;
@@ -44,7 +44,7 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         playerShip->updateCount--;
     }
 
-    nextSection = playerShip->nearTrkSect->nextSection.ptr;
+    nextSection = playerShip->nearTrkSect->nextSection;
 
     if (playerShip->attr & IN_TOW)
     {
@@ -148,7 +148,7 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     return;
 #endif
 
-    nextSection = rescueDroid->section->nextSection.ptr;
+    nextSection = rescueDroid->section->nextSection;
 
     target.vx = (rescueDroid->section->centre.vx + nextSection->centre.vx) >> 1;
     target.vy = rescueDroid->section->centre.vy - 3000;
@@ -188,7 +188,7 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         CameraUpdate = UpdateCameraDroidView;
         shipIndex->attr |= REMOTE_VIEW;
         if (shipIndex->nearTrkSect->flags & Jump)
-            cameraPtr->section = shipIndex->nearTrkSect->nextSection.ptr;
+            cameraPtr->section = shipIndex->nearTrkSect->nextSection;
         else
             cameraPtr->section = shipIndex->nearTrkSect;
     }
@@ -206,14 +206,14 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     if (rescueDroid->updateCount == 800)
     {
 
-        if ((rescueDroid->section == shipIndex->nearTrkSect) || (rescueDroid->section == shipIndex->nearTrkSect->prevSection.ptr))
+        if ((rescueDroid->section == shipIndex->nearTrkSect) || (rescueDroid->section == shipIndex->nearTrkSect->prevSection))
         {
             shipIndex->attr &= ~IN_TOW;
         }
         else
         {
             rescueDroid->section = shipIndex->nearTrkSect;
-            nextSection = rescueDroid->section->nextSection.ptr;
+            nextSection = rescueDroid->section->nextSection;
 
             rescueDroid->pos.vx = (rescueDroid->section->centre.vx + nextSection->centre.vx) >> 1;
             rescueDroid->pos.vy = rescueDroid->section->centre.vy - 3000;
@@ -308,7 +308,7 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
 
         while ((rescueDroid->section->flags & Jump) == 0)
         {
-            rescueDroid->section = rescueDroid->section->prevSection.ptr;
+            rescueDroid->section = rescueDroid->section->prevSection;
         }
     }
 
@@ -339,7 +339,7 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
 
     while (1)
     {
-        rescueDroid->section = rescueDroid->section->nextSection.ptr;
+        rescueDroid->section = rescueDroid->section->nextSection;
         if (rescueDroid->section->flags & Jump)
             break;
     }

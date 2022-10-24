@@ -362,7 +362,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
     wingPos.vy = playerShip->pos.vy - (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
     wingPos.vz = playerShip->pos.vz - (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
 
-    trackPtr = playerShip->nearTrkSect->nextSection.ptr;
+    trackPtr = playerShip->nearTrkSect->nextSection;
 
     direction.vx = trackPtr->centre.vx - playerShip->nearTrkSect->centre.vx;
     direction.vy = trackPtr->centre.vy - playerShip->nearTrkSect->centre.vy;
@@ -392,7 +392,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
     if (toFace > 0)
     {
         playerShip->attr |= LSIDE;
-        if ((facePtr == (track->faces + playerShip->nearTrkSect->faceStart)) || (playerShip->nearTrkSect->junction.index != 0))
+        if (1) //(facePtr == (track->faces + playerShip->nearTrkSect->faceStart)) || playerShip->nearTrkSect->junction) // TODO og bug, possible optimization?
         {
             facePoint = track->vertices + facePtr->vertex[0];
 
@@ -409,7 +409,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                     }
                     else
                     {
-                        facePtr2 = track->faces + playerShip->nearTrkSect->nextSection.ptr->faceStart;
+                        facePtr2 = track->faces + playerShip->nearTrkSect->nextSection->faceStart;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
                         {
@@ -426,7 +426,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                     }
                     else
                     {
-                        facePtr2 = track->faces + playerShip->nearTrkSect->prevSection.ptr->faceStart;
+                        facePtr2 = track->faces + playerShip->nearTrkSect->prevSection->faceStart;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
                         {
@@ -490,7 +490,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
             facePtr++;
         }
 
-        if ((playerShip->nearTrkSect->faceCount > 3) || (playerShip->nearTrkSect->junction.index != 0))
+        if (1) //(playerShip->nearTrkSect->faceCount > 3) || playerShip->nearTrkSect->junction) // TODO og bug, possible optimization?
         {
 
             facePoint = track->vertices + facePtr->vertex[0];
@@ -507,7 +507,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                     }
                     else
                     {
-                        facePtr2 = track->faces + playerShip->nearTrkSect->nextSection.ptr->faceStart;
+                        facePtr2 = track->faces + playerShip->nearTrkSect->nextSection->faceStart;
                         facePtr2 += 3;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
@@ -525,7 +525,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                     }
                     else
                     {
-                        facePtr2 = track->faces + playerShip->nearTrkSect->prevSection.ptr->faceStart;
+                        facePtr2 = track->faces + playerShip->nearTrkSect->prevSection->faceStart;
                         facePtr2 += 3;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)

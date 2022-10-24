@@ -46,7 +46,7 @@ int32 gMusicTracksCount;
 int32 gMusicTrack;
 int32 gMasterBalance;
 
-const char gTrackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 };
+const char gTrackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 }; // TODO 15?
 
 char* gDRAM;
 char* gVRAM;

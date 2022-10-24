@@ -10,7 +10,7 @@ void InitCamera(TrackCamera* camera, TrackSection* section)
     camera->section = section;
     for (i = 0; i < 10; i++)
     {
-        camera->section = camera->section->nextSection.ptr;
+        camera->section = camera->section->nextSection;
     }
     pos.vx = camera->section->centre.vx;
     pos.vy = camera->section->centre.vy;
@@ -43,7 +43,7 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
 
     camera->section = (TrackSection*)FindNearestSection(camera->section, pos);
 
-    nextSection = camera->section->nextSection.ptr;
+    nextSection = camera->section->nextSection;
 
     GetTargetPos(&bestPath, &pos, &nextSection->centre, &camera->section->centre);
 
@@ -264,10 +264,10 @@ void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData
 
     if (target == 0)
     {
-        section = camShip->nearTrkSect->nextSection.ptr;
+        section = camShip->nearTrkSect->nextSection;
         for (i = 0; i < 10; i++)
         {
-            section = section->nextSection.ptr;
+            section = section->nextSection;
         }
 
         camera->section = section;

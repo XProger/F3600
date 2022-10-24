@@ -188,9 +188,6 @@ TextureGL gTrackTex[MAX_TRACK_TEX];
 uint16 gTrackTexData[MAX_TRACK_TEX][128 * 128];
 
 extern TrackData* track;
-extern TexTemplate* ctrltexTemplate;
-extern short ctrllibraryTextures;
-extern short ctrlnumLib;
 
 const CVECTOR colorGrey = { 128, 128, 128, 255 };
 const CVECTOR colorWhite = { 255, 255, 255, 255 };
@@ -1428,7 +1425,7 @@ void renderTrack(void)
     }
 
     section = track->sections + sections[0][0];
-    renderSection(section->prevSection.ptr);
+    renderSection(section->prevSection);
 
     for (i = 0; i < 3; i++)
     {
@@ -1439,7 +1436,7 @@ void renderTrack(void)
             for (s = 0; s < sections[i][j + 1]; s++)
             {
                 renderSection(section);
-                section = section->nextSection.ptr;
+                section = section->nextSection;
             }
         }
     }
@@ -1988,8 +1985,9 @@ void dumpBitmap(const char* fileName, int32 width, int32 height, uint8* data32)
     fclose(f);
 }
 
-Texture* renderCreateTexture(Tim* tim)
+Texture* renderCreateTexture(uint8* ptr)
 {
+    Tim* tim = (Tim*)ptr;
     TextureGL* tex;
     int32 w, h;
     int i, j;
@@ -2024,6 +2022,7 @@ Texture* renderCreateTexture(Tim* tim)
     }
     else if (TimType(tim) == TIM_8)
     {
+        uint16 clut[256];
         Tim8* t = &tim->tim8;
         uint8* src = (uint8*)(t + 1);
         uint16* dst = tempData;
@@ -2032,14 +2031,14 @@ Texture* renderCreateTexture(Tim* tim)
 
         for (i = 0; i < 256; i++)
         {
-            t->clut[i] = RGB5551(t->clut[i]);
+            clut[i] = RGB5551(t->clut[i]);
         }
 
         for (i = 0; i < h; i++)
         {
             for (j = 0; j < w; j++)
             {
-                *dst++ = t->clut[*src++];
+                *dst++ = clut[*src++];
             }
         }
 
@@ -2071,7 +2070,11 @@ Texture* renderCreateTexture(Tim* tim)
         ASSERT(w == 32);
         ASSERT(h == 32);
         FillTrackTex(tempData);
+    #ifdef _DEBUG
+        return (Texture*)tim; // for CalcShadePalettes
+    #else
         return NULL;
+    #endif
     }
     else
     {
@@ -2080,6 +2083,9 @@ Texture* renderCreateTexture(Tim* tim)
         tex->height = h;
         tex->iw = 1.0f / w;
         tex->ih = 1.0f / h;
+
+        ASSERT(w < 511);
+        ASSERT(h < 511);
 
         glGenTextures(1, &tex->id);
         glBindTexture(GL_TEXTURE_2D, tex->id);

@@ -1,4 +1,3 @@
-
 typedef struct
 {
     short tex16[16];
@@ -6,4 +5,8 @@ typedef struct
     short tex1[1];
 } TexTemplate;
 
-TexTemplate* LoadTtfFile(char* file, short* count);
+extern TexTemplate* ctrltexTemplate;
+extern short ctrlnumLib;
+extern short ctrllibraryTextures;
+
+TexTemplate* LoadTtfFile(char* file);

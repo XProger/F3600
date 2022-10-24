@@ -19,7 +19,7 @@ int SectionSearch(ShipData* playerShip)
 
     for (i = 0; i < LOOK_BACK; i++)
     {
-        trk = trk->prevSection.ptr;
+        trk = trk->prevSection;
     }
 
     /****** Find vector from ship centre to track section under  ******/
@@ -31,9 +31,9 @@ int SectionSearch(ShipData* playerShip)
 
     smallest_mag = ((cent2ship.vx * cent2ship.vx) + (cent2ship.vy * cent2ship.vy) + (cent2ship.vz * cent2ship.vz));
 
-    if (trk->junction.index != -1)
+    if (trk->junction)
     {
-        junc = trk->junction.ptr;
+        junc = trk->junction;
         juncChecked = 1;
     }
 
@@ -41,11 +41,11 @@ int SectionSearch(ShipData* playerShip)
 
     for (i = 0; i < LOOK_AHEAD; i++)
     {
-        trk = trk->nextSection.ptr;
+        trk = trk->nextSection;
 
-        if (trk->junction.index != -1)
+        if (trk->junction)
         {
-            junc = trk->junction.ptr;
+            junc = trk->junction;
             juncChecked = 1;
         }
 
@@ -78,9 +78,9 @@ int SectionSearch(ShipData* playerShip)
                 nearest_section = trk;
             }
             if (junc->flags & JunctionStart)
-                trk = trk->nextSection.ptr;
+                trk = trk->nextSection;
             else
-                trk = trk->prevSection.ptr;
+                trk = trk->prevSection;
         }
     }
 
@@ -113,7 +113,7 @@ TrackSection* FindNearestSection(TrackSection* trk, VECTOR pos)
 
     for (i = 0; i < LOOK_BACK; i++)
     {
-        trk = trk->prevSection.ptr;
+        trk = trk->prevSection;
     }
 
     /****** Find vector from ship centre to track section under  ******/
@@ -127,19 +127,19 @@ TrackSection* FindNearestSection(TrackSection* trk, VECTOR pos)
 
     nearest_section = trk;
 
-    if (trk->junction.index != -1)
+    if (trk->junction)
     {
-        junc = trk->junction.ptr;
+        junc = trk->junction;
         juncChecked = 1;
     }
 
     for (i = 0; i < LOOK_AHEAD; i++)
     {
-        trk = trk->nextSection.ptr;
+        trk = trk->nextSection;
 
-        if (trk->junction.index != -1)
+        if (trk->junction)
         {
-            junc = trk->junction.ptr;
+            junc = trk->junction;
             juncChecked = 1;
         }
 
@@ -172,9 +172,9 @@ TrackSection* FindNearestSection(TrackSection* trk, VECTOR pos)
                 nearest_section = trk;
             }
             if (junc->flags & JunctionStart)
-                trk = trk->nextSection.ptr;
+                trk = trk->nextSection;
             else
-                trk = trk->prevSection.ptr;
+                trk = trk->prevSection;
         }
     }
 

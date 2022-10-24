@@ -1,10 +1,6 @@
 #ifndef _TIM_H_INCLUDED_
 #define _TIM_H_INCLUDED_
 
-#define CLUT4   0x00
-#define CLUT8   0x01
-#define TRUE15  0x10
-
 typedef struct TimHeader
 {
     long id;
@@ -71,5 +67,14 @@ typedef union Tim
 #define TIM_16   2
 
 #define TimType(t) (t->header.flags & 7)
+
+// textures format for 3DO
+#define TEX_TYPE_4  0
+#define TEX_TYPE_16 1
+
+#define INIT_TEX_INFO(w, h, t)  ((w) | ((h) << 9) | ((t) << 18))
+#define GET_TEX_WIDTH(info)     ((info) & 0x1FF)
+#define GET_TEX_HEIGHT(info)    (((info) >> 9) & 0x1FF)
+#define GET_TEX_TYPE(info)      ((info) >> 18)
 
 #endif

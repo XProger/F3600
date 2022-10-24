@@ -354,15 +354,15 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 
     for (i = 0; i < startLinePos[gameData->actTrackNum] - 15; i++)
     {
-        section = section->nextSection.ptr;
+        section = section->nextSection;
     }
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
         startSection[i] = section;
-        section = section->nextSection.ptr;
+        section = section->nextSection;
         if ((i % 2) == 0)
-            section = section->nextSection.ptr;
+            section = section->nextSection;
     }
 
     for (i = 0; i < NO_OF_SHIPS; i++)
@@ -490,7 +490,7 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         shipIndex[i].prevSecNo = startSection[position]->secNo;
         shipIndex[i].DPASectDiff = startSection[position]->secNo;
 
-        nextSection = startSection[position]->nextSection.ptr;
+        nextSection = startSection[position]->nextSection;
         targetVector.vx = nextSection->centre.vx - startSection[position]->centre.vx;
         targetVector.vy = nextSection->centre.vy - startSection[position]->centre.vy;
         targetVector.vz = nextSection->centre.vz - startSection[position]->centre.vz;

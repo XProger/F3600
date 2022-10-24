@@ -8,6 +8,8 @@ void* RAM_SND;
 
 ScreenContext screen;
 
+Item irqTimer;
+
 int gPad;
 int gPadStickX;
 int gPadStickY;
@@ -17,9 +19,9 @@ int lastKey;
 int gFrameIndex;
 int gLastFrameIndex;
 
-int32 osGetSystemTimeMS()
+int32 osGetSystemTimeMS(void)
 {
-    return 0;
+    return GetMSecTime(irqTimer);
 }
 
 void osQuit()
@@ -63,20 +65,17 @@ long osLoadFile(const char* name, char* buffer)
     Stream* fs;
     int32 size;
 
-    printf("load file %s\n", name);
-
     fs = OpenDiskStream((char*)name, buffer ? 2048 : 0);
     if (!fs)
     {
-        printf("failed to open file\n");
+        printf("failed to open file %s\n", name);
         return 0;
     }
     size = fs->st_FileLength;
-    printf("size = %d\n", size);
 
     if (ReadDiskStream(fs, buffer, size) < 0)
     {
-        printf("failed to read file\n");
+        printf("failed to read file %s\n", name);
         return 0;
     }
 
@@ -108,6 +107,8 @@ int main(int argc, char *argv[])
     OpenAudioFolio();
     InitEventUtility(1, 0, LC_Observer);
     CreateBasicDisplay(&screen, DI_TYPE_DEFAULT, 2);
+
+    irqTimer = GetTimerIOReq();
 
     memCheck();
 

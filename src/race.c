@@ -18,9 +18,7 @@ int ajscount = 0; // oh shit another global flag
 TrackData ctrltrackStart;
 TexTemplate* ctrltexTemplate;
 Object* ctrlprm[PrmMax];
-short ctrllibraryTextures;
 short ctrlprmCount;
-short ctrlnumLib;
 Cone ctrlcone;
 TrackSection* ctrlnextSection;
 
@@ -230,6 +228,8 @@ void raceInit(ConfigData* gameData)
     int ctrljcheck;
     char trackPath[64];
 
+    printf("race init\n");
+
     InitGameDisplay();
 
     if (ctrlmode != ATTRACT) // not demo mode
@@ -255,7 +255,6 @@ void raceInit(ConfigData* gameData)
 
     ctrl_says_quit = 0;
     ctrlprmCount = 0;
-    ctrlnumLib = 0;
     ctrlnoWeaponGrids = 0;
     ctrlchoice = -1;
     ctrlcheck = 1;
@@ -296,14 +295,7 @@ void raceInit(ConfigData* gameData)
     /**********************************************************/
     /***                 Initialise Track                   ***/
     /**********************************************************/
-    getPath(trackPath, gameData->actTrackNum, "/track.trv");
-    InitVertices(trackPath);
-    getPath(trackPath, gameData->actTrackNum, "/track.trf");
-    InitFaces(trackPath);
-    getPath(trackPath, gameData->actTrackNum, "/track.trs");
-    InitSections(trackPath);
-    getPath(trackPath, gameData->actTrackNum, "/track.vew");
-    InitViewList(trackPath);
+    LoadTrack(gameData->actTrackNum);
 
     extroLevel = 0;
 
@@ -361,15 +353,6 @@ void raceInit(ConfigData* gameData)
         shipSpline[6]->skeleton->super = ctrlcamera.camPos;
     }
 
-    getPath(trackPath, gameData->actTrackNum, "/library.ttf");
-    ctrltexTemplate = LoadTtfFile(trackPath, &ctrlnumLib);
-
-    HACK_LOAD_TRACK = 1;
-    ctrllibraryTextures = TextureTableCount;
-    getPath(trackPath, gameData->actTrackNum, "/library.cmp");
-    LoadCompressedTextureSequence(trackPath, 0);
-    HACK_LOAD_TRACK = 0;
-
     ctrlsection = track->sections;
 
     i = 0;
@@ -379,18 +362,18 @@ void raceInit(ConfigData* gameData)
     {
         ctrlnoWeaponGrids = SetTrackAttributes(ctrlsection, i, ctrlweaponGrid, ctrlnoWeaponGrids);
         ctrlsection->secNo = i;
-        if (ctrlsection->junction.index != -1)
+        if (ctrlsection->junction)
         {
             ctrljsection = ctrlsection;
             j = i;
-            ctrlsection = ctrlsection->junction.ptr;
+            ctrlsection = ctrlsection->junction;
             while (ctrljcheck)
             {
                 i++;
                 ctrlnoWeaponGrids = SetTrackAttributes(ctrlsection, i, ctrlweaponGrid, ctrlnoWeaponGrids);
                 ctrlsection->secNo = i;
-                ctrlsection = ctrlsection->nextSection.ptr;
-                if (ctrlsection->junction.index != -1)
+                ctrlsection = ctrlsection->nextSection;
+                if (ctrlsection->junction)
                     ctrljcheck = 0;
             }
             ctrljcheck = 1;
@@ -399,7 +382,7 @@ void raceInit(ConfigData* gameData)
         }
         i++;
         NoOfMainSections++;
-        ctrlsection = ctrlsection->nextSection.ptr;
+        ctrlsection = ctrlsection->nextSection;
         if (ctrlsection == track->sections)
             ctrlcheck = 0;
     }
@@ -499,6 +482,10 @@ void raceInit(ConfigData* gameData)
     UpdateEffects();
 
     ctrlFramesCount = 1;
+
+#ifdef _DEBUG
+    convertTrack3DO(gameData->actTrackNum);
+#endif
 }
 
 void raceCtrl(ConfigData* gameData)

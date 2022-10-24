@@ -93,15 +93,21 @@ void titleLoop(void)
 
 void gameInit(void)
 {
+    int32 time;
+
     renderInit();
 
     InitGameDisplay();
 
+    time = osGetSystemTimeMS();
     TextureTableCount = 0;
-    InitText();
+    InitText(); // 0.27s -> 0.15s (uncomp) -> 0.07s (conv tex)
+    printf("init text %d ms\n", osGetSystemTimeMS() - time);
 
-    showLoading(-1);
+    showLoading(-1); // 1s
 
+    // 3.4s -> 2.3s (uncomp) -> 1.7s (conv tex)
+    time = osGetSystemTimeMS();
     soundInit();
     SfxInit();
     InitNotes();
@@ -154,6 +160,8 @@ void gameInit(void)
 
     pDRAM_checkpoint = pDRAM;
     pVRAM_checkpoint = pVRAM;
+
+    printf("init main %d ms\n", osGetSystemTimeMS() - time);
 }
 
 void gameFree(void)
@@ -164,6 +172,8 @@ void gameFree(void)
 
 void gameCtrl(void)
 {
+    int32 time;
+
     switch (ctrlGameLoop)
     {
         case GAME_LOOP_TITLE_INIT:
@@ -178,7 +188,9 @@ void gameCtrl(void)
             pDRAM = pDRAM_checkpoint;
             pVRAM = pVRAM_checkpoint;
             MusicReset();
-            menuInit();
+            time = osGetSystemTimeMS();
+            menuInit(); // 4.7s -> 3.1s (uncomp) -> 2.1s (conv tex)
+            printf("init menu %d ms\n", osGetSystemTimeMS() - time);
             ctrlGameLoop = GAME_LOOP_MENU;
         case GAME_LOOP_MENU:
             menuLoop(&ctrlConfigData);
@@ -188,7 +200,9 @@ void gameCtrl(void)
             pDRAM = pDRAM_checkpoint;
             pVRAM = pVRAM_checkpoint;
             MusicReset();
-            raceInit(&ctrlConfigData);
+            time = osGetSystemTimeMS();
+            raceInit(&ctrlConfigData); // 14s -> 10.3s (uncomp) -> 7.9s (conv tex)
+            printf("race init %d ms\n", osGetSystemTimeMS() - time);
             renderPrepare();
             ctrlGameLoop = GAME_LOOP_RACE;
         case GAME_LOOP_RACE:
@@ -208,4 +222,3 @@ void gameCtrl(void)
         }
     }
 }
-

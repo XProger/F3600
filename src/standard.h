@@ -38,6 +38,7 @@
 #else
     #include <stdio.h>
 
+    #define USE_COMPRESSION
     #define USE_SHIP_AMBIENT
     #define MENU_HAS_QUIT
 #endif
@@ -108,6 +109,7 @@ long rcos( long angle );
 
 unsigned short GetKeyNoBlock(void);
 
+int32 osGetSystemTimeMS(void);
 void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
 long osLoadFile(const char* name, char* buffer);

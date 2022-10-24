@@ -764,16 +764,16 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         /**** junction                                                       ****/
         /************************************************************************/
 
-        section = remoteShip->nearTrkSect->prevSection.ptr;
+        section = remoteShip->nearTrkSect->prevSection;
 
         for (i = 0; i < 4; i++)
         {
-            section = section->nextSection.ptr;
+            section = section->nextSection;
         }
 
-        if (section->junction.index != -1)
+        if (section->junction)
         {
-            if (section->junction.ptr->flags & JunctionStart)
+            if (section->junction->flags & JunctionStart)
             {
                 decide = randy() % 2;
                 if (decide == 0)
@@ -783,28 +783,28 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
             }
         }
 
-        section = remoteShip->nearTrkSect->prevSection.ptr;
+        section = remoteShip->nearTrkSect->prevSection;
 
         for (i = 0; i < 4; i++)
         {
-            if (section->junction.index != -1)
+            if (section->junction)
             {
-                if (section->junction.ptr->flags & JunctionStart)
+                if (section->junction->flags & JunctionStart)
                 {
                     if (remoteShip->attr & JUNC_LEFT)
                     {
-                        section = section->junction.ptr;
+                        section = section->junction;
                     }
                     else
-                        section = section->nextSection.ptr;
+                        section = section->nextSection;
                 }
                 else
-                    section = section->nextSection.ptr;
+                    section = section->nextSection;
             }
             else
-                section = section->nextSection.ptr;
+                section = section->nextSection;
         }
-        nextSection = section->nextSection.ptr;
+        nextSection = section->nextSection;
         section = remoteShip->nearTrkSect;
 
         /***************************************************************************/
@@ -818,9 +818,9 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
         if (remoteShip->nearTrkSect->flags & Jump) /**** Cure for ships getting stuck on hump lip ****/
         {
-            targetVector.vx = remoteShip->nearTrkSect->centre.vx - remoteShip->nearTrkSect->prevSection.ptr->centre.vx;
-            targetVector.vy = remoteShip->nearTrkSect->centre.vy - remoteShip->nearTrkSect->prevSection.ptr->centre.vy;
-            targetVector.vz = remoteShip->nearTrkSect->centre.vz - remoteShip->nearTrkSect->prevSection.ptr->centre.vz;
+            targetVector.vx = remoteShip->nearTrkSect->centre.vx - remoteShip->nearTrkSect->prevSection->centre.vx;
+            targetVector.vy = remoteShip->nearTrkSect->centre.vy - remoteShip->nearTrkSect->prevSection->centre.vy;
+            targetVector.vz = remoteShip->nearTrkSect->centre.vz - remoteShip->nearTrkSect->prevSection->centre.vz;
         }
         else
         {
@@ -927,9 +927,9 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
     else
     {
         section = remoteShip->nearTrkSect;
-        section = section->nextSection.ptr;
-        section = section->nextSection.ptr;
-        nextSection = section->nextSection.ptr;
+        section = section->nextSection;
+        section = section->nextSection;
+        nextSection = section->nextSection;
 
         remoteShip->updateControl = HoldCentre;
         (remoteShip->updateControl)(&offSetVector, myShip, facePtr, shipNo);

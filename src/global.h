@@ -52,7 +52,6 @@ extern int attractDelay;
 extern int raceType;
 
 extern int tempLapTimes[5];
-extern int serialLapTimes[5];
 
 extern Object* startBoom[4];
 extern short startBoomCount;
@@ -78,40 +77,6 @@ extern int32 gMusicTracksCount;
 extern int32 gMusicTrack;
 extern int32 gMasterBalance;
 
-/* fade table references */
-
-#define BLACK_NOT_DRAWN 1
-#define BLACK1_TRANSL 2
-#define BLACK2_TRANSL 3
-#define BLACK3_TRANSL 4
-#define BLACK4_TRANSL 5
-#define BLACK5_TRANSL 6
-#define BLACK6_TRANSL 7
-#define WHITE1_TRANSL 8
-#define WHITE2_TRANSL 9
-#define WHITE3_TRANSL 10
-#define WHITE4_TRANSL 11
-#define WHITE5_TRANSL 12
-#define WHITE6_TRANSL 13
-#define WHITE7_TRANSL 14
-#define WHITE8_TRANSL 15
-#define RED_TRANSL 16
-#define BRIGHT_RED_TRANSL 17
-#define YELLOW_TRANSL 18
-#define YELLOW_WHITE_TRANSL 19
-#define BLUE_TRANSL 20
-#define PURPLE_TRANSL 21
-#define UNUSED1_TRANSL 22
-#define UNUSED2_TRANSL 23
-#define UNUSED3_TRANSL 24
-#define UNUSED4_TRANSL 25
-
-#define BLUE_SPEEDUP 25
-
-#define RED_LIGHT_FADE 16
-#define AMBER_LIGHT_FADE 26
-#define GREEN_LIGHT_FADE 27
-
 #ifdef ENABLE_60_FPS
     #define frameRate30 60
 #else
@@ -130,13 +95,13 @@ extern int32 gMasterBalance;
 #define FR7U    (7 * 30 / frameRate30)
 #define FR32U   (32 * 30 / frameRate30)
 
-extern char trackdir[];
 extern const char gTrackList[15];
 
-#define BLOCK_SIZE (32 * 1024)
+#define DRAM_BLOCK_SIZE (32 * 1024)
+#define VRAM_BLOCK_SIZE (16 * 1024)
 
-#define DRAM_SIZE (28 * BLOCK_SIZE)
-#define VRAM_SIZE (21 * BLOCK_SIZE)
+#define DRAM_SIZE (32 * DRAM_BLOCK_SIZE)
+#define VRAM_SIZE (44 * VRAM_BLOCK_SIZE)
 
 extern char* gDRAM;
 extern char* gVRAM;

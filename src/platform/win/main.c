@@ -23,11 +23,11 @@ void timerInit()
     QueryPerformanceCounter(&gTimerStart);
 }
 
-long osGetSystemTimeMS()
+int32 osGetSystemTimeMS(void)
 {
     LARGE_INTEGER count;
     QueryPerformanceCounter(&count);
-    return (long)((count.QuadPart - gTimerStart.QuadPart) * 1000L / gTimerFreq.QuadPart);
+    return (int32)((count.QuadPart - gTimerStart.QuadPart) * 1000L / gTimerFreq.QuadPart);
 }
 
 void osQuit()

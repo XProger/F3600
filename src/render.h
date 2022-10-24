@@ -95,7 +95,7 @@ void renderSetMode(int renderMode);
 void renderSetBlend(int blend);
 void renderDepthWrite(int enable);
 void renderNextLayer(void);
-Texture* renderCreateTexture(Tim* tim);
+Texture* renderCreateTexture(uint8* ptr);
 void renderDeleteTexture(Texture* texture);
 
 #endif
