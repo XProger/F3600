@@ -2,7 +2,7 @@ typedef struct
 {
     short coneIndex[3][8];
 
-    SVECTOR oldVertex[3][8];
+    vec4s oldVertex[3][8];
 
     Object* object[8];
     ShipData* ship[8];

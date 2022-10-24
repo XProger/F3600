@@ -8,9 +8,9 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
     ShipData* playerShip;
     TrackSection* section;
     TrackSection* nextSection;
-    static VECTOR target;
-    VECTOR targetVector;
-    VECTOR distance;
+    static vec4i target;
+    vec4i targetVector;
+    vec4i distance;
     int i;
 
     playerShip = &(shipIndex[shipNo]);
@@ -33,13 +33,13 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         playerShip->nearTrkSect = section;
         nextSection = section->nextSection;
 
-        target.vx = (section->centre.vx + nextSection->centre.vx) >> 1;
-        target.vy = ((section->centre.vy + nextSection->centre.vy) >> 1) - 2000;
-        target.vz = (section->centre.vz + nextSection->centre.vz) >> 1;
+        target.x = (section->centre.x + nextSection->centre.x) >> 1;
+        target.y = ((section->centre.y + nextSection->centre.y) >> 1) - 2000;
+        target.z = (section->centre.z + nextSection->centre.z) >> 1;
 
-        playerShip->vel.vx = 0;
-        playerShip->vel.vy = 0;
-        playerShip->vel.vz = 0;
+        playerShip->vel.x = 0;
+        playerShip->vel.y = 0;
+        playerShip->vel.z = 0;
 
         playerShip->updateCount--;
     }
@@ -48,19 +48,19 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
     if (playerShip->attr & IN_TOW)
     {
-        target.vx += (nextSection->centre.vx - target.vx) >> 7;
-        target.vy += (nextSection->centre.vy - target.vy) >> 7;
-        target.vz += (nextSection->centre.vz - target.vz) >> 7;
+        target.x += (nextSection->centre.x - target.x) >> 7;
+        target.y += (nextSection->centre.y - target.y) >> 7;
+        target.z += (nextSection->centre.z - target.z) >> 7;
 
-        playerShip->vel.vx = ((target.vx - playerShip->pos.vx) * 60) / FR60;
-        playerShip->vel.vy = ((target.vy - playerShip->pos.vy) * 60) / FR60;
-        playerShip->vel.vz = ((target.vz - playerShip->pos.vz) * 60) / FR60;
+        playerShip->vel.x = ((target.x - playerShip->pos.x) * 60) / FR60;
+        playerShip->vel.y = ((target.y - playerShip->pos.y) * 60) / FR60;
+        playerShip->vel.z = ((target.z - playerShip->pos.z) * 60) / FR60;
 
-        targetVector.vx = nextSection->centre.vx - playerShip->nearTrkSect->centre.vx;
-        targetVector.vy = nextSection->centre.vy - playerShip->nearTrkSect->centre.vy;
-        targetVector.vz = nextSection->centre.vz - playerShip->nearTrkSect->centre.vz;
+        targetVector.x = nextSection->centre.x - playerShip->nearTrkSect->centre.x;
+        targetVector.y = nextSection->centre.y - playerShip->nearTrkSect->centre.y;
+        targetVector.z = nextSection->centre.z - playerShip->nearTrkSect->centre.z;
 
-        playerShip->vhdg = -ratan2(targetVector.vx, targetVector.vz) - playerShip->hdg;
+        playerShip->vhdg = -ratan2(targetVector.x, targetVector.z) - playerShip->hdg;
         if (playerShip->vhdg > 2048)
             playerShip->vhdg = playerShip->vhdg - 4096;
         else if (playerShip->vhdg < -2048)
@@ -69,17 +69,17 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         playerShip->hdg = ang(playerShip->hdg);
     }
 
-    playerShip->vel.vx -= playerShip->vel.vx >> 4;
-    playerShip->vel.vy -= playerShip->vel.vy >> 4;
-    playerShip->vel.vz -= playerShip->vel.vz >> 4;
+    playerShip->vel.x -= playerShip->vel.x >> 4;
+    playerShip->vel.y -= playerShip->vel.y >> 4;
+    playerShip->vel.z -= playerShip->vel.z >> 4;
 
-    playerShip->pos.vx += playerShip->vel.vx >> 5;
-    playerShip->pos.vy += playerShip->vel.vy >> 5;
-    playerShip->pos.vz += playerShip->vel.vz >> 5;
+    playerShip->pos.x += playerShip->vel.x >> 5;
+    playerShip->pos.y += playerShip->vel.y >> 5;
+    playerShip->pos.z += playerShip->vel.z >> 5;
 
-    distance.vx = playerShip->pos.vx - playerShip->nearTrkSect->centre.vx;
-    distance.vy = playerShip->pos.vy - playerShip->nearTrkSect->centre.vy;
-    distance.vz = playerShip->pos.vz - playerShip->nearTrkSect->centre.vz;
+    distance.x = playerShip->pos.x - playerShip->nearTrkSect->centre.x;
+    distance.y = playerShip->pos.y - playerShip->nearTrkSect->centre.y;
+    distance.z = playerShip->pos.z - playerShip->nearTrkSect->centre.z;
 
     playerShip->pitch -= playerShip->pitch >> 3;
     playerShip->roll -= playerShip->roll >> 5;
@@ -102,25 +102,25 @@ void UpdateDroidStart(RescueData* rescueDroid, ShipData* shipIndex, Object** shi
 
     if (rescueDroid->updateCount < 400)
     {
-        rescueDroid->acc.vx = (-rsin(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 14;
-        rescueDroid->acc.vy = 0;
-        rescueDroid->acc.vz = (rcos(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 14;
+        rescueDroid->acc.x = (-rsin(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 14;
+        rescueDroid->acc.y = 0;
+        rescueDroid->acc.z = (rcos(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 14;
 
         rescueDroid->vhdg = 0;
     }
 
     else if (rescueDroid->updateCount < 710)
     {
-        rescueDroid->acc.vx = (-rsin(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 15;
-        rescueDroid->acc.vy = -140;
-        rescueDroid->acc.vz = (rcos(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 15;
+        rescueDroid->acc.x = (-rsin(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 15;
+        rescueDroid->acc.y = -140;
+        rescueDroid->acc.z = (rcos(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 15;
 
         rescueDroid->vhdg = -8;
     }
 
     else if (rescueDroid->updateCount == 770)
     {
-        rescueDroid->acc.vy -= 90;
+        rescueDroid->acc.y -= 90;
         rescueDroid->vhdg = 8;
     }
 
@@ -130,17 +130,17 @@ void UpdateDroidStart(RescueData* rescueDroid, ShipData* shipIndex, Object** shi
     {
         rescueDroid->updateCount = 800;
         rescueDroid->droidUpdate = UpdateDroidCircle;
-        rescueDroid->pos.vx = rescueDroid->section->centre.vx;
-        rescueDroid->pos.vy = -3000;
-        rescueDroid->pos.vz = rescueDroid->section->centre.vz;
+        rescueDroid->pos.x = rescueDroid->section->centre.x;
+        rescueDroid->pos.y = -3000;
+        rescueDroid->pos.z = rescueDroid->section->centre.z;
     }
 }
 
 void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes)
 {
     TrackSection* nextSection;
-    VECTOR targetVector;
-    VECTOR target;
+    vec4i targetVector;
+    vec4i target;
     short targetHdg;
     short quickestTurn, turn;
 
@@ -150,15 +150,15 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
 
     nextSection = rescueDroid->section->nextSection;
 
-    target.vx = (rescueDroid->section->centre.vx + nextSection->centre.vx) >> 1;
-    target.vy = rescueDroid->section->centre.vy - 3000;
-    target.vz = (rescueDroid->section->centre.vz + nextSection->centre.vz) >> 1;
+    target.x = (rescueDroid->section->centre.x + nextSection->centre.x) >> 1;
+    target.y = rescueDroid->section->centre.y - 3000;
+    target.z = (rescueDroid->section->centre.z + nextSection->centre.z) >> 1;
 
-    targetVector.vx = target.vx - rescueDroid->pos.vx;
-    targetVector.vy = target.vy - rescueDroid->pos.vy;
-    targetVector.vz = target.vz - rescueDroid->pos.vz;
+    targetVector.x = target.x - rescueDroid->pos.x;
+    targetVector.y = target.y - rescueDroid->pos.y;
+    targetVector.z = target.z - rescueDroid->pos.z;
 
-    targetHdg = -ratan2(targetVector.vx, targetVector.vz);
+    targetHdg = -ratan2(targetVector.x, targetVector.z);
 
     quickestTurn = targetHdg - rescueDroid->hdg;
 
@@ -176,9 +176,9 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         rescueDroid->vhdg = quickestTurn >> 6;
     }
 
-    rescueDroid->acc.vx = (-rsin(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 15;
-    rescueDroid->acc.vy = targetVector.vy >> 6;
-    rescueDroid->acc.vz = (rcos(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 15;
+    rescueDroid->acc.x = (-rsin(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 15;
+    rescueDroid->acc.y = targetVector.y >> 6;
+    rescueDroid->acc.z = (rcos(rescueDroid->hdg) * rcos(rescueDroid->pitch)) >> 15;
 
     if (shipIndex->attr & RESCUE)
     {
@@ -198,8 +198,8 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
 
 void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes)
 {
-    VECTOR target;
-    VECTOR distance;
+    vec4i target;
+    vec4i distance;
 
     TrackSection* nextSection;
 
@@ -215,83 +215,83 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
             rescueDroid->section = shipIndex->nearTrkSect;
             nextSection = rescueDroid->section->nextSection;
 
-            rescueDroid->pos.vx = (rescueDroid->section->centre.vx + nextSection->centre.vx) >> 1;
-            rescueDroid->pos.vy = rescueDroid->section->centre.vy - 3000;
-            rescueDroid->pos.vz = (rescueDroid->section->centre.vz + nextSection->centre.vz) >> 1;
+            rescueDroid->pos.x = (rescueDroid->section->centre.x + nextSection->centre.x) >> 1;
+            rescueDroid->pos.y = rescueDroid->section->centre.y - 3000;
+            rescueDroid->pos.z = (rescueDroid->section->centre.z + nextSection->centre.z) >> 1;
             shipIndex->attr &= ~IN_TOW;
         }
 
-        rescueDroid->vel.vx = 0;
-        rescueDroid->vel.vy = 0;
-        rescueDroid->vel.vz = 0;
+        rescueDroid->vel.x = 0;
+        rescueDroid->vel.y = 0;
+        rescueDroid->vel.z = 0;
 
-        rescueDroid->acc.vx = 0;
-        rescueDroid->acc.vy = 0;
-        rescueDroid->acc.vz = 0;
+        rescueDroid->acc.x = 0;
+        rescueDroid->acc.y = 0;
+        rescueDroid->acc.z = 0;
 
         rescueDroid->updateCount = 799;
     }
 
-    target.vx = shipIndex->pos.vx;
-    target.vy = shipIndex->pos.vy - 350;
-    target.vz = shipIndex->pos.vz;
+    target.x = shipIndex->pos.x;
+    target.y = shipIndex->pos.y - 350;
+    target.z = shipIndex->pos.z;
 
     rescueDroid->vhdg = 0;
     rescueDroid->hdg = shipIndex->hdg;
 
-    distance.vx = (target.vx - rescueDroid->pos.vx);
-    distance.vy = (target.vy - rescueDroid->pos.vy);
-    distance.vz = (target.vz - rescueDroid->pos.vz);
+    distance.x = (target.x - rescueDroid->pos.x);
+    distance.y = (target.y - rescueDroid->pos.y);
+    distance.z = (target.z - rescueDroid->pos.z);
 
-    rescueDroid->vel.vx = (distance.vx) << 4;
-    rescueDroid->vel.vy = (distance.vy) << 4;
-    rescueDroid->vel.vz = (distance.vz) << 4;
+    rescueDroid->vel.x = (distance.x) << 4;
+    rescueDroid->vel.y = (distance.y) << 4;
+    rescueDroid->vel.z = (distance.z) << 4;
 
-    if ((rescueDroid->vel.vx < 129) && (rescueDroid->vel.vx > 0))
-        rescueDroid->vel.vx = 129;
-    if ((rescueDroid->vel.vy < 129) && (rescueDroid->vel.vy > 0))
-        rescueDroid->vel.vy = 129;
-    if ((rescueDroid->vel.vz < 129) && (rescueDroid->vel.vz > 0))
-        rescueDroid->vel.vz = 129;
+    if ((rescueDroid->vel.x < 129) && (rescueDroid->vel.x > 0))
+        rescueDroid->vel.x = 129;
+    if ((rescueDroid->vel.y < 129) && (rescueDroid->vel.y > 0))
+        rescueDroid->vel.y = 129;
+    if ((rescueDroid->vel.z < 129) && (rescueDroid->vel.z > 0))
+        rescueDroid->vel.z = 129;
 
-    if ((rescueDroid->vel.vx > -129) && (rescueDroid->vel.vx < 0))
-        rescueDroid->vel.vx = -129;
-    if ((rescueDroid->vel.vy > -129) && (rescueDroid->vel.vy < 0))
-        rescueDroid->vel.vy = -129;
-    if ((rescueDroid->vel.vz > -129) && (rescueDroid->vel.vz < 0))
-        rescueDroid->vel.vz = -129;
+    if ((rescueDroid->vel.x > -129) && (rescueDroid->vel.x < 0))
+        rescueDroid->vel.x = -129;
+    if ((rescueDroid->vel.y > -129) && (rescueDroid->vel.y < 0))
+        rescueDroid->vel.y = -129;
+    if ((rescueDroid->vel.z > -129) && (rescueDroid->vel.z < 0))
+        rescueDroid->vel.z = -129;
 
     if (shipIndex->attr & IN_TOW)
     {
 
-        rescueDroid->acc.vx = 0;
-        rescueDroid->acc.vy = 0;
-        rescueDroid->acc.vz = 0;
+        rescueDroid->acc.x = 0;
+        rescueDroid->acc.y = 0;
+        rescueDroid->acc.z = 0;
 
-        rescueDroid->vel.vx = 0;
-        rescueDroid->vel.vy = 0;
-        rescueDroid->vel.vz = 0;
+        rescueDroid->vel.x = 0;
+        rescueDroid->vel.y = 0;
+        rescueDroid->vel.z = 0;
 
-        rescueDroid->pos.vx = target.vx;
-        rescueDroid->pos.vy = target.vy;
-        rescueDroid->pos.vz = target.vz;
+        rescueDroid->pos.x = target.x;
+        rescueDroid->pos.y = target.y;
+        rescueDroid->pos.z = target.z;
     }
 
     if ((GetMagnitude(&distance) < 1) && ((shipIndex->attr & IN_TOW) == 0))
     {
         shipIndex->attr |= IN_TOW;
 
-        rescueDroid->acc.vx = 0;
-        rescueDroid->acc.vy = 0;
-        rescueDroid->acc.vz = 0;
+        rescueDroid->acc.x = 0;
+        rescueDroid->acc.y = 0;
+        rescueDroid->acc.z = 0;
 
-        rescueDroid->vel.vx = 0;
-        rescueDroid->vel.vy = 0;
-        rescueDroid->vel.vz = 0;
+        rescueDroid->vel.x = 0;
+        rescueDroid->vel.y = 0;
+        rescueDroid->vel.z = 0;
 
-        rescueDroid->pos.vx = target.vx;
-        rescueDroid->pos.vy = target.vy;
-        rescueDroid->pos.vz = target.vz;
+        rescueDroid->pos.x = target.x;
+        rescueDroid->pos.y = target.y;
+        rescueDroid->pos.z = target.z;
     }
 
     if ((shipIndex->attr & RESCUE) == 0)
@@ -317,17 +317,17 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
 
 void SetDroidVectors(RescueData* rescueDroid, Object** shipShapes)
 {
-    rescueDroid->vel.vx += rescueDroid->acc.vx;
-    rescueDroid->vel.vy += rescueDroid->acc.vy;
-    rescueDroid->vel.vz += rescueDroid->acc.vz;
+    rescueDroid->vel.x += rescueDroid->acc.x;
+    rescueDroid->vel.y += rescueDroid->acc.y;
+    rescueDroid->vel.z += rescueDroid->acc.z;
 
-    rescueDroid->vel.vx -= rescueDroid->vel.vx >> 3;
-    rescueDroid->vel.vy -= rescueDroid->vel.vy >> 3;
-    rescueDroid->vel.vz -= rescueDroid->vel.vz >> 3;
+    rescueDroid->vel.x -= rescueDroid->vel.x >> 3;
+    rescueDroid->vel.y -= rescueDroid->vel.y >> 3;
+    rescueDroid->vel.z -= rescueDroid->vel.z >> 3;
 
-    rescueDroid->pos.vx += rescueDroid->vel.vx >> 6;
-    rescueDroid->pos.vy += rescueDroid->vel.vy >> 6;
-    rescueDroid->pos.vz += rescueDroid->vel.vz >> 6;
+    rescueDroid->pos.x += rescueDroid->vel.x >> 6;
+    rescueDroid->pos.y += rescueDroid->vel.y >> 6;
+    rescueDroid->pos.z += rescueDroid->vel.z >> 6;
 
     rescueDroid->hdg += rescueDroid->vhdg;
     rescueDroid->hdg = ang(rescueDroid->hdg);
@@ -344,17 +344,17 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
             break;
     }
 
-    rescueDroid->pos.vx = shipIndex->pos.vx;
-    rescueDroid->pos.vy = shipIndex->pos.vy - 200;
-    rescueDroid->pos.vz = shipIndex->pos.vz;
+    rescueDroid->pos.x = shipIndex->pos.x;
+    rescueDroid->pos.y = shipIndex->pos.y - 200;
+    rescueDroid->pos.z = shipIndex->pos.z;
 
-    rescueDroid->vel.vx = 0;
-    rescueDroid->vel.vy = 0;
-    rescueDroid->vel.vz = 0;
+    rescueDroid->vel.x = 0;
+    rescueDroid->vel.y = 0;
+    rescueDroid->vel.z = 0;
 
-    rescueDroid->acc.vx = 0;
-    rescueDroid->acc.vy = 0;
-    rescueDroid->acc.vz = 0;
+    rescueDroid->acc.x = 0;
+    rescueDroid->acc.y = 0;
+    rescueDroid->acc.z = 0;
 
     rescueDroid->hdg = shipIndex->hdg;
     rescueDroid->pitch = shipIndex->pitch;
@@ -378,6 +378,6 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
 void DrawDroid(Object* droid, const RescueData* rescueData)
 {
 #ifndef __3DO__ // TODO
-    DrawObject(droid, rescueData->pos.vx, rescueData->pos.vy, rescueData->pos.vz, rescueData->hdg, rescueData->pitch, rescueData->roll);
+    DrawObject(droid, rescueData->pos.x, rescueData->pos.y, rescueData->pos.z, rescueData->hdg, rescueData->pitch, rescueData->roll);
 #endif
 }

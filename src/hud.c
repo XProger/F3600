@@ -685,7 +685,7 @@ int CalcPosition(ShipData* shipIndex)
 {
     int i, j;
     int tempPosition;
-    VECTOR B, C, AB, AC, trackVect;
+    vec4i B, C, AB, AC, trackVect;
     int angleB, angleC, distanceB, distanceC;
 
     for (i = 0; i < NO_OF_SHIPS; i++)
@@ -702,25 +702,25 @@ int CalcPosition(ShipData* shipIndex)
 
             else if (shipIndex[i].DPASectDiff == shipIndex[j].DPASectDiff)
             {
-                B.vx = shipIndex[i].pos.vx;
-                B.vy = shipIndex[i].pos.vy;
-                B.vz = shipIndex[i].pos.vz;
+                B.x = shipIndex[i].pos.x;
+                B.y = shipIndex[i].pos.y;
+                B.z = shipIndex[i].pos.z;
 
-                C.vx = shipIndex[j].pos.vx;
-                C.vy = shipIndex[j].pos.vy;
-                C.vz = shipIndex[j].pos.vz;
+                C.x = shipIndex[j].pos.x;
+                C.y = shipIndex[j].pos.y;
+                C.z = shipIndex[j].pos.z;
 
-                AB.vx = B.vx - shipIndex[i].nearTrkSect->centre.vx;
-                AB.vy = B.vy - shipIndex[i].nearTrkSect->centre.vy;
-                AB.vz = B.vz - shipIndex[i].nearTrkSect->centre.vz;
+                AB.x = B.x - shipIndex[i].nearTrkSect->centre.x;
+                AB.y = B.y - shipIndex[i].nearTrkSect->centre.y;
+                AB.z = B.z - shipIndex[i].nearTrkSect->centre.z;
 
-                AC.vx = C.vx - shipIndex[j].nearTrkSect->centre.vx;
-                AC.vy = C.vy - shipIndex[j].nearTrkSect->centre.vy;
-                AC.vz = C.vz - shipIndex[j].nearTrkSect->centre.vz;
+                AC.x = C.x - shipIndex[j].nearTrkSect->centre.x;
+                AC.y = C.y - shipIndex[j].nearTrkSect->centre.y;
+                AC.z = C.z - shipIndex[j].nearTrkSect->centre.z;
 
-                trackVect.vx = shipIndex[i].nearTrkSect->nextSection->centre.vx - shipIndex[i].nearTrkSect->centre.vx;
-                trackVect.vy = shipIndex[i].nearTrkSect->nextSection->centre.vy - shipIndex[i].nearTrkSect->centre.vy;
-                trackVect.vz = shipIndex[i].nearTrkSect->nextSection->centre.vz - shipIndex[i].nearTrkSect->centre.vz;
+                trackVect.x = shipIndex[i].nearTrkSect->nextSection->centre.x - shipIndex[i].nearTrkSect->centre.x;
+                trackVect.y = shipIndex[i].nearTrkSect->nextSection->centre.y - shipIndex[i].nearTrkSect->centre.y;
+                trackVect.z = shipIndex[i].nearTrkSect->nextSection->centre.z - shipIndex[i].nearTrkSect->centre.z;
 
                 angleB = GetAng(&AB, &trackVect);
                 angleC = GetAng(&AC, &trackVect);

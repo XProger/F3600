@@ -880,14 +880,14 @@ void addVertex(int32 x, int32 y, int32 z, float s, float t, const CVECTOR* color
     v->a = 255;
 }
 
-void addVertexI(const VECTOR* pos, float s, float t, const CVECTOR* color)
+void addVertexI(const vec4i* pos, float s, float t, const CVECTOR* color)
 {
     ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
 
     VertexGL* v = gVertices + gVerticesCount++;
-    v->x = pos->vx;
-    v->y = pos->vy;
-    v->z = pos->vz;
+    v->x = pos->x;
+    v->y = pos->y;
+    v->z = pos->z;
     v->s = s;
     v->t = t;
     v->r = color->r;
@@ -896,14 +896,14 @@ void addVertexI(const VECTOR* pos, float s, float t, const CVECTOR* color)
     v->a = 255;
 }
 
-void addVertexS(const SVECTOR* pos, float s, float t, const CVECTOR* color)
+void addVertexS(const vec4s* pos, float s, float t, const CVECTOR* color)
 {
     ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
 
     VertexGL* v = gVertices + gVerticesCount++;
-    v->x = pos->vx;
-    v->y = pos->vy;
-    v->z = pos->vz;
+    v->x = pos->x;
+    v->y = pos->y;
+    v->z = pos->z;
     v->s = s;
     v->t = t;
     v->r = color->r;
@@ -1338,8 +1338,8 @@ void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
 void renderSection(const TrackSection* section)
 {
     const Face* face = track->faces + section->faceStart;
-    const VECTOR* vertices = track->vertices;
-    const VECTOR* v;
+    const TrackVertex* vertices = track->vertices;
+    const vec4i* v;
     int i;
     float u0, u1;
     CVECTOR color;
@@ -1373,10 +1373,10 @@ void renderSection(const TrackSection* section)
         }
 
         addQuad();
-        addVertexI(vertices + face->vertex[3], u0, 1.0f, &color);
-        addVertexI(vertices + face->vertex[2], u1, 1.0f, &color);
-        addVertexI(vertices + face->vertex[1], u1, 0.0f, &color);
-        addVertexI(vertices + face->vertex[0], u0, 0.0f, &color);
+        addVertexI((vec4i*)(vertices + face->vertex[3]), u0, 1.0f, &color);
+        addVertexI((vec4i*)(vertices + face->vertex[2]), u1, 1.0f, &color);
+        addVertexI((vec4i*)(vertices + face->vertex[1]), u1, 0.0f, &color);
+        addVertexI((vec4i*)(vertices + face->vertex[0]), u0, 0.0f, &color);
     }
 }
 
@@ -1449,11 +1449,11 @@ void renderTrack(void)
 #endif
 }
 
-void renderMesh(const SVECTOR* vertices, Primitive* prim, int32 count)
+void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
 {
     int i;
     Prm poly;
-    const SVECTOR* v;
+    const vec4s* v;
 
     poly.primitive = prim;
 
@@ -1771,10 +1771,10 @@ void renderMesh(const SVECTOR* vertices, Primitive* prim, int32 count)
                 stateCheck();
 
                 addQuad();
-                addVertex(v->vx - sx, v->vy - h0, v->vz - sz, 0.0f, 0.0f, &f->colour);
-                addVertex(v->vx + sx, v->vy - h0, v->vz + sz, 1.0f, 0.0f, &f->colour);
-                addVertex(v->vx + sx, v->vy + h1, v->vz + sz, 1.0f, 1.0f, &f->colour);
-                addVertex(v->vx - sx, v->vy + h1, v->vz - sz, 0.0f, 1.0f, &f->colour);
+                addVertex(v->x - sx, v->y - h0, v->z - sz, 0.0f, 0.0f, &f->colour);
+                addVertex(v->x + sx, v->y - h0, v->z + sz, 1.0f, 0.0f, &f->colour);
+                addVertex(v->x + sx, v->y + h1, v->z + sz, 1.0f, 1.0f, &f->colour);
+                addVertex(v->x - sx, v->y + h1, v->z - sz, 0.0f, 1.0f, &f->colour);
                 break;
             }
 

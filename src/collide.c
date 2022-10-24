@@ -37,17 +37,17 @@ void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
 void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
 {
     int mag;
-    VECTOR distance;
+    vec4i distance;
     int collide;
-    VECTOR vc;
+    vec4i vc;
     int ownMass, remMass;
-    VECTOR ship2ship;
-    VECTOR ship1React, ship2React;
-    VECTOR soundPos;
+    vec4i ship2ship;
+    vec4i ship1React, ship2React;
+    vec4i soundPos;
 
-    distance.vx = (shipIndex[i].pos.vx - shipIndex[j].pos.vx) >> 3;
-    distance.vy = (shipIndex[i].pos.vy - shipIndex[j].pos.vy) >> 3;
-    distance.vz = (shipIndex[i].pos.vz - shipIndex[j].pos.vz) >> 3;
+    distance.x = (shipIndex[i].pos.x - shipIndex[j].pos.x) >> 3;
+    distance.y = (shipIndex[i].pos.y - shipIndex[j].pos.y) >> 3;
+    distance.z = (shipIndex[i].pos.z - shipIndex[j].pos.z) >> 3;
 
     mag = GetMagnitude(&distance);
 
@@ -68,71 +68,71 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
             ownMass = shipIndex[j].mass;
             remMass = shipIndex[i].mass;
 
-            vc.vx = ((shipIndex[j].vel.vx * ownMass) + (shipIndex[i].vel.vx * remMass)) / (ownMass + remMass);
-            vc.vy = ((shipIndex[j].vel.vy * ownMass) + (shipIndex[i].vel.vy * remMass)) / (ownMass + remMass);
-            vc.vz = ((shipIndex[j].vel.vz * ownMass) + (shipIndex[i].vel.vz * remMass)) / (ownMass + remMass);
+            vc.x = ((shipIndex[j].vel.x * ownMass) + (shipIndex[i].vel.x * remMass)) / (ownMass + remMass);
+            vc.y = ((shipIndex[j].vel.y * ownMass) + (shipIndex[i].vel.y * remMass)) / (ownMass + remMass);
+            vc.z = ((shipIndex[j].vel.z * ownMass) + (shipIndex[i].vel.z * remMass)) / (ownMass + remMass);
 
-            ship1React.vx = (vc.vx - shipIndex[j].vel.vx) >> 1;
-            ship1React.vy = (vc.vy - shipIndex[j].vel.vy) >> 1;
-            ship1React.vz = (vc.vz - shipIndex[j].vel.vz) >> 1;
+            ship1React.x = (vc.x - shipIndex[j].vel.x) >> 1;
+            ship1React.y = (vc.y - shipIndex[j].vel.y) >> 1;
+            ship1React.z = (vc.z - shipIndex[j].vel.z) >> 1;
 
-            ship2React.vx = (vc.vx - shipIndex[i].vel.vx) >> 1;
-            ship2React.vy = (vc.vy - shipIndex[i].vel.vy) >> 1;
-            ship2React.vz = (vc.vz - shipIndex[i].vel.vz) >> 1;
+            ship2React.x = (vc.x - shipIndex[i].vel.x) >> 1;
+            ship2React.y = (vc.y - shipIndex[i].vel.y) >> 1;
+            ship2React.z = (vc.z - shipIndex[i].vel.z) >> 1;
 
-            shipIndex[j].pos.vx -= sar(shipIndex[j].vel.vx, 6);
-            shipIndex[j].pos.vy -= sar(shipIndex[j].vel.vy, 6);
-            shipIndex[j].pos.vz -= sar(shipIndex[j].vel.vz, 6);
+            shipIndex[j].pos.x -= sar(shipIndex[j].vel.x, 6);
+            shipIndex[j].pos.y -= sar(shipIndex[j].vel.y, 6);
+            shipIndex[j].pos.z -= sar(shipIndex[j].vel.z, 6);
 
-            shipIndex[i].pos.vx -= sar(shipIndex[i].vel.vx, 6);
-            shipIndex[i].pos.vy -= sar(shipIndex[i].vel.vy, 6);
-            shipIndex[i].pos.vz -= sar(shipIndex[i].vel.vz, 6);
+            shipIndex[i].pos.x -= sar(shipIndex[i].vel.x, 6);
+            shipIndex[i].pos.y -= sar(shipIndex[i].vel.y, 6);
+            shipIndex[i].pos.z -= sar(shipIndex[i].vel.z, 6);
 
             /**************** YOUR CRAFT REACTION *********************/
-            shipIndex[j].vel.vx = vc.vx + ship1React.vx;
-            shipIndex[j].vel.vy = vc.vy + ship1React.vy;
-            shipIndex[j].vel.vz = vc.vz + ship1React.vz;
+            shipIndex[j].vel.x = vc.x + ship1React.x;
+            shipIndex[j].vel.y = vc.y + ship1React.y;
+            shipIndex[j].vel.z = vc.z + ship1React.z;
 
             /*************** REMOTE CRAFT REACTION ********************/
-            shipIndex[i].vel.vx = vc.vx + ship2React.vx;
-            shipIndex[i].vel.vy = vc.vy + ship2React.vy;
-            shipIndex[i].vel.vz = vc.vz + ship2React.vz;
+            shipIndex[i].vel.x = vc.x + ship2React.x;
+            shipIndex[i].vel.y = vc.y + ship2React.y;
+            shipIndex[i].vel.z = vc.z + ship2React.z;
 
-            ship2ship.vx = shipIndex[i].pos.vx - shipIndex[j].pos.vx;
-            ship2ship.vy = shipIndex[i].pos.vy - shipIndex[j].pos.vy;
-            ship2ship.vz = shipIndex[i].pos.vz - shipIndex[j].pos.vz;
+            ship2ship.x = shipIndex[i].pos.x - shipIndex[j].pos.x;
+            ship2ship.y = shipIndex[i].pos.y - shipIndex[j].pos.y;
+            ship2ship.z = shipIndex[i].pos.z - shipIndex[j].pos.z;
 
-            shipIndex[i].vel.vx += ship2ship.vx << 2;
-            shipIndex[i].vel.vy += ship2ship.vy << 2;
-            shipIndex[i].vel.vz += ship2ship.vz << 2;
+            shipIndex[i].vel.x += ship2ship.x << 2;
+            shipIndex[i].vel.y += ship2ship.y << 2;
+            shipIndex[i].vel.z += ship2ship.z << 2;
 
-            shipIndex[j].vel.vx -= ship2ship.vx << 2;
-            shipIndex[j].vel.vy -= ship2ship.vy << 2;
-            shipIndex[j].vel.vz -= ship2ship.vz << 2;
+            shipIndex[j].vel.x -= ship2ship.x << 2;
+            shipIndex[j].vel.y -= ship2ship.y << 2;
+            shipIndex[j].vel.z -= ship2ship.z << 2;
 
-            shipIndex[j].vel.vx = (shipIndex[j].vel.vx * 60) / FR60;
-            shipIndex[j].vel.vy = (shipIndex[j].vel.vy * 60) / FR60;
-            shipIndex[j].vel.vz = (shipIndex[j].vel.vz * 60) / FR60;
+            shipIndex[j].vel.x = (shipIndex[j].vel.x * 60) / FR60;
+            shipIndex[j].vel.y = (shipIndex[j].vel.y * 60) / FR60;
+            shipIndex[j].vel.z = (shipIndex[j].vel.z * 60) / FR60;
 
-            shipIndex[i].vel.vx = (shipIndex[i].vel.vx * 60) / FR60;
-            shipIndex[i].vel.vy = (shipIndex[i].vel.vy * 60) / FR60;
-            shipIndex[i].vel.vz = (shipIndex[i].vel.vz * 60) / FR60;
+            shipIndex[i].vel.x = (shipIndex[i].vel.x * 60) / FR60;
+            shipIndex[i].vel.y = (shipIndex[i].vel.y * 60) / FR60;
+            shipIndex[i].vel.z = (shipIndex[i].vel.z * 60) / FR60;
 
-            shipIndex[j].pos.vx += sar(shipIndex[j].vel.vx, 6);
-            shipIndex[j].pos.vy += sar(shipIndex[j].vel.vy, 6);
-            shipIndex[j].pos.vz += sar(shipIndex[j].vel.vz, 6);
+            shipIndex[j].pos.x += sar(shipIndex[j].vel.x, 6);
+            shipIndex[j].pos.y += sar(shipIndex[j].vel.y, 6);
+            shipIndex[j].pos.z += sar(shipIndex[j].vel.z, 6);
 
-            shipIndex[i].pos.vx += sar(shipIndex[i].vel.vx, 6);
-            shipIndex[i].pos.vy += sar(shipIndex[i].vel.vy, 6);
-            shipIndex[i].pos.vz += sar(shipIndex[i].vel.vz, 6);
+            shipIndex[i].pos.x += sar(shipIndex[i].vel.x, 6);
+            shipIndex[i].pos.y += sar(shipIndex[i].vel.y, 6);
+            shipIndex[i].pos.z += sar(shipIndex[i].vel.z, 6);
 
             if ((shipIndex[i].attr & SHIP_COLL) == 0)
             {
                 if ((shipIndex[j].attr & SHIP_COLL) == 0)
                 {
-                    soundPos.vx = (shipIndex[i].pos.vx + shipIndex[j].pos.vx) >> 1;
-                    soundPos.vy = (shipIndex[i].pos.vy + shipIndex[j].pos.vy) >> 1;
-                    soundPos.vz = (shipIndex[i].pos.vz + shipIndex[j].pos.vz) >> 1;
+                    soundPos.x = (shipIndex[i].pos.x + shipIndex[j].pos.x) >> 1;
+                    soundPos.y = (shipIndex[i].pos.y + shipIndex[j].pos.y) >> 1;
+                    soundPos.z = (shipIndex[i].pos.z + shipIndex[j].pos.z) >> 1;
                     PlayDirectionalNote(SFX_SHIP_2_SHIP, &soundPos);
 
                     if (j == ownShip)
@@ -173,30 +173,30 @@ int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
     short* coords;
     short primitiveCount;
 
-    VECTOR p1, p2, p3; /* the three plane points of other ship */
+    vec4i p1, p2, p3; /* the three plane points of other ship */
 
-    VECTOR a, b, c, d; /* four vector points of the hero ship */
+    vec4i a, b, c, d; /* four vector points of the hero ship */
 
     int factor2; /* intermediate calculation terms */
-    VECTOR factor1;
-    VECTOR term1;
+    vec4i factor1;
+    vec4i term1;
 
-    VECTOR res_vec; /* resultant intersection vector */
+    vec4i res_vec; /* resultant intersection vector */
     int alpha; /* the above alpha value */
 
-    VECTOR DC, BC, AC; /* position vectors of hero ship */
-    VECTOR BD, AB;
-    VECTOR AD;
+    vec4i DC, BC, AC; /* position vectors of hero ship */
+    vec4i BD, AB;
+    vec4i AD;
 
-    VECTOR* start_vec; /* is assigned a, b, c or d from above */
-    VECTOR* pos_vec; /* is assigned DC, BC, AC, BD, AB or AD */
+    vec4i* start_vec; /* is assigned a, b, c or d from above */
+    vec4i* pos_vec; /* is assigned DC, BC, AC, BD, AB or AD */
 
-    VECTOR plane1; /* normal of plane of other ship */
+    vec4i plane1; /* normal of plane of other ship */
 
-    VECTOR P1P2; /* 2 position vectors of other ship */
-    VECTOR P1P3; /* (all that is needed to get normal) */
+    vec4i P1P2; /* 2 position vectors of other ship */
+    vec4i P1P3; /* (all that is needed to get normal) */
 
-    VECTOR vec0, vec1, vec2; /* vectors between plane coords and intersection point */
+    vec4i vec0, vec1, vec2; /* vectors between plane coords and intersection point */
     int angle; /* total angle */
 
     short high1, high2;
@@ -291,27 +291,27 @@ int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
             {
                 alpha = alpha / factor2;
 
-                term1.vx = ((alpha * pos_vec->vx) >> 12);
-                term1.vy = ((alpha * pos_vec->vy) >> 12);
-                term1.vz = ((alpha * pos_vec->vz) >> 12);
+                term1.x = ((alpha * pos_vec->x) >> 12);
+                term1.y = ((alpha * pos_vec->y) >> 12);
+                term1.z = ((alpha * pos_vec->z) >> 12);
 
-                res_vec.vx = start_vec->vx + term1.vx;
-                res_vec.vy = start_vec->vy + term1.vy;
-                res_vec.vz = start_vec->vz + term1.vz;
+                res_vec.x = start_vec->x + term1.x;
+                res_vec.y = start_vec->y + term1.y;
+                res_vec.z = start_vec->z + term1.z;
 
                 if ((alpha >= 0) && (alpha <= 4096))
                 {
-                    vec0.vx = res_vec.vx - p1.vx;
-                    vec0.vy = res_vec.vy - p1.vy;
-                    vec0.vz = res_vec.vz - p1.vz;
+                    vec0.x = res_vec.x - p1.x;
+                    vec0.y = res_vec.y - p1.y;
+                    vec0.z = res_vec.z - p1.z;
 
-                    vec1.vx = res_vec.vx - p2.vx;
-                    vec1.vy = res_vec.vy - p2.vy;
-                    vec1.vz = res_vec.vz - p2.vz;
+                    vec1.x = res_vec.x - p2.x;
+                    vec1.y = res_vec.y - p2.y;
+                    vec1.z = res_vec.z - p2.z;
 
-                    vec2.vx = res_vec.vx - p3.vx;
-                    vec2.vy = res_vec.vy - p3.vy;
-                    vec2.vz = res_vec.vz - p3.vz;
+                    vec2.x = res_vec.x - p3.x;
+                    vec2.y = res_vec.y - p3.y;
+                    vec2.z = res_vec.z - p3.z;
 
                     angle = GetAng(&vec0, &vec1);
                     angle += GetAng(&vec1, &vec2);
@@ -328,62 +328,62 @@ int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
     return 0;
 }
 
-int PlaneLineCollision(const VECTOR* plane_point, const VECTOR* ship_pos, const SVector* normal)
+int PlaneLineCollision(const vec4i* plane_point, const vec4i* ship_pos, const vec3s* normal)
 {
     int dot_product, norm_dot_product;
 
-    dot_product = (ship_pos->vx - plane_point->vx) * normal->vx +
-                  (ship_pos->vy - plane_point->vy) * normal->vy +
-                  (ship_pos->vz - plane_point->vz) * normal->vz;
+    dot_product = (ship_pos->x - plane_point->x) * normal->x +
+                  (ship_pos->y - plane_point->y) * normal->y +
+                  (ship_pos->z - plane_point->z) * normal->z;
 
-    norm_dot_product = ((normal->vx * normal->vx) + (normal->vy * normal->vy) + (normal->vz * normal->vz)) >> 12;
+    norm_dot_product = ((normal->x * normal->x) + (normal->y * normal->y) + (normal->z * normal->z)) >> 12;
 
     return dot_product / norm_dot_product;
 }
 
 void Ship2Track(ShipData* playerShip, Face* facePtr)
 {
-    VECTOR nosePos, wingPos;
+    vec4i nosePos, wingPos;
     int alpha;
-    VECTOR direction;
+    vec4i direction;
     int downTrack;
     TrackSection* trackPtr;
     int toFace;
-    VECTOR toFaceVector;
-    const VECTOR* facePoint;
+    vec4i toFaceVector;
+    const vec4i* facePoint;
     int collide;
     Face* facePtr2;
 
-    nosePos.vx = playerShip->pos.vx + (playerShip->unitVecNose.vx >> 3);
-    nosePos.vy = playerShip->pos.vy + (playerShip->unitVecNose.vy >> 3);
-    nosePos.vz = playerShip->pos.vz + (playerShip->unitVecNose.vz >> 3);
+    nosePos.x = playerShip->pos.x + (playerShip->unitVecNose.x >> 3);
+    nosePos.y = playerShip->pos.y + (playerShip->unitVecNose.y >> 3);
+    nosePos.z = playerShip->pos.z + (playerShip->unitVecNose.z >> 3);
 
-    wingPos.vx = playerShip->pos.vx - (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-    wingPos.vy = playerShip->pos.vy - (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-    wingPos.vz = playerShip->pos.vz - (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+    wingPos.x = playerShip->pos.x - (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
+    wingPos.y = playerShip->pos.y - (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
+    wingPos.z = playerShip->pos.z - (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
 
     trackPtr = playerShip->nearTrkSect->nextSection;
 
-    direction.vx = trackPtr->centre.vx - playerShip->nearTrkSect->centre.vx;
-    direction.vy = trackPtr->centre.vy - playerShip->nearTrkSect->centre.vy;
-    direction.vz = trackPtr->centre.vz - playerShip->nearTrkSect->centre.vz;
+    direction.x = trackPtr->centre.x - playerShip->nearTrkSect->centre.x;
+    direction.y = trackPtr->centre.y - playerShip->nearTrkSect->centre.y;
+    direction.z = trackPtr->centre.z - playerShip->nearTrkSect->centre.z;
 
-    downTrack = ((direction.vx * playerShip->unitVecNose.vx) + (direction.vy * playerShip->unitVecNose.vy) + (direction.vz * playerShip->unitVecNose.vz));
+    downTrack = ((direction.x * playerShip->unitVecNose.x) + (direction.y * playerShip->unitVecNose.y) + (direction.z * playerShip->unitVecNose.z));
 
     if (downTrack < 0)
         playerShip->attr &= ~DIRECTION;
     else
         playerShip->attr |= DIRECTION;
 
-    toFaceVector.vx = track->vertices[(facePtr->vertex[0])].vx - track->vertices[(facePtr->vertex[1])].vx;
-    toFaceVector.vy = track->vertices[(facePtr->vertex[0])].vy - track->vertices[(facePtr->vertex[1])].vy;
-    toFaceVector.vz = track->vertices[(facePtr->vertex[0])].vz - track->vertices[(facePtr->vertex[1])].vz;
+    toFaceVector.x = track->vertices[(facePtr->vertex[0])].x - track->vertices[(facePtr->vertex[1])].x;
+    toFaceVector.y = track->vertices[(facePtr->vertex[0])].y - track->vertices[(facePtr->vertex[1])].y;
+    toFaceVector.z = track->vertices[(facePtr->vertex[0])].z - track->vertices[(facePtr->vertex[1])].z;
 
-    direction.vx = playerShip->nearTrkSect->centre.vx - playerShip->pos.vx;
-    direction.vy = playerShip->nearTrkSect->centre.vy - playerShip->pos.vy;
-    direction.vz = playerShip->nearTrkSect->centre.vz - playerShip->pos.vz;
+    direction.x = playerShip->nearTrkSect->centre.x - playerShip->pos.x;
+    direction.y = playerShip->nearTrkSect->centre.y - playerShip->pos.y;
+    direction.z = playerShip->nearTrkSect->centre.z - playerShip->pos.z;
 
-    toFace = ((direction.vx * toFaceVector.vx) + (direction.vy * toFaceVector.vy) + (direction.vz * toFaceVector.vz));
+    toFace = ((direction.x * toFaceVector.x) + (direction.y * toFaceVector.y) + (direction.z * toFaceVector.z));
 
     facePtr--;
 
@@ -392,9 +392,9 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
     if (toFace > 0)
     {
         playerShip->attr |= LSIDE;
-        if (1) //(facePtr == (track->faces + playerShip->nearTrkSect->faceStart)) || playerShip->nearTrkSect->junction) // TODO og bug, possible optimization?
+        if (1) //(facePtr == (track->faces + playerShip->nearTrkSect->faceStart)) || playerShip->nearTrkSect->junction)
         {
-            facePoint = track->vertices + facePtr->vertex[0];
+            facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
             alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
 
@@ -456,9 +456,9 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                 return;
             }
 
-            wingPos.vx = playerShip->pos.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-            wingPos.vy = playerShip->pos.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-            wingPos.vz = playerShip->pos.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+            wingPos.x = playerShip->pos.x + (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
+            wingPos.y = playerShip->pos.y + (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
+            wingPos.z = playerShip->pos.z + (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
 
             alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
@@ -490,10 +490,10 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
             facePtr++;
         }
 
-        if (1) //(playerShip->nearTrkSect->faceCount > 3) || playerShip->nearTrkSect->junction) // TODO og bug, possible optimization?
+        if ((playerShip->nearTrkSect->faceCount > 3) || playerShip->nearTrkSect->junction)
         {
 
-            facePoint = track->vertices + facePtr->vertex[0];
+            facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
             alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
             if (alpha <= 0)
@@ -554,9 +554,9 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                 return;
             }
 
-            wingPos.vx = playerShip->pos.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-            wingPos.vy = playerShip->pos.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-            wingPos.vz = playerShip->pos.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+            wingPos.x = playerShip->pos.x + (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
+            wingPos.y = playerShip->pos.y + (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
+            wingPos.z = playerShip->pos.z + (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
             alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
@@ -576,31 +576,31 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
     }
 }
 
-int CheckPolygonCollision(const Face* facePtr, const VECTOR* pos, int alpha)
+int CheckPolygonCollision(const Face* facePtr, const vec4i* pos, int alpha)
 {
-    VECTOR planePoint;
-    VECTOR vec0, vec1, vec2, vec3; /* vectors between plane coords and intersection point */
+    vec4i planePoint;
+    vec4i vec0, vec1, vec2, vec3; /* vectors between plane coords and intersection point */
     int angle;
 
-    planePoint.vx = pos->vx - ((facePtr->normal.vx * alpha) >> 12);
-    planePoint.vy = pos->vy - ((facePtr->normal.vy * alpha) >> 12);
-    planePoint.vz = pos->vz - ((facePtr->normal.vz * alpha) >> 12);
+    planePoint.x = pos->x - ((facePtr->normal.x * alpha) >> 12);
+    planePoint.y = pos->y - ((facePtr->normal.y * alpha) >> 12);
+    planePoint.z = pos->z - ((facePtr->normal.z * alpha) >> 12);
 
-    vec0.vx = planePoint.vx - track->vertices[(facePtr->vertex[1])].vx;
-    vec0.vy = planePoint.vy - track->vertices[(facePtr->vertex[1])].vy;
-    vec0.vz = planePoint.vz - track->vertices[(facePtr->vertex[1])].vz;
+    vec0.x = planePoint.x - track->vertices[(facePtr->vertex[1])].x;
+    vec0.y = planePoint.y - track->vertices[(facePtr->vertex[1])].y;
+    vec0.z = planePoint.z - track->vertices[(facePtr->vertex[1])].z;
 
-    vec1.vx = planePoint.vx - track->vertices[(facePtr->vertex[2])].vx;
-    vec1.vy = planePoint.vy - track->vertices[(facePtr->vertex[2])].vy;
-    vec1.vz = planePoint.vz - track->vertices[(facePtr->vertex[2])].vz;
+    vec1.x = planePoint.x - track->vertices[(facePtr->vertex[2])].x;
+    vec1.y = planePoint.y - track->vertices[(facePtr->vertex[2])].y;
+    vec1.z = planePoint.z - track->vertices[(facePtr->vertex[2])].z;
 
-    vec2.vx = planePoint.vx - track->vertices[(facePtr->vertex[0])].vx;
-    vec2.vy = planePoint.vy - track->vertices[(facePtr->vertex[0])].vy;
-    vec2.vz = planePoint.vz - track->vertices[(facePtr->vertex[0])].vz;
+    vec2.x = planePoint.x - track->vertices[(facePtr->vertex[0])].x;
+    vec2.y = planePoint.y - track->vertices[(facePtr->vertex[0])].y;
+    vec2.z = planePoint.z - track->vertices[(facePtr->vertex[0])].z;
 
-    vec3.vx = planePoint.vx - track->vertices[(facePtr->vertex[3])].vx;
-    vec3.vy = planePoint.vy - track->vertices[(facePtr->vertex[3])].vy;
-    vec3.vz = planePoint.vz - track->vertices[(facePtr->vertex[3])].vz;
+    vec3.x = planePoint.x - track->vertices[(facePtr->vertex[3])].x;
+    vec3.y = planePoint.y - track->vertices[(facePtr->vertex[3])].y;
+    vec3.z = planePoint.z - track->vertices[(facePtr->vertex[3])].z;
 
     /*TODO optimize this school math shit*/
     angle = GetAng(&vec0, &vec2);
@@ -618,31 +618,31 @@ int CheckPolygonCollision(const Face* facePtr, const VECTOR* pos, int alpha)
 
 void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha)
 {
-    SVECTOR collisionVector;
+    vec4s collisionVector;
     int angle;
-    VECTOR wingPos;
+    vec4i wingPos;
     int magnitude;
 
-    collisionVector.vx = playerShip->nearTrkSect->centre.vx - track->vertices[(facePtr->vertex[2])].vx;
-    collisionVector.vy = playerShip->nearTrkSect->centre.vy - track->vertices[(facePtr->vertex[2])].vy;
-    collisionVector.vz = playerShip->nearTrkSect->centre.vz - track->vertices[(facePtr->vertex[2])].vz;
+    collisionVector.x = playerShip->nearTrkSect->centre.x - track->vertices[(facePtr->vertex[2])].x;
+    collisionVector.y = playerShip->nearTrkSect->centre.y - track->vertices[(facePtr->vertex[2])].y;
+    collisionVector.z = playerShip->nearTrkSect->centre.z - track->vertices[(facePtr->vertex[2])].z;
 
     angle = AngleOfCollision(&collisionVector, &playerShip->unitVecNose);
 
     Reflection(&(playerShip->vel), &facePtr->normal);
 
-    playerShip->pos.vx -= playerShip->vel.vx >> 6;
-    playerShip->pos.vy -= playerShip->vel.vy >> 6;
-    playerShip->pos.vz -= playerShip->vel.vz >> 6;
+    playerShip->pos.x -= playerShip->vel.x >> 6;
+    playerShip->pos.y -= playerShip->vel.y >> 6;
+    playerShip->pos.z -= playerShip->vel.z >> 6;
 
     /*TODO no slowdown by side collision*/
-    playerShip->vel.vx -= playerShip->vel.vx >> 1;
-    playerShip->vel.vy -= playerShip->vel.vy >> 1;
-    playerShip->vel.vz -= playerShip->vel.vz >> 1;
+    playerShip->vel.x -= playerShip->vel.x >> 1;
+    playerShip->vel.y -= playerShip->vel.y >> 1;
+    playerShip->vel.z -= playerShip->vel.z >> 1;
 
-    playerShip->vel.vx += (facePtr->normal.vx);
-    playerShip->vel.vy += (facePtr->normal.vy);
-    playerShip->vel.vz += (facePtr->normal.vz);
+    playerShip->vel.x += (facePtr->normal.x);
+    playerShip->vel.y += (facePtr->normal.y);
+    playerShip->vel.z += (facePtr->normal.z);
 
     magnitude = (abs(angle) * playerShip->speed) >> 16;
 
@@ -653,15 +653,15 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
     if (direction > 0)
     {
-        wingPos.vx = playerShip->pos.vx + (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-        wingPos.vy = playerShip->pos.vy + (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-        wingPos.vz = playerShip->pos.vz + (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+        wingPos.x = playerShip->pos.x + (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
+        wingPos.y = playerShip->pos.y + (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
+        wingPos.z = playerShip->pos.z + (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
     }
     else
     {
-        wingPos.vx = playerShip->pos.vx - (playerShip->unitVecWing.vx >> 4) - (playerShip->unitVecNose.vx >> 4);
-        wingPos.vy = playerShip->pos.vy - (playerShip->unitVecWing.vy >> 4) - (playerShip->unitVecNose.vy >> 4);
-        wingPos.vz = playerShip->pos.vz - (playerShip->unitVecWing.vz >> 4) - (playerShip->unitVecNose.vz >> 4);
+        wingPos.x = playerShip->pos.x - (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
+        wingPos.y = playerShip->pos.y - (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
+        wingPos.z = playerShip->pos.z - (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
     }
 
     PlayDirectionalNote(SFX_SHIP_2_TRACK, &wingPos);
@@ -681,14 +681,14 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
 void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha)
 {
-    SVECTOR collisionVector;
+    vec4s collisionVector;
     int angle;
-    VECTOR nosePos;
+    vec4i nosePos;
     int magnitude;
 
-    collisionVector.vx = playerShip->nearTrkSect->centre.vx - track->vertices[(facePtr->vertex[2])].vx;
-    collisionVector.vy = playerShip->nearTrkSect->centre.vy - track->vertices[(facePtr->vertex[2])].vy;
-    collisionVector.vz = playerShip->nearTrkSect->centre.vz - track->vertices[(facePtr->vertex[2])].vz;
+    collisionVector.x = playerShip->nearTrkSect->centre.x - track->vertices[(facePtr->vertex[2])].x;
+    collisionVector.y = playerShip->nearTrkSect->centre.y - track->vertices[(facePtr->vertex[2])].y;
+    collisionVector.z = playerShip->nearTrkSect->centre.z - track->vertices[(facePtr->vertex[2])].z;
 
     angle = abs(AngleOfCollision(&collisionVector, &playerShip->unitVecNose));
 
@@ -700,21 +700,21 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     else
         playerShip->vhdg -= magnitude;
 
-    playerShip->pos.vx -= playerShip->vel.vx >> 6;
-    playerShip->pos.vy -= playerShip->vel.vy >> 6;
-    playerShip->pos.vz -= playerShip->vel.vz >> 6;
+    playerShip->pos.x -= playerShip->vel.x >> 6;
+    playerShip->pos.y -= playerShip->vel.y >> 6;
+    playerShip->pos.z -= playerShip->vel.z >> 6;
 
-    playerShip->vel.vx -= playerShip->vel.vx >> 1;
-    playerShip->vel.vy -= playerShip->vel.vy >> 1;
-    playerShip->vel.vz -= playerShip->vel.vz >> 1;
+    playerShip->vel.x -= playerShip->vel.x >> 1;
+    playerShip->vel.y -= playerShip->vel.y >> 1;
+    playerShip->vel.z -= playerShip->vel.z >> 1;
 
-    playerShip->vel.vx += facePtr->normal.vx;
-    playerShip->vel.vy += facePtr->normal.vy;
-    playerShip->vel.vz += facePtr->normal.vz;
+    playerShip->vel.x += facePtr->normal.x;
+    playerShip->vel.y += facePtr->normal.y;
+    playerShip->vel.z += facePtr->normal.z;
 
-    nosePos.vx = playerShip->pos.vx + (playerShip->unitVecNose.vx >> 3);
-    nosePos.vy = playerShip->pos.vy + (playerShip->unitVecNose.vy >> 3);
-    nosePos.vz = playerShip->pos.vz + (playerShip->unitVecNose.vz >> 3);
+    nosePos.x = playerShip->pos.x + (playerShip->unitVecNose.x >> 3);
+    nosePos.y = playerShip->pos.y + (playerShip->unitVecNose.y >> 3);
+    nosePos.z = playerShip->pos.z + (playerShip->unitVecNose.z >> 3);
 
     PlayDirectionalNote(SFX_SHIP_2_TRACK, &nosePos);
 
@@ -732,18 +732,18 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     */
 }
 
-void Reflection(VECTOR* incidence, const SVector* normal)
+void Reflection(vec4i* incidence, const vec3s* normal)
 {
     int temp;
 
-    temp = ((((int)normal->vx * -incidence->vx) >> 12) + ((int)(normal->vy * -incidence->vy) >> 12) + ((int)(normal->vz * -incidence->vz) >> 12));
+    temp = ((((int)normal->x * -incidence->x) >> 12) + ((int)(normal->y * -incidence->y) >> 12) + ((int)(normal->z * -incidence->z) >> 12));
 
-    incidence->vx = (((2 * (int)normal->vx) * temp) >> 12) + incidence->vx;
-    incidence->vy = (((2 * (int)normal->vy) * temp) >> 12) + incidence->vy;
-    incidence->vz = (((2 * (int)normal->vz) * temp) >> 12) + incidence->vz;
+    incidence->x = (((2 * (int)normal->x) * temp) >> 12) + incidence->x;
+    incidence->y = (((2 * (int)normal->y) * temp) >> 12) + incidence->y;
+    incidence->z = (((2 * (int)normal->z) * temp) >> 12) + incidence->z;
 }
 
-int AngleOfCollision(const SVECTOR* normal, const VECTOR* ship_point)
+int AngleOfCollision(const vec4s* normal, const vec4i* ship_point)
 {
     int dot_product;
     int norm_dist, shpoint_dist;
@@ -752,13 +752,13 @@ int AngleOfCollision(const SVECTOR* normal, const VECTOR* ship_point)
     int tmp1, tmp2;
     long sx, sy, sz;
 
-    sx = ship_point->vx >> 9;
-    sy = ship_point->vy >> 9;
-    sz = ship_point->vz >> 9;
+    sx = ship_point->x >> 9;
+    sy = ship_point->y >> 9;
+    sz = ship_point->z >> 9;
 
-    dot_product = ((sx * normal->vx) + (sy * normal->vy) + (sz * normal->vz));
+    dot_product = ((sx * normal->x) + (sy * normal->y) + (sz * normal->z));
 
-    norm_dist = SquareRoot0((normal->vx * normal->vx) + (normal->vy * normal->vy) + (normal->vz * normal->vz));
+    norm_dist = SquareRoot0((normal->x * normal->x) + (normal->y * normal->y) + (normal->z * normal->z));
 
     shpoint_dist = SquareRoot0((sx * sx) + (sy * sy) + (sz * sz));
 

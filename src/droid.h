@@ -2,9 +2,9 @@ typedef struct RescueData
 {
     TrackSection* section;
     short modelID;
-    VECTOR pos;
-    VECTOR vel;
-    VECTOR acc;
+    vec4i pos;
+    vec4i vel;
+    vec4i acc;
     short hdg, pitch, roll;
     short vhdg, vpitch, vroll;
     short updateCount;

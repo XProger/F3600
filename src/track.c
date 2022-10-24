@@ -54,8 +54,8 @@ void InitTrack(char* file)
     printf("%d\n", track->faceCount);
     printf("%d\n", track->sectionCount);
 
-    track->vertices = (VECTOR*)ptr;
-    ptr += header->vertexCount * sizeof(VECTOR);
+    track->vertices = (TrackVertex*)ptr;
+    ptr += header->vertexCount * sizeof(TrackVertex);
 
     track->faces = (Face*)ptr;
     ptr += header->faceCount * sizeof(Face);
@@ -99,19 +99,24 @@ void LoadTrack(int32 trackNum)
 #else
 void IntelVertex(void)
 {
-    VECTOR* vert;
+    vec4i* vert;
+    TrackVertex* v;
     short i;
 
     /* intel the vertex data */
 
-    vert = track->vertices;
-    for (i = 0; i < track->vertexCount; i++)
+    // convert from VECTOR to TrackVertex
+    vert = (vec4i*)track->vertices;
+    v = track->vertices;
+    for (i = 0; i < track->vertexCount; i++, vert++, v++)
     {
-        IntelLong(&vert->vx);
-        IntelLong(&vert->vy);
-        IntelLong(&vert->vz);
+        v->x = vert->x;
+        v->y = vert->y;
+        v->z = vert->z;
 
-        vert += 1;
+        IntelLong(&v->x);
+        IntelLong(&v->y);
+        IntelLong(&v->z);
     }
 }
 
@@ -130,9 +135,9 @@ void IntelFace(void)
         IntelShort(&face->vertex[2]);
         IntelShort(&face->vertex[3]);
 
-        IntelShort(&face->normal.vx);
-        IntelShort(&face->normal.vy);
-        IntelShort(&face->normal.vz);
+        IntelShort(&face->normal.x);
+        IntelShort(&face->normal.y);
+        IntelShort(&face->normal.z);
 
         face += 1;
     }
@@ -152,9 +157,9 @@ void IntelSection(void)
         IntelLong(&(long)section->prevSection);
         IntelLong(&(long)section->nextSection);
 
-        IntelLong(&section->centre.vx);
-        IntelLong(&section->centre.vy);
-        IntelLong(&section->centre.vz);
+        IntelLong(&section->centre.x);
+        IntelLong(&section->centre.y);
+        IntelLong(&section->centre.z);
 
         //IntelShort(&section->version);
         //IntelShort(&section->pad);
@@ -210,8 +215,8 @@ void IndexToPointers(void)
 void InitVertices(char* file)
 {
     long size = osLoadFile(file, pDRAM);
-    track->vertices = (VECTOR*)allocDRAM(size);
-    track->vertexCount = size / sizeof(VECTOR);
+    track->vertices = (TrackVertex*)allocDRAM(size);
+    track->vertexCount = size / sizeof(vec4i);
     IntelVertex();
 }
 
@@ -306,7 +311,7 @@ typedef struct TrackSection3DO
     uint32 prevSection;
     uint32 nextSection;
 
-    Vector centre;
+    vec3i centre;
 
     uint16 faceStart;
     uint16 faceCount;
@@ -329,7 +334,7 @@ int32 clutsCount;
 uint16 cluts[MAX_TRACK_CLUTS][16];
 uint16 faceCLUT[4096][5];
 
-VECTOR trackVertex[4096];
+TrackVertex trackVertex[4096];
 int32 trackVertexCount;
 
 Face trackFaces[4096];
@@ -378,7 +383,7 @@ int32 clutAdd(int32 faceTexIndex, float r, float g, float b)
     return clutsCount - 1;
 }
 
-int32 vertexAdd(const VECTOR* v)
+int32 vertexAdd(const TrackVertex* v)
 {
     int32 i, start;
 
@@ -390,16 +395,15 @@ int32 vertexAdd(const VECTOR* v)
 
     for (i = start; i < trackVertexCount; i++)
     {
-        if (trackVertex[i].vx == v->vx &&
-            trackVertex[i].vy == v->vy &&
-            trackVertex[i].vz == v->vz)
+        if (trackVertex[i].x == v->x &&
+            trackVertex[i].y == v->y &&
+            trackVertex[i].z == v->z)
         {
             return i;
         }
     }
 
     trackVertex[trackVertexCount] = *v;
-    trackVertex[trackVertexCount].pad = 0;
     return trackVertexCount++;
 }
 
@@ -589,19 +593,17 @@ void convertTrack3DO(int32 trackNum)
     // vertices
     for (i = 0; i < trackVertexCount; i++)
     {
-        int32 vx = trackVertex[i].vx;
-        int32 vy = trackVertex[i].vy;
-        int32 vz = trackVertex[i].vz;
-        int32 pad = 0;
+        int32 x = trackVertex[i].x;
+        int32 y = trackVertex[i].y;
+        int32 z = trackVertex[i].z;
 
-        IntelLong(&vx);
-        IntelLong(&vy);
-        IntelLong(&vz);
+        IntelLong(&x);
+        IntelLong(&y);
+        IntelLong(&z);
 
-        fwrite(&vx, sizeof(vx), 1, f);
-        fwrite(&vy, sizeof(vy), 1, f);
-        fwrite(&vz, sizeof(vz), 1, f);
-        fwrite(&pad, sizeof(pad), 1, f);
+        fwrite(&x, sizeof(x), 1, f);
+        fwrite(&y, sizeof(y), 1, f);
+        fwrite(&z, sizeof(z), 1, f);
     }
 
     // faces
@@ -612,9 +614,9 @@ void convertTrack3DO(int32 trackNum)
         uint16 i1 = face->vertex[1];
         uint16 i2 = face->vertex[2];
         uint16 i3 = face->vertex[3];
-        int16 nx = face->normal.vx;
-        int16 ny = face->normal.vy;
-        int16 nz = face->normal.vz;
+        int16 nx = face->normal.x;
+        int16 ny = face->normal.y;
+        int16 nz = face->normal.z;
         uint8 flags = face->flags;
         uint8 texture = face->texture;
         uint32 plut = faceCLUT[i][0] * sizeof(cluts[0]);
@@ -680,9 +682,9 @@ void convertTrack3DO(int32 trackNum)
         IntelLong(&section.prevSection);
         IntelLong(&section.nextSection);
 
-        IntelLong(&section.centre.vx);
-        IntelLong(&section.centre.vy);
-        IntelLong(&section.centre.vz);
+        IntelLong(&section.centre.x);
+        IntelLong(&section.centre.y);
+        IntelLong(&section.centre.z);
 
         IntelShort(&section.faceStart);
         IntelShort(&section.faceCount);

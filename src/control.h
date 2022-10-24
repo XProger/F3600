@@ -23,13 +23,13 @@ void UpdateRemoteShip(ShipData*, int, WeaponData*);
 void UpdatePlayerShipNormStart(ShipData*, int, WeaponData*);
 void UpdateRemoteShipStart(ShipData*, int, WeaponData*);
 
-void HoldCentre(VECTOR* result, ShipData* shipIndex, Face* facePtr, int);
-void HoldRight(VECTOR* result, ShipData* shipIndex, Face* facePtr, int);
-void HoldLeft(VECTOR* result, ShipData* shipIndex, Face* facePtr, int);
-void BlockShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int);
-void AvoidShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int);
-void AvoidOtherShips(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int);
-void ZigZagShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int);
+void HoldCentre(vec4i* result, ShipData* shipIndex, Face* facePtr, int);
+void HoldRight(vec4i* result, ShipData* shipIndex, Face* facePtr, int);
+void HoldLeft(vec4i* result, ShipData* shipIndex, Face* facePtr, int);
+void BlockShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
+void AvoidShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
+void AvoidOtherShips(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
+void ZigZagShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
 
 void SetSkeletonDirectionHPR(Skeleton* skeleton, short hdg, short pitch, short roll);
 void SetSkeletonDirectionRPH(Skeleton* skeleton, short roll, short pitch, short hdg);

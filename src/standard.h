@@ -60,31 +60,39 @@ typedef unsigned int        uint32;
 
 typedef struct
 {
-    short m[3][3]; /* 3x3 rotation matrix */
-    long t[3]; /* transfer vector */
+    int16 m[3][3];
+    int32 t[3];
 } MATRIX;
 
 typedef struct
-{ /* long word type 3D vector */
-    long vx, vy;
-    long vz, pad;
-} VECTOR;
-
-typedef struct
-{ /* short word type 3D vector */
-    short vx, vy;
-    short vz, pad;
-} SVECTOR;
-
-typedef struct
-{ /* color type vector */
+{
     uint8 r, g, b, cd;
 } CVECTOR;
 
-typedef struct
-{ /* 2D short vector */
-    short vx, vy;
-} DVECTOR;
+typedef struct vec2s
+{
+    int16 x, y;
+} vec2s;
+
+typedef struct vec3s
+{
+    int16 x, y, z;
+} vec3s;
+
+typedef struct vec4s
+{
+    int16 x, y, z, w;
+} vec4s;
+
+typedef struct vec3i
+{
+    int32 x, y, z;
+} vec3i;
+
+typedef struct vec4i
+{
+    int32 x, y, z, w;
+} vec4i;
 
 #ifndef NULL
     #define NULL 0

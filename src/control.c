@@ -3,12 +3,6 @@
 extern short behindSpeed[];
 extern short shipOrder[];
 
-#define FULL   0
-#define HIGH   3
-#define MEDIUM 2
-#define LOW    1
-#define SMALL  0
-
 extern int gPadStickX;
 extern int gPadStickY;
 
@@ -23,6 +17,9 @@ void UpdateShips(ShipData* shipIndex, WeaponData* weaponIndex)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
+        if (!((i == ownShip) || (raceType != TIME_TRIAL)))
+            continue;
+
         (shipIndex[i].update)(shipIndex, i, weaponIndex);
 
     #ifdef USE_SHIP_AMBIENT
@@ -112,9 +109,9 @@ void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo, WeaponData* weap
     GeneralStartProcs(playerShip);
 
     if (playerShip->updateCount == START_TIME - 1)
-        startPos = playerShip->pos.vy;
+        startPos = playerShip->pos.y;
 
-    playerShip->pos.vy = startPos + (rsin(playerShip->updateCount * 80) >> 7);
+    playerShip->pos.y = startPos + (rsin(playerShip->updateCount * 80) >> 7);
 
     if (playerShip->updateCount == 0)
     {
@@ -293,10 +290,10 @@ void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo, WeaponData* weaponIn
 
     if (shipIndex->updateCount == START_TIME)
     {
-        startPos = shipIndex->pos.vy;
+        startPos = shipIndex->pos.y;
     }
 
-    shipIndex->pos.vy = startPos + (rsin(shipIndex->updateCount * (80 + shipNo * 3)) >> 7);
+    shipIndex->pos.y = startPos + (rsin(shipIndex->updateCount * (80 + shipNo * 3)) >> 7);
 
     shipIndex->updateCount--;
     if (shipIndex->updateCount == 0)
@@ -305,48 +302,48 @@ void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo, WeaponData* weaponIn
     }
 }
 
-void HoldLeft(VECTOR* result, ShipData* shipIndex, Face* facePtr, int shipNo)
+void HoldLeft(vec4i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
-    VECTOR faceVert1, faceVert2;
+    vec4i faceVert1, faceVert2;
 
-    faceVert1.vx = track->vertices[(facePtr->vertex[1])].vx;
-    faceVert1.vy = track->vertices[(facePtr->vertex[1])].vy;
-    faceVert1.vz = track->vertices[(facePtr->vertex[1])].vz;
+    faceVert1.x = track->vertices[(facePtr->vertex[1])].x;
+    faceVert1.y = track->vertices[(facePtr->vertex[1])].y;
+    faceVert1.z = track->vertices[(facePtr->vertex[1])].z;
 
-    faceVert2.vx = track->vertices[(facePtr->vertex[0])].vx;
-    faceVert2.vy = track->vertices[(facePtr->vertex[0])].vy;
-    faceVert2.vz = track->vertices[(facePtr->vertex[0])].vz;
+    faceVert2.x = track->vertices[(facePtr->vertex[0])].x;
+    faceVert2.y = track->vertices[(facePtr->vertex[0])].y;
+    faceVert2.z = track->vertices[(facePtr->vertex[0])].z;
 
-    result->vx = (faceVert1.vx - faceVert2.vx) >> 1;
-    result->vy = (faceVert1.vy - faceVert2.vy) >> 1;
-    result->vz = (faceVert1.vz - faceVert2.vz) >> 1;
+    result->x = (faceVert1.x - faceVert2.x) >> 1;
+    result->y = (faceVert1.y - faceVert2.y) >> 1;
+    result->z = (faceVert1.z - faceVert2.z) >> 1;
 }
 
-void HoldRight(VECTOR* result, ShipData* shipIndex, Face* facePtr, int shipNo)
+void HoldRight(vec4i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
-    VECTOR faceVert1, faceVert2;
+    vec4i faceVert1, faceVert2;
 
-    faceVert1.vx = track->vertices[(facePtr->vertex[0])].vx;
-    faceVert1.vy = track->vertices[(facePtr->vertex[0])].vy;
-    faceVert1.vz = track->vertices[(facePtr->vertex[0])].vz;
+    faceVert1.x = track->vertices[(facePtr->vertex[0])].x;
+    faceVert1.y = track->vertices[(facePtr->vertex[0])].y;
+    faceVert1.z = track->vertices[(facePtr->vertex[0])].z;
 
-    faceVert2.vx = track->vertices[(facePtr->vertex[1])].vx;
-    faceVert2.vy = track->vertices[(facePtr->vertex[1])].vy;
-    faceVert2.vz = track->vertices[(facePtr->vertex[1])].vz;
+    faceVert2.x = track->vertices[(facePtr->vertex[1])].x;
+    faceVert2.y = track->vertices[(facePtr->vertex[1])].y;
+    faceVert2.z = track->vertices[(facePtr->vertex[1])].z;
 
-    result->vx = (faceVert1.vx - faceVert2.vx) >> 1;
-    result->vy = (faceVert1.vy - faceVert2.vy) >> 1;
-    result->vz = (faceVert1.vz - faceVert2.vz) >> 1;
+    result->x = (faceVert1.x - faceVert2.x) >> 1;
+    result->y = (faceVert1.y - faceVert2.y) >> 1;
+    result->z = (faceVert1.z - faceVert2.z) >> 1;
 }
 
-void HoldCentre(VECTOR* result, ShipData* shipIndex, Face* facePtr, int shipNo)
+void HoldCentre(vec4i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
-    result->vx = 0;
-    result->vy = 0;
-    result->vz = 0;
+    result->x = 0;
+    result->y = 0;
+    result->z = 0;
 }
 
-void BlockShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
+void BlockShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     if (shipIndex[ownShip].attr & LSIDE)
         HoldLeft(blockVector, shipIndex, facePtr, shipNo);
@@ -354,7 +351,7 @@ void BlockShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int ship
         HoldRight(blockVector, shipIndex, facePtr, shipNo);
 }
 
-void AvoidShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
+void AvoidShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     if (shipIndex[ownShip].attr & LSIDE)
         HoldRight(blockVector, shipIndex, facePtr, shipNo);
@@ -362,7 +359,7 @@ void AvoidShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int ship
         HoldLeft(blockVector, shipIndex, facePtr, shipNo);
 }
 
-void AvoidOtherShips(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
+void AvoidOtherShips(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     int i;
     short DPASectDiff; /** Change to run from sect not DPA sect **/
@@ -394,7 +391,7 @@ void AvoidOtherShips(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, in
     }
 }
 
-void ZigZagShip(VECTOR* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
+void ZigZagShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     if ((shipIndex->updateCount % 50) == 0)
     {
@@ -411,21 +408,17 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
     Face* facePtr = NULL;
     TrackSection *nextSection, *section;
     int i;
-    VECTOR targetVector, bestPath;
-    const VECTOR* facePoint;
+    vec4i targetVector, bestPath;
+    const vec4i* facePoint;
     int temp, alpha;
-    VECTOR offSetVector;
-    Vector path1, path2;
+    vec4i offSetVector;
+    vec3i path1, path2;
     int gap_mag, decide;
     short DPASectDiff;
 
-#ifdef __3DO__
-    return;
-#endif
-
-    offSetVector.vx = 0;
-    offSetVector.vy = 0;
-    offSetVector.vz = 0;
+    offSetVector.x = 0;
+    offSetVector.y = 0;
+    offSetVector.z = 0;
 
     myShip = &(shipIndex[ownShip]);
     remoteShip = &(shipIndex[shipNo]);
@@ -818,44 +811,44 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
         if (remoteShip->nearTrkSect->flags & Jump) /**** Cure for ships getting stuck on hump lip ****/
         {
-            targetVector.vx = remoteShip->nearTrkSect->centre.vx - remoteShip->nearTrkSect->prevSection->centre.vx;
-            targetVector.vy = remoteShip->nearTrkSect->centre.vy - remoteShip->nearTrkSect->prevSection->centre.vy;
-            targetVector.vz = remoteShip->nearTrkSect->centre.vz - remoteShip->nearTrkSect->prevSection->centre.vz;
+            targetVector.x = remoteShip->nearTrkSect->centre.x - remoteShip->nearTrkSect->prevSection->centre.x;
+            targetVector.y = remoteShip->nearTrkSect->centre.y - remoteShip->nearTrkSect->prevSection->centre.y;
+            targetVector.z = remoteShip->nearTrkSect->centre.z - remoteShip->nearTrkSect->prevSection->centre.z;
         }
         else
         {
-            targetVector.vx = nextSection->centre.vx - section->centre.vx;
-            targetVector.vy = nextSection->centre.vy - section->centre.vy;
-            targetVector.vz = nextSection->centre.vz - section->centre.vz;
+            targetVector.x = nextSection->centre.x - section->centre.x;
+            targetVector.y = nextSection->centre.y - section->centre.y;
+            targetVector.z = nextSection->centre.z - section->centre.z;
         }
 
         gap_mag = GetMagnitude(&targetVector);
 
-        targetVector.vx = (targetVector.vx * remoteShip->speed) / gap_mag;
-        targetVector.vy = (targetVector.vy * remoteShip->speed) / gap_mag;
-        targetVector.vz = (targetVector.vz * remoteShip->speed) / gap_mag;
+        targetVector.x = (targetVector.x * remoteShip->speed) / gap_mag;
+        targetVector.y = (targetVector.y * remoteShip->speed) / gap_mag;
+        targetVector.z = (targetVector.z * remoteShip->speed) / gap_mag;
 
-        path1.vx = section->centre.vx + offSetVector.vx;
-        path1.vy = section->centre.vy + offSetVector.vy;
-        path1.vz = section->centre.vz + offSetVector.vz;
+        path1.x = section->centre.x + offSetVector.x;
+        path1.y = section->centre.y + offSetVector.y;
+        path1.z = section->centre.z + offSetVector.z;
 
-        path2.vx = nextSection->centre.vx + offSetVector.vx;
-        path2.vy = nextSection->centre.vy + offSetVector.vy;
-        path2.vz = nextSection->centre.vz + offSetVector.vz;
+        path2.x = nextSection->centre.x + offSetVector.x;
+        path2.y = nextSection->centre.y + offSetVector.y;
+        path2.z = nextSection->centre.z + offSetVector.z;
 
         GetTargetPos(&bestPath, &remoteShip->pos, &path2, &path1);
 
-        remoteShip->acc.vx = (targetVector.vx + ((bestPath.vx - remoteShip->pos.vx) >> 1));
-        remoteShip->acc.vy = (targetVector.vy + ((bestPath.vy - remoteShip->pos.vy) >> 1));
-        remoteShip->acc.vz = (targetVector.vz + ((bestPath.vz - remoteShip->pos.vz) >> 1));
+        remoteShip->acc.x = (targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1));
+        remoteShip->acc.y = (targetVector.y + ((bestPath.y - remoteShip->pos.y) >> 1));
+        remoteShip->acc.z = (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
 
-        remoteShip->acc.vx = (remoteShip->acc.vx * 60) / FR60;
-        remoteShip->acc.vy = (remoteShip->acc.vy * 60) / FR60;
-        remoteShip->acc.vz = (remoteShip->acc.vz * 60) / FR60;
+        remoteShip->acc.x = (remoteShip->acc.x * 60) / FR60;
+        remoteShip->acc.y = (remoteShip->acc.y * 60) / FR60;
+        remoteShip->acc.z = (remoteShip->acc.z * 60) / FR60;
 
-        remoteShip->vel.vx += remoteShip->acc.vx;
-        remoteShip->vel.vy += remoteShip->acc.vy;
-        remoteShip->vel.vz += remoteShip->acc.vz;
+        remoteShip->vel.x += remoteShip->acc.x;
+        remoteShip->vel.y += remoteShip->acc.y;
+        remoteShip->vel.z += remoteShip->acc.z;
         /***** If remote has gone over speed-up *****/
 
         /***** Can use control routine to determine position now *****/
@@ -874,7 +867,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
         /****** Speed Test, should not make much difference ******/
         /****** to overall lap times of opposition          ******/
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
         alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
         if (alpha < 50)
@@ -882,22 +875,22 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
     #if 0
         alpha = TRACK_MAGNET * (TARGETHEIGHT - alpha) / alpha;
-        remoteShip->acc.vx = (facePtr->normal.vx * alpha) >> 8;
-        remoteShip->acc.vy = (facePtr->normal.vy * alpha) >> 8;
-        remoteShip->acc.vz = (facePtr->normal.vz * alpha) >> 8;
+        remoteShip->acc.x = (facePtr->normal.x * alpha) >> 8;
+        remoteShip->acc.y = (facePtr->normal.y * alpha) >> 8;
+        remoteShip->acc.z = (facePtr->normal.z * alpha) >> 8;
     #else
-        remoteShip->acc.vx = (((facePtr->normal.vx * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vx * TRACK_MAGNET)) >> 8;
-        remoteShip->acc.vy = (((facePtr->normal.vy * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vy * TRACK_MAGNET)) >> 8;
-        remoteShip->acc.vz = (((facePtr->normal.vz * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.vz * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.x = (((facePtr->normal.x * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.x * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.y = (((facePtr->normal.y * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.y * TRACK_MAGNET)) >> 8;
+        remoteShip->acc.z = (((facePtr->normal.z * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.z * TRACK_MAGNET)) >> 8;
     #endif
 
-        remoteShip->vel.vx += remoteShip->acc.vx;
-        remoteShip->vel.vy += remoteShip->acc.vy;
-        remoteShip->vel.vz += remoteShip->acc.vz;
+        remoteShip->vel.x += remoteShip->acc.x;
+        remoteShip->vel.y += remoteShip->acc.y;
+        remoteShip->vel.z += remoteShip->acc.z;
 
-        temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
+        temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
-        remoteShip->vhdg = -ratan2(targetVector.vx, targetVector.vz) - remoteShip->hdg;
+        remoteShip->vhdg = -ratan2(targetVector.x, targetVector.z) - remoteShip->hdg;
         remoteShip->vhdg += remoteShip->ahdg; /*** Result of weapon collision ***/
         remoteShip->ahdg -= remoteShip->ahdg >> 3;
 
@@ -909,7 +902,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         remoteShip->vhdg = (remoteShip->vhdg * 60) / FR60;
         remoteShip->hdg += remoteShip->vhdg >> 4;
 
-        remoteShip->vpitch = -ratan2(targetVector.vy, temp) - remoteShip->pitch;
+        remoteShip->vpitch = -ratan2(targetVector.y, temp) - remoteShip->pitch;
         remoteShip->vpitch = (remoteShip->vpitch * 60) / FR60;
 
         remoteShip->pitch += remoteShip->vpitch >> 4;
@@ -941,33 +934,33 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
         remoteShip->speed -= (abs(remoteShip->speed * remoteShip->vhdg)) >> 14;
 
-        targetVector.vx = nextSection->centre.vx - section->centre.vx;
-        targetVector.vy = nextSection->centre.vy - section->centre.vy;
-        targetVector.vz = nextSection->centre.vz - section->centre.vz;
+        targetVector.x = nextSection->centre.x - section->centre.x;
+        targetVector.y = nextSection->centre.y - section->centre.y;
+        targetVector.z = nextSection->centre.z - section->centre.z;
 
         gap_mag = GetMagnitude(&targetVector);
 
-        targetVector.vx = (targetVector.vx * remoteShip->speed) / gap_mag;
-        targetVector.vz = (targetVector.vz * remoteShip->speed) / gap_mag;
+        targetVector.x = (targetVector.x * remoteShip->speed) / gap_mag;
+        targetVector.z = (targetVector.z * remoteShip->speed) / gap_mag;
 
-        targetVector.vy = 500;
+        targetVector.y = 500;
 
         GetTargetPos(&bestPath, &remoteShip->pos, &nextSection->centre, &remoteShip->nearTrkSect->centre);
 
-        remoteShip->acc.vx = (targetVector.vx + ((bestPath.vx - remoteShip->pos.vx) >> 1));
-        remoteShip->acc.vy = targetVector.vy;
-        remoteShip->acc.vz = (targetVector.vz + ((bestPath.vz - remoteShip->pos.vz) >> 1));
+        remoteShip->acc.x = (targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1));
+        remoteShip->acc.y = targetVector.y;
+        remoteShip->acc.z = (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
 
-        remoteShip->acc.vx = (remoteShip->acc.vx * 60) / FR60;
-        remoteShip->acc.vy = (remoteShip->acc.vy * 60) / FR60;
-        remoteShip->acc.vz = (remoteShip->acc.vz * 60) / FR60;
+        remoteShip->acc.x = (remoteShip->acc.x * 60) / FR60;
+        remoteShip->acc.y = (remoteShip->acc.y * 60) / FR60;
+        remoteShip->acc.z = (remoteShip->acc.z * 60) / FR60;
 
-        remoteShip->vel.vx += remoteShip->acc.vx;
-        remoteShip->vel.vy += remoteShip->acc.vy;
-        remoteShip->vel.vz += remoteShip->acc.vz;
+        remoteShip->vel.x += remoteShip->acc.x;
+        remoteShip->vel.y += remoteShip->acc.y;
+        remoteShip->vel.z += remoteShip->acc.z;
         remoteShip->vpitch = -200 - remoteShip->pitch;
         remoteShip->pitch += remoteShip->vpitch >> 4;
-        remoteShip->vhdg = -ratan2(targetVector.vx, targetVector.vz) - remoteShip->hdg;
+        remoteShip->vhdg = -ratan2(targetVector.x, targetVector.z) - remoteShip->hdg;
 
         if (remoteShip->vhdg > 2048)
             remoteShip->vhdg = remoteShip->vhdg - 4096;
@@ -977,19 +970,19 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         remoteShip->hdg += remoteShip->vhdg >> 4;
     }
 
-    remoteShip->vel.vx -= remoteShip->vel.vx >> 3;
-    remoteShip->vel.vy -= remoteShip->vel.vy >> 3;
-    remoteShip->vel.vz -= remoteShip->vel.vz >> 3;
+    remoteShip->vel.x -= remoteShip->vel.x >> 3;
+    remoteShip->vel.y -= remoteShip->vel.y >> 3;
+    remoteShip->vel.z -= remoteShip->vel.z >> 3;
 
-    remoteShip->pos.vx += remoteShip->vel.vx >> 6;
-    remoteShip->pos.vy += remoteShip->vel.vy >> 6;
-    remoteShip->pos.vz += remoteShip->vel.vz >> 6;
+    remoteShip->pos.x += remoteShip->vel.x >> 6;
+    remoteShip->pos.y += remoteShip->vel.y >> 6;
+    remoteShip->pos.z += remoteShip->vel.z >> 6;
 
     if (remoteShip->attr & ELECTROED)
     {
-        remoteShip->pos.vx += (randy() - 16384) % 20;
-        remoteShip->pos.vy += (randy() - 16384) % 20;
-        remoteShip->pos.vz += (randy() - 16384) % 20;
+        remoteShip->pos.x += (randy() - 16384) % 20;
+        remoteShip->pos.y += (randy() - 16384) % 20;
+        remoteShip->pos.z += (randy() - 16384) % 20;
 
         if ((randy() % 50) == 0)
             remoteShip->speed -= remoteShip->speed >> 1;

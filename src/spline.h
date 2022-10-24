@@ -1,6 +1,6 @@
 /*    */
 
-TrackSection* FindAllNearestSection(VECTOR pos);
+TrackSection* FindAllNearestSection(vec4i pos);
 
 void UpdateShipRemote(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex);
 void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex);

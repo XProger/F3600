@@ -2,17 +2,17 @@
 
 char TrackDirection(const TrackCamera* camera)
 {
-    SVECTOR reference;
+    vec4s reference;
     long angle;
     const TrackSection* nextSection;
 
     nextSection = camera->section->nextSection;
 
-    reference.vx = (short)(nextSection->centre.vx - camera->section->centre.vx);
-    reference.vy = (short)(nextSection->centre.vy - camera->section->centre.vy);
-    reference.vz = (short)(nextSection->centre.vz - camera->section->centre.vz);
+    reference.x = (short)(nextSection->centre.x - camera->section->centre.x);
+    reference.y = (short)(nextSection->centre.y - camera->section->centre.y);
+    reference.z = (short)(nextSection->centre.z - camera->section->centre.z);
 
-    angle = -ratan2(reference.vx, reference.vz) + camera->hdg;
+    angle = -ratan2(reference.x, reference.z) + camera->hdg;
     angle = ang(angle);
 
     if ((angle >= -512) && (angle < 512))
@@ -37,11 +37,11 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
 {
 #ifndef __3DO__ // TODO
     short i;
-    VECTOR result;
+    vec4i result;
     long flag;
     TrackSection* section;
     long extent;
-    SVECTOR centre;
+    vec4s centre;
     Object* obj;
     MATRIX* matrix;
 
@@ -57,23 +57,23 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
             matrix = GetSkeletonMatrix(obj->skeleton);
             extent = obj->extent;
 
-            centre.vx = 0;
-            centre.vy = 0;
-            centre.vz = 0;
+            centre.x = 0;
+            centre.y = 0;
+            centre.z = 0;
 
             RotTrans(matrix, &centre, &result, &flag);
 
-            result.vz += extent;
+            result.z += extent;
 
-            if (result.vz == 0)
-                result.vz = 1;
+            if (result.z == 0)
+                result.z = 1;
 
-            result.vx = (result.vx * 160) / result.vz;
-            result.vy = (result.vy * 160) / result.vz;
+            result.x = (result.x * 160) / result.z;
+            result.y = (result.y * 160) / result.z;
 
-            extent = (extent * 160) / result.vz;
+            extent = (extent * 160) / result.z;
             /*TODO visibility*/
-            if ((result.vx >= -(extent + 160)) && (result.vx <= (extent + 160)) && (result.vy >= -(extent + 120)) && (result.vy <= (extent + 120)))
+            if ((result.x >= -(extent + 160)) && (result.x <= (extent + 160)) && (result.y >= -(extent + 120)) && (result.y <= (extent + 120)))
             {
                 renderObject(obj);
             }
@@ -91,7 +91,7 @@ void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short 
 
 void DrawShip(Object* obj, const ShipData* shipData)
 {
-    SetSkeletonPosition(obj->skeleton, shipData->pos.vx, shipData->pos.vy, shipData->pos.vz);
+    SetSkeletonPosition(obj->skeleton, shipData->pos.x, shipData->pos.y, shipData->pos.z);
     SetSkeletonDirectionHPR(obj->skeleton, shipData->hdg, shipData->pitch, shipData->roll);
     renderShip(obj, shipData->color);
 }

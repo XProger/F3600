@@ -165,9 +165,9 @@ void ResetCone(Cone* cone)
         {
             if (cone->coneIndex[j][i] != -1)
             {
-                cone->object[i]->vertices[cone->coneIndex[j][i]].vz = cone->oldVertex[j][i].vz;
-                cone->object[i]->vertices[cone->coneIndex[j][i]].vx = cone->oldVertex[j][i].vx;
-                cone->object[i]->vertices[cone->coneIndex[j][i]].vy = cone->oldVertex[j][i].vy;
+                cone->object[i]->vertices[cone->coneIndex[j][i]].z = cone->oldVertex[j][i].z;
+                cone->object[i]->vertices[cone->coneIndex[j][i]].x = cone->oldVertex[j][i].x;
+                cone->object[i]->vertices[cone->coneIndex[j][i]].y = cone->oldVertex[j][i].y;
             }
         }
     }
@@ -199,9 +199,9 @@ void UpdateCone(Cone* cone)
         {
             if (cone->coneIndex[j][i] != -1)
             {
-                cone->object[i]->vertices[cone->coneIndex[j][i]].vz = cone->oldVertex[j][i].vz - disp + ((randy() - 16383) >> 9);
-                cone->object[i]->vertices[cone->coneIndex[j][i]].vx = cone->oldVertex[j][i].vx + ((randy() - 16383) >> 11);
-                cone->object[i]->vertices[cone->coneIndex[j][i]].vy = cone->oldVertex[j][i].vy + ((randy() - 16383) >> 11);
+                cone->object[i]->vertices[cone->coneIndex[j][i]].z = cone->oldVertex[j][i].z - disp + ((randy() - 16383) >> 9);
+                cone->object[i]->vertices[cone->coneIndex[j][i]].x = cone->oldVertex[j][i].x + ((randy() - 16383) >> 11);
+                cone->object[i]->vertices[cone->coneIndex[j][i]].y = cone->oldVertex[j][i].y + ((randy() - 16383) >> 11);
             }
         }
     }

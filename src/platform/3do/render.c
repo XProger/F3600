@@ -16,7 +16,7 @@ int32 yOffset;
 int gWidth, gHeight, gBorder;
 int gCylX, gCylZ;
 
-#define MAX_CEL_FACES       1024
+#define MAX_CEL_FACES       2048
 #define MAX_CEL_TEXTURES    512
 
 #define FRAME_WIDTH         320
@@ -24,7 +24,7 @@ int gCylX, gCylZ;
 
 #define MAX_VERTICES_BUFFER 4096
 
-VECTOR vBuffer[MAX_VERTICES_BUFFER];
+vec3i vBuffer[MAX_VERTICES_BUFFER];
 
 #define OT_SHIFT    4
 #define OT_SIZE     4096
@@ -485,44 +485,44 @@ void renderFrameEnd(void)
 MATRIX* gMatrix;
 int cx, cy, cz;
 
-#define DP3(row, v) ((gMatrix->m[row][0] * v->vx + gMatrix->m[row][1] * v->vy + gMatrix->m[row][2] * v->vz) >> 12)
+#define DP3(row, v) ((gMatrix->m[row][0] * v->x + gMatrix->m[row][1] * v->y + gMatrix->m[row][2] * v->z) >> 12)
 
 #define TRANSFORM(p, v) {\
-        p.vx = DP3(0, v) + cx;\
-        p.vy = DP3(1, v) + cy;\
-        p.vz = DP3(2, v) + cz;\
+        p.x = DP3(0, v) + cx;\
+        p.y = DP3(1, v) + cy;\
+        p.z = DP3(2, v) + cz;\
     }
 
 #define PROJECT(p) {\
-        int32 z = p.vz >> 3;\
+        int32 z = p.z >> 3;\
         if (z >= DIV_TABLE_SIZE) z = DIV_TABLE_SIZE - 1;\
         z = FixedInvU(z);\
-        p.vx = (p.vx * z) >> 12;\
-        p.vy = (p.vy * z) >> 12;\
+        p.x = (p.x * z) >> 12;\
+        p.y = (p.y * z) >> 12;\
     }
 
 #define AVG(p, a, b) {\
-        p->vx = (a->vx + b->vx) >> 1;\
-        p->vy = (a->vy + b->vy) >> 1;\
-        p->vz = (a->vz + b->vz) >> 1;\
+        p->x = (a->x + b->x) >> 1;\
+        p->y = (a->y + b->y) >> 1;\
+        p->z = (a->z + b->z) >> 1;\
     }
 
-int32 cross(const VECTOR *a, const VECTOR *b, const VECTOR *c)
+int32 cross(const vec3i *a, const vec3i *b, const vec3i *c)
 {
-    return (b->vx - a->vx) * (c->vy - a->vy) -
-           (c->vx - a->vx) * (b->vy - a->vy);
+    return (b->x - a->x) * (c->y - a->y) -
+           (c->x - a->x) * (b->y - a->y);
 }
 
-void ccbMap4_track(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, const VECTOR* v3, uint8* data, uint8* plut)
+void ccbMap4_track(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i* v2, const vec3i* v3, uint8* data, uint8* plut)
 {
-    int32 x0 = v0->vx;
-    int32 y0 = v0->vy;
-    int32 x1 = v1->vx;
-    int32 x2 = v2->vx;
-    int32 y2 = v2->vy;
-    int32 y1 = v1->vy;
-    int32 x3 = v3->vx;
-    int32 y3 = v3->vy;
+    int32 x0 = v0->x;
+    int32 y0 = v0->y;
+    int32 x1 = v1->x;
+    int32 x2 = v2->x;
+    int32 y2 = v2->y;
+    int32 y1 = v1->y;
+    int32 x3 = v3->x;
+    int32 y3 = v3->y;
 
     int32 hdx0 = (x1 - x0) << (20 - 5);
     int32 hdy0 = (y1 - y0) << (20 - 5);
@@ -531,7 +531,7 @@ void ccbMap4_track(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR*
     int32 vdx0 = (x3 - x0) << (16 - 5);
     int32 vdy0 = (y3 - y0) << (16 - 5);
 
-    f->ccb_Flags =
+    face->ccb_Flags =
         CCB_NPABS  |
         CCB_SPABS  |
         CCB_PPABS  |
@@ -547,31 +547,31 @@ void ccbMap4_track(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR*
         CCB_NOBLK  |
         CCB_BGND;
 
-    f->ccb_SourcePtr = data;
-    f->ccb_PLUTPtr = plut;
-    f->ccb_XPos = (x0 + xOffset) << 16;
-    f->ccb_YPos = (y0 + yOffset) << 16;
-    f->ccb_HDX = hdx0;
-    f->ccb_HDY = hdy0;
-    f->ccb_VDX = vdx0;
-    f->ccb_VDY = vdy0;
-    f->ccb_HDDX = (hdx1 - hdx0) >> 5;
-    f->ccb_HDDY = (hdy1 - hdy0) >> 5;
-    f->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8;// | PPMPC_2S_PDC;
-    f->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
-    f->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((4 - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
+    face->ccb_SourcePtr = data;
+    face->ccb_PLUTPtr = plut;
+    face->ccb_XPos = (x0 + xOffset) << 16;
+    face->ccb_YPos = (y0 + yOffset) << 16;
+    face->ccb_HDX = hdx0;
+    face->ccb_HDY = hdy0;
+    face->ccb_VDX = vdx0;
+    face->ccb_VDY = vdy0;
+    face->ccb_HDDX = (hdx1 - hdx0) >> 5;
+    face->ccb_HDDY = (hdy1 - hdy0) >> 5;
+    face->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8;// | PPMPC_2S_PDC;
+    face->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
+    face->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((4 - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
 }
 
-void ccbMap4(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, const VECTOR* v3, uint32 texIndex)
+void ccbMap4(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i* v2, const vec3i* v3, uint32 texIndex)
 {
-    int32 x0 = v0->vx;
-    int32 y0 = v0->vy;
-    int32 x1 = v1->vx;
-    int32 x2 = v2->vx;
-    int32 y2 = v2->vy;
-    int32 y1 = v1->vy;
-    int32 x3 = v3->vx;
-    int32 y3 = v3->vy;
+    int32 x0 = v0->x;
+    int32 y0 = v0->y;
+    int32 x1 = v1->x;
+    int32 x2 = v2->x;
+    int32 y2 = v2->y;
+    int32 y1 = v1->y;
+    int32 x3 = v3->x;
+    int32 y3 = v3->y;
 
     uint32 ws = 20 - 5;
     uint32 hs = 16 - 5;
@@ -592,18 +592,7 @@ void ccbMap4(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, c
     hddx = (hdx1 - hdx0) >> hs;
     hddy = (hdy1 - hdy0) >> hs;
 
-    f->ccb_XPos = (x0 + xOffset) << 16;
-    f->ccb_YPos = (y0 + yOffset) << 16;
-    f->ccb_HDX = hdx0;
-    f->ccb_HDY = hdy0;
-    f->ccb_VDX = vdx0;
-    f->ccb_VDY = vdy0;
-    f->ccb_HDDX = hddx;
-    f->ccb_HDDY = hddy;
-
-    f->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8 | PPMPC_2D_2;
-
-    f->ccb_Flags =
+    face->ccb_Flags =
         CCB_NPABS  |
         CCB_SPABS  |
         CCB_PPABS  |
@@ -618,21 +607,29 @@ void ccbMap4(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, c
         CCB_ACE    |
         CCB_NOBLK  |
         CCB_BGND;
-
-    f->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
-    f->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
-    f->ccb_SourcePtr = texture->data;
-    f->ccb_PLUTPtr = texture->plut;
+    face->ccb_SourcePtr = texture->data;
+    face->ccb_PLUTPtr = texture->plut;
+    face->ccb_XPos = (x0 + xOffset) << 16;
+    face->ccb_YPos = (y0 + yOffset) << 16;
+    face->ccb_HDX = hdx0;
+    face->ccb_HDY = hdy0;
+    face->ccb_VDX = vdx0;
+    face->ccb_VDY = vdy0;
+    face->ccb_HDDX = hddx;
+    face->ccb_HDDY = hddy;
+    face->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8 | PPMPC_2D_2;
+    face->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
+    face->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
 }
 
-void ccbMap3(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, uint32 texIndex)
+void ccbMap3(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i* v2, uint32 texIndex)
 {
-    int32 x0 = v0->vx;
-    int32 y0 = v0->vy;
-    int32 x1 = v1->vx;
-    int32 y1 = v1->vy;
-    int32 x2 = v2->vx;
-    int32 y2 = v2->vy;
+    int32 x0 = v0->x;
+    int32 y0 = v0->y;
+    int32 x1 = v1->x;
+    int32 y1 = v1->y;
+    int32 x2 = v2->x;
+    int32 y2 = v2->y;
 
     uint32 ws = 20 - 5;
     uint32 hs = 16 - 5;
@@ -651,18 +648,7 @@ void ccbMap3(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, u
     hddx = (hdx1 - hdx0) >> hs;
     hddy = (hdy1 - hdy0) >> hs;
 
-    f->ccb_XPos = (x0 + xOffset) << 16;
-    f->ccb_YPos = (y0 + yOffset) << 16;
-    f->ccb_HDX = hdx0;
-    f->ccb_HDY = hdy0;
-    f->ccb_VDX = 0;
-    f->ccb_VDY = 0;
-    f->ccb_HDDX = hddx;
-    f->ccb_HDDY = hddy;
-
-    f->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8 | PPMPC_2D_2;
-
-    f->ccb_Flags =
+    face->ccb_Flags =
         CCB_NPABS  |
         CCB_SPABS  |
         CCB_PPABS  |
@@ -678,10 +664,19 @@ void ccbMap3(FaceCEL* f, const VECTOR* v0, const VECTOR* v1, const VECTOR* v2, u
         CCB_NOBLK  |
         CCB_BGND;
 
-    f->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
-    f->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
-    f->ccb_SourcePtr = texture->data;
-    f->ccb_PLUTPtr = texture->plut;
+    face->ccb_SourcePtr = texture->data;
+    face->ccb_PLUTPtr = texture->plut;
+    face->ccb_XPos = (x0 + xOffset) << 16;
+    face->ccb_YPos = (y0 + yOffset) << 16;
+    face->ccb_HDX = hdx0;
+    face->ccb_HDY = hdy0;
+    face->ccb_VDX = 0;
+    face->ccb_VDY = 0;
+    face->ccb_HDDX = hddx;
+    face->ccb_HDDY = hddy;
+    face->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8 | PPMPC_2D_2;
+    face->ccb_PRE0 = ((32 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_4;
+    face->ccb_PRE1 = ((32 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((woffset - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET8_SHIFT);
 }
 
 void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
@@ -694,71 +689,11 @@ void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
 
 #define ZNEAR 64
 
-void renderSectionLow(const TrackSection* section)
+void trackTransProj(const vec3i* vertex, int32 start, int32 count)
 {
-    const Face* trackFace = track->faces + section->faceStart;
-    const VECTOR* vertices = track->vertices;
-    const VECTOR *v0, *v1, *v2, *v3;
-    VECTOR p0, p1, p2, p3;
-    FaceCEL* face;
-    int i, maxZ;
-    const TextureCEL* texture;
-
-    for (i = 0; i < section->faceCount; i++, trackFace++)
-    {
-        v0 = vertices + trackFace->vertex[0];
-        v1 = vertices + trackFace->vertex[1];
-        v2 = vertices + trackFace->vertex[2];
-        v3 = vertices + trackFace->vertex[3];
-
-        TRANSFORM(p0, v0);
-        TRANSFORM(p1, v1);
-        TRANSFORM(p2, v2);
-        TRANSFORM(p3, v3);
-
-#if 0
-        if (p0.vz < ZNEAR) p0.vz = ZNEAR;
-        if (p1.vz < ZNEAR) p1.vz = ZNEAR;
-        if (p2.vz < ZNEAR) p2.vz = ZNEAR;
-        if (p3.vz < ZNEAR) p3.vz = ZNEAR;
-#else
-        if (p0.vz <= ZNEAR || p1.vz <= ZNEAR || p2.vz <= ZNEAR || p3.vz <= ZNEAR)
-            continue;
-#endif
-
-        PROJECT(p0);
-        PROJECT(p1);
-        PROJECT(p2);
-        PROJECT(p3);
-
-        //if (cross(&p0, &p1, &p3) > 0)
-        //    continue;
-
-        maxZ = p0.vz;
-        if (maxZ < p1.vz) maxZ = p1.vz;
-        if (maxZ < p2.vz) maxZ = p2.vz;
-        if (maxZ < p3.vz) maxZ = p3.vz;
-
-        face = faceAdd(maxZ >> OT_SHIFT);
-        
-        texture = (TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex1[0] + ctrllibraryTextures];
-
-        if (trackFace->flags & FLIP_TEXTURE)
-        {
-            ccbMap4_track(face, &p0, &p1, &p2, &p3, texture->data, trackFace->plut);
-        }
-        else
-        {
-            ccbMap4_track(face, &p1, &p0, &p3, &p2, texture->data, trackFace->plut);
-        }
-    }
-}
-
-void TransProjTrackVertices(const VECTOR* vertex, int32 start, int32 count)
-{
-    const VECTOR* end = vertex + start + count;
-    VECTOR* out = vBuffer + start;
-    int32 vx, vy, vz;
+    const vec3i* end = vertex + start + count;
+    vec3i* out = vBuffer + start;
+    int32 x, y, z;
     int32 px, py, pz;
     int32 z;
 
@@ -770,32 +705,32 @@ void TransProjTrackVertices(const VECTOR* vertex, int32 start, int32 count)
 
     while (vertex < end)
     {
-        vx = DP3(0, vertex) + px;
-        vy = DP3(1, vertex) + py;
-        vz = DP3(2, vertex) + pz;
+        x = DP3(0, vertex) + px;
+        y = DP3(1, vertex) + py;
+        z = DP3(2, vertex) + pz;
 
-        if (vz < ZNEAR)
+        if (z < ZNEAR)
         {
-            vz = ZNEAR;
+            z = ZNEAR;
         }
 
-        z = vz >> 3;
+        z = z >> 3;
         if (z >= DIV_TABLE_SIZE) z = DIV_TABLE_SIZE - 1;
         z = FixedInvU(z);
-        out->vx = (vx * z) >> 12;
-        out->vy = (vy * z) >> 12;
-        out->vz = vz;
+        out->x = (x * z) >> 12;
+        out->y = (y * z) >> 12;
+        out->z = z;
 
         out++;
         vertex++;
     }
 }
 
-void TransTrackVertices(const VECTOR* vertex, int32 start, int32 count)
+void trackTrans(const vec3i* vertex, int32 start, int32 count)
 {
-    const VECTOR* end = vertex + start + count;
-    VECTOR* out = vBuffer + start;
-    int32 vx, vy, vz;
+    const vec3i* end = vertex + start + count;
+    vec3i* out = vBuffer + start;
+    int32 x, y, z;
     int32 px, py, pz;
 
     px = cx;
@@ -806,45 +741,45 @@ void TransTrackVertices(const VECTOR* vertex, int32 start, int32 count)
 
     while (vertex < end)
     {
-        vx = DP3(0, vertex) + px;
-        vy = DP3(1, vertex) + py;
-        vz = DP3(2, vertex) + pz;
+        x = DP3(0, vertex) + px;
+        y = DP3(1, vertex) + py;
+        z = DP3(2, vertex) + pz;
 
-        out->vx = vx;
-        out->vy = vy;
-        out->vz = vz;
+        out->x = x;
+        out->y = y;
+        out->z = z;
 
         out++;
         vertex++;
     }
 }
 
-void ProjTrackVertices(VECTOR* vertex, int32 start, int32 count)
+void trackProj(vec3i* vertex, int32 start, int32 count)
 {
-    VECTOR* end = vertex + start + count;
-    int32 vx, vy, vz;
+    vec3i* end = vertex + start + count;
+    int32 x, y, z;
     int32 z;
 
     vertex += start;
 
     while (vertex < end)
     {
-        vx = vertex->vx;
-        vy = vertex->vy;
-        vz = vertex->vz;
+        x = vertex->x;
+        y = vertex->y;
+        z = vertex->z;
 
-        if (vz < ZNEAR)
+        if (z < ZNEAR)
         {
-            vz = ZNEAR;
+            z = ZNEAR;
         }
 
-        z = vz >> 3;
+        z = z >> 3;
         if (z >= DIV_TABLE_SIZE) z = DIV_TABLE_SIZE - 1;
         z = FixedInvU(z);
 
-        vertex->vx = (vx * z) >> 12;
-        vertex->vy = (vy * z) >> 12;
-        vertex->vz = vz;
+        vertex->x = (x * z) >> 12;
+        vertex->y = (y * z) >> 12;
+        vertex->z = z;
 
         vertex++;
     }
@@ -853,16 +788,16 @@ void ProjTrackVertices(VECTOR* vertex, int32 start, int32 count)
 void renderSectionsMed(const TrackRange* ranges)
 {
     const Face* trackFace;
-    VECTOR *p0, *p1, *p2, *p3, *p01, *p12, *p23, *p30, *pM;
+    vec3i *p0, *p1, *p2, *p3, *p01, *p12, *p23, *p30, *pM;
     int i, j, maxZ;
-    VECTOR* p;
+    vec3i* p;
 
     for (j = 0; j < 2; j++, ranges++)
     {
         if (!ranges->fCount)
             break;
 
-        TransTrackVertices(track->vertices, ranges->vStart, ranges->vCount);
+        trackTrans((vec3i*)track->vertices, ranges->vStart, ranges->vCount);
         
         p = vBuffer + ranges->vStart + ranges->vCount;
         trackFace = track->faces + ranges->fStart;
@@ -886,7 +821,7 @@ void renderSectionsMed(const TrackRange* ranges)
             AVG(pM, p01, p23);
         }
         
-        ProjTrackVertices(vBuffer, ranges->vStart, ranges->vCount + ranges->fCount * 5);
+        trackProj(vBuffer, ranges->vStart, ranges->vCount + ranges->fCount * 5);
 
         p = vBuffer + ranges->vStart + ranges->vCount;
         trackFace = track->faces + ranges->fStart;
@@ -897,7 +832,7 @@ void renderSectionsMed(const TrackRange* ranges)
             p2 = vBuffer + trackFace->vertex[2];
             p3 = vBuffer + trackFace->vertex[3];
 
-            if (p0->vz <= ZNEAR && p1->vz <= ZNEAR && p2->vz <= ZNEAR && p3->vz <= ZNEAR)
+            if (p0->z <= ZNEAR && p1->z <= ZNEAR && p2->z <= ZNEAR && p3->z <= ZNEAR)
                 continue;
 
             p01 = p + 0;
@@ -906,13 +841,13 @@ void renderSectionsMed(const TrackRange* ranges)
             p30 = p + 3;
             pM = p + 4;
 
-            //if (cross(&p0, &p1, &p3) > 0)
-            //    continue;
+            if (cross(p0, p1, p3) > 0)
+                continue;
 
-            maxZ = p0->vz;
-            if (maxZ < p1->vz) maxZ = p1->vz;
-            if (maxZ < p2->vz) maxZ = p2->vz;
-            if (maxZ < p3->vz) maxZ = p3->vz;
+            maxZ = p0->z;
+            if (maxZ < p1->z) maxZ = p1->z;
+            if (maxZ < p2->z) maxZ = p2->z;
+            if (maxZ < p3->z) maxZ = p3->z;
 
             maxZ >>= OT_SHIFT;
 
@@ -937,7 +872,7 @@ void renderSectionsMed(const TrackRange* ranges)
 void renderSectionsLow(const TrackRange* ranges)
 {
     const Face* trackFace;
-    VECTOR *p0, *p1, *p2, *p3;
+    vec3i *p0, *p1, *p2, *p3;
     FaceCEL* face;
     int i, j, maxZ;
     const TextureCEL* texture;
@@ -947,7 +882,7 @@ void renderSectionsLow(const TrackRange* ranges)
         if (!ranges->fCount)
             break;
 
-        TransProjTrackVertices(track->vertices, ranges->vStart, ranges->vCount);
+        trackTransProj((vec3i*)track->vertices, ranges->vStart, ranges->vCount);
 
         trackFace = track->faces + ranges->fStart;
 
@@ -961,10 +896,10 @@ void renderSectionsLow(const TrackRange* ranges)
             //if (p0->vz <= ZNEAR || p1->vz <= ZNEAR || p2->vz <= ZNEAR || p3->vz <= ZNEAR)
             //    continue;
 
-            //if (cross(&p0, &p1, &p3) > 0)
-            //    continue;
+            if (cross(p0, p1, p3) > 0)
+                continue;
 
-            maxZ = p0->vz;
+            maxZ = p0->z;
             //if (maxZ < p1->vz) maxZ = p1->vz;
             //if (maxZ < p2->vz) maxZ = p2->vz;
             //if (maxZ < p3->vz) maxZ = p3->vz;
@@ -1001,10 +936,10 @@ void renderTrack(void)
 
 #define DP3_XYZ(row) ((gMatrix->m[row][0] * x + gMatrix->m[row][1] * y + gMatrix->m[row][2] * z) >> 12)
 
-void transformMesh(const SVECTOR* vertices, int32 count)
+void transformMesh(const vec4s* vertices, int32 count)
 {
-    VECTOR* dst = vBuffer;
-    const SVECTOR* end = vertices + count;
+    vec3i* dst = vBuffer;
+    const vec4s* end = vertices + count;
     int32 mx = cx;
     int32 my = cy;
     int32 mz = cz;
@@ -1034,9 +969,9 @@ void transformMesh(const SVECTOR* vertices, int32 count)
         }
         z = FixedInvU(z);
 
-        dst->vx = (px * z) >> 12;
-        dst->vy = (py * z) >> 12;
-        dst->vz = pz;
+        dst->x = (px * z) >> 12;
+        dst->y = (py * z) >> 12;
+        dst->z = pz;
         dst++;
 
         vertices++;
@@ -1045,7 +980,7 @@ void transformMesh(const SVECTOR* vertices, int32 count)
 
 void renderQuadFace(const int16* indices, int32 texIndex)
 {
-    const VECTOR *p0, *p1, *p2, *p3;
+    const vec3i *p0, *p1, *p2, *p3;
     int32 avgZ;
 
     p0 = vBuffer + indices[0];
@@ -1053,33 +988,33 @@ void renderQuadFace(const int16* indices, int32 texIndex)
     p2 = vBuffer + indices[2];
     p3 = vBuffer + indices[3];
 
-    if (p0->vz <= ZNEAR || p1->vz <= ZNEAR || p2->vz <= ZNEAR || p3->vz <= ZNEAR)
+    if (p0->z <= ZNEAR || p1->z <= ZNEAR || p2->z <= ZNEAR || p3->z <= ZNEAR)
         return;
 
     if (cross(p0, p1, p3) <= 0)
         return;
 
-    avgZ = (p0->vz + p1->vz + p2->vz + p3->vz) >> 2;
+    avgZ = (p0->z + p1->z + p2->z + p3->z) >> 2;
 
     ccbMap4(faceAdd(avgZ >> OT_SHIFT), p0, p1, p3, p2, texIndex);
 }
 
 void renderTriFace(const int16* indices, int32 texIndex)
 {
-    const VECTOR *p0, *p1, *p2;
+    const vec3i *p0, *p1, *p2;
     int32 avgZ;
 
     p0 = vBuffer + indices[0];
     p1 = vBuffer + indices[1];
     p2 = vBuffer + indices[2];
 
-    if (p0->vz <= ZNEAR || p1->vz <= ZNEAR || p2->vz <= ZNEAR)
+    if (p0->z <= ZNEAR || p1->z <= ZNEAR || p2->z <= ZNEAR)
         return;
 
     if (cross(p0, p1, p2) <= 0)
         return;
 
-    avgZ = (p0->vz + p1->vz + p2->vz + p2->vz) >> 2;
+    avgZ = (p0->z + p1->z + p2->z + p2->z) >> 2;
 
     ccbMap3(faceAdd(avgZ >> OT_SHIFT), p0, p1, p2, texIndex);
 }
@@ -1088,7 +1023,6 @@ void renderMesh(Primitive* prim, int32 count)
 {
     int i;
     Prm poly;
-    const VECTOR* v;
 
     poly.primitive = prim;
 
@@ -1419,11 +1353,11 @@ void renderMesh(Primitive* prim, int32 count)
                     h1 = 0;
                 }
                 poly.spr++;
-
+                /*
                 v = vBuffer + f->coord;
                 sx = gCylX * w >> 12;
                 sz = gCylZ * w >> 12;
-                /*
+
                 renderSetTexture(t);
                 stateCheck();
 
@@ -1457,7 +1391,6 @@ void renderMesh(Primitive* prim, int32 count)
 
 void renderObject(const Object* object)
 {
-    /*
     const MATRIX* matrix;
 
     matrix = GetSkeletonMatrix(object->skeleton);
@@ -1467,7 +1400,6 @@ void renderObject(const Object* object)
     transformMesh(object->vertices, object->vertexCount);
 
     renderMesh(object->primitives, object->primitiveCount);
-    */
 }
 
 void renderShip(const Object* object, uint32 color)

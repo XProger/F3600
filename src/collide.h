@@ -7,10 +7,10 @@
 void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes);
 void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int, int);
 int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* shipIndex);
-int PlaneLineCollision(const VECTOR* plane_point, const VECTOR* ship_pos, const SVector* normal);
+int PlaneLineCollision(const vec4i* plane_point, const vec4i* ship_pos, const vec3s* normal);
 void Ship2Track(ShipData* playerShip, Face* facePtr);
 void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha);
 void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha);
-void Reflection(VECTOR* incidence, const SVector* normal);
-int AngleOfCollision(const SVECTOR* normal, const VECTOR* ship_point);
-int CheckPolygonCollision(const Face* facePtr, const VECTOR* pos, int alpha);
+void Reflection(vec4i* incidence, const vec3s* normal);
+int AngleOfCollision(const vec4s* normal, const vec4i* ship_point);
+int CheckPolygonCollision(const Face* facePtr, const vec4i* pos, int alpha);

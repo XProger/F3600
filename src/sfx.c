@@ -120,16 +120,16 @@ void SfxFree(void)
 
 }
 
-short AdjustDirectionalNote(enum SfxType id, const VECTOR* pos)
+short AdjustDirectionalNote(enum SfxType id, const vec4i* pos)
 {
-    VECTOR distance;
+    vec4i distance;
     int mag;
     int voll, volr;
     short angle;
 
-    distance.vx = (pos->vx + cameraPtr->camPos->relative.t[0]) >> 3;
-    distance.vy = (pos->vy + cameraPtr->camPos->relative.t[1]) >> 3;
-    distance.vz = (pos->vz + cameraPtr->camPos->relative.t[2]) >> 3;
+    distance.x = (pos->x + cameraPtr->camPos->relative.t[0]) >> 3;
+    distance.y = (pos->y + cameraPtr->camPos->relative.t[1]) >> 3;
+    distance.z = (pos->z + cameraPtr->camPos->relative.t[2]) >> 3;
 
     mag = GetMagnitude(&distance);
     mag = mag << 2;
@@ -140,7 +140,7 @@ short AdjustDirectionalNote(enum SfxType id, const VECTOR* pos)
 
     volr = voll;
 
-    angle = -ratan2(distance.vx, distance.vz) + cameraPtr->hdg;
+    angle = -ratan2(distance.x, distance.z) + cameraPtr->hdg;
     angle = ang(angle);
 
     if (angle > 1024)
@@ -169,12 +169,12 @@ short AdjustDirectionalNote(enum SfxType id, const VECTOR* pos)
 short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCamera* camera)
 {
     uint16 i;
-    VECTOR distance;
+    vec4i distance;
     int mag, smallestMag;
     short ident;
     int voll, volr;
     short angle;
-    VECTOR dopler;
+    vec4i dopler;
     int doplerMag;
 
 #ifdef __3DO__ // TODO optimize
@@ -188,9 +188,9 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
     {
         if (i != ownShip)
         {
-            distance.vx = (shipIndex[i].pos.vx + camera->camPos->relative.t[0]) >> 3;
-            distance.vy = (shipIndex[i].pos.vy + camera->camPos->relative.t[1]) >> 3;
-            distance.vz = (shipIndex[i].pos.vz + camera->camPos->relative.t[2]) >> 3;
+            distance.x = (shipIndex[i].pos.x + camera->camPos->relative.t[0]) >> 3;
+            distance.y = (shipIndex[i].pos.y + camera->camPos->relative.t[1]) >> 3;
+            distance.z = (shipIndex[i].pos.z + camera->camPos->relative.t[2]) >> 3;
 
             mag = GetMagnitude(&distance);
 
@@ -221,7 +221,7 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
         if (volr < 0)
             volr = 0;
 
-        angle = -ratan2(distance.vx, distance.vz) + camera->hdg;
+        angle = -ratan2(distance.x, distance.z) + camera->hdg;
         angle = ang(angle);
 
         if (angle > 1024)
@@ -235,13 +235,13 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
         //voll >>= 2;
         //volr >>= 2;
 
-        dopler.vx = (shipIndex[ident].vel.vx >> 6) - camera->vel.vx;
-        dopler.vy = (shipIndex[ident].vel.vy >> 6) - camera->vel.vy;
-        dopler.vz = (shipIndex[ident].vel.vz >> 6) - camera->vel.vz;
+        dopler.x = (shipIndex[ident].vel.x >> 6) - camera->vel.x;
+        dopler.y = (shipIndex[ident].vel.y >> 6) - camera->vel.y;
+        dopler.z = (shipIndex[ident].vel.z >> 6) - camera->vel.z;
 
-        dopler.vx += distance.vx;
-        dopler.vy += distance.vy;
-        dopler.vz += distance.vz;
+        dopler.x += distance.x;
+        dopler.y += distance.y;
+        dopler.z += distance.z;
 
         doplerMag = mag - GetMagnitude(&dopler);
 
@@ -310,7 +310,7 @@ void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
         (vol >> 2) + ((vol * playerShip->l_brake_rot) >> 9));
 }
 
-int PlayDirectionalNote(enum SfxType id, const VECTOR* pos)
+int PlayDirectionalNote(enum SfxType id, const vec4i* pos)
 {
     int channel = PlayNote(id);
     AdjustDirectionalNote(id, pos);

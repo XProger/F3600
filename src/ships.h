@@ -41,15 +41,15 @@ typedef struct ShipData
     TrackSection *nearTrkSect, *prevShipSect;
     int attr; /* Ship attributes */
     int combatAttr; /* Ship attributes */
-    VECTOR unitVecNose; /* SVECTOR  ? */ /* Unit vector along ships nose */
-    VECTOR unitVecWing; /* SVECTOR  ? */ /* Unit vector along ships nose */
-    VECTOR pos; /* 32bit ship position */
-    VECTOR vel, acc; /* Velocity, accn vectors for ship */
+    vec4i unitVecNose; /* vec4s  ? */ /* Unit vector along ships nose */
+    vec4i unitVecWing; /* vec4s  ? */ /* Unit vector along ships nose */
+    vec4i pos; /* 32bit ship position */
+    vec4i vel, acc; /* Velocity, accn vectors for ship */
     short hdg, pitch, roll; /* Orientation attributes */
     short vhdg, vpitch, vroll;
     short ahdg;
     short mass; /* Mass of ship */
-    VECTOR thrust; /* Thrust vector */
+    vec4i thrust; /* Thrust vector */
     short r_brake_rot, l_brake_rot; /* Air brakes */
     uint16 speed; /* speed */
     short thrust_mag; /* Thrust magnitude */
@@ -84,7 +84,7 @@ typedef struct ShipData
     uint32 color;
 
     /***** Control Routines *****/
-    void (*updateControl)(VECTOR*, struct ShipData*, Face*, int);
+    void (*updateControl)(vec4i*, struct ShipData*, Face*, int);
     void (*update)(struct ShipData*, int, struct WeaponData*);
 
 } ShipData;

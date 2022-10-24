@@ -1,24 +1,3 @@
-typedef struct Normal
-{
-    signed char vx;
-    signed char vy;
-    signed char vz;
-} Normal;
-
-typedef struct Vector
-{
-    long vx;
-    long vy;
-    long vz;
-} Vector;
-
-typedef struct SVector
-{
-    short vx;
-    short vy;
-    short vz;
-} SVector;
-
 /* Face flags */
 #define TRACK_BASE          1
 #define WEAPON_GRID_LEFT    2
@@ -31,7 +10,7 @@ typedef struct SVector
 typedef struct Face
 {
     int16 vertex[4];
-    SVector normal;
+    vec3s normal;
     uint8 flags;
     uint8 texture;
     uint8* plut;
@@ -40,7 +19,7 @@ typedef struct Face
 typedef struct Face
 {
     int16 vertex[4];
-    SVector normal;
+    vec3s normal;
     uint8 texture;
     uint8 flags;
     uint8 red;
@@ -73,7 +52,7 @@ typedef struct TrackSection
     struct TrackSection* prevSection;
     struct TrackSection* nextSection;
 
-    Vector centre;
+    vec3i centre;
 
     uint16 faceStart;
     uint16 faceCount;
@@ -96,7 +75,7 @@ typedef struct TrackSection
     struct TrackSection* prevSection;
     struct TrackSection* nextSection;
 
-    Vector centre;
+    vec3i centre;
 
     short unused_version;
     short unused_pad;
@@ -128,13 +107,20 @@ typedef struct TrackSection
 } TrackSection;
 #endif
 
+typedef struct TrackVertex
+{
+    long x;
+    long y;
+    long z;
+} TrackVertex;
+
 typedef struct TrackData
 {
     long vertexCount;
     long faceCount;
     long sectionCount;
 
-    VECTOR* vertices;
+    TrackVertex* vertices;
     Face* faces;
     TrackSection* sections;
     int16* viewList;
@@ -146,7 +132,7 @@ typedef struct TrackCamera
     TrackSection* section;
     short hdg, pitch, roll;
     short vhdg, vpitch, vroll;
-    SVECTOR vel;
+    vec4s vel;
 } TrackCamera;
 
 #ifdef __3DO__

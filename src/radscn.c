@@ -11,9 +11,9 @@ void SceneRadiusCheck(Object* objects)
     short i, j;
     Object* object;
     MATRIX* matrix;
-    Vector* sectionCentre;
+    vec3i* sectionCentre;
     short objectCount;
-    VECTOR vector;
+    vec4i vector;
     long distance;
     short objectList[ObjectListMax];
     short withinLocal;
@@ -56,15 +56,15 @@ void SceneRadiusCheck(Object* objects)
             matrix = &object->skeleton->relative;
             sectionCentre = &section->centre;
 
-            vector.vx = matrix->t[0] - sectionCentre->vx;
-            vector.vy = matrix->t[1] - sectionCentre->vy;
-            vector.vz = matrix->t[2] - sectionCentre->vz;
+            vector.x = matrix->t[0] - sectionCentre->x;
+            vector.y = matrix->t[1] - sectionCentre->y;
+            vector.z = matrix->t[2] - sectionCentre->z;
 
             if (section->flags & Jump)
             {
-                if ((abs(vector.vx) < (section->globalRadius * 2)) && (abs(vector.vy) < (section->globalRadius * 2)) && (abs(vector.vz) < (section->globalRadius * 2)))
+                if ((abs(vector.x) < (section->globalRadius * 2)) && (abs(vector.y) < (section->globalRadius * 2)) && (abs(vector.z) < (section->globalRadius * 2)))
                 {
-                    distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+                    distance = SquareRoot0((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
 
                     distance = distance - object->extent;
 
@@ -77,9 +77,9 @@ void SceneRadiusCheck(Object* objects)
             }
             else
             {
-                if ((abs(vector.vx) < section->globalRadius) && (abs(vector.vy) < section->globalRadius) && (abs(vector.vz) < section->globalRadius))
+                if ((abs(vector.x) < section->globalRadius) && (abs(vector.y) < section->globalRadius) && (abs(vector.z) < section->globalRadius))
                 {
-                    distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+                    distance = SquareRoot0((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
 
                     distance = distance - object->extent;
 
@@ -101,13 +101,13 @@ void SceneRadiusCheck(Object* objects)
                     matrix = &object->skeleton->relative;
                     sectionCentre = &visSection->centre;
 
-                    vector.vx = matrix->t[0] - sectionCentre->vx;
-                    vector.vy = matrix->t[1] - sectionCentre->vy;
-                    vector.vz = matrix->t[2] - sectionCentre->vz;
+                    vector.x = matrix->t[0] - sectionCentre->x;
+                    vector.y = matrix->t[1] - sectionCentre->y;
+                    vector.z = matrix->t[2] - sectionCentre->z;
 
-                    if ((abs(vector.vx) < section->localRadius) && (abs(vector.vy) < section->localRadius) && (abs(vector.vz) < section->localRadius))
+                    if ((abs(vector.x) < section->localRadius) && (abs(vector.y) < section->localRadius) && (abs(vector.z) < section->localRadius))
                     {
-                        distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+                        distance = SquareRoot0((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
 
                         distance = distance - object->extent;
 
@@ -128,13 +128,13 @@ void SceneRadiusCheck(Object* objects)
                     matrix = &object->skeleton->relative;
                     sectionCentre = &visSection->centre;
 
-                    vector.vx = matrix->t[0] - sectionCentre->vx;
-                    vector.vy = matrix->t[1] - sectionCentre->vy;
-                    vector.vz = matrix->t[2] - sectionCentre->vz;
+                    vector.x = matrix->t[0] - sectionCentre->x;
+                    vector.y = matrix->t[1] - sectionCentre->y;
+                    vector.z = matrix->t[2] - sectionCentre->z;
 
-                    if ((abs(vector.vx) < section->localRadius) && (abs(vector.vy) < section->localRadius) && (abs(vector.vz) < section->localRadius))
+                    if ((abs(vector.x) < section->localRadius) && (abs(vector.y) < section->localRadius) && (abs(vector.z) < section->localRadius))
                     {
-                        distance = SquareRoot0((vector.vx * vector.vx) + (vector.vy * vector.vy) + (vector.vz * vector.vz));
+                        distance = SquareRoot0((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
 
                         distance = distance - object->extent;
 

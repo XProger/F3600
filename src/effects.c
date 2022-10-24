@@ -39,9 +39,9 @@ void UpdateEffects(void)
 
         if (fx->count > 0)
         {
-            fx->x += fx->vx;
-            fx->y += fx->vy;
-            fx->z += fx->vz;
+            fx->x += fx->x;
+            fx->y += fx->y;
+            fx->z += fx->z;
 
             fx->count--;
         }
@@ -127,36 +127,36 @@ void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
                     {
                         if (noToRelease == 0)
                         {
-                            fx->x = weapon->pos.vx;
-                            fx->y = weapon->pos.vy;
-                            fx->z = weapon->pos.vz;
-                            fx->vx = (int8)randy() >> 4;
-                            fx->vy = (int8)randy() >> 4;
-                            fx->vz = (int8)randy() >> 4;
+                            fx->x = weapon->pos.x;
+                            fx->y = weapon->pos.y;
+                            fx->z = weapon->pos.z;
+                            fx->x = (int8)randy() >> 4;
+                            fx->y = (int8)randy() >> 4;
+                            fx->z = (int8)randy() >> 4;
                             fx->count = 20 + (randy() % 10);
                             fx->size = 7;
                             fx->type = exploType;
                         }
                         else if (noToRelease == 1)
                         {
-                            fx->x = weapon->pos.vx - (weapon->vel.vx >> 1);
-                            fx->y = weapon->pos.vy - (weapon->vel.vy >> 1);
-                            fx->z = weapon->pos.vz - (weapon->vel.vz >> 1);
-                            fx->vx = 0;
-                            fx->vy = 0;
-                            fx->vz = 0;
+                            fx->x = weapon->pos.x - (weapon->vel.x >> 1);
+                            fx->y = weapon->pos.y - (weapon->vel.y >> 1);
+                            fx->z = weapon->pos.z - (weapon->vel.z >> 1);
+                            fx->x = 0;
+                            fx->y = 0;
+                            fx->z = 0;
                             fx->count = 5;
                             fx->size = 7;
                             fx->type = (exploType == FX_SMOKE) ? FX_FIRE : exploType;
                         }
                         else if (noToRelease == 2)
                         {
-                            fx->x = weapon->pos.vx - (weapon->vel.vx >> 2);
-                            fx->y = weapon->pos.vy - (weapon->vel.vy >> 2);
-                            fx->z = weapon->pos.vz - (weapon->vel.vz >> 2);
-                            fx->vx = (int8)randy() >> 4;
-                            fx->vy = (int8)randy() >> 4;
-                            fx->vz = (int8)randy() >> 4;
+                            fx->x = weapon->pos.x - (weapon->vel.x >> 2);
+                            fx->y = weapon->pos.y - (weapon->vel.y >> 2);
+                            fx->z = weapon->pos.z - (weapon->vel.z >> 2);
+                            fx->x = (int8)randy() >> 4;
+                            fx->y = (int8)randy() >> 4;
+                            fx->z = (int8)randy() >> 4;
                             fx->count = 20 + (randy() % 10);
                             fx->size = 7;
                             fx->type = exploType;
@@ -199,19 +199,19 @@ void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
 
                 if (fx->count == 0)
                 {
-                    fx->x = weapon->pos.vx;
-                    fx->y = weapon->pos.vy;
-                    fx->z = weapon->pos.vz;
+                    fx->x = weapon->pos.x;
+                    fx->y = weapon->pos.y;
+                    fx->z = weapon->pos.z;
 
-                    fx->vx = (int8)randy() >> 2;
-                    fx->vy = (int8)randy() >> 2;
-                    fx->vz = (int8)randy() >> 2;
+                    fx->x = (int8)randy() >> 2;
+                    fx->y = (int8)randy() >> 2;
+                    fx->z = (int8)randy() >> 2;
 
                     if (weapon->count == SHIP_EXPLODE)
                     {
-                        fx->vx += (int16)(shipIndex[weapon->targetShip].vel.vx >> 6);
-                        fx->vy += (int16)(shipIndex[weapon->targetShip].vel.vy >> 6);
-                        fx->vz += (int16)(shipIndex[weapon->targetShip].vel.vz >> 6);
+                        fx->x += (int16)(shipIndex[weapon->targetShip].vel.x >> 6);
+                        fx->y += (int16)(shipIndex[weapon->targetShip].vel.y >> 6);
+                        fx->z += (int16)(shipIndex[weapon->targetShip].vel.z >> 6);
                     }
 
                     fx->count = -((((uint8)randy()) >> 4) + 8);
@@ -463,9 +463,9 @@ void DrawShadows(ShipData* shipIndex)
     Shadow s;
     int i, j, px, py, pz, cx, cy, cz, nx, nz, wx, wz;
     int alpha, intensity;
-    const VECTOR* facePoint;
+    const vec4i* facePoint;
     ShipData* playerShip;
-    VECTOR v[4];
+    vec4i v[4];
 
     cx = ctrlcamera.camPos->absolute.t[0];
     cy = ctrlcamera.camPos->absolute.t[1];
@@ -492,33 +492,33 @@ void DrawShadows(ShipData* shipIndex)
             facePtr++;
         }
 
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
-        px = playerShip->pos.vx;
-        py = playerShip->pos.vy;
-        pz = playerShip->pos.vz;
+        px = playerShip->pos.x;
+        py = playerShip->pos.y;
+        pz = playerShip->pos.z;
 
-        nx = playerShip->unitVecNose.vx >> SHADOW_SHIFT_N;
-        nz = playerShip->unitVecNose.vz >> SHADOW_SHIFT_N;
+        nx = playerShip->unitVecNose.x >> SHADOW_SHIFT_N;
+        nz = playerShip->unitVecNose.z >> SHADOW_SHIFT_N;
 
-        wx = playerShip->unitVecWing.vx >> SHADOW_SHIFT_W;
-        wz = playerShip->unitVecWing.vz >> SHADOW_SHIFT_W;
+        wx = playerShip->unitVecWing.x >> SHADOW_SHIFT_W;
+        wz = playerShip->unitVecWing.z >> SHADOW_SHIFT_W;
 
-        v[0].vx = px + nx - wx;
-        v[0].vy = py;
-        v[0].vz = pz + nz - wz;
+        v[0].x = px + nx - wx;
+        v[0].y = py;
+        v[0].z = pz + nz - wz;
 
-        v[1].vx = px + nx + wx;
-        v[1].vy = py;
-        v[1].vz = pz + nz + wz;
+        v[1].x = px + nx + wx;
+        v[1].y = py;
+        v[1].z = pz + nz + wz;
 
-        v[2].vx = px - nx + wx;
-        v[2].vy = py;
-        v[2].vz = pz - nz + wz;
+        v[2].x = px - nx + wx;
+        v[2].y = py;
+        v[2].z = pz - nz + wz;
 
-        v[3].vx = px - nx - wx;
-        v[3].vy = py;
-        v[3].vz = pz - nz - wz;
+        v[3].x = px - nx - wx;
+        v[3].y = py;
+        v[3].z = pz - nz - wz;
 
         intensity = 0;
 
@@ -530,26 +530,26 @@ void DrawShadows(ShipData* shipIndex)
 
             alpha -= SHADOW_BIAS;
 
-            v[j].vx -= (alpha * facePtr->normal.vx) >> 12;
-            v[j].vy -= (alpha * facePtr->normal.vy) >> 12;
-            v[j].vz -= (alpha * facePtr->normal.vz) >> 12;
+            v[j].x -= (alpha * facePtr->normal.x) >> 12;
+            v[j].y -= (alpha * facePtr->normal.y) >> 12;
+            v[j].z -= (alpha * facePtr->normal.z) >> 12;
         }
 
-        s.x0 = v[0].vx;
-        s.y0 = v[0].vy;
-        s.z0 = v[0].vz;
+        s.x0 = v[0].x;
+        s.y0 = v[0].y;
+        s.z0 = v[0].z;
 
-        s.x1 = v[1].vx;
-        s.y1 = v[1].vy;
-        s.z1 = v[1].vz;
+        s.x1 = v[1].x;
+        s.y1 = v[1].y;
+        s.z1 = v[1].z;
 
-        s.x2 = v[2].vx;
-        s.y2 = v[2].vy;
-        s.z2 = v[2].vz;
+        s.x2 = v[2].x;
+        s.y2 = v[2].y;
+        s.z2 = v[2].z;
 
-        s.x3 = v[3].vx;
-        s.y3 = v[3].vy;
-        s.z3 = v[3].vz;
+        s.x3 = v[3].x;
+        s.y3 = v[3].y;
+        s.z3 = v[3].z;
 
         s.texture = gEffectTextures[FX_SHADOW];
 
@@ -610,7 +610,7 @@ void InitAuroraBorialis(Object* object)
     short* coords;
     int count = 0;
     short y;
-    SVECTOR* vertex;
+    vec4s* vertex;
 
     poly.primitive = object->primitives;
     primitiveCount = object->primitiveCount;
@@ -626,7 +626,7 @@ void InitAuroraBorialis(Object* object)
 
             case TypeGT4:
                 coords = poly.gt4->coords;
-                y = vertex[coords[0]].vy;
+                y = vertex[coords[0]].y;
                 if (y < -6000) /* -8000 */
                 {
                     ASSERT(count < MAX_AURORA_PRIMS);

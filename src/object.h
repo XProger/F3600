@@ -271,9 +271,9 @@ typedef struct Spline
 {
     short type; /* Type of primitive */
     short flag;
-    VECTOR control1;
-    VECTOR position;
-    VECTOR control2;
+    vec4i control1;
+    vec4i position;
+    vec4i control2;
     CVECTOR colour;
 } Spline;
 
@@ -281,7 +281,7 @@ typedef struct PointLight
 {
     short type;
     short flag;
-    VECTOR position;
+    vec4i position;
     CVECTOR colour;
     short startFalloff;
     short endFalloff;
@@ -291,8 +291,8 @@ typedef struct SpotLight
 {
     short type;
     short flag;
-    VECTOR position;
-    SVECTOR direction;
+    vec4i position;
+    vec4s direction;
     CVECTOR colour;
     short startFalloff;
     short endFalloff;
@@ -304,7 +304,7 @@ typedef struct InfiniteLight
 {
     short type;
     short flag;
-    SVECTOR direction;
+    vec4s direction;
     CVECTOR colour;
 } InfiniteLight;
 
@@ -350,11 +350,11 @@ typedef struct Object
     char name[16];
 
     short vertexCount; /* Number of Vertices */
-    SVECTOR* vertices; /* Pointer to 3D Points */
+    vec4s* vertices; /* Pointer to 3D Points */
 
     /*TODO unused*/
-    short normalCount; /* Number of Normals */
-    SVECTOR* normals; /* Pointer to 3D Normals */
+    short unused_normalCount; /* Number of Normals */
+    vec4s* unused_normals; /* Pointer to 3D Normals */
 
     short primitiveCount; /* Number of Primitives */
     Primitive* primitives; /* Pointer to Z Sort Primitives */
@@ -380,7 +380,7 @@ typedef union Prm
     long* lptr;
     Object* object;
     Skeleton* skeleton;
-    SVECTOR* svector;
+    vec4s* svector;
     Primitive* primitive;
 
     F3* f3;

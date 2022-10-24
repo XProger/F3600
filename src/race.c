@@ -143,11 +143,11 @@ int InitCrowdSound(Object** prm, short prmCount, Object** lostad, int stadCount)
 void AdjustCrowdSound(Object** lostad, int stadCount)
 {
     int i;
-    VECTOR distance;
+    vec4i distance;
     int mag;
     int chosen;
     int smallestMag;
-    VECTOR pos;
+    vec4i pos;
 
 #ifdef __3DO__ // TODO optimize
     return;
@@ -160,9 +160,9 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
 
     for (i = 0; i < stadCount; i++)
     {
-        distance.vx = (lostad[i]->skeleton->relative.t[0] + cameraPtr->camPos->relative.t[0]) >> 3;
-        distance.vy = (lostad[i]->skeleton->relative.t[1] + cameraPtr->camPos->relative.t[1]) >> 3;
-        distance.vz = (lostad[i]->skeleton->relative.t[2] + cameraPtr->camPos->relative.t[2]) >> 3;
+        distance.x = (lostad[i]->skeleton->relative.t[0] + cameraPtr->camPos->relative.t[0]) >> 3;
+        distance.y = (lostad[i]->skeleton->relative.t[1] + cameraPtr->camPos->relative.t[1]) >> 3;
+        distance.z = (lostad[i]->skeleton->relative.t[2] + cameraPtr->camPos->relative.t[2]) >> 3;
 
         mag = GetMagnitude(&distance);
 
@@ -175,9 +175,9 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
 
     if (smallestMag < 8192)
     {
-        pos.vx = lostad[chosen]->skeleton->relative.t[0];
-        pos.vy = lostad[chosen]->skeleton->relative.t[1];
-        pos.vz = lostad[chosen]->skeleton->relative.t[2];
+        pos.x = lostad[chosen]->skeleton->relative.t[0];
+        pos.y = lostad[chosen]->skeleton->relative.t[1];
+        pos.z = lostad[chosen]->skeleton->relative.t[2];
 
         AdjustDirectionalNote(SFX_CROWD, &pos);
     }

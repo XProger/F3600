@@ -103,11 +103,11 @@ void SetSpread(ShipData* shipIndex, ConfigData* gameData, int position, int i)
 void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 {
     int i;
-    VECTOR distance;
+    vec4i distance;
     Object* obj;
     int mag;
-    SVECTOR toCentre;
-    VECTOR v2;
+    vec4s toCentre;
+    vec4i v2;
     long flag;
     MATRIX* matrix;
 
@@ -115,21 +115,24 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        distance.vx = (shipIndex[i].pos.vx + ctrlcamera.camPos->relative.t[0]) >> 3;
-        distance.vy = (shipIndex[i].pos.vy + ctrlcamera.camPos->relative.t[1]) >> 3;
-        distance.vz = (shipIndex[i].pos.vz + ctrlcamera.camPos->relative.t[2]) >> 3;
+        if (!((i == ownShip) || (raceType != TIME_TRIAL)))
+            continue;
+
+        distance.x = (shipIndex[i].pos.x + ctrlcamera.camPos->relative.t[0]) >> 3;
+        distance.y = (shipIndex[i].pos.y + ctrlcamera.camPos->relative.t[1]) >> 3;
+        distance.z = (shipIndex[i].pos.z + ctrlcamera.camPos->relative.t[2]) >> 3;
 
         mag = GetMagnitude(&distance);
 
-        toCentre.vx = (shipIndex[i].pos.vx + ctrlcamera.camPos->relative.t[0]);
-        toCentre.vy = (shipIndex[i].pos.vy + ctrlcamera.camPos->relative.t[1]);
-        toCentre.vz = (shipIndex[i].pos.vz + ctrlcamera.camPos->relative.t[2]);
+        toCentre.x = (shipIndex[i].pos.x + ctrlcamera.camPos->relative.t[0]);
+        toCentre.y = (shipIndex[i].pos.y + ctrlcamera.camPos->relative.t[1]);
+        toCentre.z = (shipIndex[i].pos.z + ctrlcamera.camPos->relative.t[2]);
         RotTrans(matrix, &toCentre, &v2, &flag);
 
         if (mag < SHIP_VIS_DIST)
             shipIndex[i].attr |= VISIBLE;
 
-        if ((mag < SHIP_VIS_DIST) && (v2.vz > 0) || (i == camShip))
+        if ((mag < SHIP_VIS_DIST) && (v2.z > 0) || (i == camShip))
         {
         #ifdef USE_SHIP_LODS
             if (shipIndex[ownShip].attr & RACING)
@@ -148,11 +151,7 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 
             if (((shipIndex[i].attr & VIEW_IN) == 0) || (shipIndex[i].attr & REMOTE_VIEW))
             {
-                /*TODO disable AI ships for TIME TRIAL!*/
-                if ((i == ownShip) || (raceType != TIME_TRIAL))
-                {
-                    DrawShip(obj, shipIndex + i);
-                }
+                DrawShip(obj, shipIndex + i);
             }
         }
         else
@@ -222,9 +221,9 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 {
     int i, j;
     Face* face;
-    VECTOR targetVector;
+    vec4i targetVector;
     TrackSection* nextSection;
-    VECTOR facePoint;
+    vec4i facePoint;
     TrackSection* startSection[8];
     short position = 1;
     short used[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -367,12 +366,12 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        shipIndex[i].vel.vx = 0;
-        shipIndex[i].vel.vy = 0;
-        shipIndex[i].vel.vz = 0;
-        shipIndex[i].acc.vx = 0;
-        shipIndex[i].acc.vy = 0;
-        shipIndex[i].acc.vz = 0;
+        shipIndex[i].vel.x = 0;
+        shipIndex[i].vel.y = 0;
+        shipIndex[i].vel.z = 0;
+        shipIndex[i].acc.x = 0;
+        shipIndex[i].acc.y = 0;
+        shipIndex[i].acc.z = 0;
         shipIndex[i].hdg = 0;
         shipIndex[i].pitch = 0;
         shipIndex[i].roll = 0;
@@ -479,21 +478,21 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         if ((position % 2) != 0)
             face++;
 
-        facePoint.vx = (track->vertices[(face->vertex[0])].vx + track->vertices[(face->vertex[2])].vx) >> 1;
-        facePoint.vy = (track->vertices[(face->vertex[0])].vy + track->vertices[(face->vertex[2])].vy) >> 1;
-        facePoint.vz = (track->vertices[(face->vertex[0])].vz + track->vertices[(face->vertex[2])].vz) >> 1;
-        shipIndex[i].pos.vx = facePoint.vx + ((face->normal.vx * 200) >> 12);
-        shipIndex[i].pos.vy = facePoint.vy + ((face->normal.vy * 200) >> 12);
-        shipIndex[i].pos.vz = facePoint.vz + ((face->normal.vz * 200) >> 12);
+        facePoint.x = (track->vertices[(face->vertex[0])].x + track->vertices[(face->vertex[2])].x) >> 1;
+        facePoint.y = (track->vertices[(face->vertex[0])].y + track->vertices[(face->vertex[2])].y) >> 1;
+        facePoint.z = (track->vertices[(face->vertex[0])].z + track->vertices[(face->vertex[2])].z) >> 1;
+        shipIndex[i].pos.x = facePoint.x + ((face->normal.x * 200) >> 12);
+        shipIndex[i].pos.y = facePoint.y + ((face->normal.y * 200) >> 12);
+        shipIndex[i].pos.z = facePoint.z + ((face->normal.z * 200) >> 12);
 
         shipIndex[i].nearSecNo = startSection[position]->secNo;
         shipIndex[i].prevSecNo = startSection[position]->secNo;
         shipIndex[i].DPASectDiff = startSection[position]->secNo;
 
         nextSection = startSection[position]->nextSection;
-        targetVector.vx = nextSection->centre.vx - startSection[position]->centre.vx;
-        targetVector.vy = nextSection->centre.vy - startSection[position]->centre.vy;
-        targetVector.vz = nextSection->centre.vz - startSection[position]->centre.vz;
-        shipIndex[i].hdg = -ratan2(targetVector.vx, targetVector.vz);
+        targetVector.x = nextSection->centre.x - startSection[position]->centre.x;
+        targetVector.y = nextSection->centre.y - startSection[position]->centre.y;
+        targetVector.z = nextSection->centre.z - startSection[position]->centre.z;
+        shipIndex[i].hdg = -ratan2(targetVector.x, targetVector.z);
     }
 }

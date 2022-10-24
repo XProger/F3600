@@ -37,13 +37,13 @@ void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
 
             if (weapon->type == SHIELD)
             {
-                SetSkeletonPosition(obj->skeleton, weapon->pos.vx, weapon->pos.vy, weapon->pos.vz);
+                SetSkeletonPosition(obj->skeleton, weapon->pos.x, weapon->pos.y, weapon->pos.z);
                 SetSkeletonDirectionHPR(obj->skeleton, weapon->hdg, weapon->pitch, shipIndex[weapon->fireShip].roll);
                 renderShield(obj, weapon->count);
             }
             else
             {
-                DrawObject(weaponShapes[weapon->currentWeapon].shapePtr, weapon->pos.vx, weapon->pos.vy, weapon->pos.vz, weapon->hdg, weapon->pitch, 0);
+                DrawObject(weaponShapes[weapon->currentWeapon].shapePtr, weapon->pos.x, weapon->pos.y, weapon->pos.z, weapon->hdg, weapon->pitch, 0);
             }
         }
     }
@@ -157,9 +157,9 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                 case TURBO:
                     playerShip->weaponType = NO_WEAPON;
 
-                    playerShip->vel.vx += (((playerShip->unitVecNose.vx) << 3) * FR60) / 50;
-                    playerShip->vel.vy += (((playerShip->unitVecNose.vy) << 3) * FR60) / 50;
-                    playerShip->vel.vz += (((playerShip->unitVecNose.vz) << 3) * FR60) / 50;
+                    playerShip->vel.x += (((playerShip->unitVecNose.x) << 3) * FR60) / 50;
+                    playerShip->vel.y += (((playerShip->unitVecNose.y) << 3) * FR60) / 50;
+                    playerShip->vel.z += (((playerShip->unitVecNose.z) << 3) * FR60) / 50;
 
                     if (shipNo == ownShip)
                     {
@@ -273,7 +273,7 @@ void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
 
 void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
 {
-    SVECTOR* vertex;
+    vec4s* vertex;
     DVECTOR sxy;
     long flag;
     const MATRIX* matrix;
@@ -288,7 +288,7 @@ void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShap
         return;
 
     renderSetBlend(BLEND_ADD);
-    renderImage(targetTexture, sxy.vx - (targetTexture->width >> 1), sxy.vy - (targetTexture->height >> 1));
+    renderImage(targetTexture, sxy.x - (targetTexture->width >> 1), sxy.y - (targetTexture->height >> 1));
     renderSetBlend(BLEND_ALPHA);
 }
 
@@ -303,8 +303,8 @@ void InitWeaponObj(WeaponShape* weaponShapes, int textures, const char* name, in
     object->skeleton = prm.skeleton++;
     object->vertices = prm.svector;
     prm.svector += object->vertexCount;
-    object->normals = prm.svector;
-    prm.svector += object->normalCount;
+    object->unused_normals = prm.svector;
+    prm.svector += object->unused_normalCount;
     object->primitives = prm.primitive;
 }
 
@@ -346,10 +346,10 @@ void ResetWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapo
 
 void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    VECTOR distance;
+    vec4i distance;
     Face* facePtr;
     int i, mag;
-    const VECTOR* facePoint;
+    const vec4i* facePoint;
     int alpha;
 
     weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, weapon->pos);
@@ -361,27 +361,27 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         facePtr++;
     }
 
-    weapon->vel.vx += weapon->acc.vx;
-    weapon->vel.vy += weapon->acc.vy;
-    weapon->vel.vz += weapon->acc.vz;
+    weapon->vel.x += weapon->acc.x;
+    weapon->vel.y += weapon->acc.y;
+    weapon->vel.z += weapon->acc.z;
 
-    weapon->vel.vx -= weapon->vel.vx >> 5;
-    weapon->vel.vy -= weapon->vel.vy >> 5;
-    weapon->vel.vz -= weapon->vel.vz >> 5;
+    weapon->vel.x -= weapon->vel.x >> 5;
+    weapon->vel.y -= weapon->vel.y >> 5;
+    weapon->vel.z -= weapon->vel.z >> 5;
 
-    weapon->pos.vx += weapon->vel.vx;
-    weapon->pos.vy += weapon->vel.vy;
-    weapon->pos.vz += weapon->vel.vz;
+    weapon->pos.x += weapon->vel.x;
+    weapon->pos.y += weapon->vel.y;
+    weapon->pos.z += weapon->vel.z;
 
-    facePoint = track->vertices + facePtr->vertex[0];
+    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
     alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
 
     if (alpha < 2000)
     {
-        weapon->pos.vx += (((200 - alpha) * (int)facePtr->normal.vx) >> 13);
-        weapon->pos.vy += (((200 - alpha) * (int)facePtr->normal.vy) >> 13);
-        weapon->pos.vz += (((200 - alpha) * (int)facePtr->normal.vz) >> 13);
+        weapon->pos.x += (((200 - alpha) * (int)facePtr->normal.x) >> 13);
+        weapon->pos.y += (((200 - alpha) * (int)facePtr->normal.y) >> 13);
+        weapon->pos.z += (((200 - alpha) * (int)facePtr->normal.z) >> 13);
     }
 
     weapon->count--;
@@ -395,9 +395,9 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         if (i == weapon->fireShip)
             continue;
 
-        distance.vx = (shipIndex[i].pos.vx - weapon->pos.vx) >> 2;
-        distance.vy = (shipIndex[i].pos.vy - weapon->pos.vy) >> 2;
-        distance.vz = (shipIndex[i].pos.vz - weapon->pos.vz) >> 2;
+        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 2;
+        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 2;
+        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 2;
 
         mag = GetMagnitude(&distance);
 
@@ -414,9 +414,9 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
                 }
                 else
                 {
-                    shipIndex[i].vel.vx -= (shipIndex[i].vel.vx * 3) >> 2;
-                    shipIndex[i].vel.vy -= (shipIndex[i].vel.vy * 3) >> 2;
-                    shipIndex[i].vel.vz -= (shipIndex[i].vel.vz * 3) >> 2;
+                    shipIndex[i].vel.x -= (shipIndex[i].vel.x * 3) >> 2;
+                    shipIndex[i].vel.y -= (shipIndex[i].vel.y * 3) >> 2;
+                    shipIndex[i].vel.z -= (shipIndex[i].vel.z * 3) >> 2;
                     shipIndex[i].vroll += randy() % 250;
                     shipIndex[i].ahdg = (randy() - 16384) >> 1;
                     SetShake(20);
@@ -447,7 +447,7 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     {
         for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
         {
-            facePoint = track->vertices + facePtr->vertex[0];
+            facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
             mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
             if (mag <= 0)
@@ -465,22 +465,22 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
 void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    VECTOR distance;
-    VECTOR targetVector;
+    vec4i distance;
+    vec4i targetVector;
     Face* facePtr;
     int i, mag, temp, vhdg, vpitch;
-    const VECTOR* facePoint;
+    const vec4i* facePoint;
     int alpha;
 
     if (weapon->targetShip > -1)
     {
-        targetVector.vx = (shipIndex[weapon->targetShip].pos.vx - weapon->pos.vx) >> 3;
-        targetVector.vy = (shipIndex[weapon->targetShip].pos.vy - weapon->pos.vy) >> 3;
-        targetVector.vz = (shipIndex[weapon->targetShip].pos.vz - weapon->pos.vz) >> 3;
-        temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
+        targetVector.x = (shipIndex[weapon->targetShip].pos.x - weapon->pos.x) >> 3;
+        targetVector.y = (shipIndex[weapon->targetShip].pos.y - weapon->pos.y) >> 3;
+        targetVector.z = (shipIndex[weapon->targetShip].pos.z - weapon->pos.z) >> 3;
+        temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
-        vhdg = ((-ratan2(targetVector.vx, targetVector.vz)) - weapon->hdg);
-        vpitch = ((-ratan2(targetVector.vy, temp)) - weapon->pitch);
+        vhdg = ((-ratan2(targetVector.x, targetVector.z)) - weapon->hdg);
+        vpitch = ((-ratan2(targetVector.y, temp)) - weapon->pitch);
     }
     else
     {
@@ -505,25 +505,25 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
     weapon->hdg = ang(weapon->hdg);
     weapon->pitch = ang(weapon->pitch);
 
-    weapon->acc.vx = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
-    weapon->acc.vy = -rsin(weapon->pitch) >> 4;
-    weapon->acc.vz = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    weapon->acc.x = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    weapon->acc.y = -rsin(weapon->pitch) >> 4;
+    weapon->acc.z = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
 
-    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.x = (weapon->acc.x * 60) / FR60;
+    weapon->acc.y = (weapon->acc.y * 60) / FR60;
+    weapon->acc.z = (weapon->acc.z * 60) / FR60;
 
-    weapon->vel.vx += weapon->acc.vx;
-    weapon->vel.vy += weapon->acc.vy;
-    weapon->vel.vz += weapon->acc.vz;
+    weapon->vel.x += weapon->acc.x;
+    weapon->vel.y += weapon->acc.y;
+    weapon->vel.z += weapon->acc.z;
 
-    weapon->vel.vx -= weapon->vel.vx >> 2;
-    weapon->vel.vy -= weapon->vel.vy >> 2;
-    weapon->vel.vz -= weapon->vel.vz >> 2;
+    weapon->vel.x -= weapon->vel.x >> 2;
+    weapon->vel.y -= weapon->vel.y >> 2;
+    weapon->vel.z -= weapon->vel.z >> 2;
 
-    weapon->pos.vx += weapon->vel.vx;
-    weapon->pos.vy += weapon->vel.vy;
-    weapon->pos.vz += weapon->vel.vz;
+    weapon->pos.x += weapon->vel.x;
+    weapon->pos.y += weapon->vel.y;
+    weapon->pos.z += weapon->vel.z;
 
     facePtr = track->faces + weapon->nearTrkSect->faceStart;
 
@@ -532,15 +532,15 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
         facePtr++;
     }
 
-    facePoint = track->vertices + facePtr->vertex[0];
+    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
     alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
 
     if (alpha < 2000)
     {
-        weapon->pos.vx += (((200 - alpha) * (int)facePtr->normal.vx) >> 13);
-        weapon->pos.vy += (((200 - alpha) * (int)facePtr->normal.vy) >> 13);
-        weapon->pos.vz += (((200 - alpha) * (int)facePtr->normal.vz) >> 13);
+        weapon->pos.x += (((200 - alpha) * (int)facePtr->normal.x) >> 13);
+        weapon->pos.y += (((200 - alpha) * (int)facePtr->normal.y) >> 13);
+        weapon->pos.z += (((200 - alpha) * (int)facePtr->normal.z) >> 13);
     }
 
     weapon->count--;
@@ -554,9 +554,9 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
         if (i == weapon->fireShip)
             continue;
 
-        distance.vx = (shipIndex[i].pos.vx - weapon->pos.vx) >> 3;
-        distance.vy = (shipIndex[i].pos.vy - weapon->pos.vy) >> 3;
-        distance.vz = (shipIndex[i].pos.vz - weapon->pos.vz) >> 3;
+        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 3;
+        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 3;
+        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 3;
 
         mag = GetMagnitude(&distance);
 
@@ -572,9 +572,9 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
                 }
                 else
                 {
-                    shipIndex[i].vel.vx -= (shipIndex[i].vel.vx * 3) >> 2;
-                    shipIndex[i].vel.vy -= (shipIndex[i].vel.vy * 3) >> 2;
-                    shipIndex[i].vel.vz -= (shipIndex[i].vel.vz * 3) >> 2;
+                    shipIndex[i].vel.x -= (shipIndex[i].vel.x * 3) >> 2;
+                    shipIndex[i].vel.y -= (shipIndex[i].vel.y * 3) >> 2;
+                    shipIndex[i].vel.z -= (shipIndex[i].vel.z * 3) >> 2;
                     shipIndex[i].vroll += randy() % 250;
                     shipIndex[i].ahdg = (randy() - 16384) >> 1;
                     SetShake(20);
@@ -595,7 +595,7 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
 
     for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
     {
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
         mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
         if (mag <= 0)
         {
@@ -643,17 +643,17 @@ void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
 
     GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
 
-    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.x = (weapon->acc.x * 60) / FR60;
+    weapon->acc.y = (weapon->acc.y * 60) / FR60;
+    weapon->acc.z = (weapon->acc.z * 60) / FR60;
 
-    weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
-    weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
-    weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> 6);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> 6);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> 6);
 
-    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
 
     weapon->hdg = shipIndex[weapon->fireShip].hdg;
     weapon->pitch = shipIndex[weapon->fireShip].pitch;
@@ -663,7 +663,7 @@ void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
 
 void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    VECTOR distance;
+    vec4i distance;
     int ossilation;
     int i, mag;
     Prm poly;
@@ -678,7 +678,7 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
     ossilation = sar(rsin((weapon->currentWeapon * 400) + (weapon->count * 40)), 9);
 
-    weapon->pos.vx += ossilation;
+    weapon->pos.x += ossilation;
     weapon->hdg += 128;
     weapon->pitch = 0;
 
@@ -710,9 +710,9 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
         if (i == weapon->fireShip)
             continue;
 
-        distance.vx = (shipIndex[i].pos.vx - weapon->pos.vx) >> 2;
-        distance.vy = (shipIndex[i].pos.vy - weapon->pos.vy) >> 2;
-        distance.vz = (shipIndex[i].pos.vz - weapon->pos.vz) >> 2;
+        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 2;
+        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 2;
+        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 2;
 
         mag = GetMagnitude(&distance);
 
@@ -728,9 +728,9 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
                 }
                 else
                 {
-                    shipIndex[i].vel.vx -= shipIndex[i].vel.vx >> 3;
-                    shipIndex[i].vel.vy -= shipIndex[i].vel.vy >> 3;
-                    shipIndex[i].vel.vz -= shipIndex[i].vel.vz >> 3;
+                    shipIndex[i].vel.x -= shipIndex[i].vel.x >> 3;
+                    shipIndex[i].vel.y -= shipIndex[i].vel.y >> 3;
+                    shipIndex[i].vel.z -= shipIndex[i].vel.z >> 3;
                     SetShake(20);
                 }
             }
@@ -775,17 +775,17 @@ void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
     GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
 
-    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.x = (weapon->acc.x * 60) / FR60;
+    weapon->acc.y = (weapon->acc.y * 60) / FR60;
+    weapon->acc.z = (weapon->acc.z * 60) / FR60;
 
-    weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
-    weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
-    weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> 6);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> 6);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> 6);
 
-    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
 
     weapon->hdg = shipIndex[weapon->fireShip].hdg;
     weapon->pitch = shipIndex[weapon->fireShip].pitch;
@@ -796,22 +796,22 @@ void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
     int i;
-    VECTOR distance;
-    VECTOR targetVector;
+    vec4i distance;
+    vec4i targetVector;
     Face* facePtr;
     int mag, temp, vhdg, vpitch;
-    const VECTOR* facePoint;
+    const vec4i* facePoint;
     int alpha;
 
     if (weapon->targetShip > -1)
     {
-        targetVector.vx = (shipIndex[weapon->targetShip].pos.vx - weapon->pos.vx) >> 3;
-        targetVector.vy = (shipIndex[weapon->targetShip].pos.vy - weapon->pos.vy) >> 3;
-        targetVector.vz = (shipIndex[weapon->targetShip].pos.vz - weapon->pos.vz) >> 3;
-        temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
+        targetVector.x = (shipIndex[weapon->targetShip].pos.x - weapon->pos.x) >> 3;
+        targetVector.y = (shipIndex[weapon->targetShip].pos.y - weapon->pos.y) >> 3;
+        targetVector.z = (shipIndex[weapon->targetShip].pos.z - weapon->pos.z) >> 3;
+        temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
-        vhdg = ((-ratan2(targetVector.vx, targetVector.vz)) - weapon->hdg);
-        vpitch = ((-ratan2(targetVector.vy, temp)) - weapon->pitch);
+        vhdg = ((-ratan2(targetVector.x, targetVector.z)) - weapon->hdg);
+        vpitch = ((-ratan2(targetVector.y, temp)) - weapon->pitch);
     }
     else
     {
@@ -833,25 +833,25 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     weapon->hdg = ang(weapon->hdg);
     weapon->pitch = ang(weapon->pitch);
 
-    weapon->acc.vx = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
-    weapon->acc.vy = -rsin(weapon->pitch) >> 4;
-    weapon->acc.vz = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    weapon->acc.x = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    weapon->acc.y = -rsin(weapon->pitch) >> 4;
+    weapon->acc.z = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
 
-    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.x = (weapon->acc.x * 60) / FR60;
+    weapon->acc.y = (weapon->acc.y * 60) / FR60;
+    weapon->acc.z = (weapon->acc.z * 60) / FR60;
 
-    weapon->vel.vx += weapon->acc.vx;
-    weapon->vel.vy += weapon->acc.vy;
-    weapon->vel.vz += weapon->acc.vz;
+    weapon->vel.x += weapon->acc.x;
+    weapon->vel.y += weapon->acc.y;
+    weapon->vel.z += weapon->acc.z;
 
-    weapon->vel.vx -= weapon->vel.vx >> 2;
-    weapon->vel.vy -= weapon->vel.vy >> 2;
-    weapon->vel.vz -= weapon->vel.vz >> 2;
+    weapon->vel.x -= weapon->vel.x >> 2;
+    weapon->vel.y -= weapon->vel.y >> 2;
+    weapon->vel.z -= weapon->vel.z >> 2;
 
-    weapon->pos.vx += weapon->vel.vx;
-    weapon->pos.vy += weapon->vel.vy;
-    weapon->pos.vz += weapon->vel.vz;
+    weapon->pos.x += weapon->vel.x;
+    weapon->pos.y += weapon->vel.y;
+    weapon->pos.z += weapon->vel.z;
 
     weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, weapon->pos);
 
@@ -862,15 +862,15 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
         facePtr++;
     }
 
-    facePoint = track->vertices + facePtr->vertex[0];
+    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
     alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
 
     if (alpha < 2000)
     {
-        weapon->pos.vx += (((200 - alpha) * (int)facePtr->normal.vx) >> 13);
-        weapon->pos.vy += (((200 - alpha) * (int)facePtr->normal.vy) >> 13);
-        weapon->pos.vz += (((200 - alpha) * (int)facePtr->normal.vz) >> 13);
+        weapon->pos.x += (((200 - alpha) * (int)facePtr->normal.x) >> 13);
+        weapon->pos.y += (((200 - alpha) * (int)facePtr->normal.y) >> 13);
+        weapon->pos.z += (((200 - alpha) * (int)facePtr->normal.z) >> 13);
     }
 
     weapon->count--;
@@ -884,9 +884,9 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
         if (i == weapon->fireShip)
             continue;
 
-        distance.vx = (shipIndex[i].pos.vx - weapon->pos.vx) >> 3;
-        distance.vy = (shipIndex[i].pos.vy - weapon->pos.vy) >> 3;
-        distance.vz = (shipIndex[i].pos.vz - weapon->pos.vz) >> 3;
+        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 3;
+        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 3;
+        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 3;
 
         mag = GetMagnitude(&distance);
 
@@ -911,7 +911,7 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
 
     for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
     {
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
         mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
         if (mag <= 0)
@@ -948,21 +948,21 @@ void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     weapon->currentWeapon = WEAPON_SHAPE_EBOLT;
     weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
 
-    weapon->acc.vx = shipIndex[weapon->fireShip].unitVecNose.vx >> 8;
-    weapon->acc.vy = shipIndex[weapon->fireShip].unitVecNose.vy >> 8;
-    weapon->acc.vz = shipIndex[weapon->fireShip].unitVecNose.vz >> 8;
+    weapon->acc.x = shipIndex[weapon->fireShip].unitVecNose.x >> 8;
+    weapon->acc.y = shipIndex[weapon->fireShip].unitVecNose.y >> 8;
+    weapon->acc.z = shipIndex[weapon->fireShip].unitVecNose.z >> 8;
 
-    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.x = (weapon->acc.x * 60) / FR60;
+    weapon->acc.y = (weapon->acc.y * 60) / FR60;
+    weapon->acc.z = (weapon->acc.z * 60) / FR60;
 
-    weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
-    weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
-    weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> 6);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> 6);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> 6);
 
-    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
 
     weapon->hdg = shipIndex[weapon->fireShip].hdg;
     weapon->pitch = shipIndex[weapon->fireShip].pitch;
@@ -1006,21 +1006,21 @@ void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     weapon->currentWeapon = WEAPON_SHAPE_EBOLT;
     weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
 
-    weapon->acc.vx = shipIndex[weapon->fireShip].unitVecNose.vx >> 8;
-    weapon->acc.vy = shipIndex[weapon->fireShip].unitVecNose.vy >> 8;
-    weapon->acc.vz = shipIndex[weapon->fireShip].unitVecNose.vz >> 8;
+    weapon->acc.x = shipIndex[weapon->fireShip].unitVecNose.x >> 8;
+    weapon->acc.y = shipIndex[weapon->fireShip].unitVecNose.y >> 8;
+    weapon->acc.z = shipIndex[weapon->fireShip].unitVecNose.z >> 8;
 
-    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.x = (weapon->acc.x * 60) / FR60;
+    weapon->acc.y = (weapon->acc.y * 60) / FR60;
+    weapon->acc.z = (weapon->acc.z * 60) / FR60;
 
-    weapon->vel.vx = (shipIndex[weapon->fireShip].vel.vx >> 6);
-    weapon->vel.vy = (shipIndex[weapon->fireShip].vel.vy >> 6);
-    weapon->vel.vz = (shipIndex[weapon->fireShip].vel.vz >> 6);
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> 6);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> 6);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> 6);
 
-    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
 
     weapon->hdg = shipIndex[weapon->fireShip].hdg;
     weapon->pitch = shipIndex[weapon->fireShip].pitch;
@@ -1029,22 +1029,22 @@ void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
 void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
-    VECTOR distance;
-    VECTOR targetVector;
-    const VECTOR* facePoint;
+    vec4i distance;
+    vec4i targetVector;
+    const vec4i* facePoint;
     Face* facePtr;
     int i, mag, temp, vhdg, vpitch;
     int alpha;
 
     if (weapon->targetShip > -1)
     {
-        targetVector.vx = (shipIndex[weapon->targetShip].pos.vx - weapon->pos.vx) >> 3;
-        targetVector.vy = (shipIndex[weapon->targetShip].pos.vy - weapon->pos.vy) >> 3;
-        targetVector.vz = (shipIndex[weapon->targetShip].pos.vz - weapon->pos.vz) >> 3;
-        temp = SquareRoot0(targetVector.vx * targetVector.vx + targetVector.vz * targetVector.vz);
+        targetVector.x = (shipIndex[weapon->targetShip].pos.x - weapon->pos.x) >> 3;
+        targetVector.y = (shipIndex[weapon->targetShip].pos.y - weapon->pos.y) >> 3;
+        targetVector.z = (shipIndex[weapon->targetShip].pos.z - weapon->pos.z) >> 3;
+        temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
-        vhdg = ((-ratan2(targetVector.vx, targetVector.vz)) - weapon->hdg);
-        vpitch = ((-ratan2(targetVector.vy, temp)) - weapon->pitch);
+        vhdg = ((-ratan2(targetVector.x, targetVector.z)) - weapon->hdg);
+        vpitch = ((-ratan2(targetVector.y, temp)) - weapon->pitch);
     }
     else
     {
@@ -1066,25 +1066,25 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     weapon->hdg = ang(weapon->hdg);
     weapon->pitch = ang(weapon->pitch);
 
-    weapon->acc.vx = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
-    weapon->acc.vy = -rsin(weapon->pitch) >> 4;
-    weapon->acc.vz = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    weapon->acc.x = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    weapon->acc.y = -rsin(weapon->pitch) >> 4;
+    weapon->acc.z = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
 
-    weapon->acc.vx = (weapon->acc.vx * 60) / FR60;
-    weapon->acc.vy = (weapon->acc.vy * 60) / FR60;
-    weapon->acc.vz = (weapon->acc.vz * 60) / FR60;
+    weapon->acc.x = (weapon->acc.x * 60) / FR60;
+    weapon->acc.y = (weapon->acc.y * 60) / FR60;
+    weapon->acc.z = (weapon->acc.z * 60) / FR60;
 
-    weapon->vel.vx += weapon->acc.vx;
-    weapon->vel.vy += weapon->acc.vy;
-    weapon->vel.vz += weapon->acc.vz;
+    weapon->vel.x += weapon->acc.x;
+    weapon->vel.y += weapon->acc.y;
+    weapon->vel.z += weapon->acc.z;
 
-    weapon->vel.vx -= weapon->vel.vx >> 2;
-    weapon->vel.vy -= weapon->vel.vy >> 2;
-    weapon->vel.vz -= weapon->vel.vz >> 2;
+    weapon->vel.x -= weapon->vel.x >> 2;
+    weapon->vel.y -= weapon->vel.y >> 2;
+    weapon->vel.z -= weapon->vel.z >> 2;
 
-    weapon->pos.vx += weapon->vel.vx;
-    weapon->pos.vy += weapon->vel.vy;
-    weapon->pos.vz += weapon->vel.vz;
+    weapon->pos.x += weapon->vel.x;
+    weapon->pos.y += weapon->vel.y;
+    weapon->pos.z += weapon->vel.z;
 
     weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, weapon->pos);
 
@@ -1095,15 +1095,15 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         facePtr++;
     }
 
-    facePoint = track->vertices + facePtr->vertex[0];
+    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
     alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
 
     if (alpha < 2000)
     {
-        weapon->pos.vx += (((200 - alpha) * (int)facePtr->normal.vx) >> 13);
-        weapon->pos.vy += (((200 - alpha) * (int)facePtr->normal.vy) >> 13);
-        weapon->pos.vz += (((200 - alpha) * (int)facePtr->normal.vz) >> 13);
+        weapon->pos.x += (((200 - alpha) * (int)facePtr->normal.x) >> 13);
+        weapon->pos.y += (((200 - alpha) * (int)facePtr->normal.y) >> 13);
+        weapon->pos.z += (((200 - alpha) * (int)facePtr->normal.z) >> 13);
     }
 
     weapon->count--;
@@ -1117,9 +1117,9 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         if (i == weapon->fireShip)
             continue;
 
-        distance.vx = (shipIndex[i].pos.vx - weapon->pos.vx) >> 3;
-        distance.vy = (shipIndex[i].pos.vy - weapon->pos.vy) >> 3;
-        distance.vz = (shipIndex[i].pos.vz - weapon->pos.vz) >> 3;
+        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 3;
+        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 3;
+        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 3;
 
         mag = GetMagnitude(&distance);
 
@@ -1152,7 +1152,7 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
     for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
     {
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
         mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
         if (mag <= 0)
@@ -1174,9 +1174,9 @@ void InitMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon
     {
         weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
         weapon->currentWeapon = WEAPON_SHAPE_MINE;
-        weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-        weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-        weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+        weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+        weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+        weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
         weapon->hdg = 0;
         if (weapon->fireShip == ownShip)
         {
@@ -1194,9 +1194,9 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
     weapon->currentWeapon = WEAPON_SHAPE_SHIELD;
 
-    weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-    weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-    weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
 
     weapon->hdg = shipIndex[weapon->fireShip].hdg;
     weapon->pitch = shipIndex[weapon->fireShip].pitch;
@@ -1291,15 +1291,15 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 {
     if (shipIndex[weapon->fireShip].attr & VIEW_IN)
     {
-        weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx + (shipIndex[weapon->fireShip].unitVecNose.vx >> 6);
-        weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy + (shipIndex[weapon->fireShip].unitVecNose.vy >> 6);
-        weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz + (shipIndex[weapon->fireShip].unitVecNose.vz >> 6);
+        weapon->pos.x = shipIndex[weapon->fireShip].pos.x + (shipIndex[weapon->fireShip].unitVecNose.x >> 6);
+        weapon->pos.y = shipIndex[weapon->fireShip].pos.y + (shipIndex[weapon->fireShip].unitVecNose.y >> 6);
+        weapon->pos.z = shipIndex[weapon->fireShip].pos.z + (shipIndex[weapon->fireShip].unitVecNose.z >> 6);
     }
     else
     {
-        weapon->pos.vx = shipIndex[weapon->fireShip].pos.vx;
-        weapon->pos.vy = shipIndex[weapon->fireShip].pos.vy;
-        weapon->pos.vz = shipIndex[weapon->fireShip].pos.vz;
+        weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+        weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+        weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
     }
 
     weapon->count--;
@@ -1433,16 +1433,16 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
     }
 }
 
-void GetFireVector(VECTOR* result, VECTOR target, Face* facePtr, VECTOR shipPos)
+void GetFireVector(vec4i* result, vec4i target, Face* facePtr, vec4i shipPos)
 {
     int alpha, origAlpha;
-    const VECTOR* facePoint;
+    const vec4i* facePoint;
 
-    facePoint = track->vertices + facePtr->vertex[0];
+    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
 
-    target.vx = shipPos.vx + (target.vx >> 6);
-    target.vy = shipPos.vy + (target.vy >> 6);
-    target.vz = shipPos.vz + (target.vz >> 6);
+    target.x = shipPos.x + (target.x >> 6);
+    target.y = shipPos.y + (target.y >> 6);
+    target.z = shipPos.z + (target.z >> 6);
 
     alpha = PlaneLineCollision(facePoint, &target, &facePtr->normal);
     origAlpha = PlaneLineCollision(facePoint, &shipPos, &facePtr->normal);
@@ -1451,28 +1451,28 @@ void GetFireVector(VECTOR* result, VECTOR target, Face* facePtr, VECTOR shipPos)
 
     alpha -= origAlpha;
 
-    result->vx = target.vx - ((alpha * facePtr->normal.vx) >> 12);
-    result->vy = target.vy - ((alpha * facePtr->normal.vy) >> 12);
-    result->vz = target.vz - ((alpha * facePtr->normal.vz) >> 12);
+    result->x = target.x - ((alpha * facePtr->normal.x) >> 12);
+    result->y = target.y - ((alpha * facePtr->normal.y) >> 12);
+    result->z = target.z - ((alpha * facePtr->normal.z) >> 12);
 
-    result->vx -= shipPos.vx;
-    result->vy -= shipPos.vy;
-    result->vz -= shipPos.vz;
+    result->x -= shipPos.x;
+    result->y -= shipPos.y;
+    result->z -= shipPos.z;
 }
 
 void Weapon2Mine(WeaponData* weapon, WeaponData* weaponIndex, WeaponShape* weaponShapes)
 {
     int i;
-    VECTOR distance;
+    vec4i distance;
     int mag;
 
     for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
         if ((weaponIndex[i].type == MINE) && (weaponIndex[i].count > 0))
         {
-            distance.vx = (weaponIndex[i].pos.vx - weapon->pos.vx) >> 2;
-            distance.vy = (weaponIndex[i].pos.vy - weapon->pos.vy) >> 2;
-            distance.vz = (weaponIndex[i].pos.vz - weapon->pos.vz) >> 2;
+            distance.x = (weaponIndex[i].pos.x - weapon->pos.x) >> 2;
+            distance.y = (weaponIndex[i].pos.y - weapon->pos.y) >> 2;
+            distance.z = (weaponIndex[i].pos.z - weapon->pos.z) >> 2;
 
             mag = GetMagnitude(&distance);
 

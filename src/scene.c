@@ -149,15 +149,15 @@ void IntelPrim(Prm prm)
             break;
 
         case TypeSpline:
-            IntelLong(&prm.spline->control1.vx);
-            IntelLong(&prm.spline->control1.vy);
-            IntelLong(&prm.spline->control1.vz);
-            IntelLong(&prm.spline->position.vx);
-            IntelLong(&prm.spline->position.vy);
-            IntelLong(&prm.spline->position.vz);
-            IntelLong(&prm.spline->control2.vx);
-            IntelLong(&prm.spline->control2.vy);
-            IntelLong(&prm.spline->control2.vz);
+            IntelLong(&prm.spline->control1.x);
+            IntelLong(&prm.spline->control1.y);
+            IntelLong(&prm.spline->control1.z);
+            IntelLong(&prm.spline->position.x);
+            IntelLong(&prm.spline->position.y);
+            IntelLong(&prm.spline->position.z);
+            IntelLong(&prm.spline->control2.x);
+            IntelLong(&prm.spline->control2.y);
+            IntelLong(&prm.spline->control2.z);
             break;
 
         case TypeInfiniteLight:
@@ -207,7 +207,7 @@ Object* LoadPrm(const char* name, short textureStart)
         object = prm.object++;
 
         IntelShort(&object->vertexCount);
-        IntelShort(&object->normalCount);
+        IntelShort(&object->unused_normalCount);
         IntelShort(&object->primitiveCount);
         IntelLong(&object->extent);
 
@@ -239,21 +239,21 @@ Object* LoadPrm(const char* name, short textureStart)
 
         for (i = 0; i < object->vertexCount; i++)
         {
-            IntelShort(&object->vertices[i].vx);
-            IntelShort(&object->vertices[i].vy);
-            IntelShort(&object->vertices[i].vz);
+            IntelShort(&object->vertices[i].x);
+            IntelShort(&object->vertices[i].y);
+            IntelShort(&object->vertices[i].z);
         }
 
         /* Normals */
 
-        object->normals = prm.svector;
-        prm.svector += object->normalCount;
+        object->unused_normals = prm.svector;
+        prm.svector += object->unused_normalCount;
 
-        for (i = 0; i < object->normalCount; i++)
+        for (i = 0; i < object->unused_normalCount; i++)
         {
-            IntelShort(&object->normals[i].vx);
-            IntelShort(&object->normals[i].vy);
-            IntelShort(&object->normals[i].vz);
+            IntelShort(&object->unused_normals[i].x);
+            IntelShort(&object->unused_normals[i].y);
+            IntelShort(&object->unused_normals[i].z);
         }
 
         /* Primitives */

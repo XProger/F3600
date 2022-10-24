@@ -1295,7 +1295,7 @@ const short SineTable[TableSize] = {
     -50,    -43,    -37,    -31,    -25,    -18,    -12,    -6,
 };
 
-int GetAng(const VECTOR* vec1, const VECTOR* vec2)
+int GetAng(const vec4i* vec1, const vec4i* vec2)
 {
     int angle;
     int product;
@@ -1317,35 +1317,35 @@ int GetAng(const VECTOR* vec1, const VECTOR* vec2)
     return (angle);
 }
 
-int GetMagnitude(const VECTOR* vec1)
+int GetMagnitude(const vec4i* vec1)
 {
     int mag;
 
-    mag = vec1->vx * vec1->vx + vec1->vy * vec1->vy + vec1->vz * vec1->vz;
+    mag = vec1->x * vec1->x + vec1->y * vec1->y + vec1->z * vec1->z;
     mag = SquareRoot0(mag);
     return (mag);
 }
 
-int ScalarProduct(const VECTOR* vec1, const VECTOR* vec2)
+int ScalarProduct(const vec4i* vec1, const vec4i* vec2)
 {
     int result;
 
-    result = vec1->vx * vec2->vx + vec1->vy * vec2->vy + vec1->vz * vec2->vz;
+    result = vec1->x * vec2->x + vec1->y * vec2->y + vec1->z * vec2->z;
     return (result);
 }
 
-void CrossProduct(VECTOR* result, const VECTOR* A, const VECTOR* B)
+void CrossProduct(vec4i* result, const vec4i* A, const vec4i* B)
 {
-    result->vx = (A->vy * B->vz - A->vz * B->vy) >> 9;
-    result->vy = (A->vz * B->vx - A->vx * B->vz) >> 9;
-    result->vz = (A->vx * B->vy - A->vy * B->vx) >> 9;
+    result->x = (A->y * B->z - A->z * B->y) >> 9;
+    result->y = (A->z * B->x - A->x * B->z) >> 9;
+    result->z = (A->x * B->y - A->y * B->x) >> 9;
 }
 
-void MinusVector(const VECTOR* v1, const VECTOR* v2, VECTOR* result)
+void MinusVector(const vec4i* v1, const vec4i* v2, vec4i* result)
 {
-    result->vx = v2->vx - v1->vx;
-    result->vy = v2->vy - v1->vy;
-    result->vz = v2->vz - v1->vz;
+    result->x = v2->x - v1->x;
+    result->y = v2->y - v1->y;
+    result->z = v2->z - v1->z;
 }
 
 int arccos(int value)
@@ -1458,40 +1458,40 @@ void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret)
     ret->m[2][2] = (((long)m0->m[2][0] * (long)m1->m[0][2]) + ((long)m0->m[2][1] * (long)m1->m[1][2]) + ((long)m0->m[2][2] * (long)m1->m[2][2])) >> SHIFT;
 }
 
-void ApplyMatrix(const MATRIX* m, const SVECTOR* v0, VECTOR* v1)
+void ApplyMatrix(const MATRIX* m, const vec4s* v0, vec4i* v1)
 {
     long xt, yt, zt;
     long stage1, stage2, stage3;
 
-    xt = (long)(v0->vx);
-    yt = (long)(v0->vy);
-    zt = (long)(v0->vz);
+    xt = (long)(v0->x);
+    yt = (long)(v0->y);
+    zt = (long)(v0->z);
 
     stage1 = (xt * (long)(m->m[0][0])) >> SHIFT;
     stage2 = (yt * (long)(m->m[0][1])) >> SHIFT;
     stage3 = (zt * (long)(m->m[0][2])) >> SHIFT;
-    v1->vx = stage1 + stage2 + stage3 + m->t[0];
+    v1->x = stage1 + stage2 + stage3 + m->t[0];
 
     stage1 = (xt * (long)(m->m[1][0])) >> SHIFT;
     stage2 = (yt * (long)(m->m[1][1])) >> SHIFT;
     stage3 = (zt * (long)(m->m[1][2])) >> SHIFT;
-    v1->vy = stage1 + stage2 + stage3 + m->t[1];
+    v1->y = stage1 + stage2 + stage3 + m->t[1];
 
     stage1 = (xt * (long)(m->m[2][0])) >> SHIFT;
     stage2 = (yt * (long)(m->m[2][1])) >> SHIFT;
     stage3 = (zt * (long)(m->m[2][2])) >> SHIFT;
-    v1->vz = stage1 + stage2 + stage3 + m->t[2];
+    v1->z = stage1 + stage2 + stage3 + m->t[2];
 }
 
-void RotTrans(const MATRIX* m, const SVECTOR* v0, VECTOR* v1, long* flag)
+void RotTrans(const MATRIX* m, const vec4s* v0, vec4i* v1, long* flag)
 {
     long x, y, z, f = 0;
 
     ApplyMatrix(m, v0, v1);
 
-    x = v1->vx;
-    y = v1->vy;
-    z = v1->vz;
+    x = v1->x;
+    y = v1->y;
+    z = v1->z;
 
     if (z < 0)
     {
@@ -1538,18 +1538,18 @@ void RotTrans(const MATRIX* m, const SVECTOR* v0, VECTOR* v1, long* flag)
         f |= CrtClipped | YLarge;
     }
 
-    v1->vx = x;
-    v1->vy = y;
+    v1->x = x;
+    v1->y = y;
     *flag = f;
 }
 
-void DLSRotTransPers(DVECTOR* sxy, const VECTOR* r0, long* flag)
+void DLSRotTransPers(DVECTOR* sxy, const vec4i* r0, long* flag)
 {
     long x, y, z, f = 0;
 
-    x = r0->vx;
-    y = r0->vy;
-    z = r0->vz;
+    x = r0->x;
+    y = r0->y;
+    z = r0->z;
 
     if (z < 0)
     {
@@ -1623,19 +1623,19 @@ void DLSRotTransPers(DVECTOR* sxy, const VECTOR* r0, long* flag)
         f |= CrtClipped | YClipped;
     }
 
-    sxy->vx = x;
-    sxy->vy = y;
+    sxy->x = x;
+    sxy->y = y;
     *flag = f;
 }
 
-long RotTransPers(const MATRIX* m, const SVECTOR* v0, DVECTOR* sxy, long* flag)
+long RotTransPers(const MATRIX* m, const vec4s* v0, DVECTOR* sxy, long* flag)
 {
-    VECTOR r0;
+    vec4i r0;
 
     ApplyMatrix(m, v0, &r0);
     DLSRotTransPers(sxy, &r0, flag);
 
-    return r0.vz >> 2;
+    return r0.z >> 2;
 }
 
 uint16 swap16(uint16 x) {

@@ -57,9 +57,9 @@ typedef struct WeaponData
     short count;
     short currentWeapon;
     TrackSection* nearTrkSect;
-    VECTOR acc;
-    VECTOR vel;
-    VECTOR pos;
+    vec4i acc;
+    vec4i vel;
+    vec4i pos;
     short hdg, pitch;
     signed char targetShip;
     char fireShip;
@@ -97,7 +97,7 @@ void UpdateRevCon(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
 void InitSpecial(ShipData* playerShip, WeaponShape*, WeaponData*, WeaponData*);
 
 void Weapon2Mine(WeaponData* weapon, WeaponData* weaponIndex, WeaponShape* weaponShapes);
-void GetFireVector(VECTOR* result, VECTOR target, Face* facePtr, VECTOR shipPos);
+void GetFireVector(vec4i* result, vec4i target, Face* facePtr, vec4i shipPos);
 void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids);
 void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex);
 void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes);

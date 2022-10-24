@@ -717,9 +717,9 @@ void DrawTeams(const Menu* menu, int shapeNo)
 void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
 {
     ShipData shipData;
-    shipData.pos.vx = x;
-    shipData.pos.vy = y;
-    shipData.pos.vz = size;
+    shipData.pos.x = x;
+    shipData.pos.y = y;
+    shipData.pos.z = size;
     shipData.hdg = -heading;
     shipData.pitch = 0;
     shipData.roll = 0;
