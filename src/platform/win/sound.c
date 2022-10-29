@@ -1,5 +1,5 @@
 #include "game.h"
-#include "../../libs/stb_vorbis/stb_vorbis.c"
+#include "stb_vorbis/stb_vorbis.c"
 
 #define MAX_CHANNELS 16
 #define PITCH_SHIFT  12

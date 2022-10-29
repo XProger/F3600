@@ -583,7 +583,6 @@ void compileShader(Shader* shader, const char* text)
 void renderInit(void)
 {
     VertexGL* v = NULL;
-    int format;
     PIXELFORMATDESCRIPTOR pfd;
     PFNWGLCHOOSEPIXELFORMATARBPROC    wglChoosePixelFormatARB    = NULL;
     PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
@@ -602,10 +601,11 @@ void renderInit(void)
     {
         HWND fWnd = CreateWindow("static", NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
         HDC fDC = GetDC(fWnd);
+        HGLRC fRC;
 
         int format = ChoosePixelFormat(fDC, &pfd);
         SetPixelFormat(fDC, format, &pfd);
-        HGLRC fRC = wglCreateContext(fDC);
+        fRC = wglCreateContext(fDC);
         wglMakeCurrent(fDC, fRC);
 
         wglChoosePixelFormatARB    = GetProcOGL(wglChoosePixelFormatARB);
