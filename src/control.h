@@ -30,6 +30,3 @@ void BlockShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
 void AvoidShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
 void AvoidOtherShips(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
 void ZigZagShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
-
-void SetSkeletonDirectionHPR(Skeleton* skeleton, short hdg, short pitch, short roll);
-void SetSkeletonDirectionRPH(Skeleton* skeleton, short roll, short pitch, short hdg);

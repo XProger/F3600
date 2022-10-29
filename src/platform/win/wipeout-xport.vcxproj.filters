@@ -32,7 +32,6 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="render.c" />
     <ClCompile Include="..\..\menus.c" />
-    <ClCompile Include="..\..\object.c" />
     <ClCompile Include="..\..\sfx.c" />
     <ClCompile Include="sound.c" />
   </ItemGroup>
@@ -64,13 +63,11 @@
     <ClInclude Include="..\..\sound.h" />
     <ClInclude Include="..\..\spline.h" />
     <ClInclude Include="..\..\standard.h" />
-    <ClInclude Include="..\..\tim.h" />
     <ClInclude Include="..\..\track.h" />
     <ClInclude Include="..\..\ttf.h" />
     <ClInclude Include="..\..\utils.h" />
     <ClInclude Include="..\..\weapon.h" />
     <ClInclude Include="..\..\render.h" />
     <ClInclude Include="..\..\game.h" />
-    <ClInclude Include="..\..\object.h" />
   </ItemGroup>
 </Project>

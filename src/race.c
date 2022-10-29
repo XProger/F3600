@@ -230,7 +230,7 @@ void raceInit(ConfigData* gameData)
 
     printf("race init\n");
 
-    InitGameDisplay();
+    renderOffset(0, 0);
 
     if (ctrlmode != ATTRACT) // not demo mode
     {
@@ -240,8 +240,6 @@ void raceInit(ConfigData* gameData)
     showLoading(ctrlConfigData.actTrackNum);
 
     trackNum = gameData->trackNum; // for restoring - SJR
-
-    TextureTableCount = gBaseTextureIndex;
 
     attractDelay = 0;
 
@@ -728,7 +726,7 @@ void raceCtrl(ConfigData* gameData)
 
         if (ctrlshipIndex[ownShip].attr & RACING)
         {
-            if (((ctrlshipIndex[ownShip].weaponType == MISSILE) || (ctrlshipIndex[ownShip].weaponType == ELEC_BOLT) || (ctrlshipIndex[ownShip].weaponType == REV_CON)) && (ctrlshipIndex[ownShip].attr & RACING))
+            if (((ctrlshipIndex[ownShip].weaponType == WPN_MISSILE) || (ctrlshipIndex[ownShip].weaponType == WPN_ELEC_BOLT) || (ctrlshipIndex[ownShip].weaponType == WPN_REV_CON)) && (ctrlshipIndex[ownShip].attr & RACING))
             {
                 MissileLock(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
             }
@@ -1240,19 +1238,16 @@ void raceCtrl(ConfigData* gameData)
     }
 }
 
+int32 dbg_update;
+
 void raceLoop(ConfigData* gameData)
 {
     int i, count;
     
     ctrlFramesCount += gFrameIndex - gLastFrameIndex;
 
-#ifdef ENABLE_60_FPS
-    count = ctrlFramesCount;
-    ctrlFramesCount -= count;
-#else
     count = ctrlFramesCount >> 1; // 60 -> 30 Hz
     ctrlFramesCount -= count << 1;
-#endif
 
     if (count > 10) // max frame skip
     {
@@ -1261,7 +1256,9 @@ void raceLoop(ConfigData* gameData)
 
     for (i = 0; i < count; i++)
     {
+        dbg_update = osGetSystemTimeMS();
         raceCtrl(gameData);
+        dbg_update = osGetSystemTimeMS() - dbg_update;
     }
 
     renderFrameBegin();
@@ -1388,7 +1385,6 @@ void raceLoop(ConfigData* gameData)
         ctrlmode = INTERACTIVE;
 
         ResetCone(&ctrlcone);
-        TextureTableCount = gBaseTextureIndex;
         ctrlGameLoop = (gameData->gameType == CHAMPIONSHIP) ? GAME_LOOP_RACE_INIT : GAME_LOOP_MAIN;
         return;
     }

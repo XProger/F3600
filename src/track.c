@@ -86,7 +86,7 @@ void LoadTrack(int32 trackNum)
     getPath(trackPath, trackNum, "/library.ttf");
     ctrltexTemplate = LoadTtfFile(trackPath);
 
-    ctrllibraryTextures = TextureTableCount;
+    ctrllibraryTextures = gTexturePtr - gTextures;
     getPath(trackPath, trackNum, "/library.cmp");
     LoadCompressedTextureSequence(trackPath, 0);
 
@@ -287,7 +287,7 @@ void LoadTrack(int32 trackNum)
     ctrltexTemplate = LoadTtfFile(trackPath);
 
     HACK_LOAD_TRACK = 1;
-    ctrllibraryTextures = TextureTableCount;
+    ctrllibraryTextures = gTexturePtr - gTextures;
     getPath(trackPath, trackNum, "/library.cmp");
     LoadCompressedTextureSequence(trackPath, 0);
     HACK_LOAD_TRACK = 0;
@@ -344,7 +344,7 @@ int32 clutAdd(int32 faceTexIndex, float r, float g, float b)
 {
     int32 i, pr, pg, pb;
     uint16 clut[16];
-    Tim* tim = (Tim*)TextureTable[faceTexIndex + ctrllibraryTextures];
+    Tim* tim = gTextures[faceTexIndex + ctrllibraryTextures].tim;
 
     ASSERT(TimType(tim) == TIM_4);
 

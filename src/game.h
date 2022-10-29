@@ -2,8 +2,6 @@
 #define _GAME_H_INCLUDED_
 
 #include "standard.h"
-#include "tim.h"
-#include "object.h"
 #include "render.h"
 #include "skeleton.h"
 #include "track.h"

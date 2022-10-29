@@ -84,7 +84,7 @@ int SectionSearch(ShipData* playerShip)
         }
     }
 
-    smallest_mag = SquareRoot0(smallest_mag);
+    smallest_mag = rsqrt(smallest_mag);
 
     if (smallest_mag > 3700)
     {
@@ -123,7 +123,7 @@ TrackSection* FindNearestSection(TrackSection* trk, vec4i pos)
     cent2ship.y = pos.y - trk->centre.y;
     cent2ship.z = pos.z - trk->centre.z;
 
-    smallest_mag = /*SquareRoot0*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+    smallest_mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
     nearest_section = trk;
 
@@ -146,7 +146,7 @@ TrackSection* FindNearestSection(TrackSection* trk, vec4i pos)
         cent2ship.x = pos.x - trk->centre.x;
         cent2ship.y = pos.y - trk->centre.y;
         cent2ship.z = pos.z - trk->centre.z;
-        mag = /*SquareRoot0*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+        mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
         if (mag < smallest_mag)
         {
@@ -164,7 +164,7 @@ TrackSection* FindNearestSection(TrackSection* trk, vec4i pos)
             cent2ship.x = pos.x - trk->centre.x;
             cent2ship.y = pos.y - trk->centre.y;
             cent2ship.z = pos.z - trk->centre.z;
-            mag = /*SquareRoot0*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+            mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
             if (mag < smallest_mag)
             {

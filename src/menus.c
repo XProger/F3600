@@ -16,7 +16,7 @@ int modelHdg = 0;
 int zoomInOut = 0;
 int downUp = 0;
 
-Texture* buttonTex[18];
+Texture* gButtonTex;
 Texture* slideTex;
 Texture* sliderTex;
 
@@ -52,7 +52,7 @@ Object* optShapes[7];
 Object* padShapes[3];
 SelectionData selectData;
 
-Texture* trackTex[7];
+Texture* gTrackIcon;
 
 void DrawControllerMenu(const Menu* menu, int shapeNo);
 void DrawControllerEdit(const Menu* menu, int shapeNo);
@@ -209,6 +209,7 @@ const Menu gMenuSystem[] = {
     { "CONFIGURE KEYBOARD", padShapes, padShapes, DrawControllerEdit, ControllerEdit, 0 }
 };
 
+
 //#define VER_PSX
 
 void menuInit(void)
@@ -230,7 +231,8 @@ void menuInit(void)
     LoadTexModel(optShapes, "misc");
 #endif
 
-    InitTrackTex(trackTex);
+    gTrackIcon = gTexturePtr;
+    LoadCompressedTextureSequence("wipeout/textures/track.cmp", 0);
 
     InitButtons("wipeout/textures/buttons.cmp");
     slideTex = LoadTexture("wipeout/textures/slider1.tim");
@@ -241,7 +243,7 @@ void menuInit(void)
 
     trackNum = 15; // pretend track for restoring - SJR
 
-    InitMenuDisplay(90);
+    renderOffset(0, -30);
 
     if (ctrlfirsttime)
         InitSelectData(&selectData);
@@ -322,7 +324,7 @@ void GoMenu(int menu)
     gCurrOption = 0;
 
     PlayNote(SFX_MENU_SELECT);
-    InitMenuDisplay(90);
+    renderOffset(0, -30);
 }
 
 void GoBack(void)
@@ -337,7 +339,7 @@ void GoBack(void)
     KillNote(SFX_SHIELDS);
 
     PlayNote(SFX_MENU_2_MENU);
-    InitMenuDisplay(90);
+    renderOffset(0, -30);
 }
 
 void GoPrevMusic(void)
@@ -360,7 +362,7 @@ void GoNextMusic(void)
 
 void DisplayButtons(int x, int y, int buttType)
 {
-    renderImage(buttonTex[buttType], x, y);
+    renderImage(gButtonTex + buttType, x, y);
 }
 
 void DrawButtons(void)
@@ -414,7 +416,7 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
                     break;
                 case AUDIO_CONFIG:
                     GoMenu(AUDIO_MENU);
-                    InitMenuDisplay(180);
+                    renderOffset(0, 60);
                     gameData->oldSliderPos = gameData->currSliderPos;
                     break;
                 case HIGH_SCORES:
@@ -553,16 +555,18 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
     int i;
     const Menu* menu = gMenuSystem + gCurrMenu;
     int numOptions = menu->numOptions;
+    const char* title;
 
     if (gCurrMenu == TRACK_MENU)
     {
-        renderImage(trackTex[gCurrOption], 96, 50);
+        renderImage(gTrackIcon + gCurrOption, 96, 50);
 
         if (gameData->Class == 0)
-            CentreText("VENOM CLASS", text_data(20, 40, 8), TEXT_COLOR_HIGHLIGHT);
+            title = "VENOM CLASS";
         else
-            CentreText("RAPIER CLASS", text_data(20, 40, 8), TEXT_COLOR_HIGHLIGHT);
+            title = "RAPIER CLASS";
 
+        CentreText(title, text_data(20, 40, 8), TEXT_COLOR_HIGHLIGHT);
         numOptions = NumTracks;
     }
 
@@ -637,7 +641,7 @@ int LoadModel(Object** modelShapes, char* fileName)
     strcat(modelFile, fileName);
     strcat(modelFile, ".prm");
 
-    obj = LoadPrm(modelFile, TextureTableCount);
+    obj = LoadPrm(modelFile, 0);
 
     while (obj)
     {
@@ -664,7 +668,8 @@ int LoadTexModel(Object** modelShapes, char* fileName)
     strcpy(modelFile, "wipeout/common/");
     strcat(modelFile, fileName);
     strcat(modelFile, ".cmp");
-    modelTextures = TextureTableCount;
+
+    modelTextures = gTexturePtr - gTextures;
     LoadCompressedTextureSequence(modelFile, 0);
 
     strcpy(modelFile, "wipeout/common/");
@@ -738,7 +743,7 @@ void DrawPilot(const Menu* menu, int shapeNo)
 
 void DrawPlayPad(const Menu* menu, int shapeNo)
 {
-    InitMenuDisplay(120);
+    renderOffset(0, 0);
     DrawObject(menu->menuModel[0], 0, -1140, 6220 + zoomInOut, modelHdg, 0, 0);
     DrawObject(menu->menuModel[1], 0, 2260 + downUp, 6670, 250, -3440, 10);
 }
@@ -1135,7 +1140,7 @@ void DrawGames(const Menu* menu, int shipNo)
 {
     int hdg = gFrameIndex * 20;
 
-    InitMenuDisplay(90);
+    renderOffset(0, -30);
 
     if (shipNo == 0)
     {
@@ -1158,7 +1163,7 @@ void DrawOptionMenus(const Menu* menu, int shipNo)
     int hdg = gFrameIndex * 20;
     int heading = gFrameIndex * 5;
 
-    InitMenuDisplay(90);
+    renderOffset(0, -30);
 
     switch (shipNo)
     {
@@ -1181,7 +1186,7 @@ void DrawHiScoreMenu(const Menu* menu, int shipNo)
 {
     int hdg = gFrameIndex * 20;
 
-    InitMenuDisplay(90);
+    renderOffset(0, -30);
     DrawObject(menu->menuModel[2], 0, 0, 600, hdg, 0, 0);
 }
 
@@ -1223,18 +1228,8 @@ void InitChampionship(void)
 
 void InitButtons(char* fileName)
 {
-    int tablePos;
-    int i;
-
-    tablePos = TextureTableCount;
-
+    gButtonTex = gTexturePtr;
     LoadCompressedTextureSequence(fileName, 0);
-
-    for (i = 0; i < 18; i++)
-    {
-        buttonTex[i] = TextureTable[tablePos];
-        tablePos++;
-    }
 }
 
 void QuitYesNo(SelectionData* selectData, ConfigData* gameData)
@@ -1268,7 +1263,6 @@ void ControllerEdit(SelectionData* selectData, ConfigData* gameData)
 
 void DrawControllerMenu(const Menu* menu, int shapeNo)
 {
-    InitMenuDisplay(110);
     // TODO
 }
 
@@ -1279,7 +1273,6 @@ void KeyConfig(void)
 
 void DrawControllerEdit(const Menu* menu, int shapeNo)
 {
-    InitMenuDisplay(80);
 }
 
 void DrawGraphicDetail(const Menu* menu, int shapeNo)

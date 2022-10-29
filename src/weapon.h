@@ -22,19 +22,19 @@ enum WeaponShapeType
 #define MINE_RELEASE_RATE  3
 #define WEAPON_DELAY       (FR40)
 
-#define NO_WEAPON 0
-
-#define ROCKET    1
-#define MISSILE   2
-#define MINE      3
-#define SPECIAL   4     // TODO multiplayer
-#define ELEC_BOLT 5
-#define FLARE     6     // TODO unused
-#define REV_CON   7     // TODO multiplayer
-#define SHIELD    8
-#define TURBO     9
-
-#define NO_OF_WEAPON_TYPES 9
+enum WeaponType
+{
+    WPN_NONE,
+    WPN_MINE,
+    WPN_MISSILE,
+    WPN_ROCKET,
+    WPN_SPECIAL,    // TODO multiplayer
+    WPN_ELEC_BOLT,
+    WPN_FLARE,      // TODO unused
+    WPN_REV_CON,    // TODO multiplayer
+    WPN_SHIELD,
+    WPN_TURBO
+};
 
 #define SHIP_EXPLODE -1
 #define TRACK_EXPLODE -2

@@ -21,23 +21,23 @@ void ShipCalcAmbient(ShipData* playerShip)
 
 void ApplySpeedUp(ShipData* playerShip)
 {
-    playerShip->vel.x += ((playerShip->nearTrkSect->nextSection->centre.x - playerShip->nearTrkSect->centre.x) * 60) / FR60;
-    playerShip->vel.y += ((playerShip->nearTrkSect->nextSection->centre.y - playerShip->nearTrkSect->centre.y) * 60) / FR60;
-    playerShip->vel.z += ((playerShip->nearTrkSect->nextSection->centre.z - playerShip->nearTrkSect->centre.z) * 60) / FR60;
+    playerShip->vel.x += playerShip->nearTrkSect->nextSection->centre.x - playerShip->nearTrkSect->centre.x;
+    playerShip->vel.y += playerShip->nearTrkSect->nextSection->centre.y - playerShip->nearTrkSect->centre.y;
+    playerShip->vel.z += playerShip->nearTrkSect->nextSection->centre.z - playerShip->nearTrkSect->centre.z;
 
     gTargetFOV = CAMERA_FOV_EXTRA;
 }
 
 void ShipTrkReaction(ShipData* playerShip)
 {
-    int alpha, noseAlpha;
+    int alpha, noseAlpha, tmp;
     int resistance;
     Face* facePtr;
     vec4i force;
     vec4i velDOF;
     int velMag;
     vec4i nosePos;
-    short brake;
+    int32 brake;
     const vec4i* facePoint;
     TrackSection* nextSection;
     vec4i bestPath, distance;
@@ -55,9 +55,9 @@ void ShipTrkReaction(ShipData* playerShip)
 
     playerShip->speed = velMag;
 
-    velDOF.x = sar(velMag * playerShip->unitVecNose.x, 12);
-    velDOF.y = sar(velMag * playerShip->unitVecNose.y, 12);
-    velDOF.z = sar(velMag * playerShip->unitVecNose.z, 12);
+    velDOF.x = (velMag * playerShip->unitVecNose.x) >> 12;
+    velDOF.y = (velMag * playerShip->unitVecNose.y) >> 12;
+    velDOF.z = (velMag * playerShip->unitVecNose.z) >> 12;
 
     if (playerShip->nearTrkSect->flags & Jump)
     {
@@ -159,43 +159,37 @@ void ShipTrkReaction(ShipData* playerShip)
             playerShip->vel.y -= (playerShip->vel.y) >> 3;
             playerShip->vel.z -= (playerShip->vel.z) >> 3;
 
-            playerShip->vel.x -= (facePtr->normal.x * 60) / FR60;
-            playerShip->vel.y -= (facePtr->normal.y * 60) / FR60;
-            playerShip->vel.z -= (facePtr->normal.z * 60) / FR60;
+            playerShip->vel.x -= facePtr->normal.x;
+            playerShip->vel.y -= facePtr->normal.y;
+            playerShip->vel.z -= facePtr->normal.z;
         }
         else if (alpha <= 30)
         {
-            playerShip->vel.x += (facePtr->normal.x * 60) / FR60;
-            playerShip->vel.y += (facePtr->normal.y * 60) / FR60;
-            playerShip->vel.z += (facePtr->normal.z * 60) / FR60;
+            playerShip->vel.x += facePtr->normal.x;
+            playerShip->vel.y += facePtr->normal.y;
+            playerShip->vel.z += facePtr->normal.z;
         }
 
         brake = (playerShip->r_brake_rot + playerShip->l_brake_rot);
-        /* was << 1 */
-        playerShip->acc.x = (velDOF.x - playerShip->vel.x) / (playerShip->skid + (brake >> 2));
-        playerShip->acc.y = (velDOF.y - playerShip->vel.y) / (playerShip->skid + (brake >> 2));
-        playerShip->acc.z = (velDOF.z - playerShip->vel.z) / (playerShip->skid + (brake >> 2));
+
+        tmp = FixedInvU(playerShip->skid + (brake >> 2));
+        playerShip->acc.x = (velDOF.x - playerShip->vel.x) * tmp >> 16;
+        playerShip->acc.y = (velDOF.y - playerShip->vel.y) * tmp >> 16;
+        playerShip->acc.z = (velDOF.z - playerShip->vel.z) * tmp >> 16;
 
         if (alpha < 50)
             alpha = 50;
 
-        force.x = (facePtr->normal.x * TARGETHEIGHT * TRACK_MAGNET) / alpha;
-        force.y = (facePtr->normal.y * TARGETHEIGHT * TRACK_MAGNET) / alpha;
-        force.z = (facePtr->normal.z * TARGETHEIGHT * TRACK_MAGNET) / alpha;
-
-        force.x -= (facePtr->normal.x * TRACK_MAGNET);
-        force.y -= (facePtr->normal.y * TRACK_MAGNET);
-        force.z -= (facePtr->normal.z * TRACK_MAGNET);
+        alpha = (TRACK_MAGNET << 8) * (TARGETHEIGHT - alpha) / alpha;
+        force.x = (facePtr->normal.x * alpha) >> 8;
+        force.y = (facePtr->normal.y * alpha) >> 8;
+        force.z = (facePtr->normal.z * alpha) >> 8;
 
         force.y += 30000;
 
-        playerShip->acc.x += (force.x + playerShip->thrust.x) / playerShip->mass;
-        playerShip->acc.y += (force.y + playerShip->thrust.y) / playerShip->mass;
-        playerShip->acc.z += (force.z + playerShip->thrust.z) / playerShip->mass;
-
-        playerShip->acc.x = (playerShip->acc.x * 60) / FR60;
-        playerShip->acc.y = (playerShip->acc.y * 60) / FR60;
-        playerShip->acc.z = (playerShip->acc.z * 60) / FR60;
+        playerShip->acc.x += (force.x + playerShip->thrust.x) * SHIP_MASS_INV >> 16;
+        playerShip->acc.y += (force.y + playerShip->thrust.y) * SHIP_MASS_INV >> 16;
+        playerShip->acc.z += (force.z + playerShip->thrust.z) * SHIP_MASS_INV >> 16;
 
         playerShip->vel.x += playerShip->acc.x;
         playerShip->vel.y += playerShip->acc.y;
@@ -207,13 +201,14 @@ void ShipTrkReaction(ShipData* playerShip)
         /*** Aveage resistance value based around 128 ***/
         resistance = (playerShip->resistance * (74 - (brake >> 3))) >> 7;
 
-        playerShip->vel.x -= playerShip->vel.x / resistance;
-        playerShip->vel.y -= playerShip->vel.y / resistance;
-        playerShip->vel.z -= playerShip->vel.z / resistance;
+        tmp = FixedInvU(resistance);
+        playerShip->vel.x -= playerShip->vel.x * tmp >> 16;
+        playerShip->vel.y -= playerShip->vel.y * tmp >> 16;
+        playerShip->vel.z -= playerShip->vel.z * tmp >> 16;
 
-        playerShip->pos.x += sar(playerShip->vel.x, VELOCITY_SHIFT);
-        playerShip->pos.y += sar(playerShip->vel.y, VELOCITY_SHIFT);
-        playerShip->pos.z += sar(playerShip->vel.z, VELOCITY_SHIFT);
+        playerShip->pos.x += playerShip->vel.x >> VELOCITY_SHIFT;
+        playerShip->pos.y += playerShip->vel.y >> VELOCITY_SHIFT;
+        playerShip->pos.z += playerShip->vel.z >> VELOCITY_SHIFT;
 
         nosePos.x = (playerShip->unitVecNose.x >> 5) + playerShip->pos.x;
         nosePos.y = (playerShip->unitVecNose.y >> 5) + playerShip->pos.y;
@@ -233,11 +228,11 @@ void ShipTrkReaction(ShipData* playerShip)
         }
 
         playerShip->vpitch -= playerShip->vpitch >> 2;
-        brake = sar(playerShip->r_brake_rot - playerShip->l_brake_rot, 3);
+        brake = (playerShip->r_brake_rot - playerShip->l_brake_rot) >> 3;
 
-        playerShip->hdg += sar(brake * playerShip->speed, 15);
+        playerShip->hdg += (brake * playerShip->speed) >> 15;
 
-        playerShip->vroll += sar(playerShip->vhdg, 5);
+        playerShip->vroll += playerShip->vhdg >> 5;
         playerShip->vroll -= playerShip->vroll >> 1;
     }
 
@@ -276,17 +271,14 @@ void ShipTrkReaction(ShipData* playerShip)
 
         brake = (playerShip->r_brake_rot + playerShip->l_brake_rot);
 
-        playerShip->acc.x = (velDOF.x - playerShip->vel.x) / (MIN_RESISTANCE + (brake << 2));
-        playerShip->acc.y = (velDOF.y - playerShip->vel.y) / (MIN_RESISTANCE + (brake << 2));
-        playerShip->acc.z = (velDOF.z - playerShip->vel.z) / (MIN_RESISTANCE + (brake << 2));
+        tmp = FixedInvU(MIN_RESISTANCE + (brake << 2));
+        playerShip->acc.x = (velDOF.x - playerShip->vel.x) * tmp >> 16;
+        playerShip->acc.y = (velDOF.y - playerShip->vel.y) * tmp >> 16;
+        playerShip->acc.z = (velDOF.z - playerShip->vel.z) * tmp >> 16;
 
-        playerShip->acc.x += (playerShip->thrust.x) / playerShip->mass;
-        playerShip->acc.y += (GRAVITY + playerShip->thrust.y) / playerShip->mass;
-        playerShip->acc.z += (playerShip->thrust.z) / playerShip->mass;
-
-        playerShip->acc.x = (playerShip->acc.x * 60) / FR60;
-        playerShip->acc.y = (playerShip->acc.y * 60) / FR60;
-        playerShip->acc.z = (playerShip->acc.z * 60) / FR60;
+        playerShip->acc.x += (playerShip->thrust.x) * SHIP_MASS_INV >> 16;
+        playerShip->acc.y += (GRAVITY + playerShip->thrust.y) * SHIP_MASS_INV >> 16;
+        playerShip->acc.z += (playerShip->thrust.z) * SHIP_MASS_INV >> 16;
 
         playerShip->vel.x += playerShip->acc.x;
         playerShip->vel.y += playerShip->acc.y;
@@ -298,24 +290,25 @@ void ShipTrkReaction(ShipData* playerShip)
 
         resistance = (playerShip->resistance * (74 - (brake >> 3))) >> 7;
 
-        playerShip->vel.x -= playerShip->vel.x / resistance;
-        playerShip->vel.y -= playerShip->vel.y / resistance;
-        playerShip->vel.z -= playerShip->vel.z / resistance;
+        tmp = FixedInvU(resistance);
+        playerShip->vel.x -= playerShip->vel.x * tmp >> 16;
+        playerShip->vel.y -= playerShip->vel.y * tmp >> 16;
+        playerShip->vel.z -= playerShip->vel.z * tmp >> 16;
 
-        playerShip->pos.x += sar(playerShip->vel.x, 6);
-        playerShip->pos.y += sar(playerShip->vel.y, 6);
-        playerShip->pos.z += sar(playerShip->vel.z, 6);
+        playerShip->pos.x += playerShip->vel.x >> VELOCITY_SHIFT;
+        playerShip->pos.y += playerShip->vel.y >> VELOCITY_SHIFT;
+        playerShip->pos.z += playerShip->vel.z >> VELOCITY_SHIFT;
 
         playerShip->vpitch -= FR50;
         playerShip->vpitch -= playerShip->vpitch >> 2;
 
-        brake = sar(playerShip->r_brake_rot - playerShip->l_brake_rot, 3);
-        playerShip->hdg += sar((brake * playerShip->speed), 15);
+        brake = (playerShip->r_brake_rot - playerShip->l_brake_rot) >> 3;
+        playerShip->hdg += (brake * playerShip->speed) >> 15;
 
-        playerShip->vroll += sar(playerShip->vhdg, 5);
-        playerShip->vroll -= sar(playerShip->vroll, 1);
+        playerShip->vroll += playerShip->vhdg >> 5;
+        playerShip->vroll -= playerShip->vroll >> 1;
     }
-    playerShip->hdg += sar(playerShip->vhdg, 6);
+    playerShip->hdg += playerShip->vhdg >> 6;
 
     playerShip->pitch += playerShip->vpitch >> 4;
 
@@ -391,7 +384,7 @@ void GetTargetPos(vec4i* result, const vec4i* pos, const vec3i* cent1, const vec
     if ((a_mag != 0) && (b_mag != 0))
     {
         cos_alpha = ((-b_sq - (a_sq + c_sq)) << 12) / ((a_mag * b_mag) << 1);
-        angle = arccos(cos_alpha) >> 2;
+        angle = arccos(cos_alpha) >> 2; // TODO remove arccos
         c_mag = ((rcos(angle) * a_mag) >> 12);
         result->x = cent1->x - ((b.x * c_mag) / b_mag);
         result->y = cent1->y - ((b.y * c_mag) / b_mag);
@@ -401,8 +394,8 @@ void GetTargetPos(vec4i* result, const vec4i* pos, const vec3i* cent1, const vec
 
 void SetUnitVectors(ShipData* shipIndex)
 {
-    short sx, sy, sz;
-    short cx, cy, cz;
+    int32 sx, sy, sz;
+    int32 cx, cy, cz;
     int i;
     vec4i direction;
     vec4i toFaceVector;
@@ -411,12 +404,12 @@ void SetUnitVectors(ShipData* shipIndex)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        sy = rsin(shipIndex[i].hdg);
-        cy = rcos(shipIndex[i].hdg);
-        sx = rsin(shipIndex[i].pitch);
-        cx = rcos(shipIndex[i].pitch);
-        sz = rsin(shipIndex[i].roll);
-        cz = rcos(shipIndex[i].roll);
+        int32 sx, sy, sz;
+        int32 cx, cy, cz;
+
+        rsincos(shipIndex[i].pitch, sx, cx);
+        rsincos(shipIndex[i].hdg, sy, cy);
+        rsincos(shipIndex[i].roll, sz, cz);
 
         shipIndex[i].unitVecNose.x = -frac(sy, cx);
         shipIndex[i].unitVecNose.y = -sx;
@@ -521,4 +514,17 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     }
 
     return (noWeaponGrids);
+}
+
+void ApplyMagnet(vec4i* acc, const vec3s* normal, int32 alpha)
+{
+    if (alpha < 50)
+    {
+        alpha = 50;
+    }
+
+    alpha = (TRACK_MAGNET << 8) * (TARGETHEIGHT - alpha) / alpha;
+    acc->x = (normal->x * alpha) >> 16;
+    acc->y = (normal->y * alpha) >> 16;
+    acc->z = (normal->z * alpha) >> 16;
 }

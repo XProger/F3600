@@ -64,7 +64,7 @@ void SceneRadiusCheck(Object* objects)
             {
                 if ((abs(vector.x) < (section->globalRadius * 2)) && (abs(vector.y) < (section->globalRadius * 2)) && (abs(vector.z) < (section->globalRadius * 2)))
                 {
-                    distance = SquareRoot0((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
+                    distance = rsqrt((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
 
                     distance = distance - object->extent;
 
@@ -79,7 +79,7 @@ void SceneRadiusCheck(Object* objects)
             {
                 if ((abs(vector.x) < section->globalRadius) && (abs(vector.y) < section->globalRadius) && (abs(vector.z) < section->globalRadius))
                 {
-                    distance = SquareRoot0((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
+                    distance = rsqrt((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
 
                     distance = distance - object->extent;
 
@@ -107,7 +107,7 @@ void SceneRadiusCheck(Object* objects)
 
                     if ((abs(vector.x) < section->localRadius) && (abs(vector.y) < section->localRadius) && (abs(vector.z) < section->localRadius))
                     {
-                        distance = SquareRoot0((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
+                        distance = rsqrt((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
 
                         distance = distance - object->extent;
 
@@ -134,7 +134,7 @@ void SceneRadiusCheck(Object* objects)
 
                     if ((abs(vector.x) < section->localRadius) && (abs(vector.y) < section->localRadius) && (abs(vector.z) < section->localRadius))
                     {
-                        distance = SquareRoot0((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
+                        distance = rsqrt((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
 
                         distance = distance - object->extent;
 

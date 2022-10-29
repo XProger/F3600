@@ -1,6 +1,10 @@
 #include "menus.h"
 
-#define NO_OF_SHIPS 8
+#define NO_OF_SHIPS     8
+
+
+#define SHIP_MASS       150
+#define SHIP_MASS_INV   ((1 << 16) / SHIP_MASS)
 
 #define IN_TOW          0x1
 #define REMOTE_VIEW     0x2
@@ -48,7 +52,6 @@ typedef struct ShipData
     short hdg, pitch, roll; /* Orientation attributes */
     short vhdg, vpitch, vroll;
     short ahdg;
-    short mass; /* Mass of ship */
     vec4i thrust; /* Thrust vector */
     short r_brake_rot, l_brake_rot; /* Air brakes */
     uint16 speed; /* speed */

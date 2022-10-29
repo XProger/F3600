@@ -94,6 +94,9 @@ void memCheck(void)
 
 extern void drawInt(int32 x, int32 y, int32 number);
 
+extern int32 dbg_update;
+extern int32 dbg_render;
+
 int main(int argc, char *argv[])
 {
     int32 fpsFrameIndex;
@@ -145,7 +148,9 @@ int main(int argc, char *argv[])
             fpsFrame = 0;
         }
 
-        drawInt(320 - 8, 4 + 16, fps);
+        drawInt(320 - 8, 20, fps);
+        drawInt(320 - 8, 28, dbg_update);
+        drawInt(320 - 8, 36, dbg_render);
 
         renderSwap();
     }

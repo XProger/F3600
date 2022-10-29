@@ -42,16 +42,6 @@ void InitCone(Cone* cone)
                         allVert[allCount++] = prm.ft3->coords[2];
 
                         prm.ft3->flag |= Translucent;
-
-                        //prm.ft3->tsb = GetTPage(0, 0, TextureTable[prm.ft3->texture]->textureX, TextureTable[prm.ft3->texture]->textureY);
-                        /*
-                        prm.ft3->colour.r = 230;
-                        prm.ft3->colour.g = 0 ;
-                       prm.ft3->colour.b = UNUSED1_TRANSL;
-                       */
-                        //                  prm.ft3->colour.r = 116;
-                        //                  prm.ft3->colour.g = 97 ;
-                        //                  prm.ft3->colour.b = 103;
                         seCount++;
                     }
                     prm.ft3 += 1;
@@ -77,17 +67,6 @@ void InitCone(Cone* cone)
                         allVert[allCount++] = prm.gt3->coords[2];
 
                         prm.gt3->flag |= Translucent;
-
-                        //prm.gt3->tsb = GetTPage(0, 0, TextureTable[prm.gt3->texture]->textureX, TextureTable[prm.gt3->texture]->textureY);
-                        /*
-                        for ( j=0; j<3; j++ )
-                        {
-
-                           prm.gt3->colour[ j ].r = 116;
-                           prm.gt3->colour[ j ].g = 97 ;
-                           prm.gt3->colour[ j ].b = 103;
-                        }
-                        */
                         seCount++;
                     }
                     prm.gt3 += 1;

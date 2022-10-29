@@ -55,17 +55,13 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
     acc.y = distance.y;
     acc.z = distance.z;
 
-    acc.x = (acc.x * 60) / FR60;
-    acc.y = (acc.y * 60) / FR60;
-    acc.z = (acc.z * 60) / FR60;
-
     camera->vel.x -= acc.x >> 6;
     camera->vel.y -= acc.y >> 6;
     camera->vel.z -= acc.z >> 6;
 
-    camera->vel.x -= sar(camera->vel.x, 3);
-    camera->vel.y -= sar(camera->vel.y, 3);
-    camera->vel.z -= sar(camera->vel.z, 3);
+    camera->vel.x -= camera->vel.x >> 3;
+    camera->vel.y -= camera->vel.y >> 3;
+    camera->vel.z -= camera->vel.z >> 3;
 
     pos.x += camera->vel.x;
     pos.y += camera->vel.y;
@@ -90,18 +86,15 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
 
 void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
 {
-    short sx, sy, sz;
-    short cx, cy, cz;
+    int32 sx, sy, sz;
+    int32 cx, cy, cz;
     vec4i unitFinVector;
 
     camera->section = camShip->nearTrkSect;
 
-    sy = rsin(camShip->hdg);
-    sx = rsin(camShip->pitch);
-    sz = rsin(camShip->roll);
-    cy = rcos(camShip->hdg);
-    cx = rcos(camShip->pitch);
-    cz = rcos(camShip->roll);
+    rsincos(camShip->pitch, sx, cx);
+    rsincos(camShip->hdg, sy, cy);
+    rsincos(camShip->roll, sz, cz);
 
     unitFinVector.x = ((cy * sz) >> 12) - ((((sy * sx) >> 12) * cz) >> 12);
     unitFinVector.y = (cx * cz) >> 12;
@@ -121,6 +114,7 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
 {
     vec4i pos;
     vec4i targetVector;
+    int32 s;
 
     /*** Set to final position ***/
     pos.x = camShip->pos.x - (camShip->unitVecNose.x >> 2);
@@ -128,9 +122,11 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
     pos.z = camShip->pos.z - (camShip->unitVecNose.z >> 2);
     pos.w = 0;
 
-    pos.x += ((rsin((camShip->updateCount - SWITCH_TO_RACE_VIEW) * 3)));
+    s = rsin((camShip->updateCount - SWITCH_TO_RACE_VIEW) * 3);
+
+    pos.x += s;
     pos.y -= (2 * (camShip->updateCount - SWITCH_TO_RACE_VIEW)) + 200;
-    pos.z += ((rsin((camShip->updateCount - SWITCH_TO_RACE_VIEW) * 3)));
+    pos.z += s;
 
     if (camShip->updateCount == START_TIME)
     {
@@ -143,7 +139,7 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
 
     SetSkeletonPosition(camera->camPos, -pos.x, -pos.y, -pos.z);
 
-    camera->pitch = -sar(camShip->pitch, 1);
+    camera->pitch = -(camShip->pitch >> 1);
 
     targetVector.x = camShip->pos.x - pos.x;
     targetVector.y = camShip->pos.y - pos.y;
@@ -170,8 +166,8 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
     vec4i pos;
     int temp;
     vec4i targetVector;
-    short sx, sy, sz;
-    short cx, cy, cz;
+    int32 sx, sy, sz, st;
+    int32 cx, cy, cz, ct;
     vec4i unitFinVector;
 
     camera->section = camShip->nearTrkSect;
@@ -186,24 +182,22 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
         CameraUpdate = UpdateCameraAttractMode;
     }
 
-    sy = rsin(camShip->hdg);
-    sx = rsin(camShip->pitch);
-    sz = rsin(camShip->roll);
-    cy = rcos(camShip->hdg);
-    cx = rcos(camShip->pitch);
-    cz = rcos(camShip->roll);
+    rsincos(camShip->pitch, sx, cx);
+    rsincos(camShip->hdg, sy, cy);
+    rsincos(camShip->roll, sz, cz);
+    rsincos(target << 3, st, ct);
 
-    unitFinVector.x = ((cy * sz) >> 12) - ((((sy * sx) >> 12) * cz) >> 12);
+    unitFinVector.x = ((cy * sz) - (((sy * sx) >> 12) * cz)) >> 12;
     unitFinVector.y = (cx * cz) >> 12;
-    unitFinVector.z = ((sy * sz) >> 12) + ((((cy * sx) >> 12) * cz) >> 12);
+    unitFinVector.z = ((sy * sz) + (((cy * sx) >> 12) * cz)) >> 12;
 
-    pos.x = camShip->pos.x + (rsin(camShip->hdg) / 6);
+    pos.x = camShip->pos.x + (sy / 6);
     pos.y = camShip->pos.y + ((camShip->pitch >> 2) - 200);
-    pos.z = camShip->pos.z - (rcos(camShip->hdg) / 6);
+    pos.z = camShip->pos.z - (cy / 6);
 
-    pos.x += rsin(target << 3) >> 3;
+    pos.x += st >> 3;
     pos.y -= 200;
-    pos.z += rcos(target << 3) >> 3;
+    pos.z += ct >> 3;
 
     pos.x -= unitFinVector.x >> 4;
     pos.y -= unitFinVector.y >> 4;
@@ -213,7 +207,7 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
     targetVector.y = camShip->pos.y - pos.y;
     targetVector.z = camShip->pos.z - pos.z;
 
-    temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+    temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
     SetSkeletonPosition(camera->camPos, -pos.x, -pos.y, -pos.z);
 
@@ -243,7 +237,7 @@ void UpdateCameraDroidView(TrackCamera* camera, ShipData* camShip, RescueData* r
     targetVector.y = av.y - pos.y;
     targetVector.z = av.z - pos.z;
 
-    temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+    temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
     SetSkeletonPosition(camera->camPos, -pos.x, -pos.y, -pos.z);
 
@@ -286,7 +280,7 @@ void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData
     targetVector.y = camShip->pos.y - pos.y;
     targetVector.z = camShip->pos.z - pos.z;
 
-    temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+    temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
     SetSkeletonPosition(camera->camPos, -pos.x, -pos.y, -pos.z);
 

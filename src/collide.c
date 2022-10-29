@@ -65,12 +65,13 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
             /***                           m1 + m2                  ***/
             /**********************************************************/
 
-            ownMass = shipIndex[j].mass;
-            remMass = shipIndex[i].mass;
+            // optimization
+            // all ships in wipeout have the same mass == 150
+            // so vc = (v1 + v2) / 2
 
-            vc.x = ((shipIndex[j].vel.x * ownMass) + (shipIndex[i].vel.x * remMass)) / (ownMass + remMass);
-            vc.y = ((shipIndex[j].vel.y * ownMass) + (shipIndex[i].vel.y * remMass)) / (ownMass + remMass);
-            vc.z = ((shipIndex[j].vel.z * ownMass) + (shipIndex[i].vel.z * remMass)) / (ownMass + remMass);
+            vc.x = (shipIndex[j].vel.x + shipIndex[i].vel.x) >> 1;
+            vc.y = (shipIndex[j].vel.y + shipIndex[i].vel.y) >> 1;
+            vc.z = (shipIndex[j].vel.z + shipIndex[i].vel.z) >> 1;
 
             ship1React.x = (vc.x - shipIndex[j].vel.x) >> 1;
             ship1React.y = (vc.y - shipIndex[j].vel.y) >> 1;
@@ -80,13 +81,13 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
             ship2React.y = (vc.y - shipIndex[i].vel.y) >> 1;
             ship2React.z = (vc.z - shipIndex[i].vel.z) >> 1;
 
-            shipIndex[j].pos.x -= sar(shipIndex[j].vel.x, 6);
-            shipIndex[j].pos.y -= sar(shipIndex[j].vel.y, 6);
-            shipIndex[j].pos.z -= sar(shipIndex[j].vel.z, 6);
+            shipIndex[j].pos.x -= shipIndex[j].vel.x >> VELOCITY_SHIFT;
+            shipIndex[j].pos.y -= shipIndex[j].vel.y >> VELOCITY_SHIFT;
+            shipIndex[j].pos.z -= shipIndex[j].vel.z >> VELOCITY_SHIFT;
 
-            shipIndex[i].pos.x -= sar(shipIndex[i].vel.x, 6);
-            shipIndex[i].pos.y -= sar(shipIndex[i].vel.y, 6);
-            shipIndex[i].pos.z -= sar(shipIndex[i].vel.z, 6);
+            shipIndex[i].pos.x -= shipIndex[i].vel.x >> VELOCITY_SHIFT;
+            shipIndex[i].pos.y -= shipIndex[i].vel.y >> VELOCITY_SHIFT;
+            shipIndex[i].pos.z -= shipIndex[i].vel.z >> VELOCITY_SHIFT;
 
             /**************** YOUR CRAFT REACTION *********************/
             shipIndex[j].vel.x = vc.x + ship1React.x;
@@ -110,21 +111,13 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
             shipIndex[j].vel.y -= ship2ship.y << 2;
             shipIndex[j].vel.z -= ship2ship.z << 2;
 
-            shipIndex[j].vel.x = (shipIndex[j].vel.x * 60) / FR60;
-            shipIndex[j].vel.y = (shipIndex[j].vel.y * 60) / FR60;
-            shipIndex[j].vel.z = (shipIndex[j].vel.z * 60) / FR60;
+            shipIndex[j].pos.x += shipIndex[j].vel.x >> VELOCITY_SHIFT;
+            shipIndex[j].pos.y += shipIndex[j].vel.y >> VELOCITY_SHIFT;
+            shipIndex[j].pos.z += shipIndex[j].vel.z >> VELOCITY_SHIFT;
 
-            shipIndex[i].vel.x = (shipIndex[i].vel.x * 60) / FR60;
-            shipIndex[i].vel.y = (shipIndex[i].vel.y * 60) / FR60;
-            shipIndex[i].vel.z = (shipIndex[i].vel.z * 60) / FR60;
-
-            shipIndex[j].pos.x += sar(shipIndex[j].vel.x, 6);
-            shipIndex[j].pos.y += sar(shipIndex[j].vel.y, 6);
-            shipIndex[j].pos.z += sar(shipIndex[j].vel.z, 6);
-
-            shipIndex[i].pos.x += sar(shipIndex[i].vel.x, 6);
-            shipIndex[i].pos.y += sar(shipIndex[i].vel.y, 6);
-            shipIndex[i].pos.z += sar(shipIndex[i].vel.z, 6);
+            shipIndex[i].pos.x += shipIndex[i].vel.x >> VELOCITY_SHIFT;
+            shipIndex[i].pos.y += shipIndex[i].vel.y >> VELOCITY_SHIFT;
+            shipIndex[i].pos.z += shipIndex[i].vel.z >> VELOCITY_SHIFT;
 
             if ((shipIndex[i].attr & SHIP_COLL) == 0)
             {
@@ -631,9 +624,9 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
     Reflection(&(playerShip->vel), &facePtr->normal);
 
-    playerShip->pos.x -= playerShip->vel.x >> 6;
-    playerShip->pos.y -= playerShip->vel.y >> 6;
-    playerShip->pos.z -= playerShip->vel.z >> 6;
+    playerShip->pos.x -= playerShip->vel.x >> VELOCITY_SHIFT;
+    playerShip->pos.y -= playerShip->vel.y >> VELOCITY_SHIFT;
+    playerShip->pos.z -= playerShip->vel.z >> VELOCITY_SHIFT;
 
     /*TODO no slowdown by side collision*/
     playerShip->vel.x -= playerShip->vel.x >> 1;
@@ -700,9 +693,9 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     else
         playerShip->vhdg -= magnitude;
 
-    playerShip->pos.x -= playerShip->vel.x >> 6;
-    playerShip->pos.y -= playerShip->vel.y >> 6;
-    playerShip->pos.z -= playerShip->vel.z >> 6;
+    playerShip->pos.x -= playerShip->vel.x >> VELOCITY_SHIFT;
+    playerShip->pos.y -= playerShip->vel.y >> VELOCITY_SHIFT;
+    playerShip->pos.z -= playerShip->vel.z >> VELOCITY_SHIFT;
 
     playerShip->vel.x -= playerShip->vel.x >> 1;
     playerShip->vel.y -= playerShip->vel.y >> 1;
@@ -758,9 +751,9 @@ int AngleOfCollision(const vec4s* normal, const vec4i* ship_point)
 
     dot_product = ((sx * normal->x) + (sy * normal->y) + (sz * normal->z));
 
-    norm_dist = SquareRoot0((normal->x * normal->x) + (normal->y * normal->y) + (normal->z * normal->z));
+    norm_dist = rsqrt((normal->x * normal->x) + (normal->y * normal->y) + (normal->z * normal->z));
 
-    shpoint_dist = SquareRoot0((sx * sx) + (sy * sy) + (sz * sz));
+    shpoint_dist = rsqrt((sx * sx) + (sy * sy) + (sz * sz));
 
     dist_product = (shpoint_dist * norm_dist);
 

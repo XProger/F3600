@@ -1,13 +1,15 @@
 #define NO_OF_EFFECTS 140
-#define NO_OF_EFFECT_TEXTURES 7
 
-#define FX_FIRE        0
-#define FX_SMOKE       1
-#define FX_FIRE_WHITE  2
-#define FX_SHADOW      3
-#define FX_EBOLT       4
-#define FX_HALO        5
-#define FX_GREENY      6
+enum FxType
+{
+    FX_FIRE,
+    FX_FIRE_WHITE,
+    FX_SMOKE,
+    FX_EBOLT,
+    FX_HALO,
+    FX_GREENY,
+    FX_MAX
+};
 
 typedef struct Effect
 {

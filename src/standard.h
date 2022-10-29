@@ -34,7 +34,6 @@
 
     #define CPU_BIG_ENDIAN
     #define USE_SHIP_LODS
-    #define USE_DIV_TABLE
 #else
     #include <stdio.h>
 
@@ -102,19 +101,6 @@ typedef struct vec4i
 
 extern int gPad;
 
-/* Functions in the library but not defined in the headers! */
-
-/*
-   rsin() and rcos()
-
-   angle  : 4096 == 360 degrees
-   result : 4096 == 1
-
-
-long rsin( long angle );
-long rcos( long angle );
-*/
-
 unsigned short GetKeyNoBlock(void);
 
 int32 osGetSystemTimeMS(void);
@@ -144,11 +130,5 @@ enum GameLoop
 };
 
 #define GAME_LOOP_MAIN  GAME_LOOP_MENU_INIT
-
-typedef struct Texture
-{
-    uint16 width;
-    uint16 height;
-} Texture;
 
 #endif

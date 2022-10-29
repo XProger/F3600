@@ -35,7 +35,7 @@ void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
             weapon = weaponIndex + i;
             obj = weaponShapes[weapon->currentWeapon].shapePtr;
 
-            if (weapon->type == SHIELD)
+            if (weapon->type == WPN_SHIELD)
             {
                 SetSkeletonPosition(obj->skeleton, weapon->pos.x, weapon->pos.y, weapon->pos.z);
                 SetSkeletonDirectionHPR(obj->skeleton, weapon->hdg, weapon->pitch, shipIndex[weapon->fireShip].roll);
@@ -61,7 +61,7 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
         {
             switch (decision)
             {
-                case ROCKET:
+                case WPN_ROCKET:
                     weaponIndex[i].updateWeapon = InitRocket;
                     weaponIndex[i].count = WEAPON_DELAY;
                     weaponIndex[i].fireShip = shipNo;
@@ -70,12 +70,12 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                         PlayNote(SFX_MISS_LAUNCH);
                         SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH);
                     }
-                    weaponIndex[i].type = ROCKET;
-                    playerShip->weaponType = NO_WEAPON;
-                    playerShip->haveFired = ROCKET;
+                    weaponIndex[i].type = WPN_ROCKET;
+                    playerShip->weaponType = WPN_NONE;
+                    playerShip->haveFired = WPN_ROCKET;
                     return;
 
-                case MISSILE:
+                case WPN_MISSILE:
                     weaponIndex[i].updateWeapon = InitMissile;
                     weaponIndex[i].count = WEAPON_DELAY;
                     weaponIndex[i].fireShip = shipNo;
@@ -84,12 +84,12 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                         PlayNote(SFX_MISS_LAUNCH);
                         SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH);
                     }
-                    weaponIndex[i].type = MISSILE;
-                    playerShip->weaponType = NO_WEAPON;
-                    playerShip->haveFired = MISSILE;
+                    weaponIndex[i].type = WPN_MISSILE;
+                    playerShip->weaponType = WPN_NONE;
+                    playerShip->haveFired = WPN_MISSILE;
                     return;
 
-                case MINE:
+                case WPN_MINE:
                     weaponIndex[i].updateWeapon = InitMine;
                     count += MINE_RELEASE_RATE;
                     weaponIndex[i].fireShip = shipNo;
@@ -101,65 +101,65 @@ void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char 
                     {
                         weaponIndex[i].count = count;
                     }
-                    weaponIndex[i].type = MINE;
+                    weaponIndex[i].type = WPN_MINE;
                     if (count >= (5 * MINE_RELEASE_RATE))
                     {
-                        playerShip->weaponType = NO_WEAPON;
-                        playerShip->haveFired = MINE;
+                        playerShip->weaponType = WPN_NONE;
+                        playerShip->haveFired = WPN_MINE;
                         return;
                     }
                     break;
 
-                case SPECIAL:
+                case WPN_SPECIAL:
                     weaponIndex[i].updateWeapon = InitSpecial;
                     weaponIndex[i].count = 1;
-                    playerShip->weaponType = NO_WEAPON;
-                    playerShip->haveFired = SPECIAL;
+                    playerShip->weaponType = WPN_NONE;
+                    playerShip->haveFired = WPN_SPECIAL;
                     weaponIndex[i].fireShip = shipNo;
                     return;
 
-                case ELEC_BOLT:
+                case WPN_ELEC_BOLT:
                     weaponIndex[i].updateWeapon = InitElecBolt;
                     weaponIndex[i].count = WEAPON_DELAY;
                     weaponIndex[i].fireShip = shipNo;
-                    weaponIndex[i].type = ELEC_BOLT;
-                    playerShip->haveFired = ELEC_BOLT;
-                    playerShip->weaponType = NO_WEAPON;
+                    weaponIndex[i].type = WPN_ELEC_BOLT;
+                    playerShip->haveFired = WPN_ELEC_BOLT;
+                    playerShip->weaponType = WPN_NONE;
                     if (shipNo == ownShip)
                     {
                         PlayNote(SFX_ELECTROBOLT);
                     }
                     return;
 
-                case REV_CON:
+                case WPN_REV_CON:
                     weaponIndex[i].updateWeapon = InitRevCon;
                     weaponIndex[i].count = WEAPON_DELAY;
                     weaponIndex[i].fireShip = shipNo;
-                    weaponIndex[i].type = REV_CON;
-                    playerShip->haveFired = REV_CON;
-                    playerShip->weaponType = NO_WEAPON;
+                    weaponIndex[i].type = WPN_REV_CON;
+                    playerShip->haveFired = WPN_REV_CON;
+                    playerShip->weaponType = WPN_NONE;
                     if (shipNo == ownShip)
                     {
                         PlayNote(SFX_ELECTROBOLT);
                     }
                     return;
 
-                case SHIELD:
+                case WPN_SHIELD:
                     weaponIndex[i].updateWeapon = InitShield;
                     weaponIndex[i].count = SHIELD_DURATION;
                     weaponIndex[i].fireShip = shipNo;
-                    weaponIndex[i].type = SHIELD;
+                    weaponIndex[i].type = WPN_SHIELD;
                     playerShip->attr |= SHIELDED;
-                    playerShip->haveFired = SHIELD;
-                    playerShip->weaponType = NO_WEAPON;
+                    playerShip->haveFired = WPN_SHIELD;
+                    playerShip->weaponType = WPN_NONE;
                     return;
 
-                case TURBO:
-                    playerShip->weaponType = NO_WEAPON;
+                case WPN_TURBO:
+                    playerShip->weaponType = WPN_NONE;
 
-                    playerShip->vel.x += (((playerShip->unitVecNose.x) << 3) * FR60) / 50;
-                    playerShip->vel.y += (((playerShip->unitVecNose.y) << 3) * FR60) / 50;
-                    playerShip->vel.z += (((playerShip->unitVecNose.z) << 3) * FR60) / 50;
+                    playerShip->vel.x += playerShip->unitVecNose.x * 48 / 5;
+                    playerShip->vel.y += playerShip->unitVecNose.y * 48 / 5;
+                    playerShip->vel.z += playerShip->unitVecNose.z * 48 / 5;
 
                     if (shipNo == ownShip)
                     {
@@ -274,7 +274,7 @@ void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
 void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
 {
     vec4s* vertex;
-    DVECTOR sxy;
+    vec2s sxy;
     long flag;
     const MATRIX* matrix;
 
@@ -310,7 +310,7 @@ void InitWeaponObj(WeaponShape* weaponShapes, int textures, const char* name, in
 
 void InitWeapons(WeaponShape* weaponShapes)
 {
-    int weaponTextures = TextureTableCount;
+    int weaponTextures = gTexturePtr - gTextures;
     LoadCompressedTextureSequence("wipeout/common/mine.cmp", 1);
 
     InitWeaponObj(weaponShapes, weaponTextures, "wipeout/common/rock.prm", WEAPON_SHAPE_ROCKET);
@@ -340,7 +340,7 @@ void ResetWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapo
     for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
         weaponIndex[i].count = 0;
-        weaponIndex[i].type = NO_WEAPON;
+        weaponIndex[i].type = WPN_NONE;
     }
 }
 
@@ -471,13 +471,15 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
     int i, mag, temp, vhdg, vpitch;
     const vec4i* facePoint;
     int alpha;
+    int32 sx, sy;
+    int32 cx, cy;
 
     if (weapon->targetShip > -1)
     {
         targetVector.x = (shipIndex[weapon->targetShip].pos.x - weapon->pos.x) >> 3;
         targetVector.y = (shipIndex[weapon->targetShip].pos.y - weapon->pos.y) >> 3;
         targetVector.z = (shipIndex[weapon->targetShip].pos.z - weapon->pos.z) >> 3;
-        temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+        temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
         vhdg = ((-ratan2(targetVector.x, targetVector.z)) - weapon->hdg);
         vpitch = ((-ratan2(targetVector.y, temp)) - weapon->pitch);
@@ -505,13 +507,12 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
     weapon->hdg = ang(weapon->hdg);
     weapon->pitch = ang(weapon->pitch);
 
-    weapon->acc.x = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
-    weapon->acc.y = -rsin(weapon->pitch) >> 4;
-    weapon->acc.z = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    rsincos(weapon->pitch, sx, cx);
+    rsincos(weapon->hdg, sy, cy);
 
-    weapon->acc.x = (weapon->acc.x * 60) / FR60;
-    weapon->acc.y = (weapon->acc.y * 60) / FR60;
-    weapon->acc.z = (weapon->acc.z * 60) / FR60;
+    weapon->acc.x = (-sy * cx) >> 16;
+    weapon->acc.y = -sx >> 4;
+    weapon->acc.z = (cy * cx) >> 16;
 
     weapon->vel.x += weapon->acc.x;
     weapon->vel.y += weapon->acc.y;
@@ -643,13 +644,9 @@ void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* wea
 
     GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
 
-    weapon->acc.x = (weapon->acc.x * 60) / FR60;
-    weapon->acc.y = (weapon->acc.y * 60) / FR60;
-    weapon->acc.z = (weapon->acc.z * 60) / FR60;
-
-    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> 6);
-    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> 6);
-    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> 6);
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> VELOCITY_SHIFT);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> VELOCITY_SHIFT);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> VELOCITY_SHIFT);
 
     weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
     weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
@@ -676,7 +673,7 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
         return;
     }
 
-    ossilation = sar(rsin((weapon->currentWeapon * 400) + (weapon->count * 40)), 9);
+    ossilation = rsin((weapon->currentWeapon * 400) + (weapon->count * 40)) >> 9;
 
     weapon->pos.x += ossilation;
     weapon->hdg += 128;
@@ -775,13 +772,9 @@ void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
     GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
 
-    weapon->acc.x = (weapon->acc.x * 60) / FR60;
-    weapon->acc.y = (weapon->acc.y * 60) / FR60;
-    weapon->acc.z = (weapon->acc.z * 60) / FR60;
-
-    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> 6);
-    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> 6);
-    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> 6);
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> VELOCITY_SHIFT);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> VELOCITY_SHIFT);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> VELOCITY_SHIFT);
 
     weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
     weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
@@ -802,13 +795,15 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     int mag, temp, vhdg, vpitch;
     const vec4i* facePoint;
     int alpha;
+    int32 sx, sy;
+    int32 cx, cy;
 
     if (weapon->targetShip > -1)
     {
         targetVector.x = (shipIndex[weapon->targetShip].pos.x - weapon->pos.x) >> 3;
         targetVector.y = (shipIndex[weapon->targetShip].pos.y - weapon->pos.y) >> 3;
         targetVector.z = (shipIndex[weapon->targetShip].pos.z - weapon->pos.z) >> 3;
-        temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+        temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
         vhdg = ((-ratan2(targetVector.x, targetVector.z)) - weapon->hdg);
         vpitch = ((-ratan2(targetVector.y, temp)) - weapon->pitch);
@@ -833,13 +828,12 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     weapon->hdg = ang(weapon->hdg);
     weapon->pitch = ang(weapon->pitch);
 
-    weapon->acc.x = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
-    weapon->acc.y = -rsin(weapon->pitch) >> 4;
-    weapon->acc.z = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    rsincos(weapon->pitch, sx, cx);
+    rsincos(weapon->hdg, sy, cy);
 
-    weapon->acc.x = (weapon->acc.x * 60) / FR60;
-    weapon->acc.y = (weapon->acc.y * 60) / FR60;
-    weapon->acc.z = (weapon->acc.z * 60) / FR60;
+    weapon->acc.x = (-sy * cx) >> 16;
+    weapon->acc.y = -sx >> 4;
+    weapon->acc.z = (cy * cx) >> 16;
 
     weapon->vel.x += weapon->acc.x;
     weapon->vel.y += weapon->acc.y;
@@ -952,13 +946,9 @@ void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     weapon->acc.y = shipIndex[weapon->fireShip].unitVecNose.y >> 8;
     weapon->acc.z = shipIndex[weapon->fireShip].unitVecNose.z >> 8;
 
-    weapon->acc.x = (weapon->acc.x * 60) / FR60;
-    weapon->acc.y = (weapon->acc.y * 60) / FR60;
-    weapon->acc.z = (weapon->acc.z * 60) / FR60;
-
-    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> 6);
-    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> 6);
-    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> 6);
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> VELOCITY_SHIFT);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> VELOCITY_SHIFT);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> VELOCITY_SHIFT);
 
     weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
     weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
@@ -1010,13 +1000,9 @@ void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     weapon->acc.y = shipIndex[weapon->fireShip].unitVecNose.y >> 8;
     weapon->acc.z = shipIndex[weapon->fireShip].unitVecNose.z >> 8;
 
-    weapon->acc.x = (weapon->acc.x * 60) / FR60;
-    weapon->acc.y = (weapon->acc.y * 60) / FR60;
-    weapon->acc.z = (weapon->acc.z * 60) / FR60;
-
-    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> 6);
-    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> 6);
-    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> 6);
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> VELOCITY_SHIFT);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> VELOCITY_SHIFT);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> VELOCITY_SHIFT);
 
     weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
     weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
@@ -1035,13 +1021,15 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     Face* facePtr;
     int i, mag, temp, vhdg, vpitch;
     int alpha;
+    int32 sx, sy;
+    int32 cx, cy;
 
     if (weapon->targetShip > -1)
     {
         targetVector.x = (shipIndex[weapon->targetShip].pos.x - weapon->pos.x) >> 3;
         targetVector.y = (shipIndex[weapon->targetShip].pos.y - weapon->pos.y) >> 3;
         targetVector.z = (shipIndex[weapon->targetShip].pos.z - weapon->pos.z) >> 3;
-        temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+        temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
         vhdg = ((-ratan2(targetVector.x, targetVector.z)) - weapon->hdg);
         vpitch = ((-ratan2(targetVector.y, temp)) - weapon->pitch);
@@ -1066,13 +1054,12 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     weapon->hdg = ang(weapon->hdg);
     weapon->pitch = ang(weapon->pitch);
 
-    weapon->acc.x = (-rsin(weapon->hdg) * rcos(weapon->pitch)) >> 16;
-    weapon->acc.y = -rsin(weapon->pitch) >> 4;
-    weapon->acc.z = (rcos(weapon->hdg) * rcos(weapon->pitch)) >> 16;
+    rsincos(weapon->pitch, sx, cx);
+    rsincos(weapon->hdg, sy, cy);
 
-    weapon->acc.x = (weapon->acc.x * 60) / FR60;
-    weapon->acc.y = (weapon->acc.y * 60) / FR60;
-    weapon->acc.z = (weapon->acc.z * 60) / FR60;
+    weapon->acc.x = (-sy * cx) >> 16;
+    weapon->acc.y = -sx >> 4;
+    weapon->acc.z = (cy * cx) >> 16;
 
     weapon->vel.x += weapon->acc.x;
     weapon->vel.y += weapon->acc.y;
@@ -1209,6 +1196,7 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     weapon->updateWeapon = UpdateShield;
 }
 
+#ifdef USE_OLD_SHIELD
 void UpdateShieldColors(Object* object, int32 counter)
 {
     int i;
@@ -1286,6 +1274,7 @@ void UpdateShieldColors(Object* object, int32 counter)
         }
     }
 }
+#endif
 
 void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
 {
@@ -1319,7 +1308,7 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         weapon->hdg = shipIndex[weapon->fireShip].hdg;
         weapon->pitch = shipIndex[weapon->fireShip].pitch;
 
-#ifdef OLD_SHIELD
+#ifdef USE_OLD_SHIELD
         UpdateShieldColors(weaponShapes[weapon->currentWeapon].shapePtr, weapon->count);
 #endif
     }
@@ -1349,7 +1338,7 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
             {
                 if (((facePtr->flags & WEAPON_GRID_LEFT) && (shipIndex[j].attr & LSIDE)))
                 {
-                    if ((weaponGrid[i].section == shipIndex[j].nearTrkSect) && (shipIndex[j].weaponType == NO_WEAPON) && (weaponGrid[i].count >= 0))
+                    if ((weaponGrid[i].section == shipIndex[j].nearTrkSect) && (shipIndex[j].weaponType == WPN_NONE) && (weaponGrid[i].count >= 0))
                     {
                         weaponGrid[i].count = -30;
                         if (j == ownShip)
@@ -1367,7 +1356,7 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
             {
                 if ((facePtr->flags & WEAPON_GRID_RIGHT) && ((shipIndex[j].attr & LSIDE) == 0))
                 {
-                    if ((weaponGrid[i].section == shipIndex[j].nearTrkSect) && (shipIndex[j].weaponType == NO_WEAPON) && (weaponGrid[i].count >= 0))
+                    if ((weaponGrid[i].section == shipIndex[j].nearTrkSect) && (shipIndex[j].weaponType == WPN_NONE) && (weaponGrid[i].count >= 0))
                     {
                         weaponGrid[i].count = -30;
                         if (j == ownShip)
@@ -1385,9 +1374,12 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
 
         if ((weaponGrid[i].count >= 0) && ((shipIndex[ownShip].combatAttr & SPECIALED) == 0))
         {
-            int r = (rsin(weaponGrid[i].cycleCount) >> 5) + 128;
-            int g = (rcos(weaponGrid[i].cycleCount) >> 5) + 128;
-            int b = (rsin(-weaponGrid[i].cycleCount) >> 5) + 128;
+            int32 r, g, b;
+            rsincos(weaponGrid[i].cycleCount, r, g);
+            b = rsin(-weaponGrid[i].cycleCount);
+            r = (r >> 5) + 128;
+            g = (g >> 5) + 128;
+            b = (b >> 5) + 128;
 
             if (r > 255)
                 r = 255;
@@ -1468,7 +1460,7 @@ void Weapon2Mine(WeaponData* weapon, WeaponData* weaponIndex, WeaponShape* weapo
 
     for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
     {
-        if ((weaponIndex[i].type == MINE) && (weaponIndex[i].count > 0))
+        if ((weaponIndex[i].type == WPN_MINE) && (weaponIndex[i].count > 0))
         {
             distance.x = (weaponIndex[i].pos.x - weapon->pos.x) >> 2;
             distance.y = (weaponIndex[i].pos.y - weapon->pos.y) >> 2;
@@ -1492,17 +1484,17 @@ int GetNewWeapon(void)
     int index = randy() % 65;
 
     if (index < 17)
-        return ROCKET;
+        return WPN_ROCKET;
     else if (index < 35)
-        return MINE;
+        return WPN_MINE;
     else if (index < 45)
-        return SHIELD;
+        return WPN_SHIELD;
     else if (index < 53)
-        return MISSILE;
+        return WPN_MISSILE;
     else if (index < 59)
-        return TURBO;
+        return WPN_TURBO;
     else
-        return ELEC_BOLT;
+        return WPN_ELEC_BOLT;
 }
 
 void SetTargetShip(ShipData* shipIndex, int shipNo)

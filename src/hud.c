@@ -22,22 +22,13 @@ extern int short startLinePos[];
 
 Texture* speedoTex;
 
-Texture* gWeaponIconTextures[NO_OF_WEAPON_TYPES];
+Texture* gWeaponIcon;
 
 void InitText(void)
 {
     int i;
 
-    ASSERT(TextureTableCount == 0);
-
     LoadCompressedTextureSequence("wipeout/textures/drfonts.cmp", 0);
-
-    ASSERT(TextureTableCount <= FontTextureTableMax);
-    for (i = 0; i < TextureTableCount; i++)
-    {
-        FontTextureTable[i] = TextureTable[i];
-    }
-    TextureTableCount = 0;
 
     SetCharTextures(8);
     SetCharTextures(12);
@@ -47,13 +38,13 @@ void InitText(void)
     glyphEnd.y = 0;
     glyphEnd.w = 24;
     glyphEnd.h = 16;
-    glyphEnd.texture = FontTextureTable[DRTEXT_RED + 3];
+    glyphEnd.texture = gTextures + DRTEXT_RED + 3;
 
     glyphDel.x = 0;
     glyphDel.y = 0;
     glyphDel.w = 24;
     glyphDel.h = 16;
-    glyphDel.texture = FontTextureTable[DRTEXT_RED + 4];
+    glyphDel.texture = gTextures + DRTEXT_RED + 4;
 }
 
 typedef struct 
@@ -336,25 +327,25 @@ void AddDelEnd(char dispChar, int32 x, int32 y, uint32 colour)
 
 void SetCharTextures(int32 size)
 {
-    short currLett;
-    short i, j;
-    short vramY, vramX;
-    short searchLett, vramRow;
+    int32 currLett;
+    int32 i, j;
+    int32 x, y;
+    int32 searchLett, row;
     const Texture* texture;
     const uint16* pos;
     Glyph* glyph;
 
     if (size == 8)
     {
-        texture = FontTextureTable[DRTEXT_8];
+        texture = gTextures + DRTEXT_8;
     }
     else if (size == 12)
     {
-        texture = FontTextureTable[DRTEXT_12];
+        texture = gTextures + DRTEXT_12;
     }
     else
     {
-        texture = FontTextureTable[DRTEXT_16];
+        texture = gTextures + DRTEXT_16;
     }
 
     pos = glyphPos[(size - 8) >> 2];
@@ -364,23 +355,23 @@ void SetCharTextures(int32 size)
     {
         currLett = pos[j];
 
-        vramY = 0;
+        y = 0;
 
-        vramRow = (currLett / 100);
+        row = (currLett / 100);
 
-        vramY += (vramRow * size);
-        vramX = 0;
+        y += (row * size);
+        x = 0;
 
         // TODO WTF?
         for (i = 0; i < j; i++)
         {
             searchLett = pos[i];
-            if ((searchLett / 100) == vramRow)
-                vramX += (searchLett % 100);
+            if ((searchLett / 100) == row)
+                x += (searchLett % 100);
         }
 
-        glyph[j].x = vramX;
-        glyph[j].y = vramY;
+        glyph[j].x = x;
+        glyph[j].y = y;
         glyph[j].w = currLett % 100;
         glyph[j].h = size;
         glyph[j].texture = texture;
@@ -426,7 +417,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 
                 crossedLine++;
                 if (raceType == TIME_TRIAL)
-                    shipIndex[i].weaponType = TURBO;
+                    shipIndex[i].weaponType = WPN_TURBO;
             }
             else
             {
@@ -683,6 +674,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 
 int CalcPosition(ShipData* shipIndex)
 {
+    // TODO WTF!
     int i, j;
     int tempPosition;
     vec4i B, C, AB, AC, trackVect;
@@ -744,65 +736,6 @@ int CalcPosition(ShipData* shipIndex)
     }
 
     return winTable[ownShip].racePosition;
-}
-
-void ScreenFooter(int x, int y, int colour)
-{
-    /*TODO screen footer
-       Texture     *symbolTex, *redTex ;
-       int         i ;
-       int         offSet = 110 ;
-
-       for (i=0; i < 2; i++)
-       {
-          symbolTex = (Texture *)FontTextureTable [DRTEXT_RED + (i+1)] ;
-
-          SetPolyFT4(&(symbols[i]));
-          symbols[i].r0=230;
-          symbols[i].g0=0;
-          symbols[i].b0=BLACK_NOT_DRAWN;
-
-          if (i == 0)
-          {
-             setXY4(&(symbols[i]),  x, y,
-                                    x+20, y,
-                                    x, y+16,
-                                    x+20, y+16) ;
-
-             AddText ("SELECT",text_data (x+22,y+4, 8),TEXT_COLOR_WHITE) ;
-
-          }
-          else
-          {
-             setXY4(&(symbols[i]),  x+offSet, y,
-                                    x+20+offSet, y,
-                                    x+offSet, y+16,
-                                    x+20+offSet, y+16) ;
-
-             AddText ("BACK",text_data (x+22+offSet,y+4, 8),TEXT_COLOR_WHITE) ;
-          }
-
-          setUV4(&(symbols[i]),
-                symbolTex->u0, symbolTex->v0,
-                symbolTex->u1, symbolTex->v1,
-                symbolTex->u2, symbolTex->v2+1,
-                symbolTex->u3, symbolTex->v3+1) ;
-
-          setTPage(&(symbols[i]),0,0,symbolTex->textureX,symbolTex->textureY);
-
-          if (colour == TEXT_COLOR_WHITE)
-             symbols[i].clut = symbolTex->cba;
-          else
-          {
-             redTex = (Texture *)FontTextureTable [DRTEXT_RED] ;
-             symbols[i].clut = redTex->cba;
-          }
-
-          AddPrim( OT[ CurrentScreen ] , ( ulong* ) &(symbols[i]) );
-
-
-       }
-    */
 }
 
 void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
@@ -868,7 +801,7 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
 void DisplayLives(ConfigData* gameData)
 {
     int i;
-    const Texture* livesTex = FontTextureTable[DRTEXT_RED + 5];
+    const Texture* livesTex = gTextures + DRTEXT_RED + 5;
 
     for (i = 0; i < gameData->Lives; i++)
     {
@@ -934,44 +867,32 @@ void InitScreenTex(Texture** screenTex, const char* fileName)
 {
     int tablePos;
     char modelFile[64];
+    Texture* tex = gTexturePtr;
 
     strcpy(modelFile, "wipeout/textures/");
     strcat(modelFile, fileName);
     strcat(modelFile, ".cmp");
 
-    tablePos = TextureTableCount;
-
     LoadCompressedTextureSequence(modelFile, 0);
 
-    screenTex[0] = TextureTable[tablePos++];
-    screenTex[1] = TextureTable[tablePos++];
+    screenTex[0] = tex++;
+    screenTex[1] = tex++;
 }
 
 void InitWeaponSprtIcons(void)
 {
-    int tablePos = TextureTableCount;
-
+    gWeaponIcon = gTexturePtr;
     LoadCompressedTextureSequence("wipeout/common/wicons.cmp", 0);
-
-    gWeaponIconTextures[MINE - 1] = TextureTable[tablePos++];
-    gWeaponIconTextures[MISSILE - 1] = TextureTable[tablePos++];
-    gWeaponIconTextures[ROCKET - 1] = TextureTable[tablePos++];
-    gWeaponIconTextures[SPECIAL - 1] = TextureTable[tablePos++];
-    gWeaponIconTextures[ELEC_BOLT - 1] = TextureTable[tablePos++];
-    gWeaponIconTextures[FLARE - 1] = TextureTable[tablePos++];
-    gWeaponIconTextures[REV_CON - 1] = TextureTable[tablePos++];
-    gWeaponIconTextures[SHIELD - 1] = TextureTable[tablePos++];
-    gWeaponIconTextures[TURBO - 1] = TextureTable[tablePos++];
 }
 
 void DrawWeaponSprtIcons(ShipData* playerShip)
 {
     int icon = playerShip->weaponType;
 
-    if (icon != NO_WEAPON)
+    if (icon != WPN_NONE)
     {
         icon -= 1;
-        renderImage(gWeaponIconTextures[icon], 144, 20);
+        renderImage(gWeaponIcon + icon, 144, 20);
     }
 }
 
@@ -999,21 +920,6 @@ void DisplayAllVenomComplete(void)
     CentreText("NOW TAKE ON THE FULL", text_data(240, 126, 8), TEXT_COLOR_WHITE);
     CentreText("RAPIER CLASS CHAMPIONSHIP", text_data(240, 138, 8), TEXT_COLOR_WHITE);
     CentreText("KEEP GOING", text_data(240, 162, 8), TEXT_COLOR_WHITE);
-}
-
-void InitTrackTex(Texture** trackTex)
-{
-    int tablePos = TextureTableCount;
-
-    LoadCompressedTextureSequence("wipeout/textures/track.cmp", 0);
-
-    trackTex[0] = TextureTable[tablePos++];
-    trackTex[1] = TextureTable[tablePos++];
-    trackTex[2] = TextureTable[tablePos++];
-    trackTex[3] = TextureTable[tablePos++];
-    trackTex[4] = TextureTable[tablePos++];
-    trackTex[5] = TextureTable[tablePos++];
-    trackTex[6] = TextureTable[tablePos++];
 }
 
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)

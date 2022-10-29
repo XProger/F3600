@@ -1,7 +1,5 @@
 #include "pad.h"
 
-//#define ENABLE_60_FPS
-
 #define SHIP_VIS_DIST 3000 // og 2000
 
 #define INTERACTIVE 0
@@ -14,9 +12,6 @@
 
 #define TEXT_COLOR_WHITE        0xFF808080
 #define TEXT_COLOR_HIGHLIGHT    0xFF19668C
-
-#define FontTextureTableMax 10
-#define TextureTableMax 512
 
 #define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT)
 #define BLINK_SLOW ((gFrameIndex & 63) <= 42)
@@ -57,10 +52,10 @@ extern Object* startBoom[4];
 extern short startBoomCount;
 extern int crossedLine;
 
-extern Texture* FontTextureTable[FontTextureTableMax];
-extern Texture* TextureTable[TextureTableMax];
-extern short TextureTableCount;
-extern short gBaseTextureIndex;
+#define MAX_TEXTURES 512
+extern Texture gTextures[MAX_TEXTURES];
+extern Texture* gTexturePtr;
+
 extern Object* objectTable[ObjectTableMax];
 
 /* spline stuff */
@@ -77,11 +72,7 @@ extern int32 gMusicTracksCount;
 extern int32 gMusicTrack;
 extern int32 gMasterBalance;
 
-#ifdef ENABLE_60_FPS
-    #define frameRate30 60
-#else
-    #define frameRate30 30
-#endif
+#define frameRate30 30
 
 #define FR30    (frameRate30)
 #define FR60    (frameRate30 * 2)
@@ -100,7 +91,7 @@ extern const char gTrackList[15];
 #define DRAM_BLOCK_SIZE (32 * 1024)
 #define VRAM_BLOCK_SIZE (16 * 1024)
 
-#define DRAM_SIZE (32 * DRAM_BLOCK_SIZE)
+#define DRAM_SIZE (31 * DRAM_BLOCK_SIZE)
 #define VRAM_SIZE (44 * VRAM_BLOCK_SIZE)
 
 extern char* gDRAM;
@@ -109,3 +100,6 @@ extern char* pDRAM;
 extern char* pVRAM;
 char* allocDRAM(int size);
 char* allocVRAM(int size);
+
+void memStateSave(void);
+void memStateRestore(void);

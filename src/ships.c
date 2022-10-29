@@ -96,7 +96,7 @@ void SetSpread(ShipData* shipIndex, ConfigData* gameData, int position, int i)
             break;
     }
 
-    shipIndex[i].numtospeed = (shipIndex[i].numtospeed * FR60) / 60;
+    shipIndex[i].numtospeed = shipIndex[i].numtospeed;
 }
 
 
@@ -172,13 +172,13 @@ void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
     /** temporary memory to be allocated                 **/
     /******************************************************/
 
-    shipTextures = TextureTableCount;
+    shipTextures = gTexturePtr - gTextures;
     LoadCompressedTextureSequence("wipeout/common/allsh.cmp", 1);
 
-    colTextures = TextureTableCount;
+    colTextures = gTexturePtr - gTextures;
     LoadCompressedTextureSequence("wipeout/common/alcol.cmp", 1);
 
-    droidTextures = TextureTableCount;
+    droidTextures = gTexturePtr - gTextures;
     LoadCompressedTextureSequence("wipeout/common/rescu.cmp", 1);
 
     obj = LoadPrm("wipeout/common/allsh.prm", shipTextures);
@@ -255,13 +255,12 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 
     /****                                  Team Specific                                     ****/
     /**** Ship No               0       1       2       3       4       5       6       7    ****/
-    short massBeg[8]        = { 150,    150,    150,    150,    150,    150,    150,    150     };
     short maxThrustBeg[8]   = { 790,    790,    850,    850,    850,    850,    790,    790     };
     short resistanceBeg[8]  = { 140,    140,    134,    134,    140,    140,    134,    134     };
     short headingIncBeg[8]  = { 160,    160,    140,    140,    120,    120,    180,    180     };
     short maxHeadingBeg[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
     short skidBeg[8]        = { 12,     12,     20,     20,     24,     24,     12,     12      };
-    short massPro[8]        = { 150,    150,    150,    150,    150,    150,    150,    150     };
+
     short maxThrustPro[8]   = { 1200,   1200,   1400,   1400,   1400,   1400,   1200,   1200    };
     short resistancePro[8]  = { 140,    140,    140,    140,    130,    130,    130,    130     };
     short headingIncPro[8]  = { 160,    160,    120,    120,    140,    140,    180,    180     };
@@ -387,7 +386,7 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         shipIndex[i].attr |= VISIBLE;
         shipIndex[i].attr |= DIRECTION;
         shipIndex[i].combatAttr = 0;
-        shipIndex[i].weaponType = NO_WEAPON;
+        shipIndex[i].weaponType = WPN_NONE;
         shipIndex[i].lapNo = 0;
         shipIndex[i].prevLapNo = 0;
         shipIndex[i].speed = 0;
@@ -396,26 +395,24 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 
         if (gameData->Class == 0)
         {
-            shipIndex[i].mass = massBeg[i];
             shipIndex[i].max_thrust = maxThrustBeg[i];
             shipIndex[i].skid = skidBeg[i];
         }
         else
         {
-            shipIndex[i].mass = massPro[i];
             shipIndex[i].max_thrust = maxThrustPro[i];
             shipIndex[i].skid = skidPro[i];
         }
 
         if (gameData->Class == 0)
         {
-            shipIndex[i].headingInc = (headingIncBeg[i] * 60) / FR60;
-            shipIndex[i].maxHeading = (maxHeadingBeg[i] * 60) / FR60;
+            shipIndex[i].headingInc = headingIncBeg[i];
+            shipIndex[i].maxHeading = maxHeadingBeg[i];
         }
         else
         {
-            shipIndex[i].headingInc = (headingIncPro[i] * 60) / FR60;
-            shipIndex[i].maxHeading = (maxHeadingPro[i] * 60) / FR60;
+            shipIndex[i].headingInc = headingIncPro[i];
+            shipIndex[i].maxHeading = maxHeadingPro[i];
         }
 
         if (gameData->Class == 0)

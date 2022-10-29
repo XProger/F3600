@@ -1,5 +1,7 @@
 #include "game.h"
 
+#define USE_SWI
+
 extern int32 screenPage;
 extern ScreenContext screen;
 extern TrackCamera ctrlcamera;
@@ -17,7 +19,6 @@ int gWidth, gHeight, gBorder;
 int gCylX, gCylZ;
 
 #define MAX_CEL_FACES       2048
-#define MAX_CEL_TEXTURES    512
 
 #define FRAME_WIDTH         320
 #define FRAME_HEIGHT        240
@@ -26,8 +27,8 @@ int gCylX, gCylZ;
 
 vec3i vBuffer[MAX_VERTICES_BUFFER];
 
-#define OT_SHIFT    4
-#define OT_SIZE     4096
+#define OT_SHIFT    6
+#define OT_SIZE     1024
 
 typedef struct FaceCEL
 {
@@ -60,18 +61,8 @@ typedef struct {
 
 ListOT gOT[OT_SIZE];
 
-typedef struct
-{
-    Texture tex;
-    uint16* plut;
-    uint8* data;
-} TextureCEL;
-
 FaceCEL gFaces[MAX_CEL_FACES];
 FaceCEL* gFacesBase;
-
-TextureCEL gTextures[MAX_CEL_TEXTURES];
-TextureCEL* gTextureBase = gTextures;
 
 extern Item screenItem;
 
@@ -266,12 +257,12 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
     // Texture must be 4-bpp >= 16 px width
     int32 woffset, skipx;
     FaceCEL* face;
-    TextureCEL* t = (TextureCEL*)g->texture;
+    const Texture* t = g->texture;
 
     if (!t->plut)
         return; // TODO temporary for 8-bpp and 16-bpp
 
-    woffset = ((t->tex.width << 2) + 31) >> 5; // bitmap pitch in 32-bit words
+    woffset = ((t->width << 2) + 31) >> 5; // bitmap pitch in 32-bit words
     skipx = g->x & 7;
 
     face = faceAdd(0);
@@ -313,7 +304,7 @@ void renderImage(const Texture* t, int32 x, int32 y)
 
     face = faceAdd(0);
 
-    face->ccb_SourcePtr = ((TextureCEL*)t)->data;
+    face->ccb_SourcePtr = t->data;
 
     flags =
         CCB_NPABS  |
@@ -329,9 +320,9 @@ void renderImage(const Texture* t, int32 x, int32 y)
         CCB_ACE    |
         CCB_NOBLK;
 
-    if (((TextureCEL*)t)->plut)
+    if (t->plut)
     {
-        face->ccb_PLUTPtr = ((TextureCEL*)t)->plut;
+        face->ccb_PLUTPtr = t->plut;
         flags |= CCB_LDPLUT;
 
         woffset = t->width >> 3; // 8 px per word
@@ -363,7 +354,7 @@ void renderBackground(const Texture* t)
 {
     // Texture must be 320x240 16-bpp
     FaceCEL* face = faceAdd(OT_SIZE - 1);
-    face->ccb_SourcePtr = ((TextureCEL*)t)->data;
+    face->ccb_SourcePtr = t->data;
     face->ccb_PRE0 = ((240 - PRE0_VCNT_PREFETCH) << PRE0_VCNT_SHIFT) | PRE0_BPP_16 | PRE0_LINEAR | PRE0_BGND;
     face->ccb_PRE1 = ((320 - PRE1_TLHPCNT_PREFETCH) << PRE1_TLHPCNT_SHIFT) | PRE1_TLLSB_PDC0 | ((160 - PRE1_WOFFSET_PREFETCH) << PRE1_WOFFSET10_SHIFT);
 
@@ -437,8 +428,11 @@ void renderBackFill(int x, int y, int w, int h)
 
 void renderPrepare(void) {}
 
+int32 dbg_render;
+
 void renderFrameBegin(void)
 {
+    dbg_render = osGetSystemTimeMS();
     gFacesBase = gFaces;
 }
 
@@ -471,6 +465,8 @@ void renderFrameEnd(void)
             }
         }
 
+        dbg_render = osGetSystemTimeMS() - dbg_render;
+
         if (facesHead)
         {
             LAST_CEL(facesTail);
@@ -482,10 +478,11 @@ void renderFrameEnd(void)
     gFacesBase = gFaces;
 }
 
-MATRIX* gMatrix;
+int32 gMatrix[3][3];
 int cx, cy, cz;
 
-#define DP3(row, v) ((gMatrix->m[row][0] * v->x + gMatrix->m[row][1] * v->y + gMatrix->m[row][2] * v->z) >> 12)
+#define DP3(row, v) ((gMatrix[row][0] * v->x + gMatrix[row][1] * v->y + gMatrix[row][2] * v->z) >> 12)
+#define DP3_XYZ(row) ((gMatrix[row][0] * vx + gMatrix[row][1] * vy + gMatrix[row][2] * vz) >> 12)
 
 #define TRANSFORM(p, v) {\
         p.x = DP3(0, v) + cx;\
@@ -586,7 +583,7 @@ void ccbMap4(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i* v2, c
     int32 hddy;
     uint32 woffset = ((32 << 2) + 31) >> 5;
 
-    const TextureCEL* texture = (TextureCEL*)TextureTable[texIndex];
+    const Texture* texture = gTextures + texIndex;
 
     hs = 16 - hs;
     hddx = (hdx1 - hdx0) >> hs;
@@ -642,7 +639,7 @@ void ccbMap3(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i* v2, u
     int32 hddy;
     uint32 woffset = ((32 << 2) + 31) >> 5;
 
-    const TextureCEL* texture = (TextureCEL*)TextureTable[texIndex];
+    const Texture* texture = gTextures + texIndex;
 
     hs = 16 - hs;
     hddx = (hdx1 - hdx0) >> hs;
@@ -681,7 +678,50 @@ void ccbMap3(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i* v2, u
 
 void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
 {
-    gMatrix = GetSkeletonMatrix(skeleton);
+    MATRIX* m = GetSkeletonMatrix(skeleton);
+
+#ifdef USE_SWI
+    // extra shift fo make f16 from f12
+    gMatrix[0][0] = m->m[0][0] << 4;
+    gMatrix[0][1] = m->m[1][0] << 4;
+    gMatrix[0][2] = m->m[2][0] << 4;
+    gMatrix[1][0] = m->m[0][1] << 4;
+    gMatrix[1][1] = m->m[1][1] << 4;
+    gMatrix[1][2] = m->m[2][1] << 4;
+    gMatrix[2][0] = m->m[0][2] << 4;
+    gMatrix[2][1] = m->m[1][2] << 4;
+    gMatrix[2][2] = m->m[2][2] << 4;
+#else
+    gMatrix[0][0] = m->m[0][0];
+    gMatrix[0][1] = m->m[0][1];
+    gMatrix[0][2] = m->m[0][2];
+    gMatrix[1][0] = m->m[1][0];
+    gMatrix[1][1] = m->m[1][1];
+    gMatrix[1][2] = m->m[1][2];
+    gMatrix[2][0] = m->m[2][0];
+    gMatrix[2][1] = m->m[2][1];
+    gMatrix[2][2] = m->m[2][2];
+#endif
+
+    cx = x;
+    cy = y;
+    cz = z;
+}
+
+void renderSetSkeletonOLD(Skeleton* skeleton, int x, int y, int z)
+{
+    MATRIX* m = GetSkeletonMatrix(skeleton);
+
+    gMatrix[0][0] = m->m[0][0];
+    gMatrix[0][1] = m->m[0][1];
+    gMatrix[0][2] = m->m[0][2];
+    gMatrix[1][0] = m->m[1][0];
+    gMatrix[1][1] = m->m[1][1];
+    gMatrix[1][2] = m->m[1][2];
+    gMatrix[2][0] = m->m[2][0];
+    gMatrix[2][1] = m->m[2][1];
+    gMatrix[2][2] = m->m[2][2];
+
     cx = x;
     cy = y;
     cz = z;
@@ -689,47 +729,77 @@ void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
 
 #define ZNEAR 64
 
-void trackTransProj(const vec3i* vertex, int32 start, int32 count)
+void trackTransProj(const vec3i* src, int32 start, int32 count)
 {
-    const vec3i* end = vertex + start + count;
-    vec3i* out = vBuffer + start;
+    vec3i* dst = vBuffer + start;
+    vec3i* end = dst + count;
     int32 x, y, z;
-    int32 px, py, pz;
-    int32 z;
+    int32 tx, ty, tz;
+    int32 dz;
 
-    px = cx;
-    py = cy;
-    pz = cz;
-    
-    vertex += start;
+    tx = cx;
+    ty = cy;
+    tz = cz;
 
-    while (vertex < end)
+    src += start;
+
+#ifdef USE_SWI
+    MulManyVec3Mat33_F16((vec3f16*)dst, (vec3f16*)src, *(mat33f16*)&gMatrix, count);
+
+    while (dst < end)
     {
-        x = DP3(0, vertex) + px;
-        y = DP3(1, vertex) + py;
-        z = DP3(2, vertex) + pz;
+        x = dst->x;
+        y = dst->y;
+        z = dst->z;
+
+        x += tx;
+        y += ty;
+        z += tz;
 
         if (z < ZNEAR)
         {
             z = ZNEAR;
         }
 
-        z = z >> 3;
-        if (z >= DIV_TABLE_SIZE) z = DIV_TABLE_SIZE - 1;
-        z = FixedInvU(z);
-        out->x = (x * z) >> 12;
-        out->y = (y * z) >> 12;
-        out->z = z;
+        dz = z >> 3;
+        if (dz >= DIV_TABLE_SIZE) dz = DIV_TABLE_SIZE - 1;
+        dz = FixedInvU(dz);
 
-        out++;
-        vertex++;
+        dst->x = (x * dz) >> 12;
+        dst->y = (y * dz) >> 12;
+        dst->z = z;
+        dst++;
     }
+#else
+    while (dst < end)
+    {
+        x = DP3(0, src) + tx;
+        y = DP3(1, src) + ty;
+        z = DP3(2, src) + tz;
+        src++;
+
+        if (z < ZNEAR)
+        {
+            z = ZNEAR;
+        }
+
+        dz = z >> 3;
+        if (dz >= DIV_TABLE_SIZE) dz = DIV_TABLE_SIZE - 1;
+        dz = FixedInvU(dz);
+
+        dst->x = (x * dz) >> 12;
+        dst->y = (y * dz) >> 12;
+        dst->z = z;
+
+        dst++;
+    }
+#endif
 }
 
-void trackTrans(const vec3i* vertex, int32 start, int32 count)
+void trackTrans(const vec3i* src, int32 start, int32 count)
 {
-    const vec3i* end = vertex + start + count;
-    vec3i* out = vBuffer + start;
+    vec3i* dst = vBuffer + start;
+    vec3i* end = dst + count;
     int32 x, y, z;
     int32 px, py, pz;
 
@@ -737,51 +807,111 @@ void trackTrans(const vec3i* vertex, int32 start, int32 count)
     py = cy;
     pz = cz;
     
-    vertex += start;
+    src += start;
 
-    while (vertex < end)
+#ifdef USE_SWI
+    MulManyVec3Mat33_F16((vec3f16*)dst, (vec3f16*)src, *(mat33f16*)&gMatrix, count);
+#endif
+
+    while (dst < end)
     {
-        x = DP3(0, vertex) + px;
-        y = DP3(1, vertex) + py;
-        z = DP3(2, vertex) + pz;
+#ifdef USE_SWI
+        x = dst->x;
+        y = dst->y;
+        z = dst->z;
+#else
+        x = DP3(0, src);
+        y = DP3(1, src);
+        z = DP3(2, src);
+        src++;
+#endif
+        x += px;
+        y += py;
+        z += pz;
 
-        out->x = x;
-        out->y = y;
-        out->z = z;
-
-        out++;
-        vertex++;
+        dst->x = x;
+        dst->y = y;
+        dst->z = z;
+        dst++;
     }
 }
 
-void trackProj(vec3i* vertex, int32 start, int32 count)
+void trackProj(vec3i* dst, int32 start, int32 count)
 {
-    vec3i* end = vertex + start + count;
+    vec3i* end = dst + start + count;
     int32 x, y, z;
-    int32 z;
+    int32 dz;
 
-    vertex += start;
+    dst += start;
 
-    while (vertex < end)
+    while (dst < end)
     {
-        x = vertex->x;
-        y = vertex->y;
-        z = vertex->z;
+        x = dst->x;
+        y = dst->y;
+        z = dst->z;
 
         if (z < ZNEAR)
         {
             z = ZNEAR;
         }
 
-        z = z >> 3;
-        if (z >= DIV_TABLE_SIZE) z = DIV_TABLE_SIZE - 1;
-        z = FixedInvU(z);
+        dz = z >> 3;
+        if (dz >= DIV_TABLE_SIZE) dz = DIV_TABLE_SIZE - 1;
+        dz = FixedInvU(dz);
 
-        vertex->x = (x * z) >> 12;
-        vertex->y = (y * z) >> 12;
-        vertex->z = z;
+        x = (x * dz) >> 12;
+        y = (y * dz) >> 12;
 
-        vertex++;
+        dst->x = x;
+        dst->y = y;
+        dst->z = z;
+        dst++;
+    }
+}
+
+void transMesh(const vec4s* src, int32 count)
+{
+    // TODO USE_SWI
+    vec3i* dst = vBuffer;
+    vec3i* end = dst + count;
+    int32 xy, zp, x, y, z, vx, vy, vz, dz;
+    int32 tx = cx;
+    int32 ty = cy;
+    int32 tz = cz;
+
+    while (dst < end)
+    {
+        xy = ((uint32*)src)[0];
+        zp = ((uint32*)src)[1];
+        src++;
+
+        vx = (xy >> 16);
+        vy = (xy << 16) >> 16;
+        vz = (zp >> 16);
+
+        x = DP3_XYZ(0) + tx;
+        y = DP3_XYZ(1) + ty;
+        z = DP3_XYZ(2) + tz;
+
+        if (z <= 0)
+        {
+            z = 0;
+        }
+
+        dz = z >> 3;
+        if (dz >= DIV_TABLE_SIZE)
+        {
+            dz = DIV_TABLE_SIZE - 1;
+        }
+        dz = FixedInvU(dz);
+
+        x = (x * dz) >> 12;
+        y = (y * dz) >> 12;
+
+        dst->x = x;
+        dst->y = y;
+        dst->z = z;
+        dst++;
     }
 }
 
@@ -803,10 +933,13 @@ void renderSectionsMed(const TrackRange* ranges)
         trackFace = track->faces + ranges->fStart;
         for (i = 0; i < ranges->fCount; i++, trackFace++, p += 5)
         {
-            p0 = vBuffer + trackFace->vertex[0];
-            p1 = vBuffer + trackFace->vertex[1];
-            p2 = vBuffer + trackFace->vertex[2];
-            p3 = vBuffer + trackFace->vertex[3];
+            uint32 index01 = ((uint32*)trackFace->vertex)[0];
+            uint32 index23 = ((uint32*)trackFace->vertex)[1];
+
+            p0 = vBuffer + (index01 >> 16);
+            p1 = vBuffer + (index01 << 16 >> 16);
+            p2 = vBuffer + (index23 >> 16);
+            p3 = vBuffer + (index23 << 16 >> 16);
 
             p01 = p + 0;
             p12 = p + 1;
@@ -827,10 +960,13 @@ void renderSectionsMed(const TrackRange* ranges)
         trackFace = track->faces + ranges->fStart;
         for (i = 0; i < ranges->fCount; i++, trackFace++, p += 5)
         {
-            p0 = vBuffer + trackFace->vertex[0];
-            p1 = vBuffer + trackFace->vertex[1];
-            p2 = vBuffer + trackFace->vertex[2];
-            p3 = vBuffer + trackFace->vertex[3];
+            uint32 index01 = ((uint32*)trackFace->vertex)[0];
+            uint32 index23 = ((uint32*)trackFace->vertex)[1];
+
+            p0 = vBuffer + (index01 >> 16);
+            p1 = vBuffer + (index01 << 16 >> 16);
+            p2 = vBuffer + (index23 >> 16);
+            p3 = vBuffer + (index23 << 16 >> 16);
 
             if (p0->z <= ZNEAR && p1->z <= ZNEAR && p2->z <= ZNEAR && p3->z <= ZNEAR)
                 continue;
@@ -841,8 +977,8 @@ void renderSectionsMed(const TrackRange* ranges)
             p30 = p + 3;
             pM = p + 4;
 
-            if (cross(p0, p1, p3) > 0)
-                continue;
+            //if (cross(p0, p1, p3) > 0)
+            //    continue;
 
             maxZ = p0->z;
             if (maxZ < p1->z) maxZ = p1->z;
@@ -853,17 +989,17 @@ void renderSectionsMed(const TrackRange* ranges)
 
             if (trackFace->flags & FLIP_TEXTURE)
             {
-                ccbMap4_track(faceAdd(maxZ), p0, p01, pM, p30, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures])->data, trackFace->plut);
-                ccbMap4_track(faceAdd(maxZ), p01, p1, p12, pM, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures])->data, trackFace->plut);
-                ccbMap4_track(faceAdd(maxZ), pM, p12, p2, p23, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[3] + ctrllibraryTextures])->data, trackFace->plut);
-                ccbMap4_track(faceAdd(maxZ), p30, pM, p23, p3, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[2] + ctrllibraryTextures])->data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p0, p01, pM, p30, gTextures[ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures].data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p01, p1, p12, pM, gTextures[ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures].data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), pM, p12, p2, p23, gTextures[ctrltexTemplate[trackFace->texture].tex4[3] + ctrllibraryTextures].data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p30, pM, p23, p3, gTextures[ctrltexTemplate[trackFace->texture].tex4[2] + ctrllibraryTextures].data, trackFace->plut);
             }
             else
             {
-                ccbMap4_track(faceAdd(maxZ), p01, p0, p30, pM, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures])->data, trackFace->plut);
-                ccbMap4_track(faceAdd(maxZ), p1, p01, pM, p12, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures])->data, trackFace->plut);
-                ccbMap4_track(faceAdd(maxZ), p12, pM, p23, p2, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[2] + ctrllibraryTextures])->data, trackFace->plut);
-                ccbMap4_track(faceAdd(maxZ), pM, p30, p3, p23, ((TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex4[3] + ctrllibraryTextures])->data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p01, p0, p30, pM, gTextures[ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures].data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p1, p01, pM, p12, gTextures[ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures].data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), p12, pM, p23, p2, gTextures[ctrltexTemplate[trackFace->texture].tex4[2] + ctrllibraryTextures].data, trackFace->plut);
+                ccbMap4_track(faceAdd(maxZ), pM, p30, p3, p23, gTextures[ctrltexTemplate[trackFace->texture].tex4[3] + ctrllibraryTextures].data, trackFace->plut);
             }
         }
     }
@@ -875,7 +1011,7 @@ void renderSectionsLow(const TrackRange* ranges)
     vec3i *p0, *p1, *p2, *p3;
     FaceCEL* face;
     int i, j, maxZ;
-    const TextureCEL* texture;
+    const Texture* texture;
 
     for (j = 0; j < 2; j++, ranges++)
     {
@@ -888,16 +1024,19 @@ void renderSectionsLow(const TrackRange* ranges)
 
         for (i = 0; i < ranges->fCount; i++, trackFace++)
         {
-            p0 = vBuffer + trackFace->vertex[0];
-            p1 = vBuffer + trackFace->vertex[1];
-            p2 = vBuffer + trackFace->vertex[2];
-            p3 = vBuffer + trackFace->vertex[3];
+            uint32 index01 = ((uint32*)trackFace->vertex)[0];
+            uint32 index23 = ((uint32*)trackFace->vertex)[1];
+
+            p0 = vBuffer + (index01 >> 16);
+            p1 = vBuffer + (index01 << 16 >> 16);
+            p2 = vBuffer + (index23 >> 16);
+            p3 = vBuffer + (index23 << 16 >> 16);
 
             //if (p0->vz <= ZNEAR || p1->vz <= ZNEAR || p2->vz <= ZNEAR || p3->vz <= ZNEAR)
             //    continue;
 
-            if (cross(p0, p1, p3) > 0)
-                continue;
+            //if (cross(p0, p1, p3) > 0)
+            //    continue;
 
             maxZ = p0->z;
             //if (maxZ < p1->vz) maxZ = p1->vz;
@@ -906,7 +1045,7 @@ void renderSectionsLow(const TrackRange* ranges)
 
             face = faceAdd(maxZ >> OT_SHIFT);
         
-            texture = (TextureCEL*)TextureTable[ctrltexTemplate[trackFace->texture].tex1[0] + ctrllibraryTextures];
+            texture = gTextures + ctrltexTemplate[trackFace->texture].tex1[0] + ctrllibraryTextures;
 
             if (trackFace->flags & FLIP_TEXTURE)
             {
@@ -934,59 +1073,18 @@ void renderTrack(void)
     yOffset--;
 }
 
-#define DP3_XYZ(row) ((gMatrix->m[row][0] * x + gMatrix->m[row][1] * y + gMatrix->m[row][2] * z) >> 12)
-
-void transformMesh(const vec4s* vertices, int32 count)
-{
-    vec3i* dst = vBuffer;
-    const vec4s* end = vertices + count;
-    int32 mx = cx;
-    int32 my = cy;
-    int32 mz = cz;
-
-    while (vertices < end)
-    {
-        int32 xy = ((uint32*)vertices)[0];
-        int32 zp = ((uint32*)vertices)[1];
-
-        int32 x = (xy >> 16);
-        int32 y = (xy << 16) >> 16;
-        int32 z = (zp >> 16);
-
-        int32 px = DP3_XYZ(0) + mx;
-        int32 py = DP3_XYZ(1) + my;
-        int32 pz = DP3_XYZ(2) + mz;
-
-        if (pz <= 0)
-        {
-            pz = 0;
-        }
-
-        z = pz >> 3;
-        if (z >= DIV_TABLE_SIZE)
-        {
-            z = DIV_TABLE_SIZE - 1;
-        }
-        z = FixedInvU(z);
-
-        dst->x = (px * z) >> 12;
-        dst->y = (py * z) >> 12;
-        dst->z = pz;
-        dst++;
-
-        vertices++;
-    }
-}
-
 void renderQuadFace(const int16* indices, int32 texIndex)
 {
     const vec3i *p0, *p1, *p2, *p3;
     int32 avgZ;
 
-    p0 = vBuffer + indices[0];
-    p1 = vBuffer + indices[1];
-    p2 = vBuffer + indices[2];
-    p3 = vBuffer + indices[3];
+    uint32 index01 = ((uint32*)indices)[0];
+    uint32 index23 = ((uint32*)indices)[1];
+
+    p0 = vBuffer + (index01 >> 16);
+    p1 = vBuffer + (index01 << 16 >> 16);
+    p2 = vBuffer + (index23 >> 16);
+    p3 = vBuffer + (index23 << 16 >> 16);
 
     if (p0->z <= ZNEAR || p1->z <= ZNEAR || p2->z <= ZNEAR || p3->z <= ZNEAR)
         return;
@@ -1004,9 +1102,12 @@ void renderTriFace(const int16* indices, int32 texIndex)
     const vec3i *p0, *p1, *p2;
     int32 avgZ;
 
-    p0 = vBuffer + indices[0];
-    p1 = vBuffer + indices[1];
-    p2 = vBuffer + indices[2];
+    uint32 index01 = ((uint32*)indices)[0];
+    uint32 index23 = ((uint32*)indices)[1];
+
+    p0 = vBuffer + (index01 >> 16);
+    p1 = vBuffer + (index01 << 16 >> 16);
+    p2 = vBuffer + (index23 >> 16);
 
     if (p0->z <= ZNEAR || p1->z <= ZNEAR || p2->z <= ZNEAR)
         return;
@@ -1063,8 +1164,9 @@ void renderMesh(Primitive* prim, int32 count)
             case TypeFT3:
             {
                 const FT3* f = poly.ft3++;
-                TextureCEL* t = (TextureCEL*)TextureTable[f->texture];
                 /*
+                Texture* t = gTextures + f->texture;
+
                 renderSetTexture(t);
 
                 if (f->flag & ShipEngine)
@@ -1100,8 +1202,9 @@ void renderMesh(Primitive* prim, int32 count)
             case TypeLSFT3:
             {
                 const LSFT3* f = poly.lsft3++;
-                TextureCEL* t = (TextureCEL*)TextureTable[f->texture];
                 /*
+                Texture* t = gTextures + f->texture;
+
                 renderSetTexture(t);
                 stateCheck();
 
@@ -1149,7 +1252,7 @@ void renderMesh(Primitive* prim, int32 count)
             {
                 const FT4* f = poly.ft4++;
                 /*
-                TextureCEL* t = (TextureCEL*)TextureTable[];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
                 stateCheck();
@@ -1167,8 +1270,9 @@ void renderMesh(Primitive* prim, int32 count)
             case TypeLSFT4:
             {
                 const LSFT4* f = poly.lsft4++;
-                TextureCEL* t = (TextureCEL*)TextureTable[f->texture];
                 /*
+                Texture* t = gTextures + f->texture;
+
                 renderSetTexture(t);
                 stateCheck();
 
@@ -1214,8 +1318,9 @@ void renderMesh(Primitive* prim, int32 count)
             case TypeGT3:
             {
                 const GT3* f = poly.gt3++;
-                TextureCEL* t = (TextureCEL*)TextureTable[f->texture];
                 /*
+                Texture* t = gTextures + f->texture;
+
                 renderSetTexture(t);
 
                 if (f->flag & ShipEngine)
@@ -1251,8 +1356,9 @@ void renderMesh(Primitive* prim, int32 count)
             case TypeLSGT3:
             {
                 const LSGT3* f = poly.lsgt3++;
-                TextureCEL* t = (TextureCEL*)TextureTable[f->texture];
                 /*
+                Texture* t = gTextures + f->texture;
+
                 renderSetTexture(t);
                 stateCheck();
 
@@ -1300,7 +1406,7 @@ void renderMesh(Primitive* prim, int32 count)
             {
                 const GT4* f = poly.gt4++;
                 /*
-                TextureCEL* t = (TextureCEL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
                 stateCheck();
@@ -1318,8 +1424,9 @@ void renderMesh(Primitive* prim, int32 count)
             case TypeLSGT4:
             {
                 const LSGT4* f = poly.lsgt4++;
-                TextureCEL* t = (TextureCEL*)TextureTable[f->texture];
                 /*
+                Texture* t = gTextures + f->texture;
+
                 renderSetTexture(t);
                 stateCheck();
 
@@ -1339,7 +1446,7 @@ void renderMesh(Primitive* prim, int32 count)
 
                 int w, h0, h1;
                 int sx, sz;
-                TextureCEL* t = (TextureCEL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 w = f->width >> 1;
                 if (poly.primitive->type == TypeTSPR)
@@ -1395,9 +1502,9 @@ void renderObject(const Object* object)
 
     matrix = GetSkeletonMatrix(object->skeleton);
 
-    renderSetSkeleton(object->skeleton, matrix->t[0], matrix->t[1], matrix->t[2]);
+    renderSetSkeletonOLD(object->skeleton, matrix->t[0], matrix->t[1], matrix->t[2]);
 
-    transformMesh(object->vertices, object->vertexCount);
+    transMesh(object->vertices, object->vertexCount);
 
     renderMesh(object->primitives, object->primitiveCount);
 }
@@ -1408,9 +1515,9 @@ void renderShip(const Object* object, uint32 color)
 
     matrix = GetSkeletonMatrix(object->skeleton);
 
-    renderSetSkeleton(object->skeleton, matrix->t[0], matrix->t[1], matrix->t[2]);
+    renderSetSkeletonOLD(object->skeleton, matrix->t[0], matrix->t[1], matrix->t[2]);
 
-    transformMesh(object->vertices, object->vertexCount);
+    transMesh(object->vertices, object->vertexCount);
 
     renderMesh(object->primitives, object->primitiveCount);
 }
@@ -1429,11 +1536,11 @@ void renderNextLayer(void) {}
 
 Texture* renderCreateTexture(uint8* ptr)
 {
-    TextureCEL* tex = gTextureBase++;
+    Texture* tex = gTexturePtr++;
     uint32 info = *(uint32*)ptr;
 
-    tex->tex.width = GET_TEX_WIDTH(info);
-    tex->tex.height = GET_TEX_HEIGHT(info);
+    tex->width = GET_TEX_WIDTH(info);
+    tex->height = GET_TEX_HEIGHT(info);
 
     info = GET_TEX_TYPE(info);
 
@@ -1448,7 +1555,7 @@ Texture* renderCreateTexture(uint8* ptr)
         tex->data = ptr + sizeof(uint32);
     }
 
-    return &tex->tex;
+    return tex;
 }
 
 void renderDeleteTexture(Texture* texture)

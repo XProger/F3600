@@ -64,15 +64,6 @@ PFNGLBINDVERTEXARRAYPROC    glBindVertexArray;
 
 typedef struct
 {
-    uint16 width;
-    uint16 height;
-    GLuint id;
-    float iw;
-    float ih;
-} TextureGL;
-
-typedef struct
-{
     int32 x;
     int32 y;
     int32 z;
@@ -120,7 +111,7 @@ typedef struct
 {
     Mesh* mesh;
     const Shader* shader;
-    const TextureGL* texture;
+    const Texture* texture;
     int32 projMatrix;
     int32 viewMatrix;
     uint32 color;
@@ -155,7 +146,6 @@ int32 gMaxAniso;
 
 uint16 tempData[320 * 240];
 
-const TextureGL* gTexture;
 GLuint whiteTex;
 
 extern HWND hWnd;
@@ -184,7 +174,7 @@ Shader shaderBlob;
 Shader shaderGUI;
 
 #define MAX_TRACK_TEX   22
-TextureGL gTrackTex[MAX_TRACK_TEX];
+Texture gTrackTex[MAX_TRACK_TEX];
 uint16 gTrackTexData[MAX_TRACK_TEX][128 * 128];
 
 extern TrackData* track;
@@ -524,7 +514,7 @@ GLuint genTex(uint32 color)
     return id;
 }
 
-int UnloadTexture(TextureGL* pTex)
+int UnloadTexture(Texture* pTex)
 {
 #if 0
     if (pTex->Texture == 0)
@@ -814,7 +804,7 @@ void renderNextLayer()
     gStatePtr = NULL;
 }
 
-void renderSetTexture(const TextureGL* texture)
+void renderSetTexture(const Texture* texture)
 {
     if (gCurState.texture != texture)
     {
@@ -914,7 +904,7 @@ void addVertexS(const vec4s* pos, float s, float t, const CVECTOR* color)
 
 void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
 {
-    TextureGL* t = (TextureGL*)g->texture;
+    const Texture* t = g->texture;
     float u0 = g->x * t->iw;
     float v0 = g->y * t->ih;
     float u1 = (g->x + g->w) * t->iw;
@@ -947,7 +937,7 @@ void renderImage(const Texture* t, int32 x, int32 y)
     int x1 = x + t->width;
     int y1 = y + t->height;
 
-    renderSetTexture((TextureGL*)t);
+    renderSetTexture(t);
     stateCheck();
 
     addQuad();
@@ -964,7 +954,7 @@ void renderBackground(const Texture* t)
 
 void renderShadow(const Shadow* s)
 {
-    TextureGL* t = (TextureGL*)s->texture;
+    const Texture* t = s->texture;
     CVECTOR color = { 255, 255, 255, 255 };
 
     renderSetShader(&shaderBlob);
@@ -998,7 +988,7 @@ void renderColorQuad(const ColorQuad* q)
 void renderBillboard(const Billboard* b)
 {
     int sx, sy, sz, size;
-    TextureGL* t = (TextureGL*)b->texture;
+    const Texture* t = b->texture;
 
     size = b->size * 8;
     sx = size * gCylX >> 12;
@@ -1060,7 +1050,7 @@ void FillTrackTex(uint16* data)
 {
     int id, i, j, k, x, y;
 
-    id = TextureTableCount - ctrllibraryTextures;
+    id = (gTexturePtr - gTextures) - ctrllibraryTextures;
 
     for (i = 0; i < ctrlnumLib; i++)
     {
@@ -1091,8 +1081,7 @@ void renderFrameBegin(void)
 
     gBorder = ((gWidth * 240) / gHeight - 320) >> 1;
 
-    gCylX = rcos(-ctrlcamera.hdg);
-    gCylZ = rsin(-ctrlcamera.hdg);
+    rsincos(-ctrlcamera.hdg, gCylZ, gCylX);
 
     gCurState.texture = NULL;
     gCurState.blend = BLEND_NONE;
@@ -1126,7 +1115,7 @@ void renderFrameEnd(void)
     const Mesh* mesh;
 
     const Shader* shader = NULL;
-    const TextureGL* texture = NULL;
+    const Texture* texture = NULL;
     int32 projMatrix = -1;
     int32 viewMatrix = -1;
     int32 depthTest = 0;
@@ -1492,7 +1481,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
             case TypeFT3:
             {
                 const FT3* f = poly.ft3++;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
 
@@ -1527,7 +1516,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
             case TypeLSFT3:
             {
                 const LSFT3* f = poly.lsft3++;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
                 stateCheck();
@@ -1572,7 +1561,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
             case TypeFT4:
             {
                 const FT4* f = poly.ft4++;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
                 stateCheck();
@@ -1588,7 +1577,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
             case TypeLSFT4:
             {
                 const LSFT4* f = poly.lsft4++;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
                 stateCheck();
@@ -1632,7 +1621,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
             case TypeGT3:
             {
                 const GT3* f = poly.gt3++;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
 
@@ -1667,7 +1656,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
             case TypeLSGT3:
             {
                 const LSGT3* f = poly.lsgt3++;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
                 stateCheck();
@@ -1712,7 +1701,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
             case TypeGT4:
             {
                 const GT4* f = poly.gt4++;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
                 stateCheck();
@@ -1728,7 +1717,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
             case TypeLSGT4:
             {
                 const LSGT4* f = poly.lsgt4++;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 renderSetTexture(t);
                 stateCheck();
@@ -1748,7 +1737,7 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
 
                 int w, h0, h1;
                 int sx, sz;
-                TextureGL* t = (TextureGL*)TextureTable[f->texture];
+                Texture* t = gTextures + f->texture;
 
                 w = f->width >> 1;
                 if (poly.primitive->type == TypeTSPR)
@@ -1988,7 +1977,7 @@ void dumpBitmap(const char* fileName, int32 width, int32 height, uint8* data32)
 Texture* renderCreateTexture(uint8* ptr)
 {
     Tim* tim = (Tim*)ptr;
-    TextureGL* tex;
+    Texture* tex;
     int32 w, h;
     int i, j;
 
@@ -2065,25 +2054,25 @@ Texture* renderCreateTexture(uint8* ptr)
         ASSERT(0);
     }
 
+    tex = gTexturePtr;
+    tex->width = w;
+    tex->height = h;
+    tex->iw = 1.0f / w;
+    tex->ih = 1.0f / h;
+
     if (HACK_LOAD_TRACK)
     {
         ASSERT(w == 32);
         ASSERT(h == 32);
         FillTrackTex(tempData);
+
+        tex->id = 0;
     #ifdef _DEBUG
-        return (Texture*)tim; // for CalcShadePalettes
-    #else
-        return NULL;
+        tex->tim = tim;
     #endif
     }
     else
     {
-        tex = (TextureGL*)malloc(sizeof(TextureGL));
-        tex->width = w;
-        tex->height = h;
-        tex->iw = 1.0f / w;
-        tex->ih = 1.0f / h;
-
         ASSERT(w < 511);
         ASSERT(h < 511);
 
@@ -2107,9 +2096,11 @@ Texture* renderCreateTexture(uint8* ptr)
         }
 
         setTexFilter(HACK_LOAD_SHADOW || HACK_TEX_FILTER, 0);
-
-        return (Texture*)tex;
     }
+
+    gTexturePtr++;
+
+    return tex;
 }
 
 void renderDeleteTexture(Texture* texture)

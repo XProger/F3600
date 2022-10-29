@@ -15,9 +15,6 @@ extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 extern ShipData ctrlshipIndex[NO_OF_SHIPS];
 extern const TrackCamera ctrlcamera;
 
-char* pDRAM_checkpoint;
-char* pVRAM_checkpoint;
-
 void showLoading(int32 track)
 {
     Texture* loadingScreen;
@@ -97,10 +94,10 @@ void gameInit(void)
 
     renderInit();
 
-    InitGameDisplay();
+    renderOffset(0, 0);
 
     time = osGetSystemTimeMS();
-    TextureTableCount = 0;
+
     InitText(); // 0.27s -> 0.15s (uncomp) -> 0.07s (conv tex)
     printf("init text %d ms\n", osGetSystemTimeMS() - time);
 
@@ -156,18 +153,15 @@ void gameInit(void)
     InitEffects();
     InitWeapons(ctrlweaponShapes);
 
-    gBaseTextureIndex = TextureTableCount;
-
-    pDRAM_checkpoint = pDRAM;
-    pVRAM_checkpoint = pVRAM;
+    memStateSave();
 
     printf("init main %d ms\n", osGetSystemTimeMS() - time);
 }
 
 void gameFree(void)
 {
-    renderFree();
     SfxFree();
+    renderFree();
 }
 
 void gameCtrl(void)
@@ -185,8 +179,7 @@ void gameCtrl(void)
             break;
 
         case GAME_LOOP_MENU_INIT:
-            pDRAM = pDRAM_checkpoint;
-            pVRAM = pVRAM_checkpoint;
+            memStateRestore();
             MusicReset();
             time = osGetSystemTimeMS();
             menuInit(); // 4.7s -> 3.1s (uncomp) -> 2.1s (conv tex)
@@ -197,8 +190,7 @@ void gameCtrl(void)
             break;
 
         case GAME_LOOP_RACE_INIT:
-            pDRAM = pDRAM_checkpoint;
-            pVRAM = pVRAM_checkpoint;
+            memStateRestore();
             MusicReset();
             time = osGetSystemTimeMS();
             raceInit(&ctrlConfigData); // 14s -> 10.3s (uncomp) -> 7.9s (conv tex)

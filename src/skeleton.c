@@ -49,18 +49,66 @@ void SetSkeletonPosition(Skeleton* skeleton, long x, long y, long z)
     skeleton->update = 1;
 }
 
+void SetSkeletonDirectionHPR(Skeleton* skeleton, short hdg, short pitch, short roll)
+{
+    int32 sx, sy, sz;
+    int32 cx, cy, cz;
+
+    rsincos(pitch, sx, cx);
+    rsincos(hdg, sy, cy);
+    rsincos(roll, sz, cz);
+
+    skeleton->relative.m[0][0] = ((cy * cz) + (((sy * sz) >> 12) * sx)) >> 12;
+    skeleton->relative.m[0][1] = ((cy * sz) - (((sy * sx) >> 12) * cz)) >> 12;
+    skeleton->relative.m[0][2] = (-sy * cx) >> 12;
+
+    skeleton->relative.m[1][0] = -(sz * cx) >> 12;
+    skeleton->relative.m[1][1] = (cx * cz) >> 12;
+    skeleton->relative.m[1][2] = -sx;
+
+    skeleton->relative.m[2][0] = ((sy * cz) - (((cy * sx) >> 12) * sz)) >> 12;
+    skeleton->relative.m[2][1] = ((sy * sz) + (((cy * sx) >> 12) * cz)) >> 12;
+    skeleton->relative.m[2][2] = ((cx * cy) >> 12);
+
+    /* Mark skeleton for update */
+
+    skeleton->update = 1;
+}
+
+void SetSkeletonDirectionRPH(Skeleton* skeleton, short roll, short pitch, short hdg)
+{
+    int32 sx, sy, sz;
+    int32 cx, cy, cz;
+
+    rsincos(pitch, sx, cx);
+    rsincos(hdg, sy, cy);
+    rsincos(roll, sz, cz);
+
+    skeleton->relative.m[0][0] = ((cy * cz) - (((sz * sx) >> 12) * sy)) >> 12;
+    skeleton->relative.m[0][1] = (sz * cx) >> 12;
+    skeleton->relative.m[0][2] = (-(sy * cz) - (((sz * sx) >> 12) * cy)) >> 12;
+
+    skeleton->relative.m[1][0] = (-(sz * cy) - (((sx * cz) >> 12) * sy)) >> 12;
+    skeleton->relative.m[1][1] = (cx * cz) >> 12;
+    skeleton->relative.m[1][2] = ((sz * sy) - (((sx * cz) >> 12) * cy)) >> 12;
+
+    skeleton->relative.m[2][0] = (cx * sy) >> 12;
+    skeleton->relative.m[2][1] = sx;
+    skeleton->relative.m[2][2] = (cx * cy) >> 12;
+
+    /* Mark skeleton for update */
+
+    skeleton->update = 1;
+}
+
 void SetSkeletonDirection(Skeleton* skeleton, short xa, short ya, short za)
 {
-    short sx, sy, sz;
-    short cx, cy, cz;
+    int32 sx, sy, sz;
+    int32 cx, cy, cz;
 
-    sx = rsin(xa);
-    sy = rsin(ya);
-    sz = rsin(za);
-
-    cx = rcos(xa);
-    cy = rcos(ya);
-    cz = rcos(za);
+    rsincos(xa, sx, cx);
+    rsincos(ya, sy, cy);
+    rsincos(za, sz, cz);
 
     /* Top Row */
 
@@ -70,14 +118,14 @@ void SetSkeletonDirection(Skeleton* skeleton, short xa, short ya, short za)
 
     /* Middle Row */
 
-    skeleton->relative.m[1][0] = ((cx * sz) >> 12) - ((((sx * sy) >> 12) * cz) >> 12);
-    skeleton->relative.m[1][1] = ((cx * cz) >> 12) + ((((sx * sy) >> 12) * sz) >> 12);
+    skeleton->relative.m[1][0] = ((cx * sz) - (((sx * sy) >> 12) * cz)) >> 12;
+    skeleton->relative.m[1][1] = ((cx * cz) + (((sx * sy) >> 12) * sz)) >> 12;
     skeleton->relative.m[1][2] = (-sx * cy) >> 12;
 
     /* Bottom Row */
 
-    skeleton->relative.m[2][0] = ((sx * sz) >> 12) + ((((cx * sy) >> 12) * cz) >> 12);
-    skeleton->relative.m[2][1] = ((sx * cz) >> 12) - ((((cx * sy) >> 12) * sz) >> 12);
+    skeleton->relative.m[2][0] = ((sx * sz) + (((cx * sy) >> 12) * cz)) >> 12;
+    skeleton->relative.m[2][1] = ((sx * cz) - (((cx * sy) >> 12) * sz)) >> 12;
     skeleton->relative.m[2][2] = (cx * cy) >> 12;
 
     /* Mark skeleton for update */

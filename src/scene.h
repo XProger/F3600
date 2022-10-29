@@ -1,7 +1,4 @@
 /* (C) Psygnosis 1994. By Jason Carl Denton & Rob Smith
 */
 
-#define ToIntel 0
-#define ToUnix 1
-
 Object* LoadPrm(const char* name, short textureStart);

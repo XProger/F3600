@@ -26,14 +26,12 @@ void AddDelEnd(char dispChar, int32 x, int32 y, uint32 colour);
 void CentreText(const char*, TEXT_DATA*, uint32);
 void DisplayLives(ConfigData*); // PCwipeout
 int CalcPosition(ShipData* shipIndex);
-void ScreenFooter(int x, int y, int colour);
 void InitChampTable(void);
 void DisplayChampTable(void);
 void DisplayRacePoints(void);
 void InitScreenTex(Texture** screenTex, const char* fileName);
 void DisplayVenomComplete(void);
 void DisplayAllVenomComplete(void);
-void InitTrackTex(Texture** trackTex);
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData);
 void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData);
 void InitWeaponSprtIcons(void);

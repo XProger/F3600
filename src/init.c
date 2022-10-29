@@ -11,11 +11,11 @@ short InitScene(Object** prm, short* prmCount, Skeleton* camPos, ConfigData* gam
     int sky;
     char trackPath[64];
 
-    sceneTextures = TextureTableCount;
+    sceneTextures = gTexturePtr - gTextures;
     getPath(trackPath, gameData->actTrackNum, "/scene.cmp");
     LoadCompressedTextureSequence(trackPath, 1);
 
-    skyTextures = TextureTableCount;
+    skyTextures = gTexturePtr - gTextures;
     getPath(trackPath, gameData->actTrackNum, "/sky.cmp");
     LoadCompressedTextureSequence(trackPath, 1);
 
@@ -243,14 +243,13 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
     numTex = *(int*)compBuffer;
     SwapLE32(numTex);
 
-    ASSERT(TextureTableCount + numTex <= TextureTableMax);
     ExpandData((uint8*)compBuffer + 4 + numTex * 4, (uint8*)pVRAM);
 
     timTotalSize = 0;
     HACK_TEX_FILTER = filter;
     for (i = 0; i < numTex; i++)
     {
-        TextureTable[TextureTableCount++] = renderCreateTexture((uint8*)(pVRAM + timTotalSize));
+        renderCreateTexture((uint8*)(pVRAM + timTotalSize));
         timSize = *(int*)(compBuffer + 4 + i * 4);
         SwapLE32(timSize);
         timTotalSize += timSize;
@@ -303,7 +302,7 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
 
     for (i = 0; i < texCount; i++)
     {
-        TextureTable[TextureTableCount++] = renderCreateTexture(ptr);
+        renderCreateTexture(ptr);
         ptr += getTexSize(ptr);
     }
 }
@@ -313,12 +312,12 @@ Texture* LoadTexture(const char* fileName)
 {
     long size;
     Tim* tim;
-    Texture* tex;
+    Texture* tex = gTexturePtr;
 
     size = osLoadFile(fileName, pVRAM);
     tim = (Tim*)allocVRAM(size);
 
-    tex = renderCreateTexture((uint8*)tim);
+    renderCreateTexture((uint8*)tim);
 
 #ifdef _DEBUG
     {
@@ -333,7 +332,6 @@ Texture* LoadTexture(const char* fileName)
         fclose(f);
     }
 #endif
-
 
     return tex;
 }

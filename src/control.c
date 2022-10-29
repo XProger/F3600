@@ -189,8 +189,8 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo, WeaponData* weaponInd
         revRight = 0;
     }
 
-    headingInc = (playerShip->headingInc * gPadStickX * 30 / FR30) >> 8;
-    vpitchInc = (gPadStickY * 30 * 30 / FR30) >> 8;
+    headingInc = (playerShip->headingInc * gPadStickX) >> 8;
+    vpitchInc = (gPadStickY * 30) >> 8;
 
     if (pad & pCon.left) /** Inc = 128 , max 2048 **/
     {
@@ -504,7 +504,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                     remoteShip->updateCount = JUST_FRONT_DELAY;
                     if (remoteShip->fightBack) /**** Ship wants to make life difficult ****/
                     {
-                        if ((decide < 40) || (remoteShip->weaponType == NO_WEAPON)) /*** Ship will try to block you ***/
+                        if ((decide < 40) || (remoteShip->weaponType == WPN_NONE)) /*** Ship will try to block you ***/
                         {
                             remoteShip->updateControl = BlockShip;
                         }
@@ -516,7 +516,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                 PlayNote(SFX_SP_MINES);
                                 SetPitch(SFX_SP_MINES, SND_DEF_PITCH);
 
-                                remoteShip->weaponType = MINE;
+                                remoteShip->weaponType = WPN_MINE;
                                 FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
                             }
                         }
@@ -525,7 +525,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                             remoteShip->updateControl = BlockShip;
                             if ((remoteShip->attr & SHIELDED) == 0)
                             {
-                                remoteShip->weaponType = SHIELD;
+                                remoteShip->weaponType = WPN_SHIELD;
                                 FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
                             }
                         }
@@ -565,7 +565,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
                     if (remoteShip->fightBack) /**** Ship wants you to say "Outside Now!" ****/
                     {
-                        if (remoteShip->weaponType == NO_WEAPON)
+                        if (remoteShip->weaponType == WPN_NONE)
                         {
                             remoteShip->updateControl = AvoidShip;
                             remoteShip->attr |= OVERTAKE;
@@ -587,7 +587,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                     PlayNote(SFX_SP_ROCKET);
                                     SetPitch(SFX_SP_ROCKET, SND_DEF_PITCH);
 
-                                    remoteShip->weaponType = ROCKET;
+                                    remoteShip->weaponType = WPN_ROCKET;
                                     FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
                                 }
                             }
@@ -600,7 +600,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                     PlayNote(SFX_SP_MISSILE);
                                     SetPitch(SFX_SP_MISSILE, SND_DEF_PITCH);
 
-                                    remoteShip->weaponType = MISSILE;
+                                    remoteShip->weaponType = WPN_MISSILE;
                                     remoteShip->targetShip = ownShip;
                                     FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
                                 }
@@ -614,7 +614,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                     PlayNote(SFX_SP_SHOCKWAVE);
                                     SetPitch(SFX_SP_SHOCKWAVE, SND_DEF_PITCH);
 
-                                    remoteShip->weaponType = ELEC_BOLT;
+                                    remoteShip->weaponType = WPN_ELEC_BOLT;
                                     remoteShip->targetShip = ownShip;
                                     FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
                                 }
@@ -806,8 +806,8 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
         /***** Bleed off speed as orientation changes *****/
 
-        remoteShip->speed -= (abs(remoteShip->speed * ((remoteShip->vhdg * FR60) / 60))) >> 14; /* 14 */
-        remoteShip->speed -= (abs(remoteShip->speed * ((remoteShip->vpitch * FR60) / 60))) >> 14;
+        remoteShip->speed -= abs(remoteShip->speed * remoteShip->vhdg) >> 14;
+        remoteShip->speed -= abs(remoteShip->speed * remoteShip->vpitch) >> 14;
 
         if (remoteShip->nearTrkSect->flags & Jump) /**** Cure for ships getting stuck on hump lip ****/
         {
@@ -842,10 +842,6 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         remoteShip->acc.y = (targetVector.y + ((bestPath.y - remoteShip->pos.y) >> 1));
         remoteShip->acc.z = (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
 
-        remoteShip->acc.x = (remoteShip->acc.x * 60) / FR60;
-        remoteShip->acc.y = (remoteShip->acc.y * 60) / FR60;
-        remoteShip->acc.z = (remoteShip->acc.z * 60) / FR60;
-
         remoteShip->vel.x += remoteShip->acc.x;
         remoteShip->vel.y += remoteShip->acc.y;
         remoteShip->vel.z += remoteShip->acc.z;
@@ -870,25 +866,13 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
         alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
-        if (alpha < 50)
-            alpha = 50;
-
-    #if 0
-        alpha = TRACK_MAGNET * (TARGETHEIGHT - alpha) / alpha;
-        remoteShip->acc.x = (facePtr->normal.x * alpha) >> 8;
-        remoteShip->acc.y = (facePtr->normal.y * alpha) >> 8;
-        remoteShip->acc.z = (facePtr->normal.z * alpha) >> 8;
-    #else
-        remoteShip->acc.x = (((facePtr->normal.x * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.x * TRACK_MAGNET)) >> 8;
-        remoteShip->acc.y = (((facePtr->normal.y * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.y * TRACK_MAGNET)) >> 8;
-        remoteShip->acc.z = (((facePtr->normal.z * TARGETHEIGHT * TRACK_MAGNET) / alpha) - (facePtr->normal.z * TRACK_MAGNET)) >> 8;
-    #endif
+        ApplyMagnet(&remoteShip->acc, &facePtr->normal, alpha);
 
         remoteShip->vel.x += remoteShip->acc.x;
         remoteShip->vel.y += remoteShip->acc.y;
         remoteShip->vel.z += remoteShip->acc.z;
 
-        temp = SquareRoot0(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+        temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
         remoteShip->vhdg = -ratan2(targetVector.x, targetVector.z) - remoteShip->hdg;
         remoteShip->vhdg += remoteShip->ahdg; /*** Result of weapon collision ***/
@@ -899,14 +883,12 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         else if (remoteShip->vhdg < -2048)
             remoteShip->vhdg = remoteShip->vhdg + 4096;
 
-        remoteShip->vhdg = (remoteShip->vhdg * 60) / FR60;
         remoteShip->hdg += remoteShip->vhdg >> 4;
 
         remoteShip->vpitch = -ratan2(targetVector.y, temp) - remoteShip->pitch;
-        remoteShip->vpitch = (remoteShip->vpitch * 60) / FR60;
 
         remoteShip->pitch += remoteShip->vpitch >> 4;
-        remoteShip->vroll += sar(remoteShip->vhdg, 2);
+        remoteShip->vroll += remoteShip->vhdg >> 2;
         remoteShip->vroll -= remoteShip->vroll >> 1;
         remoteShip->roll += remoteShip->vroll;
         remoteShip->roll -= remoteShip->roll >> 3;
@@ -951,10 +933,6 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
         remoteShip->acc.y = targetVector.y;
         remoteShip->acc.z = (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
 
-        remoteShip->acc.x = (remoteShip->acc.x * 60) / FR60;
-        remoteShip->acc.y = (remoteShip->acc.y * 60) / FR60;
-        remoteShip->acc.z = (remoteShip->acc.z * 60) / FR60;
-
         remoteShip->vel.x += remoteShip->acc.x;
         remoteShip->vel.y += remoteShip->acc.y;
         remoteShip->vel.z += remoteShip->acc.z;
@@ -974,9 +952,9 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
     remoteShip->vel.y -= remoteShip->vel.y >> 3;
     remoteShip->vel.z -= remoteShip->vel.z >> 3;
 
-    remoteShip->pos.x += remoteShip->vel.x >> 6;
-    remoteShip->pos.y += remoteShip->vel.y >> 6;
-    remoteShip->pos.z += remoteShip->vel.z >> 6;
+    remoteShip->pos.x += remoteShip->vel.x >> VELOCITY_SHIFT;
+    remoteShip->pos.y += remoteShip->vel.y >> VELOCITY_SHIFT;
+    remoteShip->pos.z += remoteShip->vel.z >> VELOCITY_SHIFT;
 
     if (remoteShip->attr & ELECTROED)
     {
@@ -991,64 +969,4 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
     remoteShip->hdg = ang(remoteShip->hdg);
     remoteShip->pitch = ang(remoteShip->pitch);
     remoteShip->roll = ang(remoteShip->roll);
-}
-
-void SetSkeletonDirectionHPR(Skeleton* skeleton, short hdg, short pitch, short roll)
-{
-    short sx, sy, sz;
-    short cx, cy, cz;
-
-    sy = rsin(hdg);
-    sx = rsin(pitch);
-    sz = rsin(roll);
-
-    cy = rcos(hdg);
-    cx = rcos(pitch);
-    cz = rcos(roll);
-
-    skeleton->relative.m[0][0] = ((cy * cz) >> 12) + ((((sy * sz) >> 12) * sx) >> 12);
-    skeleton->relative.m[0][1] = ((cy * sz) >> 12) - ((((sy * sx) >> 12) * cz) >> 12);
-    skeleton->relative.m[0][2] = (-sy * cx) >> 12;
-
-    skeleton->relative.m[1][0] = -(sz * cx) >> 12;
-    skeleton->relative.m[1][1] = (cx * cz) >> 12;
-    skeleton->relative.m[1][2] = -sx;
-
-    skeleton->relative.m[2][0] = ((sy * cz) >> 12) - ((((cy * sx) >> 12) * sz) >> 12);
-    skeleton->relative.m[2][1] = ((sy * sz) >> 12) + ((((cy * sx) >> 12) * cz) >> 12);
-    skeleton->relative.m[2][2] = ((cx * cy) >> 12);
-
-    /* Mark skeleton for update */
-
-    skeleton->update = 1;
-}
-
-void SetSkeletonDirectionRPH(Skeleton* skeleton, short roll, short pitch, short hdg)
-{
-    short sx, sy, sz;
-    short cx, cy, cz;
-
-    sy = rsin(hdg);
-    sx = rsin(pitch);
-    sz = rsin(roll);
-
-    cy = rcos(hdg);
-    cx = rcos(pitch);
-    cz = rcos(roll);
-
-    skeleton->relative.m[0][0] = ((cy * cz) >> 12) - ((((sz * sx) >> 12) * sy) >> 12);
-    skeleton->relative.m[0][1] = (sz * cx) >> 12;
-    skeleton->relative.m[0][2] = (-(sy * cz) >> 12) - ((((sz * sx) >> 12) * cy) >> 12);
-
-    skeleton->relative.m[1][0] = (-(sz * cy) >> 12) - ((((sx * cz) >> 12) * sy) >> 12);
-    skeleton->relative.m[1][1] = (cx * cz) >> 12;
-    skeleton->relative.m[1][2] = ((sz * sy) >> 12) - ((((sx * cz) >> 12) * cy) >> 12);
-
-    skeleton->relative.m[2][0] = (cx * sy) >> 12;
-    skeleton->relative.m[2][1] = sx;
-    skeleton->relative.m[2][2] = (cx * cy) >> 12;
-
-    /* Mark skeleton for update */
-
-    skeleton->update = 1;
 }

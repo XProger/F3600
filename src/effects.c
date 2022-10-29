@@ -1,23 +1,16 @@
 #include "game.h"
 
 Effect gEffects[NO_OF_EFFECTS];
-Texture* gEffectTextures[NO_OF_EFFECT_TEXTURES];
+Texture* gEffectTextures;
+Texture* gShadowTex;
 
 extern int gFrameIndex;
 extern const TrackCamera ctrlcamera;
 
 void InitEffects(void)
 {
-    int tablePos = TextureTableCount;
-
+    gEffectTextures = gTexturePtr;
     LoadCompressedTextureSequence("wipeout/common/effects.cmp", 1);
-
-    gEffectTextures[FX_FIRE] = TextureTable[tablePos++];
-    gEffectTextures[FX_FIRE_WHITE] = TextureTable[tablePos++];
-    gEffectTextures[FX_SMOKE] = TextureTable[tablePos++];
-    gEffectTextures[FX_EBOLT] = TextureTable[tablePos++];
-    gEffectTextures[FX_HALO] = TextureTable[tablePos++];
-    gEffectTextures[FX_GREENY] = TextureTable[tablePos++];
 }
 
 void ResetEffects(void)
@@ -82,7 +75,7 @@ void DrawEffects(void)
             b.y = fx->y;
             b.z = fx->z;
             b.size = fx->size;
-            b.texture = gEffectTextures[fx->type];
+            b.texture = gEffectTextures + fx->type;
             renderBillboard(&b);
         }
     }
@@ -105,14 +98,14 @@ void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
         /***********************************************************************/
         /****          Add Fire + Smoke Trails for Missiles & Rockets       ****/
         /***********************************************************************/
-        if ((weapon->type == ROCKET) ||
-            (weapon->type == MISSILE) ||
-            (weapon->type == ELEC_BOLT) ||
-            (weapon->type == REV_CON))
+        if ((weapon->type == WPN_ROCKET) ||
+            (weapon->type == WPN_MISSILE) ||
+            (weapon->type == WPN_ELEC_BOLT) ||
+            (weapon->type == WPN_REV_CON))
         {
-            if (weapon->type == ELEC_BOLT)
+            if (weapon->type == WPN_ELEC_BOLT)
                 exploType = FX_EBOLT;
-            else if (weapon->type == REV_CON)
+            else if (weapon->type == WPN_REV_CON)
                 exploType = FX_GREENY;
             else
                 exploType = FX_SMOKE;
@@ -176,18 +169,18 @@ void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
         {
             if (weapon->count == SHIP_EXPLODE)
             {
-                if (weapon->type == ELEC_BOLT)
+                if (weapon->type == WPN_ELEC_BOLT)
                     exploType = FX_GREENY;
-                else if (weapon->type == REV_CON)
+                else if (weapon->type == WPN_REV_CON)
                     exploType = FX_GREENY;
                 else
                     exploType = FX_FIRE_WHITE;
             }
             else
             {
-                if (weapon->type == ELEC_BOLT)
+                if (weapon->type == WPN_ELEC_BOLT)
                     exploType = FX_EBOLT;
-                else if (weapon->type == REV_CON)
+                else if (weapon->type == WPN_REV_CON)
                     exploType = FX_GREENY;
                 else
                     exploType = FX_FIRE;
@@ -209,9 +202,9 @@ void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
 
                     if (weapon->count == SHIP_EXPLODE)
                     {
-                        fx->x += (int16)(shipIndex[weapon->targetShip].vel.x >> 6);
-                        fx->y += (int16)(shipIndex[weapon->targetShip].vel.y >> 6);
-                        fx->z += (int16)(shipIndex[weapon->targetShip].vel.z >> 6);
+                        fx->x += (int16)(shipIndex[weapon->targetShip].vel.x >> VELOCITY_SHIFT);
+                        fx->y += (int16)(shipIndex[weapon->targetShip].vel.y >> VELOCITY_SHIFT);
+                        fx->z += (int16)(shipIndex[weapon->targetShip].vel.z >> VELOCITY_SHIFT);
                     }
 
                     fx->count = -((((uint8)randy()) >> 4) + 8);
@@ -442,17 +435,20 @@ void MoveDonkey(Object** donkey)
 
 void InitShadow(void)
 {
-    HACK_LOAD_SHADOW = 1;
+    const char* name;
 
     if (ownShip < 2)
-        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout/textures/shad1.tim");
+        name = "wipeout/textures/shad1.tim";
     else if (ownShip < 4)
-        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout/textures/shad2.tim");
+        name = "wipeout/textures/shad2.tim";
     else if (ownShip < 6)
-        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout/textures/shad3.tim");
-    else if (ownShip < 8)
-        gEffectTextures[FX_SHADOW] = LoadTexture("wipeout/textures/shad4.tim");
+        name = "wipeout/textures/shad3.tim";
+    else
+        name = "wipeout/textures/shad4.tim";
 
+    HACK_LOAD_SHADOW = 1;
+    gShadowTex = gTexturePtr;
+    LoadTexture(name);
     HACK_LOAD_SHADOW = 0;
 }
 
@@ -551,7 +547,7 @@ void DrawShadows(ShipData* shipIndex)
         s.y3 = v[3].y;
         s.z3 = v[3].z;
 
-        s.texture = gEffectTextures[FX_SHADOW];
+        s.texture = gShadowTex;
 
         intensity = 255 - (intensity >> 3);
         if (intensity < 0)

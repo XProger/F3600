@@ -477,7 +477,7 @@ long osLoadFile(const char* name, char* buffer)
     fseek(f, 0, SEEK_END);
     size = ftell(f);
 
-    printf("load file %s\n", name);
+    //printf("load file %s\n", name);
     fseek(f, 0, SEEK_SET);
     if (fread(buffer, 1, size, f) != size)
     {

@@ -35,7 +35,6 @@
     <ClCompile Include="..\..\init.c" />
     <ClCompile Include="..\..\lzss.c" />
     <ClCompile Include="..\..\menus.c" />
-    <ClCompile Include="..\..\object.c" />
     <ClCompile Include="..\..\options.c" />
     <ClCompile Include="..\..\pad.c" />
     <ClCompile Include="..\..\race.c" />
@@ -71,7 +70,6 @@
     <ClInclude Include="..\..\init.h" />
     <ClInclude Include="..\..\lzss.h" />
     <ClInclude Include="..\..\menus.h" />
-    <ClInclude Include="..\..\object.h" />
     <ClInclude Include="..\..\options.h" />
     <ClInclude Include="..\..\pad.h" />
     <ClInclude Include="..\..\race.h" />
@@ -85,7 +83,6 @@
     <ClInclude Include="..\..\sound.h" />
     <ClInclude Include="..\..\spline.h" />
     <ClInclude Include="..\..\standard.h" />
-    <ClInclude Include="..\..\tim.h" />
     <ClInclude Include="..\..\track.h" />
     <ClInclude Include="..\..\ttf.h" />
     <ClInclude Include="..\..\utils.h" />

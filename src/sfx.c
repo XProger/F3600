@@ -235,9 +235,9 @@ short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCam
         //voll >>= 2;
         //volr >>= 2;
 
-        dopler.x = (shipIndex[ident].vel.x >> 6) - camera->vel.x;
-        dopler.y = (shipIndex[ident].vel.y >> 6) - camera->vel.y;
-        dopler.z = (shipIndex[ident].vel.z >> 6) - camera->vel.z;
+        dopler.x = (shipIndex[ident].vel.x >> VELOCITY_SHIFT) - camera->vel.x;
+        dopler.y = (shipIndex[ident].vel.y >> VELOCITY_SHIFT) - camera->vel.y;
+        dopler.z = (shipIndex[ident].vel.z >> VELOCITY_SHIFT) - camera->vel.z;
 
         dopler.x += distance.x;
         dopler.y += distance.y;
