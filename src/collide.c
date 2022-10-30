@@ -37,13 +37,13 @@ void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
 void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
 {
     int mag;
-    vec4i distance;
+    vec3i distance;
     int collide;
-    vec4i vc;
+    vec3i vc;
     int ownMass, remMass;
-    vec4i ship2ship;
-    vec4i ship1React, ship2React;
-    vec4i soundPos;
+    vec3i ship2ship;
+    vec3i ship1React, ship2React;
+    vec3i soundPos;
 
     distance.x = (shipIndex[i].pos.x - shipIndex[j].pos.x) >> 3;
     distance.y = (shipIndex[i].pos.y - shipIndex[j].pos.y) >> 3;
@@ -166,30 +166,30 @@ int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
     short* coords;
     short primitiveCount;
 
-    vec4i p1, p2, p3; /* the three plane points of other ship */
+    vec3i p1, p2, p3; /* the three plane points of other ship */
 
-    vec4i a, b, c, d; /* four vector points of the hero ship */
+    vec3i a, b, c, d; /* four vector points of the hero ship */
 
     int factor2; /* intermediate calculation terms */
-    vec4i factor1;
-    vec4i term1;
+    vec3i factor1;
+    vec3i term1;
 
-    vec4i res_vec; /* resultant intersection vector */
+    vec3i res_vec; /* resultant intersection vector */
     int alpha; /* the above alpha value */
 
-    vec4i DC, BC, AC; /* position vectors of hero ship */
-    vec4i BD, AB;
-    vec4i AD;
+    vec3i DC, BC, AC; /* position vectors of hero ship */
+    vec3i BD, AB;
+    vec3i AD;
 
-    vec4i* start_vec; /* is assigned a, b, c or d from above */
-    vec4i* pos_vec; /* is assigned DC, BC, AC, BD, AB or AD */
+    vec3i* start_vec; /* is assigned a, b, c or d from above */
+    vec3i* pos_vec; /* is assigned DC, BC, AC, BD, AB or AD */
 
-    vec4i plane1; /* normal of plane of other ship */
+    vec3i plane1; /* normal of plane of other ship */
 
-    vec4i P1P2; /* 2 position vectors of other ship */
-    vec4i P1P3; /* (all that is needed to get normal) */
+    vec3i P1P2; /* 2 position vectors of other ship */
+    vec3i P1P3; /* (all that is needed to get normal) */
 
-    vec4i vec0, vec1, vec2; /* vectors between plane coords and intersection point */
+    vec3i vec0, vec1, vec2; /* vectors between plane coords and intersection point */
     int angle; /* total angle */
 
     short high1, high2;
@@ -321,7 +321,7 @@ int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
     return 0;
 }
 
-int PlaneLineCollision(const vec4i* plane_point, const vec4i* ship_pos, const vec3s* normal)
+int PlaneLineCollision(const vec3i* plane_point, const vec3i* ship_pos, const vec3s* normal)
 {
     int dot_product, norm_dot_product;
 
@@ -336,14 +336,14 @@ int PlaneLineCollision(const vec4i* plane_point, const vec4i* ship_pos, const ve
 
 void Ship2Track(ShipData* playerShip, Face* facePtr)
 {
-    vec4i nosePos, wingPos;
+    vec3i nosePos, wingPos;
     int alpha;
-    vec4i direction;
+    vec3i direction;
     int downTrack;
     TrackSection* trackPtr;
     int toFace;
-    vec4i toFaceVector;
-    const vec4i* facePoint;
+    vec3i toFaceVector;
+    const vec3i* facePoint;
     int collide;
     Face* facePtr2;
 
@@ -387,7 +387,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
         playerShip->attr |= LSIDE;
         if (1) //(facePtr == (track->faces + playerShip->nearTrkSect->faceStart)) || playerShip->nearTrkSect->junction)
         {
-            facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+            facePoint = track->vertices + facePtr->vertex[0];
 
             alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
 
@@ -486,7 +486,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
         if ((playerShip->nearTrkSect->faceCount > 3) || playerShip->nearTrkSect->junction)
         {
 
-            facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+            facePoint = track->vertices + facePtr->vertex[0];
 
             alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
             if (alpha <= 0)
@@ -569,10 +569,10 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
     }
 }
 
-int CheckPolygonCollision(const Face* facePtr, const vec4i* pos, int alpha)
+int CheckPolygonCollision(const Face* facePtr, const vec3i* pos, int alpha)
 {
-    vec4i planePoint;
-    vec4i vec0, vec1, vec2, vec3; /* vectors between plane coords and intersection point */
+    vec3i planePoint;
+    vec3i vec0, vec1, vec2, vec3; /* vectors between plane coords and intersection point */
     int angle;
 
     planePoint.x = pos->x - ((facePtr->normal.x * alpha) >> 12);
@@ -611,9 +611,9 @@ int CheckPolygonCollision(const Face* facePtr, const vec4i* pos, int alpha)
 
 void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha)
 {
-    vec4s collisionVector;
+    vec3s collisionVector;
     int angle;
-    vec4i wingPos;
+    vec3i wingPos;
     int magnitude;
 
     collisionVector.x = playerShip->nearTrkSect->centre.x - track->vertices[(facePtr->vertex[2])].x;
@@ -674,9 +674,9 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
 void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha)
 {
-    vec4s collisionVector;
+    vec3s collisionVector;
     int angle;
-    vec4i nosePos;
+    vec3i nosePos;
     int magnitude;
 
     collisionVector.x = playerShip->nearTrkSect->centre.x - track->vertices[(facePtr->vertex[2])].x;
@@ -725,7 +725,7 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     */
 }
 
-void Reflection(vec4i* incidence, const vec3s* normal)
+void Reflection(vec3i* incidence, const vec3s* normal)
 {
     int temp;
 
@@ -736,7 +736,7 @@ void Reflection(vec4i* incidence, const vec3s* normal)
     incidence->z = (((2 * (int)normal->z) * temp) >> 12) + incidence->z;
 }
 
-int AngleOfCollision(const vec4s* normal, const vec4i* ship_point)
+int AngleOfCollision(const vec3s* normal, const vec3i* ship_point)
 {
     int dot_product;
     int norm_dist, shpoint_dist;

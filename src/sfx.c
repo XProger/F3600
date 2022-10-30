@@ -120,9 +120,9 @@ void SfxFree(void)
 
 }
 
-short AdjustDirectionalNote(enum SfxType id, const vec4i* pos)
+short AdjustDirectionalNote(enum SfxType id, const vec3i* pos)
 {
-    vec4i distance;
+    vec3i distance;
     int mag;
     int voll, volr;
     short angle;
@@ -169,12 +169,12 @@ short AdjustDirectionalNote(enum SfxType id, const vec4i* pos)
 short AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes, TrackCamera* camera)
 {
     uint16 i;
-    vec4i distance;
+    vec3i distance;
     int mag, smallestMag;
     short ident;
     int voll, volr;
     short angle;
-    vec4i dopler;
+    vec3i dopler;
     int doplerMag;
 
 #ifdef __3DO__ // TODO optimize
@@ -310,7 +310,7 @@ void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
         (vol >> 2) + ((vol * playerShip->l_brake_rot) >> 9));
 }
 
-int PlayDirectionalNote(enum SfxType id, const vec4i* pos)
+int PlayDirectionalNote(enum SfxType id, const vec3i* pos)
 {
     int channel = PlayNote(id);
     AdjustDirectionalNote(id, pos);

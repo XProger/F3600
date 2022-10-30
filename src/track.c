@@ -50,12 +50,8 @@ void InitTrack(char* file)
     track->faceCount = header->faceCount;
     track->sectionCount = header->sectionCount;
 
-    printf("%d\n", track->vertexCount);
-    printf("%d\n", track->faceCount);
-    printf("%d\n", track->sectionCount);
-
-    track->vertices = (TrackVertex*)ptr;
-    ptr += header->vertexCount * sizeof(TrackVertex);
+    track->vertices = (vec3i*)ptr;
+    ptr += header->vertexCount * sizeof(vec3i);
 
     track->faces = (Face*)ptr;
     ptr += header->faceCount * sizeof(Face);
@@ -100,12 +96,12 @@ void LoadTrack(int32 trackNum)
 void IntelVertex(void)
 {
     vec4i* vert;
-    TrackVertex* v;
+    vec3i* v;
     short i;
 
     /* intel the vertex data */
 
-    // convert from VECTOR to TrackVertex
+    // convert from vec4i to vec3i
     vert = (vec4i*)track->vertices;
     v = track->vertices;
     for (i = 0; i < track->vertexCount; i++, vert++, v++)
@@ -215,8 +211,8 @@ void IndexToPointers(void)
 void InitVertices(char* file)
 {
     long size = osLoadFile(file, pDRAM);
-    track->vertices = (TrackVertex*)allocDRAM(size);
     track->vertexCount = size / sizeof(vec4i);
+    track->vertices = (vec3i*)allocDRAM(track->vertexCount * sizeof(vec3i));
     IntelVertex();
 }
 
@@ -334,7 +330,7 @@ int32 clutsCount;
 uint16 cluts[MAX_TRACK_CLUTS][16];
 uint16 faceCLUT[4096][5];
 
-TrackVertex trackVertex[4096];
+vec3i trackVertex[4096];
 int32 trackVertexCount;
 
 Face trackFaces[4096];
@@ -383,7 +379,7 @@ int32 clutAdd(int32 faceTexIndex, float r, float g, float b)
     return clutsCount - 1;
 }
 
-int32 vertexAdd(const TrackVertex* v)
+int32 vertexAdd(const vec3i* v)
 {
     int32 i, start;
 

@@ -677,7 +677,7 @@ int CalcPosition(ShipData* shipIndex)
     // TODO WTF!
     int i, j;
     int tempPosition;
-    vec4i B, C, AB, AC, trackVect;
+    vec3i B, C, AB, AC, trackVect;
     int angleB, angleC, distanceB, distanceC;
 
     for (i = 0; i < NO_OF_SHIPS; i++)

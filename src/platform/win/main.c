@@ -365,23 +365,23 @@ void setKey(uint8 code, uint8 KeyDown)
 
     switch (code)
     {
-        case 'Z':
+        case 'A':
             p = IN_LT;
             break;
-        case 'X':
+        case 'D':
             p = IN_RT;
             break;
-        case 'A':
+        case 'Q':
             p = IN_LB;
             break;
-        case 'S':
+        case 'E':
             p = IN_RB;
             break;
         case VK_RETURN:
-        case VK_CONTROL:
+        case 'W':
             p = IN_A;
             break;
-        case VK_MENU:
+        case VK_SPACE:
             p = IN_B;
             break;
         case VK_TAB:

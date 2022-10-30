@@ -7,11 +7,12 @@
 typedef uint32 divTableInt;
 extern const divTableInt divTable[DIV_TABLE_SIZE];
 
-int GetMagnitude(const vec4i* vec1);
-void MinusVector(const vec4i* v1, const vec4i* v2, vec4i* result);
-void CrossProduct(vec4i* result, const vec4i* A, const vec4i* B);
-int ScalarProduct(const vec4i* vec1, const vec4i* vec2);
-int GetAng(const vec4i* vec1, const vec4i* vec2);
+int GetMagnitude(const vec3i* vec1);
+int32 GetMagnitudeApprox(int32 dx, int32 dy);
+void MinusVector(const vec3i* v1, const vec3i* v2, vec3i* result);
+void CrossProduct(vec3i* result, const vec3i* A, const vec3i* B);
+int ScalarProduct(const vec3i* vec1, const vec3i* vec2);
+int GetAng(const vec3i* vec1, const vec3i* vec2);
 int ang(int a);
 int arccos(int value);
 
@@ -30,8 +31,8 @@ extern const int32 gSinCosTable[4096];
 int32 ratan2(int32 y, int32 x);
 uint32 rsqrt(uint32 x);
 
-void RotTrans(const MATRIX* m, const vec4s* v0, vec4i* v1, long* flag);
-long RotTransPers(const MATRIX* m, const vec4s* v0, vec2s* sxy, long* flag);
+void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, long* flag);
+long RotTransPers(const MATRIX* m, const vec3s* v0, vec2s* sxy, long* flag);
 void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret);
 
 

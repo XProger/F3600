@@ -34,7 +34,6 @@ ShipData ctrlshipIndex[NO_OF_SHIPS];
 RescueData ctrlrescueDroid;
 
 WeaponShape ctrlweaponShapes[WEAPON_SHAPE_NAX];
-WeaponData ctrlweaponIndex[NO_ACTIVE_WEAPONS];
 
 WeaponGrid ctrlweaponGrid[64];
 
@@ -143,11 +142,11 @@ int InitCrowdSound(Object** prm, short prmCount, Object** lostad, int stadCount)
 void AdjustCrowdSound(Object** lostad, int stadCount)
 {
     int i;
-    vec4i distance;
+    vec3i distance;
     int mag;
     int chosen;
     int smallestMag;
-    vec4i pos;
+    vec3i pos;
 
 #ifdef __3DO__ // TODO optimize
     return;
@@ -187,14 +186,14 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
     }
 }
 
-void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponData* weaponIndex, WeaponShape* weaponShapes, RescueData* rescueDroid, Object** shipShapes)
+void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponShape* weaponShapes, RescueData* rescueDroid, Object** shipShapes)
 {
     KillNotes();
     initShipData(track->sections, shipIndex, gameData);
     InitRescueDroid(rescueDroid, shipShapes, &(shipIndex[ownShip]));
     cameraPtr->section = shipIndex[ownShip].nearTrkSect;
 
-    ResetWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
+    ResetWeapons(ctrlweaponShapes, ctrlcamera.camPos);
     ResetEffects();
     ResetStartBoom();
 
@@ -413,7 +412,7 @@ void raceInit(ConfigData* gameData)
     initShipData(track->sections, ctrlshipIndex, gameData);
     InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
 
-    ResetWeapons(ctrlweaponShapes, ctrlcamera.camPos, ctrlweaponIndex);
+    ResetWeapons(ctrlweaponShapes, ctrlcamera.camPos);
     ResetEffects();
     ResetStartBoom();
 
@@ -463,7 +462,7 @@ void raceInit(ConfigData* gameData)
 
     ctrlnextSection = ctrlcamera.section;
 
-    ctrlshipIndex[ownShip].haveFired = NON_ACTIVE;
+    ctrlshipIndex[ownShip].haveFired = 0;
 
     SetNormPadPresets(gameData);
 
@@ -505,7 +504,7 @@ void raceCtrl(ConfigData* gameData)
     ctrlNeedInSingleGameConfirm = 0;
     ctrlNeedTargetIcon = 0;
 
-    //ctrlshipIndex[ownShip].weaponType = SHIELD; // fx debug
+    //ctrlshipIndex[ownShip].weaponType = WPN_ROCKET; // fx debug
 
     if (gTargetFOV > CAMERA_FOV)
         gTargetFOV -= (1 << 12);
@@ -644,7 +643,7 @@ void raceCtrl(ConfigData* gameData)
                             break;
                         }
                     }
-                    Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                    Restart(ctrlshipIndex, gameData, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                     break;
 
                 case 2:
@@ -709,7 +708,7 @@ void raceCtrl(ConfigData* gameData)
                 ctrlbuttonPressed = 0;
         }
 
-        UpdateShips(ctrlshipIndex, ctrlweaponIndex);
+        UpdateShips(ctrlshipIndex);
 
         (ctrlrescueDroid.droidUpdate)(&ctrlrescueDroid, &(ctrlshipIndex[ownShip]), ctrlshipShapes);
 
@@ -734,7 +733,7 @@ void raceCtrl(ConfigData* gameData)
             ShakeScreen();
         }
 
-        UpdateWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
+        UpdateWeapons(ctrlshipIndex, ctrlweaponShapes);
 
         CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
 
@@ -864,7 +863,7 @@ void raceCtrl(ConfigData* gameData)
                         ctrlNeedDeSelectScreen = 0;
                         InitHiScoreData(&ctrlhiScoreData);
 
-                        Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                        Restart(ctrlshipIndex, gameData, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                     }
                 }
             }
@@ -947,7 +946,7 @@ void raceCtrl(ConfigData* gameData)
                             ctrlhiScoreData.confirm = 2;
                             ctrlhiScoreData.lConfirm = 0;
                             InitHiScoreData(&ctrlhiScoreData);
-                            Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                            Restart(ctrlshipIndex, gameData, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                         }
                     }
                 }
@@ -1220,7 +1219,7 @@ void raceCtrl(ConfigData* gameData)
                                             attractDelay = 0;
                                             ctrlhiScoreData.confirm = 2;
                                             ctrlhiScoreData.lConfirm = 0;
-                                            Restart(ctrlshipIndex, gameData, ctrlweaponIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                                            Restart(ctrlshipIndex, gameData, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                                         }
                                     }
                                 }
@@ -1280,7 +1279,6 @@ void raceLoop(ConfigData* gameData)
     }
     
     ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
-    AddEffects(ctrlweaponIndex, ctrlshipIndex);
 
     renderSetMode(RENDER_MODE_3D);
 
@@ -1292,13 +1290,13 @@ void raceLoop(ConfigData* gameData)
     DrawShadows(ctrlshipIndex);
     DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip);
     DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
-    DrawWeapons(ctrlshipIndex, ctrlweaponShapes, ctrlweaponIndex);
+    DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
     DrawEffects();
 
     renderSetMode(RENDER_MODE_2D);
 
     if (ctrlNeedTargetIcon == 1)
-        DrawTargetIcon(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
+        DrawTargetIcon(ctrlshipIndex, ctrlshipShapes);
 
     if (ctrlshipIndex[ownShip].attr & RACING)
     {

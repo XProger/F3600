@@ -64,12 +64,12 @@ void SetView(ShipData* playerShip, short padView)
     }
 }
 
-void SetFire(ShipData* playerShip, short padFire, WeaponData* weaponIndex, int shipNo)
+void SetFire(ShipData* playerShip, short padFire, int shipNo)
 {
     if ((xpad & padFire) && (playerShip->weaponType != WPN_NONE))
     {
         if ((playerShip->attr & SHIELDED) == 0)
-            FireWeapon(playerShip, weaponIndex, shipNo, playerShip->weaponType);
+            FireWeapon(playerShip, shipNo, playerShip->weaponType);
         else
             PlayNote(SFX_MENU_MOVE);
     }

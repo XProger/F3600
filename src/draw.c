@@ -37,11 +37,11 @@ void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
 {
 #ifndef __3DO__ // TODO
     short i;
-    vec4i result;
+    vec3i result;
     long flag;
     TrackSection* section;
     long extent;
-    vec4s centre;
+    vec3s centre;
     Object* obj;
     MATRIX* matrix;
 

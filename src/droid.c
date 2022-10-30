@@ -3,14 +3,14 @@
 /**************************************************************************/
 /****             Rescue droid control update routine                  ****/
 /**************************************************************************/
-void UpdateRescueDroid(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
+void UpdateRescueDroid(ShipData* shipIndex, int shipNo)
 {
     ShipData* playerShip;
     TrackSection* section;
     TrackSection* nextSection;
-    static vec4i target;
-    vec4i targetVector;
-    vec4i distance;
+    static vec3i target;
+    vec3i targetVector;
+    vec3i distance;
     int i;
 
     playerShip = &(shipIndex[shipNo]);
@@ -208,8 +208,8 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
 
 void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes)
 {
-    vec4i target;
-    vec4i distance;
+    vec3i target;
+    vec3i distance;
 
     TrackSection* nextSection;
 

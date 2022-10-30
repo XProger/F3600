@@ -46,5 +46,5 @@ void InitPadSettings(void);
 void UpdatePad(void);
 void SetBrake(ShipData* playerShip, short padLeft, short padRight);
 void SetView(ShipData* playerShip, short padView);
-void SetFire(ShipData* playerShip, short padFire, WeaponData* weaponIndex, int shipNo);
+void SetFire(ShipData* playerShip, short padFire, int shipNo);
 short GetMenuKey(short key);

@@ -92,7 +92,7 @@ TrackSection* FindAllNearestSection(vec4i pos)
 {
     TrackSection* nearSection = NULL;
     TrackSection* trk;
-    vec4i distance;
+    vec3i distance;
     // long long      smallestMag = 32767 * 32767;
     long smallestMag = 0x7fffffff; // pretty big // PCwipeout
     // long long      mag;
@@ -124,16 +124,16 @@ TrackSection* FindAllNearestSection(vec4i pos)
     return (nearSection);
 }
 
-void UpdateShipRemote(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
+void UpdateShipRemote(ShipData* shipIndex, int shipNo)
 {
     ShipData *myShip, *remoteShip;
     Face* facePtr = NULL;
     TrackSection *nextSection, *section;
     int i;
-    vec4i targetVector, bestPath;
-    const vec4i* facePoint;
+    vec3i targetVector, bestPath;
+    const vec3i* facePoint;
     int temp, alpha;
-    vec4i offSetVector;
+    vec3i offSetVector;
     vec3i path1, path2;
     int gap_mag, decide;
     short DPASectDiff;
@@ -270,7 +270,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
         /****** Speed Test, should not make much difference ******/
         /****** to overall lap times of opposition          ******/
-        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+        facePoint = track->vertices + facePtr->vertex[0];
 
         alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
@@ -376,7 +376,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
     remoteShip->roll = ang(remoteShip->roll);
 }
 
-void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
+void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo)
 {
     vec4i pos;
     vec4i pos1;
@@ -466,10 +466,10 @@ void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo, WeaponDa
 
 void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, RescueData* rescueDroid)
 {
-    vec4i pos;
     vec4i pos1;
     vec4i step;
     vec4i targetVector;
+    vec3i pos;
     long temp;
     Prm prm;
 
@@ -520,7 +520,7 @@ void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, Re
     /*
        camera->section = FindAllNearestSection( pos );
     */
-    camera->section = FindNearestSection(camera->section, pos);
+    camera->section = FindNearestSection(camera->section, &pos);
 
     targetVector.x = ship[ownShip].pos.x - pos.x;
     targetVector.y = ship[ownShip].pos.y - pos.y;

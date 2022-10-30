@@ -99,7 +99,7 @@ int SectionSearch(ShipData* playerShip)
     return (smallest_mag);
 }
 
-TrackSection* FindNearestSection(TrackSection* trk, vec4i pos)
+TrackSection* FindNearestSection(TrackSection* trk, const vec3i* pos)
 {
     TrackSection* nearest_section;
     int smallest_mag;
@@ -119,9 +119,9 @@ TrackSection* FindNearestSection(TrackSection* trk, vec4i pos)
     /****** Find vector from ship centre to track section under  ******/
     /******                     consideration                    ******/
 
-    cent2ship.x = pos.x - trk->centre.x;
-    cent2ship.y = pos.y - trk->centre.y;
-    cent2ship.z = pos.z - trk->centre.z;
+    cent2ship.x = pos->x - trk->centre.x;
+    cent2ship.y = pos->y - trk->centre.y;
+    cent2ship.z = pos->z - trk->centre.z;
 
     smallest_mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
@@ -143,9 +143,9 @@ TrackSection* FindNearestSection(TrackSection* trk, vec4i pos)
             juncChecked = 1;
         }
 
-        cent2ship.x = pos.x - trk->centre.x;
-        cent2ship.y = pos.y - trk->centre.y;
-        cent2ship.z = pos.z - trk->centre.z;
+        cent2ship.x = pos->x - trk->centre.x;
+        cent2ship.y = pos->y - trk->centre.y;
+        cent2ship.z = pos->z - trk->centre.z;
         mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
         if (mag < smallest_mag)
@@ -161,9 +161,9 @@ TrackSection* FindNearestSection(TrackSection* trk, vec4i pos)
 
         for (i = 0; i < LOOK_AHEAD; i++)
         {
-            cent2ship.x = pos.x - trk->centre.x;
-            cent2ship.y = pos.y - trk->centre.y;
-            cent2ship.z = pos.z - trk->centre.z;
+            cent2ship.x = pos->x - trk->centre.x;
+            cent2ship.y = pos->y - trk->centre.y;
+            cent2ship.z = pos->z - trk->centre.z;
             mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
             if (mag < smallest_mag)

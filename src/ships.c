@@ -103,11 +103,11 @@ void SetSpread(ShipData* shipIndex, ConfigData* gameData, int position, int i)
 void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 {
     int i;
-    vec4i distance;
+    vec3i distance;
     Object* obj;
     int mag;
-    vec4s toCentre;
-    vec4i v2;
+    vec3s toCentre;
+    vec3i v2;
     long flag;
     MATRIX* matrix;
 

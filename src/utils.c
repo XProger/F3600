@@ -1554,7 +1554,7 @@ const int32 atanOctant[] = {
     0, -16384, -65535, 49152, -32768, 16384, 32768, -49152
 };
 
-int GetAng(const vec4i* vec1, const vec4i* vec2)
+int GetAng(const vec3i* vec1, const vec3i* vec2)
 {
     int angle;
     int product;
@@ -1576,24 +1576,31 @@ int GetAng(const vec4i* vec1, const vec4i* vec2)
     return (angle);
 }
 
-int GetMagnitude(const vec4i* vec1)
+int GetMagnitude(const vec3i* vec1)
 {
     return rsqrt(vec1->x * vec1->x + vec1->y * vec1->y + vec1->z * vec1->z);
 }
 
-int ScalarProduct(const vec4i* vec1, const vec4i* vec2)
+int32 GetMagnitudeApprox(int32 dx, int32 dy)
+{
+    dx = abs(dx);
+    dy = abs(dy);
+    return (dx > dy) ? (dx + (dy >> 1)) : (dy + (dx >> 1));
+}
+
+int ScalarProduct(const vec3i* vec1, const vec3i* vec2)
 {
     return vec1->x * vec2->x + vec1->y * vec2->y + vec1->z * vec2->z;
 }
 
-void CrossProduct(vec4i* result, const vec4i* A, const vec4i* B)
+void CrossProduct(vec3i* result, const vec3i* A, const vec3i* B)
 {
     result->x = (A->y * B->z - A->z * B->y) >> 9;
     result->y = (A->z * B->x - A->x * B->z) >> 9;
     result->z = (A->x * B->y - A->y * B->x) >> 9;
 }
 
-void MinusVector(const vec4i* v1, const vec4i* v2, vec4i* result)
+void MinusVector(const vec3i* v1, const vec3i* v2, vec3i* result)
 {
     result->x = v2->x - v1->x;
     result->y = v2->y - v1->y;
@@ -1693,7 +1700,7 @@ void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret)
     ret->m[2][2] = (((long)m0->m[2][0] * (long)m1->m[0][2]) + ((long)m0->m[2][1] * (long)m1->m[1][2]) + ((long)m0->m[2][2] * (long)m1->m[2][2])) >> SHIFT;
 }
 
-void ApplyMatrix(const MATRIX* m, const vec4s* v0, vec4i* v1)
+void ApplyMatrix(const MATRIX* m, const vec3s* v0, vec3i* v1)
 {
     long xt, yt, zt;
     long stage1, stage2, stage3;
@@ -1718,7 +1725,7 @@ void ApplyMatrix(const MATRIX* m, const vec4s* v0, vec4i* v1)
     v1->z = stage1 + stage2 + stage3 + m->t[2];
 }
 
-void RotTrans(const MATRIX* m, const vec4s* v0, vec4i* v1, long* flag)
+void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, long* flag)
 {
     long x, y, z, f = 0;
 
@@ -1778,7 +1785,7 @@ void RotTrans(const MATRIX* m, const vec4s* v0, vec4i* v1, long* flag)
     *flag = f;
 }
 
-void DLSRotTransPers(vec2s* sxy, const vec4i* r0, long* flag)
+void DLSRotTransPers(vec2s* sxy, const vec3i* r0, long* flag)
 {
     long x, y, z, f = 0;
 
@@ -1863,9 +1870,9 @@ void DLSRotTransPers(vec2s* sxy, const vec4i* r0, long* flag)
     *flag = f;
 }
 
-long RotTransPers(const MATRIX* m, const vec4s* v0, vec2s* sxy, long* flag)
+long RotTransPers(const MATRIX* m, const vec3s* v0, vec2s* sxy, long* flag)
 {
-    vec4i r0;
+    vec3i r0;
 
     ApplyMatrix(m, v0, &r0);
     DLSRotTransPers(sxy, &r0, flag);

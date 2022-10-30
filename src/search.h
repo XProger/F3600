@@ -1,2 +1,2 @@
 int SectionSearch(ShipData*);
-TrackSection* FindNearestSection(TrackSection*, vec4i);
+TrackSection* FindNearestSection(TrackSection* trk, const vec3i* pos);

@@ -33,17 +33,17 @@ void ShipTrkReaction(ShipData* playerShip)
     int alpha, noseAlpha, tmp;
     int resistance;
     Face* facePtr;
-    vec4i force;
-    vec4i velDOF;
+    vec3i force;
+    vec3i velDOF;
     int velMag;
-    vec4i nosePos;
+    vec3i nosePos;
     int32 brake;
-    const vec4i* facePoint;
+    const vec3i* facePoint;
     TrackSection* nextSection;
-    vec4i bestPath, distance;
-    vec4i repulseVector;
-    vec4i planePoint;
-    vec4i vec0, vec1, vec2, vec3; /* vectors between plane coords and intersection point */
+    vec3i bestPath, distance;
+    vec3i repulseVector;
+    vec3i planePoint;
+    vec3i vec0, vec1, vec2, vec3; /* vectors between plane coords and intersection point */
     int angle;
 
     /***** Calculate thrust vector along principle axis of ship *****/
@@ -68,7 +68,7 @@ void ShipTrkReaction(ShipData* playerShip)
             facePtr++;
         }
 
-        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+        facePoint = track->vertices + facePtr->vertex[0];
 
         alpha = PlaneLineCollision(facePoint, &playerShip->pos, &facePtr->normal);
 
@@ -141,7 +141,7 @@ void ShipTrkReaction(ShipData* playerShip)
             facePtr++;
         }
 
-        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+        facePoint = track->vertices + facePtr->vertex[0];
 
         alpha = PlaneLineCollision(facePoint, &playerShip->pos, &facePtr->normal);
         noseAlpha = alpha;
@@ -341,22 +341,21 @@ void ShipTrkReaction(ShipData* playerShip)
 /**                        the camera                    **/
 /**********************************************************/
 
-void GetWorldPoint(vec4i* output, Object* object, Object* objectCollide, int pointNo)
+void GetWorldPoint(vec3i* output, Object* object, Object* objectCollide, int pointNo)
 {
     long flag;
-    const vec4s* vertex;
     const MATRIX* matrix;
+    const vec3s* vertex = (vec3s*)(objectCollide->vertices + pointNo);
 
-    vertex = objectCollide->vertices;
     matrix = GetSkeletonMatrix(object->skeleton);
 
-    RotTrans(matrix, vertex + pointNo, output, &flag);
+    RotTrans(matrix, vertex, output, &flag);
 }
 
-void GetTargetPos(vec4i* result, const vec4i* pos, const vec3i* cent1, const vec3i* cent2)
+void GetTargetPos(vec3i* result, const vec3i* pos, const vec3i* cent1, const vec3i* cent2)
 {
     int a_mag, b_mag, c_mag;
-    vec4i a, b, c;
+    vec3i a, b, c;
     int a_sq, b_sq, c_sq;
     int cos_alpha;
     int angle;
@@ -516,7 +515,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     return (noWeaponGrids);
 }
 
-void ApplyMagnet(vec4i* acc, const vec3s* normal, int32 alpha)
+void ApplyMagnet(vec3i* acc, const vec3s* normal, int32 alpha)
 {
     if (alpha < 50)
     {

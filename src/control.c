@@ -9,7 +9,7 @@ extern int gPadStickY;
 /**********************************************************************/
 /***              Call update routine for each ship                 ***/
 /**********************************************************************/
-void UpdateShips(ShipData* shipIndex, WeaponData* weaponIndex)
+void UpdateShips(ShipData* shipIndex)
 {
     int i;
 
@@ -20,7 +20,7 @@ void UpdateShips(ShipData* shipIndex, WeaponData* weaponIndex)
         if (!((i == ownShip) || (raceType != TIME_TRIAL)))
             continue;
 
-        (shipIndex[i].update)(shipIndex, i, weaponIndex);
+        (shipIndex[i].update)(shipIndex, i);
 
     #ifdef USE_SHIP_AMBIENT
         if (shipIndex[i].attr & VISIBLE)
@@ -99,7 +99,7 @@ void GeneralStartProcs(ShipData* playerShip)
 /****             Start control routine for normal pad                 ****/
 /**************************************************************************/
 
-void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
+void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo)
 {
     ShipData* playerShip;
     static int startPos;
@@ -141,7 +141,7 @@ void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo, WeaponData* weap
 /**************************************************************************/
 /****             Race control update routine for normal pad           ****/
 /**************************************************************************/
-void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
+void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
 {
     ShipData* playerShip;
     int headingInc;
@@ -269,7 +269,7 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo, WeaponData* weaponInd
 
     SetBrake(playerShip, pCon.lBrake, pCon.rBrake);
     SetView(playerShip, pCon.view);
-    SetFire(playerShip, pCon.fire, weaponIndex, shipNo);
+    SetFire(playerShip, pCon.fire, shipNo);
     ShipTrkReaction(playerShip);
 }
 
@@ -279,7 +279,7 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo, WeaponData* weaponInd
 /***************************************************************/
 /***************************************************************/
 
-void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
+void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo)
 {
     static startPos;
 
@@ -302,9 +302,9 @@ void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo, WeaponData* weaponIn
     }
 }
 
-void HoldLeft(vec4i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
+void HoldLeft(vec3i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
-    vec4i faceVert1, faceVert2;
+    vec3i faceVert1, faceVert2;
 
     faceVert1.x = track->vertices[(facePtr->vertex[1])].x;
     faceVert1.y = track->vertices[(facePtr->vertex[1])].y;
@@ -319,9 +319,9 @@ void HoldLeft(vec4i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
     result->z = (faceVert1.z - faceVert2.z) >> 1;
 }
 
-void HoldRight(vec4i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
+void HoldRight(vec3i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
-    vec4i faceVert1, faceVert2;
+    vec3i faceVert1, faceVert2;
 
     faceVert1.x = track->vertices[(facePtr->vertex[0])].x;
     faceVert1.y = track->vertices[(facePtr->vertex[0])].y;
@@ -336,14 +336,14 @@ void HoldRight(vec4i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
     result->z = (faceVert1.z - faceVert2.z) >> 1;
 }
 
-void HoldCentre(vec4i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
+void HoldCentre(vec3i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     result->x = 0;
     result->y = 0;
     result->z = 0;
 }
 
-void BlockShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
+void BlockShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     if (shipIndex[ownShip].attr & LSIDE)
         HoldLeft(blockVector, shipIndex, facePtr, shipNo);
@@ -351,7 +351,7 @@ void BlockShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipN
         HoldRight(blockVector, shipIndex, facePtr, shipNo);
 }
 
-void AvoidShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
+void AvoidShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     if (shipIndex[ownShip].attr & LSIDE)
         HoldRight(blockVector, shipIndex, facePtr, shipNo);
@@ -359,7 +359,7 @@ void AvoidShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipN
         HoldLeft(blockVector, shipIndex, facePtr, shipNo);
 }
 
-void AvoidOtherShips(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
+void AvoidOtherShips(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     int i;
     short DPASectDiff; /** Change to run from sect not DPA sect **/
@@ -391,7 +391,7 @@ void AvoidOtherShips(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int
     }
 }
 
-void ZigZagShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
+void ZigZagShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     if ((shipIndex->updateCount % 50) == 0)
     {
@@ -402,16 +402,16 @@ void ZigZagShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int ship
     }
 }
 
-void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
+void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
 {
     ShipData *myShip, *remoteShip;
     Face* facePtr = NULL;
     TrackSection *nextSection, *section;
     int i;
-    vec4i targetVector, bestPath;
-    const vec4i* facePoint;
+    vec3i targetVector, bestPath;
+    const vec3i* facePoint;
     int temp, alpha;
-    vec4i offSetVector;
+    vec3i offSetVector;
     vec3i path1, path2;
     int gap_mag, decide;
     short DPASectDiff;
@@ -517,7 +517,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                 SetPitch(SFX_SP_MINES, SND_DEF_PITCH);
 
                                 remoteShip->weaponType = WPN_MINE;
-                                FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
+                                FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                             }
                         }
                         else if ((decide >= 52) && (decide < 64)) /*** Ship will raise its shield ***/
@@ -526,7 +526,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                             if ((remoteShip->attr & SHIELDED) == 0)
                             {
                                 remoteShip->weaponType = WPN_SHIELD;
-                                FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
+                                FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                             }
                         }
                     }
@@ -588,7 +588,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
                                     SetPitch(SFX_SP_ROCKET, SND_DEF_PITCH);
 
                                     remoteShip->weaponType = WPN_ROCKET;
-                                    FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
+                                    FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                                 }
                             }
                             else if ((decide >= 54) && (decide < 60))
@@ -602,7 +602,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
                                     remoteShip->weaponType = WPN_MISSILE;
                                     remoteShip->targetShip = ownShip;
-                                    FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
+                                    FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                                 }
                             }
                             else if ((decide >= 60) && (decide < 64))
@@ -616,7 +616,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
                                     remoteShip->weaponType = WPN_ELEC_BOLT;
                                     remoteShip->targetShip = ownShip;
-                                    FireWeapon(remoteShip, weaponIndex, shipNo, remoteShip->weaponType);
+                                    FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                                 }
                             }
                         }
@@ -863,7 +863,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo, WeaponData* weaponIndex)
 
         /****** Speed Test, should not make much difference ******/
         /****** to overall lap times of opposition          ******/
-        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+        facePoint = track->vertices + facePtr->vertex[0];
         alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
         ApplyMagnet(&remoteShip->acc, &facePtr->normal, alpha);

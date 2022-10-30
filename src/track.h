@@ -107,20 +107,13 @@ typedef struct TrackSection
 } TrackSection;
 #endif
 
-typedef struct TrackVertex
-{
-    long x;
-    long y;
-    long z;
-} TrackVertex;
-
 typedef struct TrackData
 {
     long vertexCount;
     long faceCount;
     long sectionCount;
 
-    TrackVertex* vertices;
+    vec3i* vertices;
     Face* faces;
     TrackSection* sections;
     int16* viewList;

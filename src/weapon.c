@@ -2,174 +2,49 @@
 
 //#define OLD_SHIELD
 
+WeaponData gWeapons[MAX_WEAPONS];
+WeaponData* gWeaponsFree;
+WeaponData* gWeaponsActive;
+
 extern long ctrlNeedTargetIcon;
 extern int ctrlnearShip;
 extern TrackCamera ctrlcamera;
 
 Texture* targetTexture;
 
-void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex)
+void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes)
 {
-    int i;
+    WeaponData* weapon = gWeaponsActive;
 
-    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
+    while (weapon)
     {
-        if (weaponIndex[i].count > 0)
-        {
-            (weaponIndex[i].updateWeapon)(shipIndex, weaponShapes, &(weaponIndex[i]), weaponIndex);
-        }
+        WeaponData* next = weapon->next;
+        (weapon->updateWeapon)(shipIndex, weaponShapes, weapon);
+        weapon = next;
     }
 }
 
-void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weaponIndex)
+void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes)
 {
-#ifndef __3DO__ // TODO
-    int i;
-    WeaponData* weapon;
     Object* obj;
+    WeaponData* weapon = gWeaponsActive;
 
-    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
+    while (weapon)
     {
-        if (weaponIndex[i].count > 0)
+        obj = weaponShapes[weapon->currentWeapon].shapePtr;
+
+        if (weapon->type == WPN_SHIELD)
         {
-            weapon = weaponIndex + i;
-            obj = weaponShapes[weapon->currentWeapon].shapePtr;
-
-            if (weapon->type == WPN_SHIELD)
-            {
-                SetSkeletonPosition(obj->skeleton, weapon->pos.x, weapon->pos.y, weapon->pos.z);
-                SetSkeletonDirectionHPR(obj->skeleton, weapon->hdg, weapon->pitch, shipIndex[weapon->fireShip].roll);
-                renderShield(obj, weapon->count);
-            }
-            else
-            {
-                DrawObject(weaponShapes[weapon->currentWeapon].shapePtr, weapon->pos.x, weapon->pos.y, weapon->pos.z, weapon->hdg, weapon->pitch, 0);
-            }
+            SetSkeletonPosition(obj->skeleton, weapon->pos.x, weapon->pos.y, weapon->pos.z);
+            SetSkeletonDirectionHPR(obj->skeleton, weapon->hdg, weapon->pitch, shipIndex[weapon->fireShip].roll);
+            renderShield(obj, weapon->count);
         }
-    }
-#endif
-}
-
-void FireWeapon(ShipData* playerShip, WeaponData* weaponIndex, int shipNo, char decision)
-{
-    int i;
-    int count = 0;
-
-    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
-    {
-        if (weaponIndex[i].count == 0)
+        else
         {
-            switch (decision)
-            {
-                case WPN_ROCKET:
-                    weaponIndex[i].updateWeapon = InitRocket;
-                    weaponIndex[i].count = WEAPON_DELAY;
-                    weaponIndex[i].fireShip = shipNo;
-                    if (shipNo == ownShip)
-                    {
-                        PlayNote(SFX_MISS_LAUNCH);
-                        SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH);
-                    }
-                    weaponIndex[i].type = WPN_ROCKET;
-                    playerShip->weaponType = WPN_NONE;
-                    playerShip->haveFired = WPN_ROCKET;
-                    return;
-
-                case WPN_MISSILE:
-                    weaponIndex[i].updateWeapon = InitMissile;
-                    weaponIndex[i].count = WEAPON_DELAY;
-                    weaponIndex[i].fireShip = shipNo;
-                    if (shipNo == ownShip)
-                    {
-                        PlayNote(SFX_MISS_LAUNCH);
-                        SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH);
-                    }
-                    weaponIndex[i].type = WPN_MISSILE;
-                    playerShip->weaponType = WPN_NONE;
-                    playerShip->haveFired = WPN_MISSILE;
-                    return;
-
-                case WPN_MINE:
-                    weaponIndex[i].updateWeapon = InitMine;
-                    count += MINE_RELEASE_RATE;
-                    weaponIndex[i].fireShip = shipNo;
-                    if (weaponIndex[i].fireShip != ownShip)
-                    {
-                        weaponIndex[i].count = (count + WEAPON_DELAY);
-                    }
-                    else
-                    {
-                        weaponIndex[i].count = count;
-                    }
-                    weaponIndex[i].type = WPN_MINE;
-                    if (count >= (5 * MINE_RELEASE_RATE))
-                    {
-                        playerShip->weaponType = WPN_NONE;
-                        playerShip->haveFired = WPN_MINE;
-                        return;
-                    }
-                    break;
-
-                case WPN_SPECIAL:
-                    weaponIndex[i].updateWeapon = InitSpecial;
-                    weaponIndex[i].count = 1;
-                    playerShip->weaponType = WPN_NONE;
-                    playerShip->haveFired = WPN_SPECIAL;
-                    weaponIndex[i].fireShip = shipNo;
-                    return;
-
-                case WPN_ELEC_BOLT:
-                    weaponIndex[i].updateWeapon = InitElecBolt;
-                    weaponIndex[i].count = WEAPON_DELAY;
-                    weaponIndex[i].fireShip = shipNo;
-                    weaponIndex[i].type = WPN_ELEC_BOLT;
-                    playerShip->haveFired = WPN_ELEC_BOLT;
-                    playerShip->weaponType = WPN_NONE;
-                    if (shipNo == ownShip)
-                    {
-                        PlayNote(SFX_ELECTROBOLT);
-                    }
-                    return;
-
-                case WPN_REV_CON:
-                    weaponIndex[i].updateWeapon = InitRevCon;
-                    weaponIndex[i].count = WEAPON_DELAY;
-                    weaponIndex[i].fireShip = shipNo;
-                    weaponIndex[i].type = WPN_REV_CON;
-                    playerShip->haveFired = WPN_REV_CON;
-                    playerShip->weaponType = WPN_NONE;
-                    if (shipNo == ownShip)
-                    {
-                        PlayNote(SFX_ELECTROBOLT);
-                    }
-                    return;
-
-                case WPN_SHIELD:
-                    weaponIndex[i].updateWeapon = InitShield;
-                    weaponIndex[i].count = SHIELD_DURATION;
-                    weaponIndex[i].fireShip = shipNo;
-                    weaponIndex[i].type = WPN_SHIELD;
-                    playerShip->attr |= SHIELDED;
-                    playerShip->haveFired = WPN_SHIELD;
-                    playerShip->weaponType = WPN_NONE;
-                    return;
-
-                case WPN_TURBO:
-                    playerShip->weaponType = WPN_NONE;
-
-                    playerShip->vel.x += playerShip->unitVecNose.x * 48 / 5;
-                    playerShip->vel.y += playerShip->unitVecNose.y * 48 / 5;
-                    playerShip->vel.z += playerShip->unitVecNose.z * 48 / 5;
-
-                    if (shipNo == ownShip)
-                    {
-                        PlayNote(SFX_MISS_LAUNCH);
-                        SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH >> 2);
-                        gTargetFOV = CAMERA_FOV_EXTRA;
-                    }
-                    return;
-            }
+            DrawObject(weaponShapes[weapon->currentWeapon].shapePtr, weapon->pos.x, weapon->pos.y, weapon->pos.z, weapon->hdg, weapon->pitch, 0);
         }
+
+        weapon = weapon->next;
     }
 }
 
@@ -271,15 +146,15 @@ void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
         playerShip->targetShip = 0xFF;
 }
 
-void DrawTargetIcon(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
+void DrawTargetIcon(ShipData* shipIndex, Object** shipShapes)
 {
-    vec4s* vertex;
+    vec3s* vertex;
     vec2s sxy;
     long flag;
     const MATRIX* matrix;
 
     shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton->update = 1;
-    vertex = shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->vertices;
+    vertex = (vec3s*)shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->vertices;
     matrix = GetSkeletonMatrix(shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton);
 
     RotTransPers(matrix, vertex, &sxy, &flag);
@@ -322,9 +197,9 @@ void InitWeapons(WeaponShape* weaponShapes)
     targetTexture = LoadTexture("wipeout/textures/target2.tim");
 }
 
-void ResetWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weaponIndex)
+void ResetWeapons(WeaponShape* weaponShapes, Skeleton* camPos)
 {
-    int i;
+    int32 i;
     Object* obj;
 
     for (i = 0; i < WEAPON_SHAPE_NAX; i++)
@@ -337,339 +212,118 @@ void ResetWeapons(WeaponShape* weaponShapes, Skeleton* camPos, WeaponData* weapo
         }
     }
 
-    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
+    memset(gWeapons, 0, sizeof(gWeapons));
+
+    for (i = 0; i < MAX_WEAPONS - 1; i++)
     {
-        weaponIndex[i].count = 0;
-        weaponIndex[i].type = WPN_NONE;
+        gWeapons[i].next = gWeapons + i + 1;
     }
+    gWeapons[MAX_WEAPONS - 1].next = NULL;
+
+    gWeaponsFree = gWeapons;
+    gWeaponsActive = NULL;
 }
 
-void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+WeaponData* CreateWeapon()
 {
-    vec4i distance;
-    Face* facePtr;
-    int i, mag;
-    const vec4i* facePoint;
-    int alpha;
-
-    weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, weapon->pos);
-
-    facePtr = track->faces + weapon->nearTrkSect->faceStart;
-
-    while ((facePtr->flags & TRACK_BASE) == 0)
+    WeaponData* weapon = gWeaponsFree;
+    if (weapon)
     {
-        facePtr++;
-    }
+        gWeaponsFree = weapon->next;
 
-    weapon->vel.x += weapon->acc.x;
-    weapon->vel.y += weapon->acc.y;
-    weapon->vel.z += weapon->acc.z;
-
-    weapon->vel.x -= weapon->vel.x >> 5;
-    weapon->vel.y -= weapon->vel.y >> 5;
-    weapon->vel.z -= weapon->vel.z >> 5;
-
-    weapon->pos.x += weapon->vel.x;
-    weapon->pos.y += weapon->vel.y;
-    weapon->pos.z += weapon->vel.z;
-
-    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
-
-    alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
-
-    if (alpha < 2000)
-    {
-        weapon->pos.x += (((200 - alpha) * (int)facePtr->normal.x) >> 13);
-        weapon->pos.y += (((200 - alpha) * (int)facePtr->normal.y) >> 13);
-        weapon->pos.z += (((200 - alpha) * (int)facePtr->normal.z) >> 13);
-    }
-
-    weapon->count--;
-
-    /***********************************************************/
-    /****   Perform collision checks against other ships     ***/
-    /***********************************************************/
-
-    for (i = 0; i < NO_OF_SHIPS; i++)
-    {
-        if (i == weapon->fireShip)
-            continue;
-
-        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 2;
-        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 2;
-        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 2;
-
-        mag = GetMagnitude(&distance);
-
-        if (mag < 100)
+        weapon->next = gWeaponsActive;
+        weapon->prev = NULL;
+        if (gWeaponsActive)
         {
-            if ((shipIndex[i].attr & SHIELDED) == 0)
-            {
-
-                if (i != ownShip)
-                {
-                    shipIndex[i].speed = shipIndex[i].speed >> 5;
-                    shipIndex[i].vroll += randy() % 250;
-                    shipIndex[i].ahdg = (randy() - 16384) >> 1;
-                }
-                else
-                {
-                    shipIndex[i].vel.x -= (shipIndex[i].vel.x * 3) >> 2;
-                    shipIndex[i].vel.y -= (shipIndex[i].vel.y * 3) >> 2;
-                    shipIndex[i].vel.z -= (shipIndex[i].vel.z * 3) >> 2;
-                    shipIndex[i].vroll += randy() % 250;
-                    shipIndex[i].ahdg = (randy() - 16384) >> 1;
-                    SetShake(20);
-                }
-            }
-            weapon->count = SHIP_EXPLODE;
-            weapon->targetShip = i;
-
-            if (i != ownShip)
-            {
-                PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
-            }
-            else
-            {
-                PlayNote(SFX_EXPLOSION_1);
-                SetVolume(SFX_EXPLOSION_1, SND_MAX_VOLUME, SND_MAX_VOLUME);
-            }
-            return;
+            gWeaponsActive->prev = weapon;
         }
+        gWeaponsActive = weapon;
     }
-    /***********************************************************/
-    /****   Perform collision checks against track           ***/
-    /***********************************************************/
+    return weapon;
+}
 
-    facePtr = track->faces + weapon->nearTrkSect->faceStart;
-
-    if ((weapon->nearTrkSect->flags & Jump) == 0)
+void RemoveWeapon(WeaponData* weapon)
+{
+    if (weapon->next)
     {
-        for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
-        {
-            facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+        weapon->next->prev = weapon->prev;
+    }
 
-            mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
-            if (mag <= 0)
+    if (weapon->prev)
+    {
+        weapon->prev->next = weapon->next;
+    }
+    else
+    {
+        gWeaponsActive = weapon->next;
+    }
+
+    weapon->next = gWeaponsFree;
+    gWeaponsFree = weapon;
+}
+
+
+void GetFireVector(vec3i* result, vec3i target, Face* facePtr, vec3i shipPos)
+{
+    int alpha, origAlpha;
+    const vec3i* facePoint;
+
+    facePoint = (vec3i*)(track->vertices + facePtr->vertex[0]);
+
+    target.x = shipPos.x + (target.x >> 6);
+    target.y = shipPos.y + (target.y >> 6);
+    target.z = shipPos.z + (target.z >> 6);
+
+    alpha = PlaneLineCollision(facePoint, &target, &facePtr->normal);
+    origAlpha = PlaneLineCollision(facePoint, &shipPos, &facePtr->normal);
+
+    alpha = (alpha * 31) >> 5;
+
+    alpha -= origAlpha;
+
+    result->x = target.x - ((alpha * facePtr->normal.x) >> 12);
+    result->y = target.y - ((alpha * facePtr->normal.y) >> 12);
+    result->z = target.z - ((alpha * facePtr->normal.z) >> 12);
+
+    result->x -= shipPos.x;
+    result->y -= shipPos.y;
+    result->z -= shipPos.z;
+}
+
+
+void Weapon2Mine(WeaponData* weapon)
+{
+    WeaponData* mine = gWeaponsActive;
+
+    while (mine)
+    {
+        if (mine->type == WPN_MINE)
+        {
+            if (GetMagnitudeApprox((weapon->pos.x - mine->pos.x) >> 2, (weapon->pos.z - mine->pos.z) >> 2) < 30)
             {
-                weapon->count = TRACK_EXPLODE;
                 PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
-                return;
+                RemoveWeapon(weapon);
+                RemoveWeapon(mine);
+                break;
             }
-            facePtr++;
         }
+        mine = mine->next;
     }
-
-    Weapon2Mine(weapon, weaponIndex, weaponShapes);
 }
 
-void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+
+void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
 {
-    vec4i distance;
-    vec4i targetVector;
-    Face* facePtr;
-    int i, mag, temp, vhdg, vpitch;
-    const vec4i* facePoint;
-    int alpha;
-    int32 sx, sy;
-    int32 cx, cy;
-
-    if (weapon->targetShip > -1)
-    {
-        targetVector.x = (shipIndex[weapon->targetShip].pos.x - weapon->pos.x) >> 3;
-        targetVector.y = (shipIndex[weapon->targetShip].pos.y - weapon->pos.y) >> 3;
-        targetVector.z = (shipIndex[weapon->targetShip].pos.z - weapon->pos.z) >> 3;
-        temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
-
-        vhdg = ((-ratan2(targetVector.x, targetVector.z)) - weapon->hdg);
-        vpitch = ((-ratan2(targetVector.y, temp)) - weapon->pitch);
-    }
-    else
-    {
-        vhdg = 0;
-        vpitch = 0;
-    }
-
-    weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, weapon->pos);
-
-    if (vhdg > 2048)
-        vhdg = vhdg - 4096;
-    else if (vhdg < -2048)
-        vhdg = vhdg + 4096;
-    if (vpitch > 2048)
-        vpitch = vpitch - 4096;
-    else if (vpitch < -2048)
-        vpitch = vpitch + 4096;
-
-    weapon->hdg += vhdg >> 2;
-    weapon->pitch += vpitch >> 2;
-
-    weapon->hdg = ang(weapon->hdg);
-    weapon->pitch = ang(weapon->pitch);
-
-    rsincos(weapon->pitch, sx, cx);
-    rsincos(weapon->hdg, sy, cy);
-
-    weapon->acc.x = (-sy * cx) >> 16;
-    weapon->acc.y = -sx >> 4;
-    weapon->acc.z = (cy * cx) >> 16;
-
-    weapon->vel.x += weapon->acc.x;
-    weapon->vel.y += weapon->acc.y;
-    weapon->vel.z += weapon->acc.z;
-
-    weapon->vel.x -= weapon->vel.x >> 2;
-    weapon->vel.y -= weapon->vel.y >> 2;
-    weapon->vel.z -= weapon->vel.z >> 2;
-
-    weapon->pos.x += weapon->vel.x;
-    weapon->pos.y += weapon->vel.y;
-    weapon->pos.z += weapon->vel.z;
-
-    facePtr = track->faces + weapon->nearTrkSect->faceStart;
-
-    while ((facePtr->flags & TRACK_BASE) == 0)
-    {
-        facePtr++;
-    }
-
-    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
-
-    alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
-
-    if (alpha < 2000)
-    {
-        weapon->pos.x += (((200 - alpha) * (int)facePtr->normal.x) >> 13);
-        weapon->pos.y += (((200 - alpha) * (int)facePtr->normal.y) >> 13);
-        weapon->pos.z += (((200 - alpha) * (int)facePtr->normal.z) >> 13);
-    }
-
-    weapon->count--;
-
-    /***********************************************************/
-    /****   Perform collision checks against other ships     ***/
-    /***********************************************************/
-
-    for (i = 0; i < NO_OF_SHIPS; i++)
-    {
-        if (i == weapon->fireShip)
-            continue;
-
-        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 3;
-        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 3;
-        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 3;
-
-        mag = GetMagnitude(&distance);
-
-        if (mag < 100)
-        {
-            if ((shipIndex[i].attr & SHIELDED) == 0)
-            {
-                if (i != ownShip)
-                {
-                    shipIndex[i].speed = shipIndex[i].speed >> 5;
-                    shipIndex[i].vroll += 5000;
-                    shipIndex[i].ahdg = (randy() - 16384) >> 1;
-                }
-                else
-                {
-                    shipIndex[i].vel.x -= (shipIndex[i].vel.x * 3) >> 2;
-                    shipIndex[i].vel.y -= (shipIndex[i].vel.y * 3) >> 2;
-                    shipIndex[i].vel.z -= (shipIndex[i].vel.z * 3) >> 2;
-                    shipIndex[i].vroll += randy() % 250;
-                    shipIndex[i].ahdg = (randy() - 16384) >> 1;
-                    SetShake(20);
-                }
-            }
-            weapon->count = SHIP_EXPLODE;
-            weapon->targetShip = i;
-
-            PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
-            return;
-        }
-    }
-    /***********************************************************/
-    /****   Perform collision checks against track           ***/
-    /***********************************************************/
-
-    facePtr = track->faces + weapon->nearTrkSect->faceStart;
-
-    for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
-    {
-        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
-        mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
-        if (mag <= 0)
-        {
-            weapon->count = TRACK_EXPLODE;
-            PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
-            return;
-        }
-        facePtr++;
-    }
-
-    Weapon2Mine(weapon, weaponIndex, weaponShapes);
-}
-
-void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
-{
-    Face* facePtr;
-
-    if (weapon->fireShip != ownShip)
-    {
-        if (weapon->count > 1)
-        {
-            weapon->count--;
-            return;
-        }
-        else
-        {
-            weapon->count = MISSILE_DURATION;
-        }
-    }
-    else
-    {
-        weapon->count = MISSILE_DURATION;
-    }
-    weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-
-    weapon->currentWeapon = WEAPON_SHAPE_MISSILE;
-    weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
-
-    facePtr = track->faces + shipIndex[weapon->fireShip].nearTrkSect->faceStart;
-
-    while ((facePtr->flags & TRACK_BASE) == 0)
-    {
-        facePtr++;
-    }
-
-    GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
-
-    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> VELOCITY_SHIFT);
-    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> VELOCITY_SHIFT);
-    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> VELOCITY_SHIFT);
-
-    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
-    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
-    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
-
-    weapon->hdg = shipIndex[weapon->fireShip].hdg;
-    weapon->pitch = shipIndex[weapon->fireShip].pitch;
-
-    weapon->updateWeapon = UpdateMissile;
-}
-
-void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
-{
-    vec4i distance;
+    vec3i distance;
     int ossilation;
     int i, mag;
     Prm poly;
     short r;
 
     weapon->count--;
-
-    if (weapon->count == NON_ACTIVE)
+    if (weapon->count == 0)
     {
+        RemoveWeapon(weapon);
         return;
     }
 
@@ -717,8 +371,6 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
         {
             if ((shipIndex[i].attr & SHIELDED) == 0)
             {
-                weapon->count = SHIP_EXPLODE;
-                weapon->targetShip = i;
                 if (i != ownShip)
                 {
                     shipIndex[i].speed = shipIndex[i].speed >> 3;
@@ -731,14 +383,376 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
                     SetShake(20);
                 }
             }
-            weapon->count = SHIP_EXPLODE;
+
             PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
+
+            AddExplosion(weapon, i);
+            RemoveWeapon(weapon);
             return;
         }
     }
 }
 
-void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+void InitMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
+{
+    if (weapon->count == 1)
+    {
+        weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
+        weapon->currentWeapon = WEAPON_SHAPE_MINE;
+        weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+        weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+        weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
+        weapon->hdg = 0;
+        weapon->updateWeapon = UpdateMine;
+        weapon->count = MINE_DURATION;
+
+        if (weapon->fireShip == ownShip)
+        {
+            PlayNote(SFX_MINE_DROP);
+        }
+    }
+    else
+    {
+        weapon->count--;
+    }
+}
+
+
+void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
+{
+    vec3i distance;
+    vec3i targetVector;
+    Face* facePtr;
+    int i, mag, temp, vhdg, vpitch;
+    const vec3i* facePoint;
+    int alpha;
+    int32 sx, sy;
+    int32 cx, cy;
+
+    if (weapon->targetShip > -1)
+    {
+        targetVector.x = (shipIndex[weapon->targetShip].pos.x - weapon->pos.x) >> 3;
+        targetVector.y = (shipIndex[weapon->targetShip].pos.y - weapon->pos.y) >> 3;
+        targetVector.z = (shipIndex[weapon->targetShip].pos.z - weapon->pos.z) >> 3;
+        temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+
+        vhdg = ((-ratan2(targetVector.x, targetVector.z)) - weapon->hdg);
+        vpitch = ((-ratan2(targetVector.y, temp)) - weapon->pitch);
+    }
+    else
+    {
+        vhdg = 0;
+        vpitch = 0;
+    }
+
+    weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, &weapon->pos);
+
+    if (vhdg > 2048)
+        vhdg = vhdg - 4096;
+    else if (vhdg < -2048)
+        vhdg = vhdg + 4096;
+    if (vpitch > 2048)
+        vpitch = vpitch - 4096;
+    else if (vpitch < -2048)
+        vpitch = vpitch + 4096;
+
+    weapon->hdg += vhdg >> 2;
+    weapon->pitch += vpitch >> 2;
+
+    weapon->hdg = ang(weapon->hdg);
+    weapon->pitch = ang(weapon->pitch);
+
+    rsincos(weapon->pitch, sx, cx);
+    rsincos(weapon->hdg, sy, cy);
+
+    weapon->acc.x = (-sy * cx) >> 16;
+    weapon->acc.y = -sx >> 4;
+    weapon->acc.z = (cy * cx) >> 16;
+
+    weapon->vel.x += weapon->acc.x;
+    weapon->vel.y += weapon->acc.y;
+    weapon->vel.z += weapon->acc.z;
+
+    weapon->vel.x -= weapon->vel.x >> 2;
+    weapon->vel.y -= weapon->vel.y >> 2;
+    weapon->vel.z -= weapon->vel.z >> 2;
+
+    weapon->pos.x += weapon->vel.x;
+    weapon->pos.y += weapon->vel.y;
+    weapon->pos.z += weapon->vel.z;
+
+    facePtr = track->faces + weapon->nearTrkSect->faceStart;
+
+    while ((facePtr->flags & TRACK_BASE) == 0)
+    {
+        facePtr++;
+    }
+
+    facePoint = track->vertices + facePtr->vertex[0];
+
+    alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
+
+    if (alpha < 2000)
+    {
+        weapon->pos.x += (((200 - alpha) * (int)facePtr->normal.x) >> 13);
+        weapon->pos.y += (((200 - alpha) * (int)facePtr->normal.y) >> 13);
+        weapon->pos.z += (((200 - alpha) * (int)facePtr->normal.z) >> 13);
+    }
+
+    weapon->count--;
+    if (weapon->count == 0)
+    {
+        RemoveWeapon(weapon);
+        return;
+    }
+
+    AddTrail(weapon);
+
+    /***********************************************************/
+    /****   Perform collision checks against other ships     ***/
+    /***********************************************************/
+
+    for (i = 0; i < NO_OF_SHIPS; i++)
+    {
+        if (i == weapon->fireShip)
+            continue;
+
+        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 3;
+        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 3;
+        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 3;
+
+        mag = GetMagnitude(&distance);
+
+        if (mag < 100)
+        {
+            if ((shipIndex[i].attr & SHIELDED) == 0)
+            {
+                if (i != ownShip)
+                {
+                    shipIndex[i].speed = shipIndex[i].speed >> 5;
+                    shipIndex[i].vroll += 5000;
+                    shipIndex[i].ahdg = (randy() - 16384) >> 1;
+                }
+                else
+                {
+                    shipIndex[i].vel.x -= (shipIndex[i].vel.x * 3) >> 2;
+                    shipIndex[i].vel.y -= (shipIndex[i].vel.y * 3) >> 2;
+                    shipIndex[i].vel.z -= (shipIndex[i].vel.z * 3) >> 2;
+                    shipIndex[i].vroll += randy() % 250;
+                    shipIndex[i].ahdg = (randy() - 16384) >> 1;
+                    SetShake(20);
+                }
+            }
+
+            PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
+
+            AddExplosion(weapon, i);
+            RemoveWeapon(weapon);
+            return;
+        }
+    }
+    /***********************************************************/
+    /****   Perform collision checks against track           ***/
+    /***********************************************************/
+
+    facePtr = track->faces + weapon->nearTrkSect->faceStart;
+
+    for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
+    {
+        facePoint = track->vertices + facePtr->vertex[0];
+        mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
+        if (mag <= 0)
+        {
+            PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
+
+            AddExplosion(weapon, -1);
+            RemoveWeapon(weapon);
+            return;
+        }
+        facePtr++;
+    }
+
+    Weapon2Mine(weapon);
+}
+
+void InitMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
+{
+    Face* facePtr;
+
+    if (weapon->fireShip != ownShip)
+    {
+        if (weapon->count > 1)
+        {
+            weapon->count--;
+            return;
+        }
+        else
+        {
+            weapon->count = MISSILE_DURATION;
+        }
+    }
+    else
+    {
+        weapon->count = MISSILE_DURATION;
+    }
+    weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
+
+    weapon->currentWeapon = WEAPON_SHAPE_MISSILE;
+    weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
+
+    facePtr = track->faces + shipIndex[weapon->fireShip].nearTrkSect->faceStart;
+
+    while ((facePtr->flags & TRACK_BASE) == 0)
+    {
+        facePtr++;
+    }
+
+    GetFireVector(&weapon->acc, shipIndex[weapon->fireShip].unitVecNose, facePtr, shipIndex[weapon->fireShip].pos);
+
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> VELOCITY_SHIFT);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> VELOCITY_SHIFT);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> VELOCITY_SHIFT);
+
+    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
+
+    weapon->hdg = shipIndex[weapon->fireShip].hdg;
+    weapon->pitch = shipIndex[weapon->fireShip].pitch;
+
+    weapon->updateWeapon = UpdateMissile;
+}
+
+void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
+{
+    vec3i distance;
+    Face* facePtr;
+    int i, mag;
+    const vec3i* facePoint;
+    int alpha;
+
+    weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, &weapon->pos);
+
+    facePtr = track->faces + weapon->nearTrkSect->faceStart;
+
+    while ((facePtr->flags & TRACK_BASE) == 0)
+    {
+        facePtr++;
+    }
+
+    weapon->vel.x += weapon->acc.x;
+    weapon->vel.y += weapon->acc.y;
+    weapon->vel.z += weapon->acc.z;
+
+    weapon->vel.x -= weapon->vel.x >> 5;
+    weapon->vel.y -= weapon->vel.y >> 5;
+    weapon->vel.z -= weapon->vel.z >> 5;
+
+    weapon->pos.x += weapon->vel.x;
+    weapon->pos.y += weapon->vel.y;
+    weapon->pos.z += weapon->vel.z;
+
+    facePoint = track->vertices + facePtr->vertex[0];
+
+    alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
+
+    if (alpha < 2000)
+    {
+        weapon->pos.x += (((200 - alpha) * (int)facePtr->normal.x) >> 13);
+        weapon->pos.y += (((200 - alpha) * (int)facePtr->normal.y) >> 13);
+        weapon->pos.z += (((200 - alpha) * (int)facePtr->normal.z) >> 13);
+    }
+
+    weapon->count--;
+    if (weapon->count == 0)
+    {
+        RemoveWeapon(weapon);
+        return;
+    }
+
+    AddTrail(weapon);
+
+    /***********************************************************/
+    /****   Perform collision checks against other ships     ***/
+    /***********************************************************/
+
+    for (i = 0; i < NO_OF_SHIPS; i++)
+    {
+        if (i == weapon->fireShip)
+            continue;
+
+        distance.x = (shipIndex[i].pos.x - weapon->pos.x) >> 2;
+        distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 2;
+        distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 2;
+
+        mag = GetMagnitude(&distance);
+
+        if (mag < 100)
+        {
+            if ((shipIndex[i].attr & SHIELDED) == 0)
+            {
+
+                if (i != ownShip)
+                {
+                    shipIndex[i].speed = shipIndex[i].speed >> 5;
+                    shipIndex[i].vroll += randy() % 250;
+                    shipIndex[i].ahdg = (randy() - 16384) >> 1;
+                }
+                else
+                {
+                    shipIndex[i].vel.x -= (shipIndex[i].vel.x * 3) >> 2;
+                    shipIndex[i].vel.y -= (shipIndex[i].vel.y * 3) >> 2;
+                    shipIndex[i].vel.z -= (shipIndex[i].vel.z * 3) >> 2;
+                    shipIndex[i].vroll += randy() % 250;
+                    shipIndex[i].ahdg = (randy() - 16384) >> 1;
+                    SetShake(20);
+                }
+            }
+
+            if (i != ownShip)
+            {
+                PlayDirectionalNote(SFX_EXPLOSION_1, &weapon->pos);
+            }
+            else
+            {
+                PlayNote(SFX_EXPLOSION_1);
+                SetVolume(SFX_EXPLOSION_1, SND_MAX_VOLUME, SND_MAX_VOLUME);
+            }
+
+            AddExplosion(weapon, i);
+            RemoveWeapon(weapon);
+            return;
+        }
+    }
+    /***********************************************************/
+    /****   Perform collision checks against track           ***/
+    /***********************************************************/
+
+    facePtr = track->faces + weapon->nearTrkSect->faceStart;
+
+    if ((weapon->nearTrkSect->flags & Jump) == 0)
+    {
+        for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
+        {
+            facePoint = track->vertices + facePtr->vertex[0];
+
+            mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
+            if (mag <= 0)
+            {
+                PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
+
+                AddExplosion(weapon, -1);
+                RemoveWeapon(weapon);
+                return;
+            }
+            facePtr++;
+        }
+    }
+
+    Weapon2Mine(weapon);
+}
+
+void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
 {
     int i;
     Face* facePtr;
@@ -786,14 +800,31 @@ void InitRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
     weapon->updateWeapon = UpdateRocket;
 }
 
-void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+
+void InitSpecial(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
+{
+    int32 i;
+    for (i = 0; i < NO_OF_SHIPS; i++)
+    {
+        if (i != weapon->fireShip)
+        {
+            shipIndex[i].combatAttr |= SPECIALED;
+            shipIndex[i].specialCount = SPECIAL_DURATION;
+        }
+    }
+
+    RemoveWeapon(weapon);
+}
+
+
+void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
 {
     int i;
-    vec4i distance;
-    vec4i targetVector;
+    vec3i distance;
+    vec3i targetVector;
     Face* facePtr;
     int mag, temp, vhdg, vpitch;
-    const vec4i* facePoint;
+    const vec3i* facePoint;
     int alpha;
     int32 sx, sy;
     int32 cx, cy;
@@ -847,7 +878,7 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     weapon->pos.y += weapon->vel.y;
     weapon->pos.z += weapon->vel.z;
 
-    weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, weapon->pos);
+    weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, &weapon->pos);
 
     facePtr = track->faces + weapon->nearTrkSect->faceStart;
 
@@ -856,7 +887,7 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
         facePtr++;
     }
 
-    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+    facePoint = track->vertices + facePtr->vertex[0];
 
     alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
 
@@ -868,6 +899,13 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     }
 
     weapon->count--;
+    if (weapon->count == 0)
+    {
+        RemoveWeapon(weapon);
+        return;
+    }
+
+    AddTrail(weapon);
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -891,8 +929,9 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
                 shipIndex[i].attr |= ELECTROED;
                 shipIndex[i].electroCount = ELEC_DURATION;
             }
-            weapon->count = SHIP_EXPLODE;
-            weapon->targetShip = i;
+
+            AddExplosion(weapon, i);
+            RemoveWeapon(weapon);
             return;
         }
     }
@@ -905,21 +944,24 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
 
     for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
     {
-        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+        facePoint = track->vertices + facePtr->vertex[0];
 
         mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
         if (mag <= 0)
         {
-            weapon->count = TRACK_EXPLODE;
             PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
+
+            AddExplosion(weapon, -1);
+            RemoveWeapon(weapon);
             return;
         }
         facePtr++;
     }
-    Weapon2Mine(weapon, weaponIndex, weaponShapes);
+
+    Weapon2Mine(weapon);
 }
 
-void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
 {
     if (weapon->fireShip != ownShip)
     {
@@ -959,65 +1001,12 @@ void InitElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     weapon->updateWeapon = UpdateElecBolt;
 }
 
-void InitSpecial(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+
+void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
 {
-    int i;
-    weapon->count--;
-    for (i = 0; i < NO_OF_SHIPS; i++)
-    {
-        if (i != weapon->fireShip)
-        {
-            shipIndex[i].combatAttr |= SPECIALED;
-            shipIndex[i].specialCount = SPECIAL_DURATION;
-        }
-    }
-}
-
-void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
-{
-    if (weapon->fireShip != ownShip)
-    {
-        if (weapon->count > 1)
-        {
-            weapon->count--;
-            return;
-        }
-        else
-        {
-            weapon->count = ELEC_DURATION;
-        }
-    }
-    else
-    {
-        weapon->count = ELEC_DURATION;
-    }
-
-    weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-    weapon->currentWeapon = WEAPON_SHAPE_EBOLT;
-    weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
-
-    weapon->acc.x = shipIndex[weapon->fireShip].unitVecNose.x >> 8;
-    weapon->acc.y = shipIndex[weapon->fireShip].unitVecNose.y >> 8;
-    weapon->acc.z = shipIndex[weapon->fireShip].unitVecNose.z >> 8;
-
-    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> VELOCITY_SHIFT);
-    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> VELOCITY_SHIFT);
-    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> VELOCITY_SHIFT);
-
-    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
-    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
-    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
-
-    weapon->hdg = shipIndex[weapon->fireShip].hdg;
-    weapon->pitch = shipIndex[weapon->fireShip].pitch;
-    weapon->updateWeapon = UpdateRevCon;
-}
-
-void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
-{
-    vec4i distance;
-    vec4i targetVector;
-    const vec4i* facePoint;
+    vec3i distance;
+    vec3i targetVector;
+    const vec3i* facePoint;
     Face* facePtr;
     int i, mag, temp, vhdg, vpitch;
     int alpha;
@@ -1073,7 +1062,7 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     weapon->pos.y += weapon->vel.y;
     weapon->pos.z += weapon->vel.z;
 
-    weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, weapon->pos);
+    weapon->nearTrkSect = FindNearestSection(weapon->nearTrkSect, &weapon->pos);
 
     facePtr = track->faces + weapon->nearTrkSect->faceStart;
 
@@ -1082,7 +1071,7 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         facePtr++;
     }
 
-    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+    facePoint = track->vertices + facePtr->vertex[0];
 
     alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
 
@@ -1094,6 +1083,13 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     }
 
     weapon->count--;
+    if (weapon->count == 0)
+    {
+        RemoveWeapon(weapon);
+        return;
+    }
+
+    AddTrail(weapon);
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -1125,8 +1121,9 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
                     shipIndex[i].revConCount = REV_CON_DURATION;
                 }
             }
-            weapon->count = SHIP_EXPLODE;
-            weapon->targetShip = i;
+
+            AddExplosion(weapon, i);
+            RemoveWeapon(weapon);
             return;
         }
     }
@@ -1139,47 +1136,53 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 
     for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
     {
-        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+        facePoint = track->vertices + facePtr->vertex[0];
 
         mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
         if (mag <= 0)
         {
-            weapon->count = TRACK_EXPLODE;
             PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
+
+            AddExplosion(weapon, -1);
+            RemoveWeapon(weapon);
             return;
         }
         facePtr++;
     }
-    Weapon2Mine(weapon, weaponIndex, weaponShapes);
+
+    Weapon2Mine(weapon);
 }
 
-void InitMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+void InitRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
 {
-    int i;
-
-    if (weapon->count == 1)
+    if (weapon->fireShip != ownShip)
     {
-        weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-        weapon->currentWeapon = WEAPON_SHAPE_MINE;
-        weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
-        weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
-        weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
-        weapon->hdg = 0;
-        if (weapon->fireShip == ownShip)
+        if (weapon->count > 1)
         {
-            PlayNote(SFX_MINE_DROP);
+            weapon->count--;
+            return;
         }
-        weapon->updateWeapon = UpdateMine;
-        weapon->count = MINE_DURATION;
+        else
+        {
+            weapon->count = ELEC_DURATION;
+        }
     }
-    else if (weapon->count > 0)
-        weapon->count--;
-}
+    else
+    {
+        weapon->count = ELEC_DURATION;
+    }
 
-void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
-{
     weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
-    weapon->currentWeapon = WEAPON_SHAPE_SHIELD;
+    weapon->currentWeapon = WEAPON_SHAPE_EBOLT;
+    weapon->targetShip = shipIndex[weapon->fireShip].targetShip;
+
+    weapon->acc.x = shipIndex[weapon->fireShip].unitVecNose.x >> 8;
+    weapon->acc.y = shipIndex[weapon->fireShip].unitVecNose.y >> 8;
+    weapon->acc.z = shipIndex[weapon->fireShip].unitVecNose.z >> 8;
+
+    weapon->vel.x = (shipIndex[weapon->fireShip].vel.x >> VELOCITY_SHIFT);
+    weapon->vel.y = (shipIndex[weapon->fireShip].vel.y >> VELOCITY_SHIFT);
+    weapon->vel.z = (shipIndex[weapon->fireShip].vel.z >> VELOCITY_SHIFT);
 
     weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
     weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
@@ -1187,14 +1190,9 @@ void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 
     weapon->hdg = shipIndex[weapon->fireShip].hdg;
     weapon->pitch = shipIndex[weapon->fireShip].pitch;
-
-    if (weapon->fireShip == ownShip)
-    {
-        PlayNote(SFX_SHIELDS);
-        SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
-    }
-    weapon->updateWeapon = UpdateShield;
+    weapon->updateWeapon = UpdateRevCon;
 }
+
 
 #ifdef USE_OLD_SHIELD
 void UpdateShieldColors(Object* object, int32 counter)
@@ -1276,7 +1274,7 @@ void UpdateShieldColors(Object* object, int32 counter)
 }
 #endif
 
-void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon, WeaponData* weaponIndex)
+void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
 {
     if (shipIndex[weapon->fireShip].attr & VIEW_IN)
     {
@@ -1301,6 +1299,9 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         }
 
         shipIndex[weapon->fireShip].attr &= ~SHIELDED;
+
+        RemoveWeapon(weapon);
+        return;
     }
 
     if ((shipIndex[weapon->fireShip].attr & VIEW_IN) == 0)
@@ -1312,6 +1313,183 @@ void UpdateShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         UpdateShieldColors(weaponShapes[weapon->currentWeapon].shapePtr, weapon->count);
 #endif
     }
+}
+
+void InitShield(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weapon)
+{
+    weapon->nearTrkSect = shipIndex[weapon->fireShip].nearTrkSect;
+    weapon->currentWeapon = WEAPON_SHAPE_SHIELD;
+
+    weapon->pos.x = shipIndex[weapon->fireShip].pos.x;
+    weapon->pos.y = shipIndex[weapon->fireShip].pos.y;
+    weapon->pos.z = shipIndex[weapon->fireShip].pos.z;
+
+    weapon->hdg = shipIndex[weapon->fireShip].hdg;
+    weapon->pitch = shipIndex[weapon->fireShip].pitch;
+
+    if (weapon->fireShip == ownShip)
+    {
+        PlayNote(SFX_SHIELDS);
+        SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
+    }
+    weapon->updateWeapon = UpdateShield;
+}
+
+
+void FireWeapon(ShipData* playerShip, int shipNo, char decision)
+{
+    WeaponData* weapon = CreateWeapon();
+
+    if (!weapon)
+        return;
+
+    switch (decision)
+    {
+        case WPN_ROCKET:
+        {
+            weapon->updateWeapon = InitRocket;
+            weapon->count = WEAPON_DELAY;
+            weapon->fireShip = shipNo;
+            weapon->type = WPN_ROCKET;
+            playerShip->weaponType = WPN_NONE;
+            playerShip->haveFired = WPN_ROCKET;
+            if (shipNo == ownShip)
+            {
+                PlayNote(SFX_MISS_LAUNCH);
+                SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH);
+            }
+            break;
+        }
+
+        case WPN_MISSILE:
+        {
+            weapon->updateWeapon = InitMissile;
+            weapon->count = WEAPON_DELAY;
+            weapon->fireShip = shipNo;
+            weapon->type = WPN_MISSILE;
+            playerShip->weaponType = WPN_NONE;
+            playerShip->haveFired = WPN_MISSILE;
+            if (shipNo == ownShip)
+            {
+                PlayNote(SFX_MISS_LAUNCH);
+                SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH);
+            }
+            break;
+        }
+
+        case WPN_MINE:
+        {
+            int32 i;
+            int32 count = (weapon->fireShip != ownShip) ? WEAPON_DELAY : 0;
+
+            for (i = 0; i < MINES_COUNT; i++)
+            {
+                count += MINE_RELEASE_RATE;
+                weapon->updateWeapon = InitMine;
+                weapon->fireShip = shipNo;
+                weapon->count = count;
+                weapon->type = WPN_MINE;
+
+                if (i < MINES_COUNT - 1)
+                {
+                    weapon = CreateWeapon();
+                    if (!weapon)
+                        break;
+                }
+            }
+
+            playerShip->weaponType = WPN_NONE;
+            playerShip->haveFired = WPN_MINE;
+            break;
+        }
+
+        case WPN_SPECIAL:
+        {
+            weapon->updateWeapon = InitSpecial;
+            weapon->count = 1;
+            weapon->fireShip = shipNo;
+            playerShip->weaponType = WPN_NONE;
+            playerShip->haveFired = WPN_SPECIAL;
+            break;
+        }
+
+        case WPN_ELEC_BOLT:
+        {
+            weapon->updateWeapon = InitElecBolt;
+            weapon->count = WEAPON_DELAY;
+            weapon->fireShip = shipNo;
+            weapon->type = WPN_ELEC_BOLT;
+            playerShip->haveFired = WPN_ELEC_BOLT;
+            playerShip->weaponType = WPN_NONE;
+            if (shipNo == ownShip)
+            {
+                PlayNote(SFX_ELECTROBOLT);
+            }
+            break;
+        }
+
+        case WPN_REV_CON:
+        {
+            weapon->updateWeapon = InitRevCon;
+            weapon->count = WEAPON_DELAY;
+            weapon->fireShip = shipNo;
+            weapon->type = WPN_REV_CON;
+            playerShip->haveFired = WPN_REV_CON;
+            playerShip->weaponType = WPN_NONE;
+            if (shipNo == ownShip)
+            {
+                PlayNote(SFX_ELECTROBOLT);
+            }
+            break;
+        }
+
+        case WPN_SHIELD:
+        {
+            weapon->updateWeapon = InitShield;
+            weapon->count = SHIELD_DURATION;
+            weapon->fireShip = shipNo;
+            weapon->type = WPN_SHIELD;
+            playerShip->attr |= SHIELDED;
+            playerShip->haveFired = WPN_SHIELD;
+            playerShip->weaponType = WPN_NONE;
+            break;
+        }
+
+        case WPN_TURBO:
+        {
+            playerShip->weaponType = WPN_NONE;
+
+            playerShip->vel.x += playerShip->unitVecNose.x * 48 / 5;
+            playerShip->vel.y += playerShip->unitVecNose.y * 48 / 5;
+            playerShip->vel.z += playerShip->unitVecNose.z * 48 / 5;
+
+            if (shipNo == ownShip)
+            {
+                PlayNote(SFX_MISS_LAUNCH);
+                SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH >> 2);
+                gTargetFOV = CAMERA_FOV_EXTRA;
+            }
+            break;
+        }
+    }
+}
+
+int GetNewWeapon(void)
+{
+    int index = randy() % 65;
+
+    if (index < 17)
+        return WPN_ROCKET;
+    else if (index < 35)
+        return WPN_MINE;
+    else if (index < 45)
+        return WPN_SHIELD;
+    else if (index < 53)
+        return WPN_MISSILE;
+    else if (index < 59)
+        return WPN_TURBO;
+    else
+        return WPN_ELEC_BOLT;
 }
 
 void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids)
@@ -1423,172 +1601,4 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
         #endif
         }
     }
-}
-
-void GetFireVector(vec4i* result, vec4i target, Face* facePtr, vec4i shipPos)
-{
-    int alpha, origAlpha;
-    const vec4i* facePoint;
-
-    facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
-
-    target.x = shipPos.x + (target.x >> 6);
-    target.y = shipPos.y + (target.y >> 6);
-    target.z = shipPos.z + (target.z >> 6);
-
-    alpha = PlaneLineCollision(facePoint, &target, &facePtr->normal);
-    origAlpha = PlaneLineCollision(facePoint, &shipPos, &facePtr->normal);
-
-    alpha = (alpha * 31) >> 5;
-
-    alpha -= origAlpha;
-
-    result->x = target.x - ((alpha * facePtr->normal.x) >> 12);
-    result->y = target.y - ((alpha * facePtr->normal.y) >> 12);
-    result->z = target.z - ((alpha * facePtr->normal.z) >> 12);
-
-    result->x -= shipPos.x;
-    result->y -= shipPos.y;
-    result->z -= shipPos.z;
-}
-
-void Weapon2Mine(WeaponData* weapon, WeaponData* weaponIndex, WeaponShape* weaponShapes)
-{
-    int i;
-    vec4i distance;
-    int mag;
-
-    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
-    {
-        if ((weaponIndex[i].type == WPN_MINE) && (weaponIndex[i].count > 0))
-        {
-            distance.x = (weaponIndex[i].pos.x - weapon->pos.x) >> 2;
-            distance.y = (weaponIndex[i].pos.y - weapon->pos.y) >> 2;
-            distance.z = (weaponIndex[i].pos.z - weapon->pos.z) >> 2;
-
-            mag = GetMagnitude(&distance);
-
-            if (mag < 30)
-            {
-                weaponIndex->count = NON_ACTIVE;
-                weapon->count = TRACK_EXPLODE;
-                PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
-                return;
-            }
-        }
-    }
-}
-
-int GetNewWeapon(void)
-{
-    int index = randy() % 65;
-
-    if (index < 17)
-        return WPN_ROCKET;
-    else if (index < 35)
-        return WPN_MINE;
-    else if (index < 45)
-        return WPN_SHIELD;
-    else if (index < 53)
-        return WPN_MISSILE;
-    else if (index < 59)
-        return WPN_TURBO;
-    else
-        return WPN_ELEC_BOLT;
-}
-
-void SetTargetShip(ShipData* shipIndex, int shipNo)
-{
-    int i;
-    int distance, shortestDistance;
-    int nearShip = 0;
-    TrackSection* section;
-
-    shortestDistance = 999;
-
-    for (i = NO_OF_SHIPS - 1; i >= 0; i--)
-    {
-        if (i == shipNo)
-            continue;
-
-        /*** Is Player ship upon a junction branch **/
-
-        if (shipIndex[shipNo].nearTrkSect->flags & JunctionSection)
-        {
-            /*** If remote ship on same branch the attempt to target ***/
-            if (shipIndex[i].nearTrkSect->flags & JunctionSection)
-            {
-                distance = shipIndex[i].nearTrkSect->secNo - shipIndex[shipNo].nearTrkSect->secNo;
-
-                if ((distance < shortestDistance) && (distance > 0))
-                {
-                    shortestDistance = distance;
-                    nearShip = i;
-                }
-            }
-            else
-            {
-                /*** Remote ship is not same branch ***/
-                section = shipIndex[shipNo].nearTrkSect;
-
-                for (distance = 0; distance < 10; distance++)
-                {
-                    section = section->nextSection;
-                    if (shipIndex[i].nearTrkSect == section)
-                    {
-                        if ((distance < shortestDistance) && (distance > 0))
-                        {
-                            shortestDistance = distance;
-                            nearShip = i;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (shipIndex[i].nearTrkSect->flags & JunctionSection)
-            {
-                section = shipIndex[shipNo].nearTrkSect;
-                for (distance = 0; distance < 10; distance++)
-                {
-                    if (section->junction)
-                    {
-                        section = section->junction;
-                    }
-                    else
-                    {
-                        section = section->nextSection;
-                    }
-                    if (shipIndex[i].nearTrkSect == section)
-                    {
-                        if ((distance < shortestDistance) && (distance > 0))
-                        {
-                            shortestDistance = distance;
-                            nearShip = i;
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                distance = shipIndex[i].nearTrkSect->secNo - shipIndex[shipNo].nearTrkSect->secNo;
-
-                if ((distance < shortestDistance) && (distance > 0))
-                {
-                    shortestDistance = distance;
-                    nearShip = i;
-                }
-            }
-        }
-    }
-
-    if (shortestDistance < 10)
-    {
-        shipIndex[shipNo].targetShip = nearShip;
-    }
-    else
-        shipIndex[shipNo].targetShip = 0xFF;
 }

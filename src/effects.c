@@ -1,11 +1,15 @@
 #include "game.h"
 
-Effect gEffects[NO_OF_EFFECTS];
+Effect gEffects[MAX_EFFECTS];
+Effect* gEffectsFree;
+Effect* gEffectsActive;
+
 Texture* gEffectTextures;
 Texture* gShadowTex;
 
 extern int gFrameIndex;
 extern const TrackCamera ctrlcamera;
+extern ShipData ctrlshipIndex[NO_OF_SHIPS];
 
 void InitEffects(void)
 {
@@ -15,30 +19,68 @@ void InitEffects(void)
 
 void ResetEffects(void)
 {
+    int32 i;
+
     memset(gEffects, 0, sizeof(gEffects));
+
+    for (i = 0; i < MAX_EFFECTS - 1; i++)
+    {
+        gEffects[i].next = gEffects + i + 1;
+    }
+    gEffects[MAX_EFFECTS - 1].next = NULL;
+
+    gEffectsFree = gEffects;
+    gEffectsActive = NULL;
+}
+
+Effect* CreateEffect()
+{
+    Effect* fx = gEffectsFree;
+    if (fx)
+    {
+        gEffectsFree = fx->next;
+
+        fx->next = gEffectsActive;
+        fx->prev = NULL;
+        if (gEffectsActive)
+        {
+            gEffectsActive->prev = fx;
+        }
+        gEffectsActive = fx;
+    }
+    return fx;
+}
+
+void RemoveEffect(Effect* fx)
+{
+    if (fx->next)
+    {
+        fx->next->prev = fx->prev;
+    }
+
+    if (fx->prev)
+    {
+        fx->prev->next = fx->next;
+    }
+    else
+    {
+        gEffectsActive = fx->next;
+    }
+
+    fx->next = gEffectsFree;
+    gEffectsFree = fx;
 }
 
 void UpdateEffects(void)
 {
     int i;
+    Effect* fx = gEffectsActive;
 
-#ifdef __3DO__ // TODO optimize
-    return;
-#endif
-
-    for (i = 0; i < NO_OF_EFFECTS; i++)
+    while (fx)
     {
-        Effect* fx = gEffects + i;
+        Effect* next = fx->next;
 
-        if (fx->count > 0)
-        {
-            fx->x += fx->x;
-            fx->y += fx->y;
-            fx->z += fx->z;
-
-            fx->count--;
-        }
-        else if (fx->count < -6)
+        if (fx->count < -6)
         {
             fx->count++;
         }
@@ -46,6 +88,20 @@ void UpdateEffects(void)
         {
             fx->count = (uint8)randy() >> 3;
         }
+        else
+        {
+            fx->pos.x += fx->vel.x;
+            fx->pos.y += fx->vel.y;
+            fx->pos.z += fx->vel.z;
+            fx->count--;
+        }
+
+        if (fx->count == 0)
+        {
+            RemoveEffect(fx);
+        }
+
+        fx = next;
     }
 }
 
@@ -53,6 +109,7 @@ void DrawEffects(void)
 {
 #ifndef __3DO__ // TODO
     int i;
+    Effect* fx = gEffectsActive;
     Billboard b;
     int cx, cy, cz;
 
@@ -65,19 +122,16 @@ void DrawEffects(void)
     renderDepthWrite(0);
     renderSetBlend(BLEND_ADD);
 
-    for (i = 0; i < NO_OF_EFFECTS; i++)
+    while (fx)
     {
-        Effect* fx = gEffects + i;
+        b.x = fx->pos.x;
+        b.y = fx->pos.y;
+        b.z = fx->pos.z;
+        b.size = fx->size;
+        b.texture = gEffectTextures + fx->type;
+        renderBillboard(&b);
 
-        if (fx->count > 0)
-        {
-            b.x = fx->x;
-            b.y = fx->y;
-            b.z = fx->z;
-            b.size = fx->size;
-            b.texture = gEffectTextures + fx->type;
-            renderBillboard(&b);
-        }
+        fx = fx->next;
     }
 
     renderDepthWrite(1);
@@ -85,138 +139,109 @@ void DrawEffects(void)
 #endif
 }
 
-void AddEffects(WeaponData* weaponIndex, ShipData* shipIndex)
+void AddTrail(WeaponData* weapon)
 {
-    int i, j;
-    int exploType;
-    short noToRelease = 0;
+    Effect* fx;
+    int32 fxType;
 
-    for (i = 0; i < NO_ACTIVE_WEAPONS; i++)
+    if (weapon->type == WPN_ELEC_BOLT)
+        fxType = FX_EBOLT;
+    else if (weapon->type == WPN_REV_CON)
+        fxType = FX_GREENY;
+    else
+        fxType = FX_SMOKE;
+
+    if (fx = CreateEffect())
     {
-        WeaponData* weapon = weaponIndex + i;
+        fx->pos.x = weapon->pos.x;
+        fx->pos.y = weapon->pos.y;
+        fx->pos.z = weapon->pos.z;
+        fx->vel.x = (int8)randy() >> 4;
+        fx->vel.y = (int8)randy() >> 4;
+        fx->vel.z = (int8)randy() >> 4;
+        fx->count = 20 + (randy() & 7);
+        fx->size = 7;
+        fx->type = fxType;
+    }
 
-        /***********************************************************************/
-        /****          Add Fire + Smoke Trails for Missiles & Rockets       ****/
-        /***********************************************************************/
-        if ((weapon->type == WPN_ROCKET) ||
-            (weapon->type == WPN_MISSILE) ||
-            (weapon->type == WPN_ELEC_BOLT) ||
-            (weapon->type == WPN_REV_CON))
+    if (fx = CreateEffect())
+    {
+        fx->pos.x = weapon->pos.x - (weapon->vel.x >> 2);
+        fx->pos.y = weapon->pos.y - (weapon->vel.y >> 2);
+        fx->pos.z = weapon->pos.z - (weapon->vel.z >> 2);
+        fx->vel.x = (int8)randy() >> 4;
+        fx->vel.y = (int8)randy() >> 4;
+        fx->vel.z = (int8)randy() >> 4;
+        fx->count = 20 + (randy() & 7);
+        fx->size = 7;
+        fx->type = fxType;
+    }
+
+    if (fx = CreateEffect())
+    {
+        fx->pos.x = weapon->pos.x - (weapon->vel.x >> 1);
+        fx->pos.y = weapon->pos.y - (weapon->vel.y >> 1);
+        fx->pos.z = weapon->pos.z - (weapon->vel.z >> 1);
+        fx->vel.x = 0;
+        fx->vel.y = 0;
+        fx->vel.z = 0;
+        fx->count = 5;
+        fx->size = 7;
+        fx->type = (fxType == FX_SMOKE) ? FX_FIRE : fxType;
+    }
+}
+
+void AddExplosion(WeaponData* weapon, int32 targetShip)
+{
+    int32 i, fxType;
+    Effect* fx;
+
+    if (targetShip >= 0)
+    {
+        if (weapon->type == WPN_ELEC_BOLT)
+            fxType = FX_GREENY;
+        else if (weapon->type == WPN_REV_CON)
+            fxType = FX_GREENY;
+        else
+            fxType = FX_FIRE_WHITE;
+    }
+    else
+    {
+        if (weapon->type == WPN_ELEC_BOLT)
+            fxType = FX_EBOLT;
+        else if (weapon->type == WPN_REV_CON)
+            fxType = FX_GREENY;
+        else
+            fxType = FX_FIRE;
+    }
+
+    for (i = 0; i < WEAPON_FX_EXPLOSION_SPRITES; i++)
+    {
+        if (fx = CreateEffect())
         {
-            if (weapon->type == WPN_ELEC_BOLT)
-                exploType = FX_EBOLT;
-            else if (weapon->type == WPN_REV_CON)
-                exploType = FX_GREENY;
-            else
-                exploType = FX_SMOKE;
+            fx->pos.x = weapon->pos.x;
+            fx->pos.y = weapon->pos.y;
+            fx->pos.z = weapon->pos.z;
 
-            if (weapon->count > 0)
+            fx->vel.x = (int8)randy() >> 2;
+            fx->vel.y = (int8)randy() >> 2;
+            fx->vel.z = (int8)randy() >> 2;
+
+            if (targetShip >= 0)
             {
-                for (j = 0; j < NO_OF_EFFECTS; j++)
-                {
-                    Effect* fx = gEffects + j;
-
-                    if (fx->count == 0)
-                    {
-                        if (noToRelease == 0)
-                        {
-                            fx->x = weapon->pos.x;
-                            fx->y = weapon->pos.y;
-                            fx->z = weapon->pos.z;
-                            fx->x = (int8)randy() >> 4;
-                            fx->y = (int8)randy() >> 4;
-                            fx->z = (int8)randy() >> 4;
-                            fx->count = 20 + (randy() % 10);
-                            fx->size = 7;
-                            fx->type = exploType;
-                        }
-                        else if (noToRelease == 1)
-                        {
-                            fx->x = weapon->pos.x - (weapon->vel.x >> 1);
-                            fx->y = weapon->pos.y - (weapon->vel.y >> 1);
-                            fx->z = weapon->pos.z - (weapon->vel.z >> 1);
-                            fx->x = 0;
-                            fx->y = 0;
-                            fx->z = 0;
-                            fx->count = 5;
-                            fx->size = 7;
-                            fx->type = (exploType == FX_SMOKE) ? FX_FIRE : exploType;
-                        }
-                        else if (noToRelease == 2)
-                        {
-                            fx->x = weapon->pos.x - (weapon->vel.x >> 2);
-                            fx->y = weapon->pos.y - (weapon->vel.y >> 2);
-                            fx->z = weapon->pos.z - (weapon->vel.z >> 2);
-                            fx->x = (int8)randy() >> 4;
-                            fx->y = (int8)randy() >> 4;
-                            fx->z = (int8)randy() >> 4;
-                            fx->count = 20 + (randy() % 10);
-                            fx->size = 7;
-                            fx->type = exploType;
-                        }
-                        noToRelease++;
-                        if (noToRelease == 3)
-                            break;
-                    }
-                }
+                ShipData* ship = ctrlshipIndex + targetShip;
+                fx->vel.x += (int16)(ship->vel.x >> VELOCITY_SHIFT);
+                fx->vel.y += (int16)(ship->vel.y >> VELOCITY_SHIFT);
+                fx->vel.z += (int16)(ship->vel.z >> VELOCITY_SHIFT);
             }
+
+            fx->count = -((((uint8)randy()) >> 4) + 8);
+            fx->size = 24;
+            fx->type = fxType;
         }
-
-        noToRelease = 0;
-
-        if ((weapon->count == SHIP_EXPLODE) ||
-            (weapon->count == TRACK_EXPLODE))
+        else
         {
-            if (weapon->count == SHIP_EXPLODE)
-            {
-                if (weapon->type == WPN_ELEC_BOLT)
-                    exploType = FX_GREENY;
-                else if (weapon->type == WPN_REV_CON)
-                    exploType = FX_GREENY;
-                else
-                    exploType = FX_FIRE_WHITE;
-            }
-            else
-            {
-                if (weapon->type == WPN_ELEC_BOLT)
-                    exploType = FX_EBOLT;
-                else if (weapon->type == WPN_REV_CON)
-                    exploType = FX_GREENY;
-                else
-                    exploType = FX_FIRE;
-            }
-
-            for (j = 0; j < NO_OF_EFFECTS; j++)
-            {
-                Effect* fx = gEffects + j;
-
-                if (fx->count == 0)
-                {
-                    fx->x = weapon->pos.x;
-                    fx->y = weapon->pos.y;
-                    fx->z = weapon->pos.z;
-
-                    fx->x = (int8)randy() >> 2;
-                    fx->y = (int8)randy() >> 2;
-                    fx->z = (int8)randy() >> 2;
-
-                    if (weapon->count == SHIP_EXPLODE)
-                    {
-                        fx->x += (int16)(shipIndex[weapon->targetShip].vel.x >> VELOCITY_SHIFT);
-                        fx->y += (int16)(shipIndex[weapon->targetShip].vel.y >> VELOCITY_SHIFT);
-                        fx->z += (int16)(shipIndex[weapon->targetShip].vel.z >> VELOCITY_SHIFT);
-                    }
-
-                    fx->count = -((((uint8)randy()) >> 4) + 8);
-                    fx->size = 24;
-                    fx->type = exploType;
-
-                    noToRelease++;
-                    if (noToRelease == 30)
-                        return;
-                }
-            }
-            weapon->count = NON_ACTIVE;
+            break;
         }
     }
 }
@@ -459,9 +484,9 @@ void DrawShadows(ShipData* shipIndex)
     Shadow s;
     int i, j, px, py, pz, cx, cy, cz, nx, nz, wx, wz;
     int alpha, intensity;
-    const vec4i* facePoint;
+    const vec3i* facePoint;
     ShipData* playerShip;
-    vec4i v[4];
+    vec3i v[4];
 
     cx = ctrlcamera.camPos->absolute.t[0];
     cy = ctrlcamera.camPos->absolute.t[1];
@@ -488,7 +513,7 @@ void DrawShadows(ShipData* shipIndex)
             facePtr++;
         }
 
-        facePoint = (vec4i*)(track->vertices + facePtr->vertex[0]);
+        facePoint = track->vertices + facePtr->vertex[0];
 
         px = playerShip->pos.x;
         py = playerShip->pos.y;

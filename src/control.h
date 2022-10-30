@@ -15,18 +15,18 @@
 
 #define STALL -1
 
-void UpdateShips(ShipData* shipIndex, WeaponData* weaponIndex);
+void UpdateShips(ShipData* shipIndex);
 void GeneralStartProcs(ShipData* playerShip);
 
-void UpdatePlayerShipNorm(ShipData*, int, WeaponData*);
-void UpdateRemoteShip(ShipData*, int, WeaponData*);
-void UpdatePlayerShipNormStart(ShipData*, int, WeaponData*);
-void UpdateRemoteShipStart(ShipData*, int, WeaponData*);
+void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo);
+void UpdateRemoteShip(ShipData* shipIndex, int shipNo);
+void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo);
+void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo);
 
-void HoldCentre(vec4i* result, ShipData* shipIndex, Face* facePtr, int);
-void HoldRight(vec4i* result, ShipData* shipIndex, Face* facePtr, int);
-void HoldLeft(vec4i* result, ShipData* shipIndex, Face* facePtr, int);
-void BlockShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
-void AvoidShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
-void AvoidOtherShips(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
-void ZigZagShip(vec4i* blockVector, ShipData* shipIndex, Face* facePtr, int);
+void HoldCentre(vec3i* result, ShipData* shipIndex, Face* facePtr, int);
+void HoldRight(vec3i* result, ShipData* shipIndex, Face* facePtr, int);
+void HoldLeft(vec3i* result, ShipData* shipIndex, Face* facePtr, int);
+void BlockShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int);
+void AvoidShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int);
+void AvoidOtherShips(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int);
+void ZigZagShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int);

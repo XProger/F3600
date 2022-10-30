@@ -27,10 +27,10 @@ void InitCamera(TrackCamera* camera, TrackSection* section)
 
 void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
 {
-    vec4i pos;
-    vec4i bestPath;
-    vec4i distance;
-    vec4i acc;
+    vec3i bestPath;
+    vec3i distance;
+    vec3i acc;
+    vec3i pos;
     int mag;
     static int vel = 0;
 
@@ -41,7 +41,7 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
     pos.z = camShip->pos.z - (camShip->unitVecNose.z >> 2);
     pos.y -= 200;
 
-    camera->section = (TrackSection*)FindNearestSection(camera->section, pos);
+    camera->section = (TrackSection*)FindNearestSection(camera->section, &pos);
 
     nextSection = camera->section->nextSection;
 
@@ -112,15 +112,14 @@ void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData
 
 void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
 {
-    vec4i pos;
     vec4i targetVector;
+    vec3i pos;
     int32 s;
 
     /*** Set to final position ***/
     pos.x = camShip->pos.x - (camShip->unitVecNose.x >> 2);
     pos.y = camShip->pos.y - (camShip->unitVecNose.y >> 2);
     pos.z = camShip->pos.z - (camShip->unitVecNose.z >> 2);
-    pos.w = 0;
 
     s = rsin((camShip->updateCount - SWITCH_TO_RACE_VIEW) * 3);
 
@@ -134,7 +133,7 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
     }
     else
     {
-        camera->section = (TrackSection*)FindNearestSection(camera->section, pos);
+        camera->section = (TrackSection*)FindNearestSection(camera->section, &pos);
     }
 
     SetSkeletonPosition(camera->camPos, -pos.x, -pos.y, -pos.z);

@@ -996,6 +996,7 @@ void renderBillboard(const Billboard* b)
     sz = size * gCylZ >> 12;
 
     renderSetTexture(t);
+    renderSetShader(&shaderObject);
     stateCheck();
 
     addQuad();
@@ -1327,7 +1328,7 @@ void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
 void renderSection(const TrackSection* section)
 {
     const Face* face = track->faces + section->faceStart;
-    const TrackVertex* vertices = track->vertices;
+    const vec3i* vertices = track->vertices;
     const vec4i* v;
     int i;
     float u0, u1;
