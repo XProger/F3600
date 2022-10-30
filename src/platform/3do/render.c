@@ -27,8 +27,8 @@ int gCylX, gCylZ;
 
 vec3i vBuffer[MAX_VERTICES_BUFFER];
 
-#define OT_SHIFT    6
-#define OT_SIZE     1024
+#define OT_SHIFT    7
+#define OT_SIZE     512
 
 typedef struct FaceCEL
 {
@@ -226,8 +226,8 @@ void renderResize(int width, int height) {}
 
 void renderOffset(int x, int y)
 {
-    xOffset = (FRAME_WIDTH >> 1) + x;
-    yOffset = (FRAME_HEIGHT >> 1) + y;
+    xOffset = x + (FRAME_WIDTH >> 1);
+    yOffset = y + (FRAME_HEIGHT >> 1);
 }
 
 void renderClear(void) {}

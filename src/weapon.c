@@ -1469,6 +1469,8 @@ void FireWeapon(ShipData* playerShip, int shipNo, char decision)
                 SetPitch(SFX_MISS_LAUNCH, SND_DEF_PITCH >> 2);
                 gTargetFOV = CAMERA_FOV_EXTRA;
             }
+
+            RemoveWeapon(weapon);
             break;
         }
     }
