@@ -20,14 +20,14 @@ extern ChampionShip winTable[];
 
 extern int short startLinePos[];
 
-Texture* speedoTex;
+int32 gRacePos[NO_OF_SHIPS] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
+Texture* gSpeedoTex;
+Texture* gWinLoseTex;
 Texture* gWeaponIcon;
 
 void InitText(void)
 {
-    int i;
-
     LoadCompressedTextureSequence("wipeout/textures/drfonts.cmp", 0);
 
     SetCharTextures(8);
@@ -72,7 +72,7 @@ const BarPoint gBarPoint[NUM_BARS + 1] = {
 
 void InitSpeedo(void)
 {
-    speedoTex = LoadTexture("wipeout/textures/speedo.tim");
+    gSpeedoTex = LoadTexture("wipeout/textures/speedo.tim");
 }
 
 #define BAR_THRUST      70
@@ -389,74 +389,100 @@ TEXT_DATA* text_data(int start_pos_x, int start_pos_y, int size)
     return (&text);
 }
 
-void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
+void UpdateShipSecNo(ShipData* shipIndex, int32 idx, ConfigData* gameData)
 {
-    int i, j;
-    int position = NO_OF_SHIPS;
-    int secNo;
-    SortTable sortTable[NO_OF_SHIPS];
-    char tempShip;
-    char tempPoints;
+    int32 secNo;
+    ShipData* ship = shipIndex + idx;
 
-    for (i = 0; i < NO_OF_SHIPS; i++)
+    if (idx == ownShip)
     {
-        if (i == ownShip)
+        if ((ship->prevSecNo == (startLinePos[trackNo] + 1)) && (ship->nearSecNo <= startLinePos[trackNo]))
         {
-            if ((shipIndex[i].prevSecNo == (startLinePos[trackNo] + 1)) && (shipIndex[i].nearSecNo <= startLinePos[trackNo]))
-            {
-                crossedLine--;
-            }
-        }
-
-        if ((shipIndex[i].prevSecNo == startLinePos[trackNo]) && ((shipIndex[i].nearSecNo > startLinePos[trackNo]) && (shipIndex[i].nearSecNo < (startLinePos[trackNo] + 10))))
-        {
-            if (i == ownShip)
-            {
-                if (shipIndex[i].lapNo == crossedLine)
-                    shipIndex[i].lapNo++;
-
-                crossedLine++;
-                if (raceType == TIME_TRIAL)
-                    shipIndex[i].weaponType = WPN_TURBO;
-            }
-            else
-            {
-                shipIndex[i].lapNo++;
-            }
+            crossedLine--;
         }
     }
 
-    for (i = 0; i < NO_OF_SHIPS; i++)
+    if ((ship->prevSecNo == startLinePos[trackNo]) && ((ship->nearSecNo > startLinePos[trackNo]) && (ship->nearSecNo < (startLinePos[trackNo] + 10))))
     {
-        secNo = shipIndex[i].nearSecNo - (startLinePos[trackNo] + 1);
-
-        if (i == ownShip)
+        if (idx == ownShip)
         {
-            if (secNo < 0)
+            if (ship->lapNo == crossedLine)
             {
-                secNo = secNo + (crossedLine * NoOfMainSections);
+                ship->lapNo++;
+
+                if ((ship->lapNo > 1) && (ship->lapNo <= END_LAP + 1))
+                {
+                    if (CheckLapRecord(gameData, shipIndex, ownShip))
+                    {
+                        gameData->newLapRecord = 1;
+                    }
+                }
             }
-            else
+
+            crossedLine++;
+            if (raceType == TIME_TRIAL)
             {
-                secNo = secNo + ((crossedLine - 1) * NoOfMainSections);
+                ship->weaponType = WPN_TURBO;
             }
         }
         else
         {
-            if (secNo < 0)
+            ship->lapNo++;
+
+            if ((ship->lapNo > END_LAP) && (ship->attr & RACING))
             {
-                secNo = secNo + (shipIndex[i].lapNo * NoOfMainSections);
-            }
-            else
-            {
-                secNo = secNo + ((shipIndex[i].lapNo - 1) * NoOfMainSections);
+                ship->attr &= ~RACING;
             }
         }
-
-        shipIndex[i].DPASectDiff = secNo;
     }
 
-    position = CalcPosition(shipIndex);
+    secNo = ship->nearSecNo - (startLinePos[trackNo] + 1);
+
+    if (idx == ownShip)
+    {
+        if (secNo < 0)
+        {
+            secNo = secNo + (crossedLine * NoOfMainSections);
+        }
+        else
+        {
+            secNo = secNo + ((crossedLine - 1) * NoOfMainSections);
+        }
+    }
+    else
+    {
+        if (secNo < 0)
+        {
+            secNo = secNo + (ship->lapNo * NoOfMainSections);
+        }
+        else
+        {
+            secNo = secNo + ((ship->lapNo - 1) * NoOfMainSections);
+        }
+    }
+
+    ship->DPASectDiff = secNo;
+}
+
+void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
+{
+    int i, j;
+    SortTable sortTable[NO_OF_SHIPS];
+    char tempShip;
+    char tempPoints;
+
+    if (gameData->gameType != TIME_TRIAL)
+    {
+        for (i = 0; i < NO_OF_SHIPS; i++)
+        {
+            UpdateShipSecNo(shipIndex, i, gameData);
+        }
+        CalcPosition(shipIndex);
+    }
+    else
+    {
+        UpdateShipSecNo(shipIndex, ownShip, gameData);
+    }
 
     if (shipIndex[ownShip].lapNo > 0)
     {
@@ -466,27 +492,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
         }
     }
 
-    if ((shipIndex[ownShip].lapNo != shipIndex[ownShip].prevLapNo) && (shipIndex[ownShip].lapNo > 1) && (shipIndex[ownShip].lapNo <= END_LAP + 1))
-    {
-        if ((CheckLapRecord(gameData, &(shipIndex[0]), ownShip)))
-        {
-            gameData->newLapRecord = 1;
-        }
-    }
-    shipIndex[ownShip].prevLapNo = shipIndex[ownShip].lapNo;
-
     /************ HAVE FINISHED RACE *****************/
-    for (i = 0; i < NO_OF_SHIPS; i++)
-    {
-        if (i != ownShip)
-        {
-            if ((shipIndex[i].lapNo > END_LAP) && (shipIndex[i].attr & RACING))
-            {
-                shipIndex[i].attr &= ~RACING;
-            }
-        }
-    }
-
     if (shipIndex[ownShip].lapNo > END_LAP && (shipIndex[ownShip].attr & RACING))
     {
         gameData->Position = winTable[ownShip].racePosition;
@@ -672,67 +678,89 @@ void UpdateRaceHud(ShipData* shipIndex, int choice, ConfigData* gameData)
     }
 }
 
+int ComparePosision(ShipData* a, ShipData* b)
+{
+    if (((a->attr | b->attr) & RACING) == 0)
+        return 0;
+
+    if ((a->attr & RACING) == 0)
+        return -1;
+
+    if ((b->attr & RACING) == 0)
+        return 1;
+
+    if (a->DPASectDiff < b->DPASectDiff)
+    {
+        return 1;
+    }
+
+    if (a->DPASectDiff > b->DPASectDiff)
+    {
+        return -1;
+    }
+
+    // a->DPASectDiff == b->DPASectDiff
+    {
+        vec3i ca, cb, dir;
+        int32 da, db;
+        int32 cx, cy, cz;
+
+        cx = a->nearTrkSect->centre.x;
+        cy = a->nearTrkSect->centre.y;
+        cz = a->nearTrkSect->centre.z;
+
+        ASSERT(a->nearTrkSect == b->nearTrkSect);
+
+        ca.x = a->pos.x - cx;
+        ca.y = a->pos.y - cy;
+        ca.z = a->pos.z - cz;
+
+        cb.x = b->pos.x - cx;
+        cb.y = b->pos.y - cy;
+        cb.z = b->pos.z - cz;
+
+        dir.x = a->nearTrkSect->nextSection->centre.x - cx;
+        dir.y = a->nearTrkSect->nextSection->centre.y - cy;
+        dir.z = a->nearTrkSect->nextSection->centre.z - cz;
+
+        da = GetMagnitude(&ca);
+        db = GetMagnitude(&cb);
+
+        da = da ? (ScalarProduct(&ca, &dir) / da) : 0;
+        db = db ? (ScalarProduct(&cb, &dir) / db) : 0;
+
+        if (da < db)
+            return 1;
+
+        if (da > db)
+            return -1;
+    }
+
+    return 0;
+}
+
 int CalcPosition(ShipData* shipIndex)
 {
-    // TODO WTF!
-    int i, j;
-    int tempPosition;
-    vec3i B, C, AB, AC, trackVect;
-    int angleB, angleC, distanceB, distanceC;
+    int i, swapped;
+
+    do
+    {
+        swapped = 0;
+        for (i = 1; i < NO_OF_SHIPS; i++)
+        {
+            if (ComparePosision(shipIndex + gRacePos[i - 1], shipIndex + gRacePos[i]) > 0)
+            {
+                int32 t = gRacePos[i - 1];
+                gRacePos[i - 1] = gRacePos[i];
+                gRacePos[i] = t;
+                swapped = 1;
+            }
+        }
+    } while (swapped);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        tempPosition = 1;
-
-        for (j = 0; j < NO_OF_SHIPS; j++)
-        {
-            if (i == j)
-                continue;
-
-            if (((shipIndex[j].attr & RACING) == 0))
-                tempPosition++;
-
-            else if (shipIndex[i].DPASectDiff == shipIndex[j].DPASectDiff)
-            {
-                B.x = shipIndex[i].pos.x;
-                B.y = shipIndex[i].pos.y;
-                B.z = shipIndex[i].pos.z;
-
-                C.x = shipIndex[j].pos.x;
-                C.y = shipIndex[j].pos.y;
-                C.z = shipIndex[j].pos.z;
-
-                AB.x = B.x - shipIndex[i].nearTrkSect->centre.x;
-                AB.y = B.y - shipIndex[i].nearTrkSect->centre.y;
-                AB.z = B.z - shipIndex[i].nearTrkSect->centre.z;
-
-                AC.x = C.x - shipIndex[j].nearTrkSect->centre.x;
-                AC.y = C.y - shipIndex[j].nearTrkSect->centre.y;
-                AC.z = C.z - shipIndex[j].nearTrkSect->centre.z;
-
-                trackVect.x = shipIndex[i].nearTrkSect->nextSection->centre.x - shipIndex[i].nearTrkSect->centre.x;
-                trackVect.y = shipIndex[i].nearTrkSect->nextSection->centre.y - shipIndex[i].nearTrkSect->centre.y;
-                trackVect.z = shipIndex[i].nearTrkSect->nextSection->centre.z - shipIndex[i].nearTrkSect->centre.z;
-
-                angleB = GetAng(&AB, &trackVect);
-                angleC = GetAng(&AC, &trackVect);
-                distanceB = (rcos(angleB >> 3) * GetMagnitude(&AB)) >> 12;
-                distanceC = (rcos(angleC >> 3) * GetMagnitude(&AC)) >> 12;
-
-                if ((distanceB == distanceC) && (i > j))
-                    tempPosition++;
-
-                else if (distanceB < distanceC)
-                    tempPosition++;
-            }
-            else if (shipIndex[i].DPASectDiff < shipIndex[j].DPASectDiff)
-            {
-                tempPosition++;
-            }
-        }
-
-        if (shipIndex[i].attr & RACING)
-            winTable[i].racePosition = tempPosition;
+        winTable[gRacePos[i]].racePosition = i + 1;
     }
 
     return winTable[ownShip].racePosition;
@@ -863,20 +891,16 @@ void DisplayRacePoints(void)
     }
 }
 
-void InitScreenTex(Texture** screenTex, const char* fileName)
+void InitWinLoseTex(const char* fileName)
 {
-    int tablePos;
     char modelFile[64];
-    Texture* tex = gTexturePtr;
 
     strcpy(modelFile, "wipeout/textures/");
     strcat(modelFile, fileName);
     strcat(modelFile, ".cmp");
 
+    gWinLoseTex = gTexturePtr;
     LoadCompressedTextureSequence(modelFile, 0);
-
-    screenTex[0] = tex++;
-    screenTex[1] = tex++;
 }
 
 void InitWeaponSprtIcons(void)
@@ -920,6 +944,11 @@ void DisplayAllVenomComplete(void)
     CentreText("NOW TAKE ON THE FULL", text_data(240, 126, 8), TEXT_COLOR_WHITE);
     CentreText("RAPIER CLASS CHAMPIONSHIP", text_data(240, 138, 8), TEXT_COLOR_WHITE);
     CentreText("KEEP GOING", text_data(240, 162, 8), TEXT_COLOR_WHITE);
+}
+
+void DisplayWinLose(int32 index)
+{
+    renderImage(gWinLoseTex + index, 180, 50);
 }
 
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)
@@ -1098,6 +1127,6 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
     if (playerShip->attr & RACING)
     {
         fill_speedo(playerShip->speed, playerShip->thrust_mag);
-        renderImage(speedoTex, speedo_x, speedo_y);
+        renderImage(gSpeedoTex, speedo_x, speedo_y);
     }
 }

@@ -34,7 +34,6 @@ Object* objectTable[ObjectTableMax];
 Object* camSpline[20];
 Object* shipSpline[20];
 short finishedExtro;
-short extroLevel;
 
 Skeleton gCamPos;
 Skeleton gCamDir;

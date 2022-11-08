@@ -128,14 +128,11 @@ typedef struct TrackCamera
     vec4s vel;
 } TrackCamera;
 
-#ifdef __3DO__
-void InitTrackShade(char* file);
-#endif
-
 TrackSection* NextIndexSection(TrackSection* section);
 
 void LoadTrack(int32 trackNum);
 
 #ifdef _DEBUG
 void convertTrack3DO(int32 trackNum);
+void convertObjects3DO(const char* name, const Object* firstObject);
 #endif

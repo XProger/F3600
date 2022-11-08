@@ -48,68 +48,75 @@ short championOrder[8];
 short raceOrder[8];
 short shipOrder[8];
 
-void SetSpread(ShipData* shipIndex, ConfigData* gameData, int position, int i)
+void SetSpread(ShipData* ship, ConfigData* gameData, int position)
 {
+    int32 speed;
+
+    position--;
+
     switch (gameData->actTrackNum)
     {
         case 1:
-            shipIndex[i].numtospeed = (position - 1) * (60 + ((position - 1) * 11));
+            speed = 60 + position * 11;
             break;
         case 2:
-            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 20));
+            speed = 80 + position * 20;
             break;
         case 3:
-            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 11));
+            speed = 80 + position * 11;
             break;
         case 4:
-            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
+            speed = 10 + position * 8;
             break;
         case 5:
-            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
+            speed = 10 + position * 8;
             break;
         case 6:
-            shipIndex[i].numtospeed = (position - 1) * (60 + ((position - 1) * 8));
+            speed = 60 + position * 8;
             break;
         case 7:
-            shipIndex[i].numtospeed = (position - 1) * (30 + ((position - 1) * 11));
+            speed = 30 + position * 11;
             break;
         case 8:
-            shipIndex[i].numtospeed = (position - 1) * (80 + ((position - 1) * 15));
+            speed = 80 + position * 15;
             break;
         case 9:
-            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
+            speed = 10 + position * 8;
             break;
         case 10:
-            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
+            speed = 40 + position * 11;
             break;
         case 11:
-            shipIndex[i].numtospeed = (position - 1) * (30 + ((position - 1) * 11));
+            speed = 30 + position * 11;
             break;
         case 12:
-            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
+            speed = 40 + position * 11;
             break;
         case 13:
-            shipIndex[i].numtospeed = (position - 1) * (10 + ((position - 1) * 8));
+            speed = 10 + position * 8;
             break;
         case 14:
-            shipIndex[i].numtospeed = (position - 1) * (40 + ((position - 1) * 11));
+            speed = 40 + position * 11;
             break;
+        default:
+            speed = 0;
+            ASSERT(0);
     }
 
-    shipIndex[i].numtospeed = shipIndex[i].numtospeed;
+    ship->numtospeed = speed * position;
 }
-
 
 void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 {
-    int i;
-    vec3i distance;
+    int32 i;
+    int32 dist, dx, dy, dz, vz;
     Object* obj;
-    int mag;
     vec3s toCentre;
     vec3i v2;
-    long flag;
+    int32 flag;
     MATRIX* matrix;
+    ShipData* ship;
+    int32 attr;
 
     matrix = GetSkeletonMatrix(ctrlcamera.camPos->super);
 
@@ -118,46 +125,40 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
         if (!((i == ownShip) || (raceType != TIME_TRIAL)))
             continue;
 
-        distance.x = (shipIndex[i].pos.x + ctrlcamera.camPos->relative.t[0]) >> 3;
-        distance.y = (shipIndex[i].pos.y + ctrlcamera.camPos->relative.t[1]) >> 3;
-        distance.z = (shipIndex[i].pos.z + ctrlcamera.camPos->relative.t[2]) >> 3;
+        ship = shipIndex + i;
 
-        mag = GetMagnitude(&distance);
+        dx = ship->pos.x + ctrlcamera.camPos->relative.t[0];
+        dz = ship->pos.z + ctrlcamera.camPos->relative.t[2];
 
-        toCentre.x = (shipIndex[i].pos.x + ctrlcamera.camPos->relative.t[0]);
-        toCentre.y = (shipIndex[i].pos.y + ctrlcamera.camPos->relative.t[1]);
-        toCentre.z = (shipIndex[i].pos.z + ctrlcamera.camPos->relative.t[2]);
-        RotTrans(matrix, &toCentre, &v2, &flag);
+        dist = GetMagnitudeApprox(dx, dz);
 
-        if (mag < SHIP_VIS_DIST)
-            shipIndex[i].attr |= VISIBLE;
+        attr = ship->attr & ~VISIBLE;
 
-        if ((mag < SHIP_VIS_DIST) && (v2.z > 0) || (i == camShip))
+        if (dist < SHIP_VIS_DIST)
         {
-        #ifdef USE_SHIP_LODS
-            if (shipIndex[ownShip].attr & RACING)
+            dy = (ship->pos.y + ctrlcamera.camPos->relative.t[1]);
+            vz = (((dx * matrix->m[2][0]) + (dy * matrix->m[2][1]) + (dz * matrix->m[2][2])) >> FIXED_SHIFT) + matrix->t[2];
+
+            if (vz > 0)
             {
-                if (mag < 1600)
-                    obj = shipShapes[shipIndex[i].highResTableIndex];
+            #ifdef USE_SHIP_LODS
+                if (dist < SHIP_LOD_DIST)
+                    obj = shipShapes[ship->highResTableIndex];
                 else
-                    obj = shipShapes[shipIndex[i].lowResTableIndex];
-            }
-            else
-        #endif
-            {
-                obj = shipShapes[shipIndex[i].highResTableIndex];
-            }
+                    obj = shipShapes[ship->lowResTableIndex];
+            #else
+                obj = shipShapes[ship->highResTableIndex];
+            #endif
 
-
-            if (((shipIndex[i].attr & VIEW_IN) == 0) || (shipIndex[i].attr & REMOTE_VIEW))
-            {
-                DrawShip(obj, shipIndex + i);
+                if (!(attr & VIEW_IN) || (attr & REMOTE_VIEW))
+                {
+                    attr |= VISIBLE;
+                    DrawShip(obj, ship);
+                }
             }
         }
-        else
-        {
-            shipIndex[i].attr &= ~VISIBLE;
-        }
+
+        ship->attr = attr;
     }
 }
 
@@ -189,7 +190,6 @@ void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
         shipShapes[count] = obj;
 
         count += 1;
-
         obj->skeleton->super = camPos;
         obj = obj->next;
     }
@@ -228,6 +228,7 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
     short position = 1;
     short used[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     int index;
+    ShipData* ship;
 
     /***********************************************************************************/
     /**                     Ship ATTRIBUTES                                        *****/
@@ -365,110 +366,108 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        shipIndex[i].vel.x = 0;
-        shipIndex[i].vel.y = 0;
-        shipIndex[i].vel.z = 0;
-        shipIndex[i].acc.x = 0;
-        shipIndex[i].acc.y = 0;
-        shipIndex[i].acc.z = 0;
-        shipIndex[i].hdg = 0;
-        shipIndex[i].pitch = 0;
-        shipIndex[i].roll = 0;
-        shipIndex[i].vhdg = 0;
-        shipIndex[i].vpitch = 0;
-        shipIndex[i].vroll = 0;
-        shipIndex[i].ahdg = 0;
-        shipIndex[i].thrust_mag = 0;
-        shipIndex[i].r_brake_rot = 0;
-        shipIndex[i].l_brake_rot = 0;
-        shipIndex[i].attr = 0;
-        shipIndex[i].attr |= RACING;
-        shipIndex[i].attr |= VISIBLE;
-        shipIndex[i].attr |= DIRECTION;
-        shipIndex[i].combatAttr = 0;
-        shipIndex[i].weaponType = WPN_NONE;
-        shipIndex[i].lapNo = 0;
-        shipIndex[i].prevLapNo = 0;
-        shipIndex[i].speed = 0;
-        shipIndex[i].electroCount = 0;
-        shipIndex[i].revConCount = 0;
+        ship = shipIndex + i;
+
+        ship->vel.x = 0;
+        ship->vel.y = 0;
+        ship->vel.z = 0;
+        ship->hdg = 0;
+        ship->pitch = 0;
+        ship->roll = 0;
+        ship->vhdg = 0;
+        ship->vpitch = 0;
+        ship->vroll = 0;
+        ship->ahdg = 0;
+        ship->thrust_mag = 0;
+        ship->r_brake_rot = 0;
+        ship->l_brake_rot = 0;
+        ship->attr = 0;
+        ship->attr |= RACING;
+        ship->attr |= VISIBLE;
+        ship->attr |= DIRECTION;
+        ship->combatAttr = 0;
+        ship->weaponType = WPN_NONE;
+        ship->lapNo = 0;
+        ship->speed = 0;
+        ship->electroCount = 0;
+        ship->revConCount = 0;
 
         if (gameData->Class == 0)
         {
-            shipIndex[i].max_thrust = maxThrustBeg[i];
-            shipIndex[i].skid = skidBeg[i];
+            ship->max_thrust = maxThrustBeg[i];
+            ship->skid = skidBeg[i];
         }
         else
         {
-            shipIndex[i].max_thrust = maxThrustPro[i];
-            shipIndex[i].skid = skidPro[i];
-        }
-
-        if (gameData->Class == 0)
-        {
-            shipIndex[i].headingInc = headingIncBeg[i];
-            shipIndex[i].maxHeading = maxHeadingBeg[i];
-        }
-        else
-        {
-            shipIndex[i].headingInc = headingIncPro[i];
-            shipIndex[i].maxHeading = maxHeadingPro[i];
+            ship->max_thrust = maxThrustPro[i];
+            ship->skid = skidPro[i];
         }
 
         if (gameData->Class == 0)
         {
-            shipIndex[i].resistance = resistanceBeg[i];
-            shipIndex[i].fightBack = fightBackBeg[i];
+            ship->headingInc = headingIncBeg[i];
+            ship->maxHeading = maxHeadingBeg[i];
         }
         else
         {
-            shipIndex[i].resistance = resistancePro[i];
-            shipIndex[i].fightBack = fightBackPro[i];
+            ship->headingInc = headingIncPro[i];
+            ship->maxHeading = maxHeadingPro[i];
+        }
+
+        if (gameData->Class == 0)
+        {
+            ship->resistance = resistanceBeg[i];
+            ship->fightBack = fightBackBeg[i];
+        }
+        else
+        {
+            ship->resistance = resistancePro[i];
+            ship->fightBack = fightBackPro[i];
         }
 
         for (j = 0; j < 5; j++)
-            shipIndex[i].lapTimes[j] = 0;
+            ship->lapTimes[j] = 0;
 
-        shipIndex[i].updateCount = START_TIME;
-        shipIndex[i].targetShip = 0xFF;
+        ship->updateCount = START_TIME;
+        ship->targetShip = 0xFF;
 
         if (i == ownShip)
         {
-            shipIndex[i].update = UpdatePlayerShipNormStart;
+            ship->update = UpdatePlayerShipNormStart;
         }
         else
-            shipIndex[i].update = UpdateRemoteShipStart;
+            ship->update = UpdateRemoteShipStart;
 
         if (i == ownShip)
         {
             position = 0;
-            shipIndex[i].position = position;
-            shipIndex[i].remoteMaxThrust = 2900;
-            shipIndex[i].remoteThrustMag = 46;
-            shipIndex[i].fightBack = 0;
+            ship->position = position;
+            ship->remoteMaxThrust = 2900;
+            ship->remoteThrustMag = 46;
+            ship->fightBack = 0;
         }
         else
         {
             position = shipOrder[i];
-            shipIndex[i].position = position;
+            ship->position = position;
 
             if (gameData->Class == 0)
             {
-                shipIndex[i].remoteMaxThrust = RMaxThrustBeg[position - 1];
-                shipIndex[i].remoteThrustMag = RThrustMagBeg[position - 1];
-                shipIndex[i].fightBack = fightBackBeg[position - 1];
+                ship->remoteMaxThrust = RMaxThrustBeg[position - 1];
+                ship->remoteThrustMag = RThrustMagBeg[position - 1];
+                ship->fightBack = fightBackBeg[position - 1];
             }
             else
             {
-                shipIndex[i].remoteMaxThrust = RMaxThrustPro[position - 1];
-                shipIndex[i].remoteThrustMag = RThrustMagPro[position - 1];
-                shipIndex[i].fightBack = fightBackPro[position - 1];
+                ship->remoteMaxThrust = RMaxThrustPro[position - 1];
+                ship->remoteThrustMag = RThrustMagPro[position - 1];
+                ship->fightBack = fightBackPro[position - 1];
             }
         }
 
-        shipIndex[i].nearTrkSect = startSection[position];
-        shipIndex[i].prevShipSect = startSection[position];
-        SetSpread(shipIndex, gameData, position, i);
+        ship->nearTrkSect = startSection[position];
+        ship->prevShipSect = startSection[position];
+        SetSpread(ship, gameData, position);
 
         face = track->faces + startSection[position]->faceStart;
         face++;
@@ -478,18 +477,18 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         facePoint.x = (track->vertices[(face->vertex[0])].x + track->vertices[(face->vertex[2])].x) >> 1;
         facePoint.y = (track->vertices[(face->vertex[0])].y + track->vertices[(face->vertex[2])].y) >> 1;
         facePoint.z = (track->vertices[(face->vertex[0])].z + track->vertices[(face->vertex[2])].z) >> 1;
-        shipIndex[i].pos.x = facePoint.x + ((face->normal.x * 200) >> 12);
-        shipIndex[i].pos.y = facePoint.y + ((face->normal.y * 200) >> 12);
-        shipIndex[i].pos.z = facePoint.z + ((face->normal.z * 200) >> 12);
+        ship->pos.x = facePoint.x + ((face->normal.x * 200) >> FIXED_SHIFT);
+        ship->pos.y = facePoint.y + ((face->normal.y * 200) >> FIXED_SHIFT);
+        ship->pos.z = facePoint.z + ((face->normal.z * 200) >> FIXED_SHIFT);
 
-        shipIndex[i].nearSecNo = startSection[position]->secNo;
-        shipIndex[i].prevSecNo = startSection[position]->secNo;
-        shipIndex[i].DPASectDiff = startSection[position]->secNo;
+        ship->nearSecNo = startSection[position]->secNo;
+        ship->prevSecNo = startSection[position]->secNo;
+        ship->DPASectDiff = startSection[position]->secNo;
 
         nextSection = startSection[position]->nextSection;
         targetVector.x = nextSection->centre.x - startSection[position]->centre.x;
         targetVector.y = nextSection->centre.y - startSection[position]->centre.y;
         targetVector.z = nextSection->centre.z - startSection[position]->centre.z;
-        shipIndex[i].hdg = -ratan2(targetVector.x, targetVector.z);
+        ship->hdg = -ratan2(targetVector.x, targetVector.z);
     }
 }

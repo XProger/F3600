@@ -1,6 +1,7 @@
 #include "pad.h"
 
-#define SHIP_VIS_DIST 3000 // og 2000
+#define SHIP_VIS_DIST 16000
+#define SHIP_LOD_DIST 8000
 
 #define INTERACTIVE 0
 #define ATTRACT     1
@@ -62,7 +63,6 @@ extern Object* objectTable[ObjectTableMax];
 extern Object* camSpline[];
 extern Object* shipSpline[];
 extern short finishedExtro;
-extern short extroLevel;
 
 extern Skeleton gCamPos;
 extern Skeleton gCamDir;
@@ -91,7 +91,7 @@ extern const char gTrackList[15];
 #define DRAM_BLOCK_SIZE (32 * 1024)
 #define VRAM_BLOCK_SIZE (16 * 1024)
 
-#define DRAM_SIZE (31 * DRAM_BLOCK_SIZE)
+#define DRAM_SIZE (33 * DRAM_BLOCK_SIZE)
 #define VRAM_SIZE (44 * VRAM_BLOCK_SIZE)
 
 extern char* gDRAM;

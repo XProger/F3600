@@ -956,16 +956,21 @@ void renderShadow(const Shadow* s)
 {
     const Texture* t = s->texture;
     CVECTOR color = { 255, 255, 255, 255 };
+    int32 x3, y3, z3;
 
     renderSetShader(&shaderBlob);
     renderSetTexture(t);
     stateCheck();
 
+    x3 = s->v[1].x + s->v[2].x - s->v[0].x;
+    y3 = s->v[1].y + s->v[2].y - s->v[0].y;
+    z3 = s->v[1].z + s->v[2].z - s->v[0].z;
+
     addQuad();
-    addVertex(s->x0, s->y0, s->z0, 0.0f, 0.0f, &color);
-    addVertex(s->x1, s->y1, s->z1, 1.0f, 0.0f, &color);
-    addVertex(s->x2, s->y2, s->z2, 1.0f, 1.0f, &color);
-    addVertex(s->x3, s->y3, s->z3, 0.0f, 1.0f, &color);
+    addVertex(s->v[0].x, s->v[0].y, s->v[0].z, 0.0f, 0.0f, &color);
+    addVertex(s->v[1].x, s->v[1].y, s->v[1].z, 1.0f, 0.0f, &color);
+    addVertex(x3, y3, z3, 1.0f, 1.0f, &color);
+    addVertex(s->v[2].x, s->v[2].y, s->v[2].z, 0.0f, 1.0f, &color);
 
     gVertices[gVerticesCount - 3].a =
     gVertices[gVerticesCount - 2].a =
@@ -991,9 +996,9 @@ void renderBillboard(const Billboard* b)
     const Texture* t = b->texture;
 
     size = b->size * 8;
-    sx = size * gCylX >> 12;
+    sx = size * gCylX >> FIXED_SHIFT;
     sy = size;
-    sz = size * gCylZ >> 12;
+    sz = size * gCylZ >> FIXED_SHIFT;
 
     renderSetTexture(t);
     renderSetShader(&shaderObject);
@@ -1754,8 +1759,8 @@ void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
                 poly.spr++;
 
                 v = vertices + f->coord;
-                sx = gCylX * w >> 12;
-                sz = gCylZ * w >> 12;
+                sx = gCylX * w >> FIXED_SHIFT;
+                sz = gCylZ * w >> FIXED_SHIFT;
 
                 renderSetTexture(t);
                 stateCheck();

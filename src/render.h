@@ -534,10 +534,7 @@ typedef struct
 
 typedef struct
 {
-    int32 x0, y0, z0;
-    int32 x1, y1, z1;
-    int32 x2, y2, z2;
-    int32 x3, y3, z3;
+    vec3i v[3];
     const Texture* texture;
     int32 intensity;
 } Shadow;

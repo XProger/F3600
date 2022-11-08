@@ -458,6 +458,11 @@ void MoveDonkey(Object** donkey)
     }
 }
 
+#ifdef __3DO__
+void InitShadow(void)
+{
+}
+#else
 void InitShadow(void)
 {
     const char* name;
@@ -476,17 +481,16 @@ void InitShadow(void)
     LoadTexture(name);
     HACK_LOAD_SHADOW = 0;
 }
+#endif
 
 void DrawShadows(ShipData* shipIndex)
 {
-#ifndef __3DO__ // TODO
     const Face* facePtr;
     Shadow s;
     int i, j, px, py, pz, cx, cy, cz, nx, nz, wx, wz;
     int alpha, intensity;
     const vec3i* facePoint;
     ShipData* playerShip;
-    vec3i v[4];
 
     cx = ctrlcamera.camPos->absolute.t[0];
     cy = ctrlcamera.camPos->absolute.t[1];
@@ -497,7 +501,7 @@ void DrawShadows(ShipData* shipIndex)
 
     #define SHADOW_SHIFT_N  3
     #define SHADOW_SHIFT_W  4
-    #define SHADOW_BIAS     32
+    #define SHADOW_BIAS     48
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
@@ -525,52 +529,32 @@ void DrawShadows(ShipData* shipIndex)
         wx = playerShip->unitVecWing.x >> SHADOW_SHIFT_W;
         wz = playerShip->unitVecWing.z >> SHADOW_SHIFT_W;
 
-        v[0].x = px + nx - wx;
-        v[0].y = py;
-        v[0].z = pz + nz - wz;
+        s.v[0].x = px + nx - wx;
+        s.v[0].y = py;
+        s.v[0].z = pz + nz - wz;
 
-        v[1].x = px + nx + wx;
-        v[1].y = py;
-        v[1].z = pz + nz + wz;
+        s.v[1].x = px + nx + wx;
+        s.v[1].y = py;
+        s.v[1].z = pz + nz + wz;
 
-        v[2].x = px - nx + wx;
-        v[2].y = py;
-        v[2].z = pz - nz + wz;
-
-        v[3].x = px - nx - wx;
-        v[3].y = py;
-        v[3].z = pz - nz - wz;
+        s.v[2].x = px - nx - wx;
+        s.v[2].y = py;
+        s.v[2].z = pz - nz - wz;
 
         intensity = 0;
 
         /*TODO optimize, single raycast + normal*/
-        for (j = 0; j < 4; j++)
+        for (j = 0; j < 3; j++)
         {
-            alpha = PlaneLineCollision(facePoint, v + j, &facePtr->normal);
+            alpha = PlaneLineCollision(facePoint, s.v + j, &facePtr->normal);
             intensity += alpha;
 
             alpha -= SHADOW_BIAS;
 
-            v[j].x -= (alpha * facePtr->normal.x) >> 12;
-            v[j].y -= (alpha * facePtr->normal.y) >> 12;
-            v[j].z -= (alpha * facePtr->normal.z) >> 12;
+            s.v[j].x -= (facePtr->normal.x * alpha) >> FIXED_SHIFT;
+            s.v[j].y -= (facePtr->normal.y * alpha) >> FIXED_SHIFT;
+            s.v[j].z -= (facePtr->normal.z * alpha) >> FIXED_SHIFT;
         }
-
-        s.x0 = v[0].x;
-        s.y0 = v[0].y;
-        s.z0 = v[0].z;
-
-        s.x1 = v[1].x;
-        s.y1 = v[1].y;
-        s.z1 = v[1].z;
-
-        s.x2 = v[2].x;
-        s.y2 = v[2].y;
-        s.z2 = v[2].z;
-
-        s.x3 = v[3].x;
-        s.y3 = v[3].y;
-        s.z3 = v[3].z;
 
         s.texture = gShadowTex;
 
@@ -586,7 +570,6 @@ void DrawShadows(ShipData* shipIndex)
     }
 
     renderSetBlend(BLEND_NONE);
-#endif
 }
 
 int shakeCount = 0;
@@ -615,6 +598,15 @@ void ShakeScreen(void)
     osJoyVibrate(0, shakeCount, shakeCount);
 }
 
+#ifdef __3DO__
+void InitAuroraBorialis(Object* object)
+{
+}
+
+void AuroraBorialis(Object* object)
+{
+}
+#else
 /*TODO optimize this shit!*/
 #define MAX_AURORA_PRIMS 80
 
@@ -677,7 +669,6 @@ void InitAuroraBorialis(Object* object)
 
 void AuroraBorialis(Object* object)
 {
-#ifndef __3DO__ // TODO
     int i;
 
     Prm poly;
@@ -713,6 +704,5 @@ void AuroraBorialis(Object* object)
             abPtr[i]->colour[3].b = (rsin(coords[3] * (abPhase + 39)) >> 6) + 190;
         }
     }
-#endif
 }
-
+#endif

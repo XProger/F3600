@@ -36,7 +36,6 @@ void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
 
 void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
 {
-    int mag;
     vec3i distance;
     int collide;
     vec3i vc;
@@ -49,12 +48,15 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
     distance.y = (shipIndex[i].pos.y - shipIndex[j].pos.y) >> 3;
     distance.z = (shipIndex[i].pos.z - shipIndex[j].pos.z) >> 3;
 
-    mag = GetMagnitude(&distance);
-
-    if (mag < 120) /*** Do line/plane collision check ***/
+#if 1 // sphere vs sphere approx
+    if (GetMagnitudeSqr(&distance) < (40 * 40)) 
+    {
+        collide = NOSE_COLLISION;
+#else
+    if (GetMagnitudeSqr(&distance) < (120 * 120)) /*** Do line/plane collision check ***/
     {
         collide = CollideLineToPlane(j, i, shipShapes, shipIndex);
-
+#endif
         if (collide == NOSE_COLLISION)
         {
             /**********************************************************/
@@ -284,9 +286,9 @@ int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
             {
                 alpha = alpha / factor2;
 
-                term1.x = ((alpha * pos_vec->x) >> 12);
-                term1.y = ((alpha * pos_vec->y) >> 12);
-                term1.z = ((alpha * pos_vec->z) >> 12);
+                term1.x = ((alpha * pos_vec->x) >> FIXED_SHIFT);
+                term1.y = ((alpha * pos_vec->y) >> FIXED_SHIFT);
+                term1.z = ((alpha * pos_vec->z) >> FIXED_SHIFT);
 
                 res_vec.x = start_vec->x + term1.x;
                 res_vec.y = start_vec->y + term1.y;
@@ -323,15 +325,17 @@ int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* 
 
 int PlaneLineCollision(const vec3i* plane_point, const vec3i* ship_pos, const vec3s* normal)
 {
-    int dot_product, norm_dot_product;
+    int32 dot_product =
+        (ship_pos->x - plane_point->x) * normal->x +
+        (ship_pos->y - plane_point->y) * normal->y +
+        (ship_pos->z - plane_point->z) * normal->z;
 
-    dot_product = (ship_pos->x - plane_point->x) * normal->x +
-                  (ship_pos->y - plane_point->y) * normal->y +
-                  (ship_pos->z - plane_point->z) * normal->z;
-
-    norm_dot_product = ((normal->x * normal->x) + (normal->y * normal->y) + (normal->z * normal->z)) >> 12;
-
+#if 1 // optim normal length == 4096
+    return dot_product >> FIXED_SHIFT;
+#else
+    int32 norm_dot_product = ((normal->x * normal->x) + (normal->y * normal->y) + (normal->z * normal->z)) >> FIXED_SHIFT;
     return dot_product / norm_dot_product;
+#endif
 }
 
 void Ship2Track(ShipData* playerShip, Face* facePtr)
@@ -575,9 +579,9 @@ int CheckPolygonCollision(const Face* facePtr, const vec3i* pos, int alpha)
     vec3i vec0, vec1, vec2, vec3; /* vectors between plane coords and intersection point */
     int angle;
 
-    planePoint.x = pos->x - ((facePtr->normal.x * alpha) >> 12);
-    planePoint.y = pos->y - ((facePtr->normal.y * alpha) >> 12);
-    planePoint.z = pos->z - ((facePtr->normal.z * alpha) >> 12);
+    planePoint.x = pos->x - ((facePtr->normal.x * alpha) >> FIXED_SHIFT);
+    planePoint.y = pos->y - ((facePtr->normal.y * alpha) >> FIXED_SHIFT);
+    planePoint.z = pos->z - ((facePtr->normal.z * alpha) >> FIXED_SHIFT);
 
     vec0.x = planePoint.x - track->vertices[(facePtr->vertex[1])].x;
     vec0.y = planePoint.y - track->vertices[(facePtr->vertex[1])].y;
@@ -661,15 +665,16 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
     /***** Magnitude returns approx between 0 & 1000    *****/
     /***** scale this and shift to a figure around zero *****/
-    ForceFeedback(magnitude); // TODO ownShip check
+    ForceFeedback(magnitude);
 
+/*TODO audio coll volume
     magnitude = magnitude - 500;
     magnitude = magnitude << 2;
-    /*TODO audio
+
     SetVolume(SFX_SHIP_2_TRACK,
        chanTable[vagTable[SFX_SHIP_2_TRACK].channelID].s_attr.volume.left + magnitude,
        chanTable[vagTable[SFX_SHIP_2_TRACK].channelID].s_attr.volume.right + magnitude);
-    */
+*/
 }
 
 void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha)
@@ -727,13 +732,11 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 
 void Reflection(vec3i* incidence, const vec3s* normal)
 {
-    int temp;
+    int32 temp = -((normal->x * incidence->x + normal->y * incidence->y + normal->z * incidence->z) >> FIXED_SHIFT);
 
-    temp = ((((int)normal->x * -incidence->x) >> 12) + ((int)(normal->y * -incidence->y) >> 12) + ((int)(normal->z * -incidence->z) >> 12));
-
-    incidence->x = (((2 * (int)normal->x) * temp) >> 12) + incidence->x;
-    incidence->y = (((2 * (int)normal->y) * temp) >> 12) + incidence->y;
-    incidence->z = (((2 * (int)normal->z) * temp) >> 12) + incidence->z;
+    incidence->x = (normal->x * temp >> (FIXED_SHIFT - 1)) + incidence->x;
+    incidence->y = (normal->y * temp >> (FIXED_SHIFT - 1)) + incidence->y;
+    incidence->z = (normal->z * temp >> (FIXED_SHIFT - 1)) + incidence->z;
 }
 
 int AngleOfCollision(const vec3s* normal, const vec3i* ship_point)

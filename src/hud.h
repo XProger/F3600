@@ -24,14 +24,15 @@ void UpdateRaceHud(ShipData*, int, ConfigData*);
 void SetCharTextures(int32 size);
 void AddDelEnd(char dispChar, int32 x, int32 y, uint32 colour);
 void CentreText(const char*, TEXT_DATA*, uint32);
-void DisplayLives(ConfigData*); // PCwipeout
+void DisplayLives(ConfigData*);
 int CalcPosition(ShipData* shipIndex);
 void InitChampTable(void);
 void DisplayChampTable(void);
 void DisplayRacePoints(void);
-void InitScreenTex(Texture** screenTex, const char* fileName);
+void InitWinLoseTex(const char* fileName);
 void DisplayVenomComplete(void);
 void DisplayAllVenomComplete(void);
+void DisplayWinLose(int32 index);
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData);
 void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData);
 void InitWeaponSprtIcons(void);

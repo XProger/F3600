@@ -125,20 +125,30 @@ int main(int argc, char *argv[])
 
     srand(ReadHardwareRandomNumber());
 
-    gameInit();
-
     QueryGraphics(QUERYGRAF_TAG_FIELDCOUNT, &gFrameIndex);
 
     fpsFrameIndex = gFrameIndex;
 
+    gameInit();
+
     while (1)
     {
-        inputUpdate();
+        int32 dbg_frameTime;
 
         gLastFrameIndex = gFrameIndex;
-        QueryGraphics(QUERYGRAF_TAG_FIELDCOUNT, &gFrameIndex);
+
+        do
+        {
+            QueryGraphics(QUERYGRAF_TAG_FIELDCOUNT, &gFrameIndex);
+        } while (gFrameIndex - gLastFrameIndex < 2);
+
+        dbg_frameTime = osGetSystemTimeMS();
+
+        inputUpdate();
 
         gameCtrl();
+
+        dbg_frameTime = osGetSystemTimeMS() - dbg_frameTime;
 
         fpsFrame++;
         if (gFrameIndex >= fpsFrameIndex + 60)
@@ -151,6 +161,7 @@ int main(int argc, char *argv[])
         drawInt(320 - 8, 20, fps);
         drawInt(320 - 8, 28, dbg_update);
         drawInt(320 - 8, 36, dbg_render);
+        drawInt(320 - 8, 36 + 12, dbg_frameTime);
 
         renderSwap();
     }

@@ -181,14 +181,14 @@ void drawInt(int32 x, int32 y, int32 number)
     }
 }
 
-void EnableSuperClipping()
+void EnableFeatures()
 {
     int32 i;
     for (i = 0; i < 2; i++)
     {
-        SetCEControl(screen.sc_BitmapItems[i], 0xFFFFFFFF, ASCALL);
-        DisableHAVG(screen.sc_BitmapItems[i]);
-        DisableVAVG(screen.sc_BitmapItems[i]);
+        //SetCEControl(screen.sc_BitmapItems[i], 0xFFFFFFFF, ASCALL); // perf spikes and total blackout :(
+        EnableHAVG(screen.sc_BitmapItems[i]);
+        EnableVAVG(screen.sc_BitmapItems[i]);
     }
 }
 
@@ -204,7 +204,7 @@ void renderInit(void)
     irqVRAM = GetVRAMIOReq();
     screenItem = screen.sc_ScreenItems[screenPage];
 
-    //EnableSuperClipping(); // perf spikes and total blackout :(
+    EnableFeatures(); 
 
     gHighlightTextPLUT = (uint16*)allocVRAM(sizeof(HIGHLIGHT_TEXT_PLUT));
     memcpy(gHighlightTextPLUT, HIGHLIGHT_TEXT_PLUT, sizeof(HIGHLIGHT_TEXT_PLUT));
@@ -226,8 +226,8 @@ void renderResize(int width, int height) {}
 
 void renderOffset(int x, int y)
 {
-    xOffset = x + (FRAME_WIDTH >> 1);
-    yOffset = y + (FRAME_HEIGHT >> 1);
+    xOffset = (x + (FRAME_WIDTH >> 1)) << 16;
+    yOffset = (y + (FRAME_HEIGHT >> 1)) << 16;
 }
 
 void renderClear(void) {}
@@ -235,19 +235,22 @@ void renderClear(void) {}
 FaceCEL* faceAdd(int32 depth)
 {
     FaceCEL* face = gFacesBase++;
-
+    ListOT* list;
+/*
     if (depth >= OT_SIZE)
     {
         depth = OT_SIZE - 1;
     }
+*/
+    list = gOT + depth;
 
-    if (gOT[depth].head) {
-        gOT[depth].tail->ccb_NextPtr = face;
+    if (list->head) {
+        list->tail->ccb_NextPtr = face;
     } else {
-        gOT[depth].head = face;
+        list->head = face;
     }
 
-    gOT[depth].tail = face;
+    list->tail = face;
 
     return face;
 }
@@ -481,8 +484,8 @@ void renderFrameEnd(void)
 int32 gMatrix[3][3];
 int cx, cy, cz;
 
-#define DP3(row, v) ((gMatrix[row][0] * v->x + gMatrix[row][1] * v->y + gMatrix[row][2] * v->z) >> 12)
-#define DP3_XYZ(row) ((gMatrix[row][0] * vx + gMatrix[row][1] * vy + gMatrix[row][2] * vz) >> 12)
+#define DP3(row, v) ((gMatrix[row][0] * v->x + gMatrix[row][1] * v->y + gMatrix[row][2] * v->z) >> FIXED_SHIFT)
+#define DP3_XYZ(row) ((gMatrix[row][0] * vx + gMatrix[row][1] * vy + gMatrix[row][2] * vz) >> FIXED_SHIFT)
 
 #define TRANSFORM(p, v) {\
         p.x = DP3(0, v) + cx;\
@@ -521,12 +524,12 @@ void ccbMap4_track(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i*
     int32 x3 = v3->x;
     int32 y3 = v3->y;
 
-    int32 hdx0 = (x1 - x0) << (20 - 5);
-    int32 hdy0 = (y1 - y0) << (20 - 5);
-    int32 hdx1 = (x2 - x3) << (20 - 5);
-    int32 hdy1 = (y2 - y3) << (20 - 5);
-    int32 vdx0 = (x3 - x0) << (16 - 5);
-    int32 vdy0 = (y3 - y0) << (16 - 5);
+    int32 hdx0 = (x1 - x0) << 13;
+    int32 hdy0 = (y1 - y0) << 13;
+    int32 hdx1 = (x2 - x3) << 13;
+    int32 hdy1 = (y2 - y3) << 13;
+    int32 vdx0 = (x3 - x0) << 9;
+    int32 vdy0 = (y3 - y0) << 9;
 
     face->ccb_Flags =
         CCB_NPABS  |
@@ -546,8 +549,8 @@ void ccbMap4_track(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i*
 
     face->ccb_SourcePtr = data;
     face->ccb_PLUTPtr = plut;
-    face->ccb_XPos = (x0 + xOffset) << 16;
-    face->ccb_YPos = (y0 + yOffset) << 16;
+    face->ccb_XPos = xOffset + (x0 << 14);
+    face->ccb_YPos = yOffset + (y0 << 14);
     face->ccb_HDX = hdx0;
     face->ccb_HDY = hdy0;
     face->ccb_VDX = vdx0;
@@ -606,8 +609,8 @@ void ccbMap4(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i* v2, c
         CCB_BGND;
     face->ccb_SourcePtr = texture->data;
     face->ccb_PLUTPtr = texture->plut;
-    face->ccb_XPos = (x0 + xOffset) << 16;
-    face->ccb_YPos = (y0 + yOffset) << 16;
+    face->ccb_XPos = xOffset + (x0 << 16);
+    face->ccb_YPos = yOffset + (y0 << 16);
     face->ccb_HDX = hdx0;
     face->ccb_HDY = hdy0;
     face->ccb_VDX = vdx0;
@@ -663,8 +666,8 @@ void ccbMap3(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i* v2, u
 
     face->ccb_SourcePtr = texture->data;
     face->ccb_PLUTPtr = texture->plut;
-    face->ccb_XPos = (x0 + xOffset) << 16;
-    face->ccb_YPos = (y0 + yOffset) << 16;
+    face->ccb_XPos = xOffset + (x0 << 16);
+    face->ccb_YPos = yOffset + (y0 << 16);
     face->ccb_HDX = hdx0;
     face->ccb_HDY = hdy0;
     face->ccb_VDX = 0;
@@ -765,8 +768,14 @@ void trackTransProj(const vec3i* src, int32 start, int32 count)
         if (dz >= DIV_TABLE_SIZE) dz = DIV_TABLE_SIZE - 1;
         dz = FixedInvU(dz);
 
-        dst->x = (x * dz) >> 12;
-        dst->y = (y * dz) >> 12;
+        x *= dz;
+        y *= dz;
+
+        x >>= 10;
+        y >>= 10;
+
+        dst->x = x;
+        dst->y = y;
         dst->z = z;
         dst++;
     }
@@ -859,8 +868,11 @@ void trackProj(vec3i* dst, int32 start, int32 count)
         if (dz >= DIV_TABLE_SIZE) dz = DIV_TABLE_SIZE - 1;
         dz = FixedInvU(dz);
 
-        x = (x * dz) >> 12;
-        y = (y * dz) >> 12;
+        x *= dz;
+        y *= dz;
+
+        x >>= 10;
+        y >>= 10;
 
         dst->x = x;
         dst->y = y;
@@ -1068,9 +1080,9 @@ void renderTrack(void)
         ctrlcamera.camPos->absolute.t[2]);
 
     renderSectionsMed(ctrlcamera.section->visRange[0]);
-    yOffset++; // HACK to hide gaps between LODs (precision problem)
+    yOffset += (1 << 15); // HACK to hide gaps between LODs (precision problem)
     renderSectionsLow(ctrlcamera.section->visRange[1]);
-    yOffset--;
+    yOffset -= (1 << 15);
 }
 
 void renderQuadFace(const int16* indices, int32 texIndex)

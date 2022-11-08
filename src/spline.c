@@ -88,14 +88,14 @@ Congrats con[30];
 
 #define GlobalDistance 32767
 
+extern ConfigData ctrlConfigData;
+
 TrackSection* FindAllNearestSection(vec4i pos)
 {
     TrackSection* nearSection = NULL;
     TrackSection* trk;
     vec3i distance;
-    // long long      smallestMag = 32767 * 32767;
     long smallestMag = 0x7fffffff; // pretty big // PCwipeout
-    // long long      mag;
     long mag;
     long i;
 
@@ -126,7 +126,7 @@ TrackSection* FindAllNearestSection(vec4i pos)
 
 void UpdateShipRemote(ShipData* shipIndex, int shipNo)
 {
-    ShipData *myShip, *remoteShip;
+    ShipData *playerShip, *remoteShip;
     Face* facePtr = NULL;
     TrackSection *nextSection, *section;
     int i;
@@ -135,6 +135,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
     int temp, alpha;
     vec3i offSetVector;
     vec3i path1, path2;
+    vec3i force;
     int gap_mag, decide;
     short DPASectDiff;
 
@@ -142,8 +143,8 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
     offSetVector.y = 0;
     offSetVector.z = 0;
 
-    myShip = &(shipIndex[ownShip]);
-    remoteShip = &(shipIndex[shipNo]);
+    playerShip = shipIndex + ownShip;
+    remoteShip = shipIndex + shipNo;
 
     if ((remoteShip->attr & FLYING) == 0)
     {
@@ -154,7 +155,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
             facePtr++;
         }
 
-        DPASectDiff = remoteShip->DPASectDiff - myShip->DPASectDiff;
+        DPASectDiff = remoteShip->DPASectDiff - playerShip->DPASectDiff;
 
         remoteShip->updateControl = HoldCentre;
 
@@ -259,13 +260,9 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
 
         GetTargetPos(&bestPath, &remoteShip->pos, &path2, &path1);
 
-        remoteShip->acc.x = (targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1));
-        remoteShip->acc.y = (targetVector.y + ((bestPath.y - remoteShip->pos.y) >> 1));
-        remoteShip->acc.z = (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
-
-        remoteShip->vel.x += remoteShip->acc.x;
-        remoteShip->vel.y += remoteShip->acc.y;
-        remoteShip->vel.z += remoteShip->acc.z;
+        remoteShip->vel.x += targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1);
+        remoteShip->vel.y += targetVector.y + ((bestPath.y - remoteShip->pos.y) >> 1);
+        remoteShip->vel.z += targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1);
         /***** If remote has gone over speed-up *****/
 
         /****** Speed Test, should not make much difference ******/
@@ -274,11 +271,11 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
 
         alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
-        ApplyMagnet(&remoteShip->acc, &facePtr->normal, alpha);
+        ApplyMagnet(&force, &facePtr->normal, alpha);
 
-        remoteShip->vel.x += remoteShip->acc.x;
-        remoteShip->vel.y += remoteShip->acc.y;
-        remoteShip->vel.z += remoteShip->acc.z;
+        remoteShip->vel.x += force.x;
+        remoteShip->vel.y += force.y;
+        remoteShip->vel.z += force.z;
 
         temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -318,7 +315,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
         nextSection = section->nextSection;
 
         remoteShip->updateControl = HoldCentre;
-        (remoteShip->updateControl)(&offSetVector, myShip, facePtr, shipNo);
+        (remoteShip->updateControl)(&offSetVector, playerShip, facePtr, shipNo);
 
         if (remoteShip->remoteMaxThrust > remoteShip->speed)
         {
@@ -336,20 +333,14 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
         gap_mag = GetMagnitude(&targetVector);
 
         targetVector.x = (targetVector.x * remoteShip->speed) / gap_mag;
-        /*    targetVector.vy = (targetVector.vy*remoteShip->speed)/gap_mag;*/
         targetVector.z = (targetVector.z * remoteShip->speed) / gap_mag;
-
-        targetVector.y = 500;
 
         GetTargetPos(&bestPath, &remoteShip->pos, &nextSection->centre, &remoteShip->nearTrkSect->centre);
 
-        remoteShip->acc.x = (targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1));
-        remoteShip->acc.y = targetVector.y;
-        remoteShip->acc.z = (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
-
-        remoteShip->vel.x += remoteShip->acc.x;
-        remoteShip->vel.y += remoteShip->acc.y;
-        remoteShip->vel.z += remoteShip->acc.z;
+        // accelerate
+        remoteShip->vel.x += targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1);
+        remoteShip->vel.y += 500; // const
+        remoteShip->vel.z += targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1);
 
         remoteShip->vpitch = -200 - remoteShip->pitch;
 
@@ -577,7 +568,6 @@ void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueD
     timeOut--;
     if (timeOut <= 0)
     {
-        CameraUpdate = UpdateCameraHighUp;
         CameraUpdate = UpdateCameraExtroAttract;
     }
 
@@ -662,7 +652,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     long temp;
 
     /* firestar */
-    if (extroLevel == 14)
+    if (ctrlConfigData.actTrackNum == 14)
     {
 #if 0
       count = 2;
@@ -1033,7 +1023,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     }
 
     /* silverstream */
-    if (extroLevel == 13)
+    if (ctrlConfigData.actTrackNum == 13)
     {
 #if 0
       count = 4;

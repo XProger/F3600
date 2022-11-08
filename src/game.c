@@ -56,6 +56,11 @@ void showLoading(int32 track)
     pVRAM = vramPtr;
 }
 
+void resetTimer()
+{
+    gLastFrameIndex = gFrameIndex - 2;
+}
+
 void titleInit(void)
 {
     titleScreen = LoadTexture("wipeout/textures/wiptitle.tim");
@@ -126,7 +131,7 @@ void gameInit(void)
     ctrlConfigData.Position = 8;
 
     /*TODO cheats*/
-#if 1
+#if 0
     ctrlConfigData.RapierClass = 1;
     totalTracks = 14;
     NumTracks = 7;
@@ -174,6 +179,7 @@ void gameCtrl(void)
             MusicReset();
             titleInit();
             ctrlGameLoop = GAME_LOOP_TITLE;
+            resetTimer();
         case GAME_LOOP_TITLE:
             titleLoop();
             break;
@@ -185,6 +191,7 @@ void gameCtrl(void)
             menuInit(); // 4.7s -> 3.1s (uncomp) -> 2.1s (conv tex)
             printf("init menu %d ms\n", osGetSystemTimeMS() - time);
             ctrlGameLoop = GAME_LOOP_MENU;
+            resetTimer();
         case GAME_LOOP_MENU:
             menuLoop(&ctrlConfigData);
             break;
@@ -197,6 +204,7 @@ void gameCtrl(void)
             printf("race init %d ms\n", osGetSystemTimeMS() - time);
             renderPrepare();
             ctrlGameLoop = GAME_LOOP_RACE;
+            resetTimer();
         case GAME_LOOP_RACE:
             raceLoop(&ctrlConfigData);
             break;

@@ -1561,11 +1561,12 @@ int GetAng(const vec3i* vec1, const vec3i* vec2)
     int mag;
 
     product = ScalarProduct(vec1, vec2);
-    mag = (GetMagnitude(vec1) * GetMagnitude(vec2)) >> 12;
+    mag = (GetMagnitude(vec1) * GetMagnitude(vec2)) >> FIXED_SHIFT;
     if (mag == 0)
         product = 4095;
     else
         product = (product / mag);
+
     if (product > 4095)
         product = 4095;
     else if (product < -4095)
@@ -1576,9 +1577,14 @@ int GetAng(const vec3i* vec1, const vec3i* vec2)
     return (angle);
 }
 
-int GetMagnitude(const vec3i* vec1)
+int32 GetMagnitude(const vec3i* v)
 {
-    return rsqrt(vec1->x * vec1->x + vec1->y * vec1->y + vec1->z * vec1->z);
+    return rsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+}
+
+int32 GetMagnitudeSqr(const vec3i* v)
+{
+    return v->x * v->x + v->y * v->y + v->z * v->z;
 }
 
 int32 GetMagnitudeApprox(int32 dx, int32 dy)
@@ -1683,21 +1689,19 @@ uint32 rsqrt(uint32 x)
     return y;
 }
 
-#define SHIFT 12 /* number of bits to shift for 4096 */
-
 void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret)
 {
-    ret->m[0][0] = (((long)m0->m[0][0] * (long)m1->m[0][0]) + ((long)m0->m[0][1] * (long)m1->m[1][0]) + ((long)m0->m[0][2] * (long)m1->m[2][0])) >> SHIFT;
-    ret->m[0][1] = (((long)m0->m[0][0] * (long)m1->m[0][1]) + ((long)m0->m[0][1] * (long)m1->m[1][1]) + ((long)m0->m[0][2] * (long)m1->m[2][1])) >> SHIFT;
-    ret->m[0][2] = (((long)m0->m[0][0] * (long)m1->m[0][2]) + ((long)m0->m[0][1] * (long)m1->m[1][2]) + ((long)m0->m[0][2] * (long)m1->m[2][2])) >> SHIFT;
+    ret->m[0][0] = (((long)m0->m[0][0] * (long)m1->m[0][0]) + ((long)m0->m[0][1] * (long)m1->m[1][0]) + ((long)m0->m[0][2] * (long)m1->m[2][0])) >> FIXED_SHIFT;
+    ret->m[0][1] = (((long)m0->m[0][0] * (long)m1->m[0][1]) + ((long)m0->m[0][1] * (long)m1->m[1][1]) + ((long)m0->m[0][2] * (long)m1->m[2][1])) >> FIXED_SHIFT;
+    ret->m[0][2] = (((long)m0->m[0][0] * (long)m1->m[0][2]) + ((long)m0->m[0][1] * (long)m1->m[1][2]) + ((long)m0->m[0][2] * (long)m1->m[2][2])) >> FIXED_SHIFT;
 
-    ret->m[1][0] = (((long)m0->m[1][0] * (long)m1->m[0][0]) + ((long)m0->m[1][1] * (long)m1->m[1][0]) + ((long)m0->m[1][2] * (long)m1->m[2][0])) >> SHIFT;
-    ret->m[1][1] = (((long)m0->m[1][0] * (long)m1->m[0][1]) + ((long)m0->m[1][1] * (long)m1->m[1][1]) + ((long)m0->m[1][2] * (long)m1->m[2][1])) >> SHIFT;
-    ret->m[1][2] = (((long)m0->m[1][0] * (long)m1->m[0][2]) + ((long)m0->m[1][1] * (long)m1->m[1][2]) + ((long)m0->m[1][2] * (long)m1->m[2][2])) >> SHIFT;
+    ret->m[1][0] = (((long)m0->m[1][0] * (long)m1->m[0][0]) + ((long)m0->m[1][1] * (long)m1->m[1][0]) + ((long)m0->m[1][2] * (long)m1->m[2][0])) >> FIXED_SHIFT;
+    ret->m[1][1] = (((long)m0->m[1][0] * (long)m1->m[0][1]) + ((long)m0->m[1][1] * (long)m1->m[1][1]) + ((long)m0->m[1][2] * (long)m1->m[2][1])) >> FIXED_SHIFT;
+    ret->m[1][2] = (((long)m0->m[1][0] * (long)m1->m[0][2]) + ((long)m0->m[1][1] * (long)m1->m[1][2]) + ((long)m0->m[1][2] * (long)m1->m[2][2])) >> FIXED_SHIFT;
 
-    ret->m[2][0] = (((long)m0->m[2][0] * (long)m1->m[0][0]) + ((long)m0->m[2][1] * (long)m1->m[1][0]) + ((long)m0->m[2][2] * (long)m1->m[2][0])) >> SHIFT;
-    ret->m[2][1] = (((long)m0->m[2][0] * (long)m1->m[0][1]) + ((long)m0->m[2][1] * (long)m1->m[1][1]) + ((long)m0->m[2][2] * (long)m1->m[2][1])) >> SHIFT;
-    ret->m[2][2] = (((long)m0->m[2][0] * (long)m1->m[0][2]) + ((long)m0->m[2][1] * (long)m1->m[1][2]) + ((long)m0->m[2][2] * (long)m1->m[2][2])) >> SHIFT;
+    ret->m[2][0] = (((long)m0->m[2][0] * (long)m1->m[0][0]) + ((long)m0->m[2][1] * (long)m1->m[1][0]) + ((long)m0->m[2][2] * (long)m1->m[2][0])) >> FIXED_SHIFT;
+    ret->m[2][1] = (((long)m0->m[2][0] * (long)m1->m[0][1]) + ((long)m0->m[2][1] * (long)m1->m[1][1]) + ((long)m0->m[2][2] * (long)m1->m[2][1])) >> FIXED_SHIFT;
+    ret->m[2][2] = (((long)m0->m[2][0] * (long)m1->m[0][2]) + ((long)m0->m[2][1] * (long)m1->m[1][2]) + ((long)m0->m[2][2] * (long)m1->m[2][2])) >> FIXED_SHIFT;
 }
 
 void ApplyMatrix(const MATRIX* m, const vec3s* v0, vec3i* v1)
@@ -1709,20 +1713,20 @@ void ApplyMatrix(const MATRIX* m, const vec3s* v0, vec3i* v1)
     yt = (long)(v0->y);
     zt = (long)(v0->z);
 
-    stage1 = (xt * (long)(m->m[0][0])) >> SHIFT;
-    stage2 = (yt * (long)(m->m[0][1])) >> SHIFT;
-    stage3 = (zt * (long)(m->m[0][2])) >> SHIFT;
-    v1->x = stage1 + stage2 + stage3 + m->t[0];
+    stage1 = xt * (long)(m->m[0][0]);
+    stage2 = yt * (long)(m->m[0][1]);
+    stage3 = zt * (long)(m->m[0][2]);
+    v1->x = ((stage1 + stage2 + stage3) >> FIXED_SHIFT) + m->t[0];
 
-    stage1 = (xt * (long)(m->m[1][0])) >> SHIFT;
-    stage2 = (yt * (long)(m->m[1][1])) >> SHIFT;
-    stage3 = (zt * (long)(m->m[1][2])) >> SHIFT;
-    v1->y = stage1 + stage2 + stage3 + m->t[1];
+    stage1 = xt * (long)(m->m[1][0]);
+    stage2 = yt * (long)(m->m[1][1]);
+    stage3 = zt * (long)(m->m[1][2]);
+    v1->y = ((stage1 + stage2 + stage3) >> FIXED_SHIFT) + m->t[1];
 
-    stage1 = (xt * (long)(m->m[2][0])) >> SHIFT;
-    stage2 = (yt * (long)(m->m[2][1])) >> SHIFT;
-    stage3 = (zt * (long)(m->m[2][2])) >> SHIFT;
-    v1->z = stage1 + stage2 + stage3 + m->t[2];
+    stage1 = xt * (long)(m->m[2][0]);
+    stage2 = yt * (long)(m->m[2][1]);
+    stage3 = zt * (long)(m->m[2][2]);
+    v1->z = ((stage1 + stage2 + stage3) >> FIXED_SHIFT) + m->t[2];
 }
 
 void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, long* flag)

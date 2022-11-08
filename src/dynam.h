@@ -7,7 +7,7 @@
 #define TARGETHEIGHT 256
 
 #define COLLIDE 0x1
-#define frac(x, y) (((x) * (y)) >> 12) /* 9 */
+#define frac(x, y) (((x) * (y)) >> FIXED_SHIFT) /* 9 */
 
 void ShipCalcAmbient(ShipData* playerShip);
 void ShipTrkReaction(ShipData* playerShip);

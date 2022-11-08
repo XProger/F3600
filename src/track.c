@@ -711,4 +711,9 @@ void convertTrack3DO(int32 trackNum)
 
     printf("track cluts: %d\n", clutsCount);
 }
+
+void convertObjects3DO(const char* name, const Object* firstObject)
+{
+    //
+}
 #endif

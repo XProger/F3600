@@ -1,11 +1,7 @@
-#define COLLIDE_MODEL    16
 #define NOSE_COLLISION   1
-#define TAIL_COLLISION   2
-#define R_WING_COLLISION 3
-#define L_WING_COLLISION 4
 
 void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes);
-void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int, int);
+void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j);
 int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* shipIndex);
 int PlaneLineCollision(const vec3i* plane_point, const vec3i* ship_pos, const vec3s* normal);
 void Ship2Track(ShipData* playerShip, Face* facePtr);

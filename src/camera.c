@@ -96,9 +96,9 @@ void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData
     rsincos(camShip->hdg, sy, cy);
     rsincos(camShip->roll, sz, cz);
 
-    unitFinVector.x = ((cy * sz) >> 12) - ((((sy * sx) >> 12) * cz) >> 12);
-    unitFinVector.y = (cx * cz) >> 12;
-    unitFinVector.z = ((sy * sz) >> 12) + ((((cy * sx) >> 12) * cz) >> 12);
+    unitFinVector.x = ((cy * sz) - (((sy * sx) >> FIXED_SHIFT) * cz)) >> FIXED_SHIFT;
+    unitFinVector.y = (cx * cz) >> FIXED_SHIFT;
+    unitFinVector.z = ((sy * sz) + (((cy * sx) >> FIXED_SHIFT) * cz)) >> FIXED_SHIFT;
 
     SetSkeletonPosition(camera->camPos, -(camShip->pos.x - (unitFinVector.x >> 5)), -(camShip->pos.y - (unitFinVector.y >> 5)), -(camShip->pos.z - (unitFinVector.z >> 5)));
 
@@ -186,9 +186,9 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
     rsincos(camShip->roll, sz, cz);
     rsincos(target << 3, st, ct);
 
-    unitFinVector.x = ((cy * sz) - (((sy * sx) >> 12) * cz)) >> 12;
-    unitFinVector.y = (cx * cz) >> 12;
-    unitFinVector.z = ((sy * sz) + (((cy * sx) >> 12) * cz)) >> 12;
+    unitFinVector.x = ((cy * sz) - (((sy * sx) >> FIXED_SHIFT) * cz)) >> FIXED_SHIFT;
+    unitFinVector.y = (cx * cz) >> FIXED_SHIFT;
+    unitFinVector.z = ((sy * sz) + (((cy * sx) >> FIXED_SHIFT) * cz)) >> FIXED_SHIFT;
 
     pos.x = camShip->pos.x + (sy / 6);
     pos.y = camShip->pos.y + ((camShip->pitch >> 2) - 200);

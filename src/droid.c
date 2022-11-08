@@ -85,7 +85,7 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo)
     playerShip->roll -= playerShip->roll >> 5;
 
     /**** Needs PAL ****/
-    if ((playerShip->attr & IN_TOW) && (GetMagnitude(&distance) < 800))
+    if ((playerShip->attr & IN_TOW) && (GetMagnitudeSqr(&distance) < (800 * 800)))
     {
         playerShip->update = UpdatePlayerShipNorm;
         playerShip->updateCount = 0;
@@ -150,10 +150,6 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     short targetHdg;
     short quickestTurn, turn;
     int32 cx, cy, sy;
-
-#ifdef __3DO__ // TODO optimize
-    return;
-#endif
 
     nextSection = rescueDroid->section->nextSection;
 
@@ -287,7 +283,7 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         rescueDroid->pos.z = target.z;
     }
 
-    if ((GetMagnitude(&distance) < 1) && ((shipIndex->attr & IN_TOW) == 0))
+    if ((GetMagnitudeSqr(&distance) < 1) && ((shipIndex->attr & IN_TOW) == 0))
     {
         shipIndex->attr |= IN_TOW;
 
@@ -387,7 +383,7 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
 
 void DrawDroid(Object* droid, const RescueData* rescueData)
 {
-#ifndef __3DO__ // TODO
+#ifndef __3DO__ // TODO visibility check
     DrawObject(droid, rescueData->pos.x, rescueData->pos.y, rescueData->pos.z, rescueData->hdg, rescueData->pitch, rescueData->roll);
 #endif
 }

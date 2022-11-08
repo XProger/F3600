@@ -96,5 +96,5 @@ short GetMenuKey(short key)
         default:
             break;
     }
-    return (1); // PCwipeout
+    return 0;
 }

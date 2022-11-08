@@ -12,6 +12,7 @@ extern const short shipShapeOrder[];
 const short pilotShapeOrder[8] = { 0, 4, 6, 7, 2, 5, 1, 3 };
 const short teamShapeOrder[4] = { 2, 3, 1, 0 }; // jed
 ChampionShip winTable[NO_OF_SHIPS];
+
 int modelHdg = 0;
 int zoomInOut = 0;
 int downUp = 0;
@@ -1213,17 +1214,7 @@ void DisplayPadMenu2(const Menu* menu, int shapeNo)
 
 void InitChampionship(void)
 {
-    short i;
-
-    for (i = 0; i < NO_OF_SHIPS; i++)
-    {
-        winTable[i].points = 0;
-        winTable[i].racePoints = 0;
-        winTable[i].pilot[0] = '\0';
-        winTable[i].xPos = 0;
-        winTable[i].position = 0;
-        winTable[i].racePosition = 0;
-    }
+    memset(winTable, 0, sizeof(winTable));
 }
 
 void InitButtons(char* fileName)

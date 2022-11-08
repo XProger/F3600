@@ -220,6 +220,7 @@ Object* LoadPrm(const char* name, short textureStart)
             for (j = 0; j < 3; j++)
             {
                 IntelShort(&object->skeleton->relative.m[i][j]);
+                ASSERT(object->skeleton->relative.m[i][j] == 0 || object->skeleton->relative.m[i][j] == 4096);
             }
 
             IntelLong(&object->skeleton->relative.t[i]);
@@ -375,6 +376,10 @@ Object* LoadPrm(const char* name, short textureStart)
 
         lastObject = object;
     }
+
+#ifdef _DEBUG
+    convertObjects3DO(name, firstObject);
+#endif
 
     return (firstObject);
 }

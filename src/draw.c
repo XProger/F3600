@@ -33,50 +33,37 @@ char TrackDirection(const TrackCamera* camera)
     }
 }
 
-void DrawLandscape(ShipData* playerShip, TrackCamera* camera)
+void DrawLandscape(TrackCamera* camera)
 {
 #ifndef __3DO__ // TODO
-    short i;
-    vec3i result;
-    long flag;
+    int32 i;
+    int32 x, y, z, px, py;
     TrackSection* section;
-    long extent;
-    vec3s centre;
+    int32 extent;
     Object* obj;
     MATRIX* matrix;
 
     section = camera->section;
 
-    if (section->objectCount > 0)
+    for (i = 0; i < section->objectCount; i++)
     {
-        for (i = 0; i < section->objectCount; i++)
+        obj = objectTable[section->objects[i]];
+
+        obj->skeleton->update = 1;
+        matrix = GetSkeletonMatrix(obj->skeleton);
+        extent = obj->extent;
+
+        // get object view-space coords
+        x = matrix->t[0];
+        y = matrix->t[1];
+        z = matrix->t[2];
+
+        px = z + (extent << 1);
+        py = extent + ((z + extent) * 3 >> 2);
+
+        if ((x >= -px) && (x <= px) && (y >= -py) && (y <= py))
         {
-            obj = objectTable[section->objects[i]];
-
-            obj->skeleton->update = 1;
-            matrix = GetSkeletonMatrix(obj->skeleton);
-            extent = obj->extent;
-
-            centre.x = 0;
-            centre.y = 0;
-            centre.z = 0;
-
-            RotTrans(matrix, &centre, &result, &flag);
-
-            result.z += extent;
-
-            if (result.z == 0)
-                result.z = 1;
-
-            result.x = (result.x * 160) / result.z;
-            result.y = (result.y * 160) / result.z;
-
-            extent = (extent * 160) / result.z;
-            /*TODO visibility*/
-            if ((result.x >= -(extent + 160)) && (result.x <= (extent + 160)) && (result.y >= -(extent + 120)) && (result.y <= (extent + 120)))
-            {
-                renderObject(obj);
-            }
+            renderObject(obj);
         }
     }
 #endif

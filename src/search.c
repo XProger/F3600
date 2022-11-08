@@ -3,12 +3,12 @@
 #define LOOK_BACK 3
 #define LOOK_AHEAD 6
 
-int SectionSearch(ShipData* playerShip)
+void SectionSearch(ShipData* playerShip)
 {
     TrackSection *trk, *nearest_section;
-    int smallest_mag;
+    int smallest_magSq;
     vec4i cent2ship;
-    int mag;
+    int magSq;
     int i;
     short juncChecked = 0;
     TrackSection* junc = NULL;
@@ -29,7 +29,7 @@ int SectionSearch(ShipData* playerShip)
     cent2ship.y = (playerShip->pos.y - trk->centre.y) >> 2;
     cent2ship.z = playerShip->pos.z - trk->centre.z;
 
-    smallest_mag = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+    smallest_magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
     if (trk->junction)
     {
@@ -52,11 +52,11 @@ int SectionSearch(ShipData* playerShip)
         cent2ship.x = playerShip->pos.x - trk->centre.x;
         cent2ship.y = (playerShip->pos.y - trk->centre.y) >> 2;
         cent2ship.z = playerShip->pos.z - trk->centre.z;
-        mag = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+        magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
-        if (mag < smallest_mag)
+        if (magSq < smallest_magSq)
         {
-            smallest_mag = mag;
+            smallest_magSq = magSq;
             nearest_section = trk;
         }
     }
@@ -70,11 +70,11 @@ int SectionSearch(ShipData* playerShip)
             cent2ship.x = playerShip->pos.x - trk->centre.x;
             cent2ship.y = (playerShip->pos.y - trk->centre.y) >> 2;
             cent2ship.z = playerShip->pos.z - trk->centre.z;
-            mag = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+            magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
-            if (mag < smallest_mag)
+            if (magSq < smallest_magSq)
             {
-                smallest_mag = mag;
+                smallest_magSq = magSq;
                 nearest_section = trk;
             }
             if (junc->flags & JunctionStart)
@@ -84,9 +84,7 @@ int SectionSearch(ShipData* playerShip)
         }
     }
 
-    smallest_mag = rsqrt(smallest_mag);
-
-    if (smallest_mag > 3700)
+    if (smallest_magSq > (3700 * 3700))
     {
         playerShip->attr |= FLYING;
     }
@@ -96,15 +94,14 @@ int SectionSearch(ShipData* playerShip)
     }
 
     playerShip->nearTrkSect = nearest_section;
-    return (smallest_mag);
 }
 
 TrackSection* FindNearestSection(TrackSection* trk, const vec3i* pos)
 {
     TrackSection* nearest_section;
-    int smallest_mag;
+    int smallest_magSq;
     vec4i cent2ship;
-    int mag;
+    int magSq;
     int i;
     short juncChecked = 0;
     TrackSection* junc = NULL;
@@ -123,7 +120,7 @@ TrackSection* FindNearestSection(TrackSection* trk, const vec3i* pos)
     cent2ship.y = pos->y - trk->centre.y;
     cent2ship.z = pos->z - trk->centre.z;
 
-    smallest_mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+    smallest_magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
     nearest_section = trk;
 
@@ -146,11 +143,11 @@ TrackSection* FindNearestSection(TrackSection* trk, const vec3i* pos)
         cent2ship.x = pos->x - trk->centre.x;
         cent2ship.y = pos->y - trk->centre.y;
         cent2ship.z = pos->z - trk->centre.z;
-        mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+        magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
-        if (mag < smallest_mag)
+        if (magSq < smallest_magSq)
         {
-            smallest_mag = mag;
+            smallest_magSq = magSq;
             nearest_section = trk;
         }
     }
@@ -164,11 +161,11 @@ TrackSection* FindNearestSection(TrackSection* trk, const vec3i* pos)
             cent2ship.x = pos->x - trk->centre.x;
             cent2ship.y = pos->y - trk->centre.y;
             cent2ship.z = pos->z - trk->centre.z;
-            mag = /*rsqrt*/ ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
+            magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
-            if (mag < smallest_mag)
+            if (magSq < smallest_magSq)
             {
-                smallest_mag = mag;
+                smallest_magSq = magSq;
                 nearest_section = trk;
             }
             if (junc->flags & JunctionStart)

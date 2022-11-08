@@ -153,22 +153,25 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
     playerShip = &(shipIndex[shipNo]);
 
     if (playerShip->electroCount > 0)
+    {
         playerShip->electroCount--;
-
-    if (playerShip->electroCount == 0)
-        playerShip->attr &= ~ELECTROED;
+        if (playerShip->electroCount == 0)
+            playerShip->attr &= ~ELECTROED;
+    }
 
     if (playerShip->revConCount > 0)
+    {
         playerShip->revConCount--;
-
-    if (playerShip->revConCount == 0)
-        playerShip->combatAttr &= ~REVCONNED;
+        if (playerShip->revConCount == 0)
+            playerShip->combatAttr &= ~REVCONNED;
+    }
 
     if (playerShip->specialCount > 0)
+    {
         playerShip->specialCount--;
-
-    if (playerShip->specialCount == 0)
-        playerShip->combatAttr &= ~SPECIALED;
+        if (playerShip->specialCount == 0)
+            playerShip->combatAttr &= ~SPECIALED;
+    }
 
     if ((playerShip->combatAttr & REVCONNED) && (revLeft == 0))
     {
@@ -404,7 +407,7 @@ void ZigZagShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int ship
 
 void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
 {
-    ShipData *myShip, *remoteShip;
+    ShipData *playerShip, *remoteShip;
     Face* facePtr = NULL;
     TrackSection *nextSection, *section;
     int i;
@@ -413,6 +416,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
     int temp, alpha;
     vec3i offSetVector;
     vec3i path1, path2;
+    vec3i force;
     int gap_mag, decide;
     short DPASectDiff;
 
@@ -420,13 +424,15 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
     offSetVector.y = 0;
     offSetVector.z = 0;
 
-    myShip = &(shipIndex[ownShip]);
-    remoteShip = &(shipIndex[shipNo]);
+    playerShip = shipIndex + ownShip;
+    remoteShip = shipIndex + shipNo;
 
     if (remoteShip->electroCount > 0)
+    {
         remoteShip->electroCount--;
-    if (remoteShip->electroCount == 0)
-        remoteShip->attr &= ~ELECTROED;
+        if (remoteShip->electroCount == 0)
+            remoteShip->attr &= ~ELECTROED;
+    }
 
     if ((remoteShip->attr & FLYING) == 0)
     {
@@ -437,13 +443,12 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
             facePtr++;
         }
 
-        DPASectDiff = remoteShip->DPASectDiff - myShip->DPASectDiff;
+        DPASectDiff = remoteShip->DPASectDiff - playerShip->DPASectDiff;
 
         remoteShip->attr &= ~JUST_IN_FRONT;
 
-        if (remoteShip == myShip)
+        if (remoteShip == playerShip)
         {
-
             remoteShip->updateControl = AvoidOtherShips;
             if (((remoteShip->remoteMaxThrust) > remoteShip->speed))
                 remoteShip->speed += remoteShip->remoteThrustMag;
@@ -757,12 +762,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
         /**** junction                                                       ****/
         /************************************************************************/
 
-        section = remoteShip->nearTrkSect->prevSection;
-
-        for (i = 0; i < 4; i++)
-        {
-            section = section->nextSection;
-        }
+        section = remoteShip->nearTrkSect->nextSection->nextSection->nextSection;
 
         if (section->junction)
         {
@@ -824,9 +824,16 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
 
         gap_mag = GetMagnitude(&targetVector);
 
+#if 1 // div optim
+        gap_mag = (remoteShip->speed << 14) / gap_mag;
+        targetVector.x = gap_mag * targetVector.x >> 14;
+        targetVector.y = gap_mag * targetVector.y >> 14;
+        targetVector.z = gap_mag * targetVector.z >> 14;
+#else
         targetVector.x = (targetVector.x * remoteShip->speed) / gap_mag;
         targetVector.y = (targetVector.y * remoteShip->speed) / gap_mag;
         targetVector.z = (targetVector.z * remoteShip->speed) / gap_mag;
+#endif
 
         path1.x = section->centre.x + offSetVector.x;
         path1.y = section->centre.y + offSetVector.y;
@@ -838,13 +845,10 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
 
         GetTargetPos(&bestPath, &remoteShip->pos, &path2, &path1);
 
-        remoteShip->acc.x = (targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1));
-        remoteShip->acc.y = (targetVector.y + ((bestPath.y - remoteShip->pos.y) >> 1));
-        remoteShip->acc.z = (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
-
-        remoteShip->vel.x += remoteShip->acc.x;
-        remoteShip->vel.y += remoteShip->acc.y;
-        remoteShip->vel.z += remoteShip->acc.z;
+        // accelerate
+        remoteShip->vel.x += targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1);
+        remoteShip->vel.y += targetVector.y + ((bestPath.y - remoteShip->pos.y) >> 1);
+        remoteShip->vel.z += targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1);
         /***** If remote has gone over speed-up *****/
 
         /***** Can use control routine to determine position now *****/
@@ -866,13 +870,13 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
         facePoint = track->vertices + facePtr->vertex[0];
         alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
-        ApplyMagnet(&remoteShip->acc, &facePtr->normal, alpha);
+        ApplyMagnet(&force, &facePtr->normal, alpha);
 
-        remoteShip->vel.x += remoteShip->acc.x;
-        remoteShip->vel.y += remoteShip->acc.y;
-        remoteShip->vel.z += remoteShip->acc.z;
+        remoteShip->vel.x += force.x;
+        remoteShip->vel.y += force.y;
+        remoteShip->vel.z += force.z;
 
-        temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+        temp = GetMagnitudeApprox(targetVector.x, targetVector.z);
 
         remoteShip->vhdg = -ratan2(targetVector.x, targetVector.z) - remoteShip->hdg;
         remoteShip->vhdg += remoteShip->ahdg; /*** Result of weapon collision ***/
@@ -907,7 +911,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
         nextSection = section->nextSection;
 
         remoteShip->updateControl = HoldCentre;
-        (remoteShip->updateControl)(&offSetVector, myShip, facePtr, shipNo);
+        (remoteShip->updateControl)(&offSetVector, playerShip, facePtr, shipNo);
 
         if (remoteShip->remoteMaxThrust > remoteShip->speed)
         {
@@ -929,13 +933,11 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
 
         GetTargetPos(&bestPath, &remoteShip->pos, &nextSection->centre, &remoteShip->nearTrkSect->centre);
 
-        remoteShip->acc.x = (targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1));
-        remoteShip->acc.y = targetVector.y;
-        remoteShip->acc.z = (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
+        // accelerate
+        remoteShip->vel.x += (targetVector.x + ((bestPath.x - remoteShip->pos.x) >> 1));
+        remoteShip->vel.y += targetVector.y;
+        remoteShip->vel.z += (targetVector.z + ((bestPath.z - remoteShip->pos.z) >> 1));
 
-        remoteShip->vel.x += remoteShip->acc.x;
-        remoteShip->vel.y += remoteShip->acc.y;
-        remoteShip->vel.z += remoteShip->acc.z;
         remoteShip->vpitch = -200 - remoteShip->pitch;
         remoteShip->pitch += remoteShip->vpitch >> 4;
         remoteShip->vhdg = -ratan2(targetVector.x, targetVector.z) - remoteShip->hdg;

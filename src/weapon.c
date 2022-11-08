@@ -281,9 +281,9 @@ void GetFireVector(vec3i* result, vec3i target, Face* facePtr, vec3i shipPos)
 
     alpha -= origAlpha;
 
-    result->x = target.x - ((alpha * facePtr->normal.x) >> 12);
-    result->y = target.y - ((alpha * facePtr->normal.y) >> 12);
-    result->z = target.z - ((alpha * facePtr->normal.z) >> 12);
+    result->x = target.x - ((facePtr->normal.x * alpha) >> FIXED_SHIFT);
+    result->y = target.y - ((facePtr->normal.y * alpha) >> FIXED_SHIFT);
+    result->z = target.z - ((facePtr->normal.z * alpha) >> FIXED_SHIFT);
 
     result->x -= shipPos.x;
     result->y -= shipPos.y;
@@ -316,7 +316,7 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
 {
     vec3i distance;
     int ossilation;
-    int i, mag;
+    int i, magSq;
     Prm poly;
     short r;
 
@@ -365,9 +365,9 @@ void UpdateMine(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* weap
         distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 2;
         distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 2;
 
-        mag = GetMagnitude(&distance);
+        magSq = GetMagnitudeSqr(&distance);
 
-        if (mag < 100)
+        if (magSq < (100 * 100))
         {
             if ((shipIndex[i].attr & SHIELDED) == 0)
             {
@@ -423,7 +423,7 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
     vec3i distance;
     vec3i targetVector;
     Face* facePtr;
-    int i, mag, temp, vhdg, vpitch;
+    int i, magSq, temp, vhdg, vpitch;
     const vec3i* facePoint;
     int alpha;
     int32 sx, sy;
@@ -521,9 +521,9 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
         distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 3;
         distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 3;
 
-        mag = GetMagnitude(&distance);
+        magSq = GetMagnitudeSqr(&distance);
 
-        if (mag < 100)
+        if (magSq < (100 * 100))
         {
             if ((shipIndex[i].attr & SHIELDED) == 0)
             {
@@ -560,8 +560,8 @@ void UpdateMissile(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* w
     for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
     {
         facePoint = track->vertices + facePtr->vertex[0];
-        mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
-        if (mag <= 0)
+        temp = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
+        if (temp <= 0)
         {
             PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
 
@@ -627,7 +627,7 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
 {
     vec3i distance;
     Face* facePtr;
-    int i, mag;
+    int i, magSq;
     const vec3i* facePoint;
     int alpha;
 
@@ -685,9 +685,9 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 2;
         distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 2;
 
-        mag = GetMagnitude(&distance);
+        magSq = GetMagnitudeSqr(&distance);
 
-        if (mag < 100)
+        if (magSq < (100 * 100))
         {
             if ((shipIndex[i].attr & SHIELDED) == 0)
             {
@@ -736,8 +736,8 @@ void UpdateRocket(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         {
             facePoint = track->vertices + facePtr->vertex[0];
 
-            mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
-            if (mag <= 0)
+            alpha = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
+            if (alpha <= 0)
             {
                 PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
 
@@ -823,7 +823,7 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     vec3i distance;
     vec3i targetVector;
     Face* facePtr;
-    int mag, temp, vhdg, vpitch;
+    int magSq, temp, vhdg, vpitch;
     const vec3i* facePoint;
     int alpha;
     int32 sx, sy;
@@ -920,9 +920,9 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
         distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 3;
         distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 3;
 
-        mag = GetMagnitude(&distance);
+        magSq = GetMagnitudeSqr(&distance);
 
-        if (mag < 100)
+        if (magSq < (100 * 100))
         {
             if ((shipIndex[i].attr & SHIELDED) == 0)
             {
@@ -946,8 +946,8 @@ void UpdateElecBolt(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* 
     {
         facePoint = track->vertices + facePtr->vertex[0];
 
-        mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
-        if (mag <= 0)
+        temp = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
+        if (temp <= 0)
         {
             PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
 
@@ -1008,7 +1008,7 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     vec3i targetVector;
     const vec3i* facePoint;
     Face* facePtr;
-    int i, mag, temp, vhdg, vpitch;
+    int i, magSq, temp, vhdg, vpitch;
     int alpha;
     int32 sx, sy;
     int32 cx, cy;
@@ -1104,9 +1104,9 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
         distance.y = (shipIndex[i].pos.y - weapon->pos.y) >> 3;
         distance.z = (shipIndex[i].pos.z - weapon->pos.z) >> 3;
 
-        mag = GetMagnitude(&distance);
+        magSq = GetMagnitudeSqr(&distance);
 
-        if (mag < 100)
+        if (magSq < (100 * 100))
         {
             if ((shipIndex[i].attr & SHIELDED) == 0)
             {
@@ -1138,8 +1138,8 @@ void UpdateRevCon(ShipData* shipIndex, WeaponShape* weaponShapes, WeaponData* we
     {
         facePoint = track->vertices + facePtr->vertex[0];
 
-        mag = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
-        if (mag <= 0)
+        temp = PlaneLineCollision(facePoint, &weapon->pos, &facePtr->normal);
+        if (temp <= 0)
         {
             PlayDirectionalNote(SFX_EXPLOSION_2, &weapon->pos);
 

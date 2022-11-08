@@ -7,7 +7,9 @@
 typedef uint32 divTableInt;
 extern const divTableInt divTable[DIV_TABLE_SIZE];
 
-int GetMagnitude(const vec3i* vec1);
+int32 GetMagnitude(const vec3i* v);
+int32 GetMagnitudeSqr(const vec3i* v);
+
 int32 GetMagnitudeApprox(int32 dx, int32 dy);
 void MinusVector(const vec3i* v1, const vec3i* v2, vec3i* result);
 void CrossProduct(vec3i* result, const vec3i* A, const vec3i* B);
@@ -31,6 +33,9 @@ extern const int32 gSinCosTable[4096];
 int32 ratan2(int32 y, int32 x);
 uint32 rsqrt(uint32 x);
 
+#define FIXED_SHIFT 12 /* number of bits to shift for 4096 */
+
+void ApplyMatrix(const MATRIX* m, const vec3s* v0, vec3i* v1);
 void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, long* flag);
 long RotTransPers(const MATRIX* m, const vec3s* v0, vec2s* sxy, long* flag);
 void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret);

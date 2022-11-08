@@ -153,12 +153,11 @@ typedef struct SelectionData
 
 typedef struct ChampionShip
 {
-    short points;
-    short racePoints;
-    char pilot[25];
-    short xPos;
-    char position;
-    char racePosition;
+    uint8 points;
+    uint8 racePoints;
+    uint8 position;
+    uint8 racePosition;
+    char pilot[24];
 } ChampionShip;
 
 typedef struct SortTable

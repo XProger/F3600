@@ -48,7 +48,7 @@ typedef struct ShipData
     vec3i unitVecNose; /* vec4s  ? */ /* Unit vector along ships nose */
     vec3i unitVecWing; /* vec4s  ? */ /* Unit vector along ships nose */
     vec3i pos; /* 32bit ship position */
-    vec3i vel, acc; /* Velocity, accn vectors for ship */
+    vec3i vel;
     vec3i thrust; /* Thrust vector */
     short hdg, pitch, roll; /* Orientation attributes */
     short vhdg, vpitch, vroll;
@@ -78,7 +78,6 @@ typedef struct ShipData
     /***** Race Control Attributes *****/
     int lapTime;
     char lapNo;
-    char prevLapNo;
     char position;
     short nearSecNo, prevSecNo;
     int lapTimes[5];

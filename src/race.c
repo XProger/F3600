@@ -71,7 +71,6 @@ char ctrlrec[8];
 char ctrlactivated;
 int ctrlchoiceData;
 char ctrlquitFlag;
-Texture* ctrlwinLose[2];
 int ctrlquitTwoPlayer;
 char ctrlshowGameOver;
 
@@ -143,16 +142,16 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
 {
     int i;
     vec3i distance;
-    int mag;
+    int magSq;
     int chosen;
-    int smallestMag;
+    int smallestMagSq;
     vec3i pos;
 
 #ifdef __3DO__ // TODO optimize
     return;
 #endif
 
-    smallestMag = 10000;
+    smallestMagSq = 0x7FFFFFFF;
     chosen = -1;
 
     /*TODO audio crowd lerp between two closest*/
@@ -163,16 +162,16 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
         distance.y = (lostad[i]->skeleton->relative.t[1] + cameraPtr->camPos->relative.t[1]) >> 3;
         distance.z = (lostad[i]->skeleton->relative.t[2] + cameraPtr->camPos->relative.t[2]) >> 3;
 
-        mag = GetMagnitude(&distance);
+        magSq = GetMagnitudeSqr(&distance);
 
-        if (mag < smallestMag)
+        if (magSq < smallestMagSq)
         {
-            smallestMag = mag;
+            smallestMagSq = magSq;
             chosen = i;
         }
     }
 
-    if (smallestMag < 8192)
+    if (smallestMagSq < (8192 * 8192))
     {
         pos.x = lostad[chosen]->skeleton->relative.t[0];
         pos.y = lostad[chosen]->skeleton->relative.t[1];
@@ -294,13 +293,9 @@ void raceInit(ConfigData* gameData)
     /**********************************************************/
     LoadTrack(gameData->actTrackNum);
 
-    extroLevel = 0;
-
     /* firestar */
     if (gameData->actTrackNum == 14)
     {
-        extroLevel = 14;
-
         camSpline[0] = LoadPrm("wipeout/common/cam1s.prm", 0);
         camSpline[0]->skeleton->super = ctrlcamera.camPos;
 
@@ -329,8 +324,6 @@ void raceInit(ConfigData* gameData)
     /* silverstream */
     if (gameData->actTrackNum == 13)
     {
-        extroLevel = 13;
-
         camSpline[4] = LoadPrm("wipeout/common/cam5s.prm", 0);
         camSpline[4]->skeleton->super = ctrlcamera.camPos;
 
@@ -405,9 +398,11 @@ void raceInit(ConfigData* gameData)
     InitShadow();
 
     if (trackNo == 13)
+    {
         InitAuroraBorialis(ctrlprm[ctrlsky]);
+    }
 
-    InitScreenTex(ctrlwinLose, PILOT_NAMES[gameData->shipNum]);
+    InitWinLoseTex(PILOT_NAMES[gameData->shipNum]);
 
     initShipData(track->sections, ctrlshipIndex, gameData);
     InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
@@ -1285,11 +1280,11 @@ void raceLoop(ConfigData* gameData)
     GetSkeletonMatrix(ctrlcamera.camPos);
 
     renderSky(ctrlprm[ctrlsky]);
-    DrawLandscape(&(ctrlshipIndex[ownShip]), &ctrlcamera);
+    DrawLandscape(&ctrlcamera);
     renderTrack();
-    DrawShadows(ctrlshipIndex);
     DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip);
     DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
+    DrawShadows(ctrlshipIndex);
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
     DrawEffects();
 
@@ -1342,9 +1337,7 @@ void raceLoop(ConfigData* gameData)
     }
     // Pictures at end
     if (ctrlNeedWinLose)
-    {
-        renderImage(ctrlwinLose[ctrlNeedWinLoseVar], 180, 50);
-    }
+        DisplayWinLose(ctrlNeedWinLoseVar);
     // High score bollox
     if (ctrlNeedRaceInfo)
         DisplayRaceInfo(gameData, &ctrlhiScoreData);
