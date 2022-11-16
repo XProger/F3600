@@ -2,18 +2,19 @@
 
 int ownShip;
 void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
-TrackCamera* cameraPtr;
 int NoOfMainSections;
 
 uint16 pad;
 uint16 opad, xpad;
 PadInfo pCon;
 
-Object* startBoom[4];
-short startBoomCount = 0;
+Object* gStartBoom[4];
+short gStartBoomCount = 0;
 int crossedLine;
 
-TrackData* track;
+TrackData gTrack;
+TrackCamera gCamera;
+
 int trackNo;
 int raceType;
 char NumTracks = 6;
@@ -28,20 +29,21 @@ int gTargetFOV = CAMERA_FOV;
 Texture gTextures[MAX_TEXTURES];
 Texture* gTexturePtr = gTextures;
 
-Object* objectTable[ObjectTableMax];
-
 /* spline stuff */
 Object* camSpline[20];
 Object* shipSpline[20];
 short finishedExtro;
 
-Skeleton gCamPos;
-Skeleton gCamDir;
-
 short trackNum;
 int32 gMusicTracksCount;
 int32 gMusicTrack;
 int32 gMasterBalance;
+
+int32 dbg_update;
+int32 dbg_render;
+int32 dbg_frameTime;
+int32 dbg_v;
+int32 dbg_f;
 
 const char gTrackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 }; // TODO 15?
 

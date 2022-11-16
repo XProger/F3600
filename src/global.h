@@ -14,7 +14,12 @@
 #define TEXT_COLOR_WHITE        0xFF808080
 #define TEXT_COLOR_HIGHLIGHT    0xFF19668C
 
+#ifdef __3DO__
+#define BLINK_TEXT (((gFrameIndex & 7) <= 3) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT) // ok for 15 fps :)
+#else
 #define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT)
+#endif
+
 #define BLINK_SLOW ((gFrameIndex & 63) <= 42)
 
 #define CAMERA_FOV          (75 << 12)
@@ -32,10 +37,11 @@ extern int HACK_TEX_FILTER;
 
 #define SCREEN_Z 160
 
-extern TrackData* track;
+extern TrackData gTrack;
+extern TrackCamera gCamera;
+
 extern int ownShip;
 extern void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
-extern TrackCamera* cameraPtr;
 extern int NoOfMainSections;
 extern uint16 pad;
 extern uint16 opad, xpad;
@@ -57,15 +63,10 @@ extern int crossedLine;
 extern Texture gTextures[MAX_TEXTURES];
 extern Texture* gTexturePtr;
 
-extern Object* objectTable[ObjectTableMax];
-
 /* spline stuff */
 extern Object* camSpline[];
 extern Object* shipSpline[];
 extern short finishedExtro;
-
-extern Skeleton gCamPos;
-extern Skeleton gCamDir;
 
 extern short trackNum;
 extern int32 gMusicTracksCount;
@@ -91,7 +92,7 @@ extern const char gTrackList[15];
 #define DRAM_BLOCK_SIZE (32 * 1024)
 #define VRAM_BLOCK_SIZE (16 * 1024)
 
-#define DRAM_SIZE (33 * DRAM_BLOCK_SIZE)
+#define DRAM_SIZE (32 * DRAM_BLOCK_SIZE)
 #define VRAM_SIZE (44 * VRAM_BLOCK_SIZE)
 
 extern char* gDRAM;
@@ -103,3 +104,10 @@ char* allocVRAM(int size);
 
 void memStateSave(void);
 void memStateRestore(void);
+
+extern int32 dbg_update;
+extern int32 dbg_render;
+extern int32 dbg_frameTime;
+extern int32 dbg_update;
+extern int32 dbg_v;
+extern int32 dbg_f;

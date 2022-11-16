@@ -15,9 +15,9 @@ TrackSection* NextIndexSection(TrackSection* section)
 {
     section += 1;
 
-    if (section > track->sections + track->sectionCount - 1)
+    if (section > gTrack.sections + gTrack.sectionCount - 1)
     {
-        section = track->sections;
+        section = gTrack.sections;
     }
 
     return (section);
@@ -30,9 +30,9 @@ void InitPLUT(char* file)
     long size = osLoadFile(file, (char*)pVRAM);
     uint32 plutsAddr = (uint32)allocVRAM(size);
 
-    for (i = 0; i < track->faceCount; i++)
+    for (i = 0; i < gTrack.faceCount; i++)
     {
-        track->faces[i].plut += plutsAddr;
+        gTrack.faces[i].plut += plutsAddr;
     }
 }
 
@@ -46,22 +46,22 @@ void InitTrack(char* file)
     TrackHeader3DO* header = (TrackHeader3DO*)ptr;
     ptr += sizeof(TrackHeader3DO);
 
-    track->vertexCount = header->vertexCount;
-    track->faceCount = header->faceCount;
-    track->sectionCount = header->sectionCount;
+    gTrack.vertexCount = header->vertexCount;
+    gTrack.faceCount = header->faceCount;
+    gTrack.sectionCount = header->sectionCount;
 
-    track->vertices = (vec3i*)ptr;
+    gTrack.vertices = (vec3i*)ptr;
     ptr += header->vertexCount * sizeof(vec3i);
 
-    track->faces = (Face*)ptr;
+    gTrack.faces = (Face*)ptr;
     ptr += header->faceCount * sizeof(Face);
 
-    track->sections = (TrackSection*)ptr;
+    gTrack.sections = (TrackSection*)ptr;
 
     // init section pointers
-    section = track->sections;
+    section = gTrack.sections;
 
-    for (i = 0; i < track->sectionCount; i++)
+    for (i = 0; i < gTrack.sectionCount; i++)
     {
         section->prevSection = (TrackSection*)(ptr + (int32)section->prevSection);
         section->nextSection = (TrackSection*)(ptr + (int32)section->nextSection);
@@ -70,6 +70,8 @@ void InitTrack(char* file)
         {
             section->junction = (TrackSection*)(ptr + (int32)section->junction);
         }
+
+        section->objects = (int16*)(ptr + (int32)section->objects);
 
         section++;
     }
@@ -102,9 +104,9 @@ void IntelVertex(void)
     /* intel the vertex data */
 
     // convert from vec4i to vec3i
-    vert = (vec4i*)track->vertices;
-    v = track->vertices;
-    for (i = 0; i < track->vertexCount; i++, vert++, v++)
+    vert = (vec4i*)gTrack.vertices;
+    v = gTrack.vertices;
+    for (i = 0; i < gTrack.vertexCount; i++, vert++, v++)
     {
         v->x = vert->x;
         v->y = vert->y;
@@ -123,8 +125,8 @@ void IntelFace(void)
 
     /* intel the face data */
 
-    face = track->faces;
-    for (i = 0; i < track->faceCount; i++)
+    face = gTrack.faces;
+    for (i = 0; i < gTrack.faceCount; i++)
     {
         IntelShort(&face->vertex[0]);
         IntelShort(&face->vertex[1]);
@@ -146,8 +148,8 @@ void IntelSection(void)
 
     /* intel the section data */
 
-    section = track->sections;
-    for (i = 0; i < track->sectionCount; i++)
+    section = gTrack.sections;
+    for (i = 0; i < gTrack.sectionCount; i++)
     {
         IntelLong(&(long)section->junction);
         IntelLong(&(long)section->prevSection);
@@ -189,15 +191,15 @@ void IndexToPointers(void)
 
     /* change the section indices to pointers */
 
-    section = track->sections;
-    for (i = 0; i < track->sectionCount; i++)
+    section = gTrack.sections;
+    for (i = 0; i < gTrack.sectionCount; i++)
     {
-        section->prevSection = track->sections + (int32)section->prevSection;
-        section->nextSection = track->sections + (int32)section->nextSection;
+        section->prevSection = gTrack.sections + (int32)section->prevSection;
+        section->nextSection = gTrack.sections + (int32)section->nextSection;
 
         if ((int32)section->junction != -1)
         {
-            section->junction = track->sections + (int32)section->junction;
+            section->junction = gTrack.sections + (int32)section->junction;
         }
         else
         {
@@ -211,24 +213,24 @@ void IndexToPointers(void)
 void InitVertices(char* file)
 {
     long size = osLoadFile(file, pDRAM);
-    track->vertexCount = size / sizeof(vec4i);
-    track->vertices = (vec3i*)allocDRAM(track->vertexCount * sizeof(vec3i));
+    gTrack.vertexCount = size / sizeof(vec4i);
+    gTrack.vertices = (vec3i*)allocDRAM(gTrack.vertexCount * sizeof(vec3i));
     IntelVertex();
 }
 
 void InitFaces(char* file)
 {
     long size = osLoadFile(file, pDRAM);
-    track->faces = (Face*)allocDRAM(size);
-    track->faceCount = size / sizeof(Face);
+    gTrack.faces = (Face*)allocDRAM(size);
+    gTrack.faceCount = size / sizeof(Face);
     IntelFace();
 }
 
 void InitSections(char* file)
 {
     long size = osLoadFile(file, pDRAM);
-    track->sections = (TrackSection*)allocDRAM(size);
-    track->sectionCount = size / sizeof(TrackSection);
+    gTrack.sections = (TrackSection*)allocDRAM(size);
+    gTrack.sectionCount = size / sizeof(TrackSection);
     IntelSection();
     IndexToPointers();
 }
@@ -241,33 +243,33 @@ void InitViewList(char* file)
     int viewListCount;
 
     long size = osLoadFile(file, pDRAM);
-    track->viewList = (int16*)allocDRAM(size);
+    gTrack.viewList = (int16*)allocDRAM(size);
     viewListCount = size / 2;
 
     for (i = 0; i < viewListCount; i++)
     {
-        IntelShort(&track->viewList[i]);
+        IntelShort(&gTrack.viewList[i]);
     }
 
-    section = track->sections;
+    section = gTrack.sections;
     total = 0;
-    for (i = 0; i < track->sectionCount; i++)
+    for (i = 0; i < gTrack.sectionCount; i++)
     {
         for (j = 0; j < 3; j++)
         {
-            section->northViewSection[j] = track->viewList + total;
+            section->northViewSection[j] = gTrack.viewList + total;
             total += section->northViewCount[j];
 
-            section->southViewSection[j] = track->viewList + total;
+            section->southViewSection[j] = gTrack.viewList + total;
             total += section->southViewCount[j];
 
-            section->eastViewSection[j] = track->viewList + total;
+            section->eastViewSection[j] = gTrack.viewList + total;
             total += section->eastViewCount[j];
 
-            section->westViewSection[j] = track->viewList + total;
+            section->westViewSection[j] = gTrack.viewList + total;
             total += section->westViewCount[j];
 
-            section->allViewSection[j] = track->viewList + total;
+            section->allViewSection[j] = gTrack.viewList + total;
             total += section->allViewCount[j];
         }
 
@@ -312,8 +314,8 @@ typedef struct TrackSection3DO
     uint16 faceStart;
     uint16 faceCount;
 
-    uint32 objects; // 0
-    uint32 objectCount; // 0
+    uint32 objects;
+    uint32 objectsCount;
 
     uint16 globalRadius;
     uint16 localRadius;
@@ -410,12 +412,12 @@ void collectTrackSectionGeometry(const TrackSection* section)
 
     for (i = section->faceStart; i < section->faceStart + section->faceCount; i++)
     {
-        *face = track->faces[i];
+        *face = gTrack.faces[i];
 
-        face->vertex[0] = vertexAdd(track->vertices + face->vertex[0]);
-        face->vertex[1] = vertexAdd(track->vertices + face->vertex[1]);
-        face->vertex[2] = vertexAdd(track->vertices + face->vertex[2]);
-        face->vertex[3] = vertexAdd(track->vertices + face->vertex[3]);
+        face->vertex[0] = vertexAdd(gTrack.vertices + face->vertex[0]);
+        face->vertex[1] = vertexAdd(gTrack.vertices + face->vertex[1]);
+        face->vertex[2] = vertexAdd(gTrack.vertices + face->vertex[2]);
+        face->vertex[3] = vertexAdd(gTrack.vertices + face->vertex[3]);
 
         ASSERT(face->vertex[0] != face->vertex[1] && face->vertex[0] != face->vertex[2] && face->vertex[0] != face->vertex[3]);
         ASSERT(face->vertex[1] != face->vertex[2] && face->vertex[1] != face->vertex[3]);
@@ -430,7 +432,7 @@ void collectTrackSectionGeometry(const TrackSection* section)
 void collectTrackGeometry(void)
 {
     int32 i;
-    const TrackSection* section = track->sections;
+    const TrackSection* section = gTrack.sections;
 
     trackVertexCount = 0;
     trackFaceCount = 0;
@@ -449,10 +451,10 @@ void collectTrackGeometry(void)
 
         collectTrackSectionGeometry(section);
         section = section->nextSection;
-    } while (section != track->sections);
+    } while (section != gTrack.sections);
 
-    ASSERT(trackVertexCount <= track->vertexCount);
-    ASSERT(trackFaceCount == track->faceCount);
+    ASSERT(trackVertexCount <= gTrack.vertexCount);
+    ASSERT(trackFaceCount == gTrack.faceCount);
 }
 
 void collectTrackCLUT(void)
@@ -463,7 +465,7 @@ void collectTrackCLUT(void)
 
     clutsCount = 0;
 
-    for (i = 0; i < track->faceCount; i++, face++)
+    for (i = 0; i < gTrack.faceCount; i++, face++)
     {
         r = 2.0f * face->red / 255.0f;
         g = 2.0f * face->green / 255.0f;
@@ -502,7 +504,7 @@ void getFaceRanges(const TrackSection* section, TrackRange* ranges, int32 from, 
         ranges->fCount += section->faceCount;
         section = section->nextSection;
 
-        if (section == track->sections)
+        if (section == gTrack.sections)
         {
             ranges++;
             ranges->fStart = section->faceStart;
@@ -548,11 +550,23 @@ void getVisibilityRange(const TrackSection* section, TrackRange* ranges, int32 f
     getVertexRange(ranges + 1);
 }
 
+void writeShort(FILE* f, int16 value)
+{
+    IntelShort(&value);
+    fwrite(&value, sizeof(value), 1, f);
+}
+
+void writeInt(FILE* f, int32 value)
+{
+    IntelLong(&value);
+    fwrite(&value, sizeof(value), 1, f);
+}
+
 void convertTrack3DO(int32 trackNum)
 {
     TrackHeader3DO header;
     TrackSection3DO section;
-    int32 i, j, index;
+    int32 i, j, index, objOffset;
 
     FILE* f;
 
@@ -576,7 +590,7 @@ void convertTrack3DO(int32 trackNum)
 
     header.vertexCount = trackVertexCount;
     header.faceCount = trackFaceCount;
-    header.sectionCount = track->sectionCount;
+    header.sectionCount = gTrack.sectionCount;
     header.plutCount = clutsCount;
 
     IntelLong(&header.vertexCount);
@@ -642,31 +656,35 @@ void convertTrack3DO(int32 trackNum)
     }
 
     // sections
-    ASSERT(track->sections->junction == NULL); // track sections can't start from junction
+    ASSERT(gTrack.sections->junction == NULL); // track sections can't start from junction
 
-    for (i = 0; i < track->sectionCount; i++)
+    objOffset = gTrack.sectionCount * sizeof(TrackSection3DO);
+
+    for (i = 0; i < gTrack.sectionCount; i++)
     {
-        TrackSection* sec = track->sections + i;
+        TrackSection* sec = gTrack.sections + i;
 
         if (sec->junction)
         {
-            section.junction = (sec->junction - track->sections) * sizeof(TrackSection3DO);
+            section.junction = (sec->junction - gTrack.sections) * sizeof(TrackSection3DO);
         }
         else
         {
             section.junction = 0;
         }
 
-        section.prevSection = (sec->prevSection - track->sections) * sizeof(TrackSection3DO);
-        section.nextSection = (sec->nextSection - track->sections) * sizeof(TrackSection3DO);
+        section.prevSection = (sec->prevSection - gTrack.sections) * sizeof(TrackSection3DO);
+        section.nextSection = (sec->nextSection - gTrack.sections) * sizeof(TrackSection3DO);
 
         section.centre = sec->centre;
 
         section.faceStart = sec->faceStart;
         section.faceCount = sec->faceCount;
 
-        section.objects = 0;
-        section.objectCount = 0;
+        section.objects = objOffset;
+        section.objectsCount = sec->objectsCount;
+
+        objOffset += section.objectsCount * sizeof(uint16);
 
         section.globalRadius = sec->globalRadius;
         section.localRadius = sec->localRadius;
@@ -684,6 +702,9 @@ void convertTrack3DO(int32 trackNum)
 
         IntelShort(&section.faceStart);
         IntelShort(&section.faceCount);
+
+        IntelLong(&section.objects);
+        IntelLong(&section.objectsCount);
 
         IntelShort(&section.globalRadius);
         IntelShort(&section.localRadius);
@@ -709,11 +730,90 @@ void convertTrack3DO(int32 trackNum)
         fwrite(&section, sizeof(section), 1, f);
     }
 
+    for (i = 0; i < gTrack.sectionCount; i++)
+    {
+        TrackSection* sec = gTrack.sections + i;
+
+        for (j = 0; j < sec->objectsCount; j++)
+        {
+            writeShort(f, sec->objects[j]);
+        }
+    }
+    
+    fclose(f);
+
     printf("track cluts: %d\n", clutsCount);
 }
 
-void convertObjects3DO(const char* name, const Object* firstObject)
+void convertObjects3DO(const char* name, const Object* objects, int32 count)
 {
-    //
+    int32 i, j;
+    int32 offset;
+    const Object* obj;
+    FILE* f;
+    char path[256];
+
+    strcpy(path, "../src/platform/3do/CD/");
+    strcat(path, name);
+
+    f = fopen(path, "wb");
+
+    writeInt(f, count);
+
+    offset = sizeof(Object) * count;
+
+    obj = objects;
+    for (i = 0; i < count; i++, obj++)
+    {
+        writeInt(f, obj->type); // TODO remove (use scene header)
+        writeInt(f, obj->vCount);
+        writeInt(f, obj->fCount);
+        writeInt(f, obj->sCount);
+        writeInt(f, obj->pos.x);
+        writeInt(f, obj->pos.y);
+        writeInt(f, obj->pos.z);
+        writeInt(f, obj->extent);
+
+        writeInt(f, offset);
+        offset += obj->vCount * sizeof(vec3i);
+        writeInt(f, offset);
+        offset += obj->fCount * 8; // 8 = sizeof(ObjFace3DO)
+        writeInt(f, offset);
+        offset += obj->sCount * 8; // 8 = sizeof(ObjSprite3DO)
+    }
+
+    obj = objects;
+    for (i = 0; i < count; i++, obj++)
+    {
+        for (j = 0; j < obj->vCount; j++)
+        {
+            // pre-shift for 3DO math co-processor
+            writeInt(f, obj->vertices[j].x << 4);
+            writeInt(f, obj->vertices[j].y << 4);
+            writeInt(f, obj->vertices[j].z << 4);
+        }
+
+        for (j = 0; j < obj->fCount; j++)
+        {
+            uint32 indices =
+                (obj->faces[j].index[0]) |
+                (obj->faces[j].index[1] << 8) | 
+                (obj->faces[j].index[2] << 16) | 
+                (obj->faces[j].index[3] << 24);
+
+            writeInt(f, obj->faces[j].flags & 0xFFFF);
+            writeInt(f, indices);
+        }
+
+        for (j = 0; j < obj->sCount; j++)
+        {
+            uint16 size = 0; // TODO
+            writeInt(f, obj->sprites[j].flags);
+            writeShort(f, obj->sprites[j].index);
+            writeShort(f, size);
+        }
+    }
+
+    fclose(f);
 }
 #endif

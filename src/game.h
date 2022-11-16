@@ -3,7 +3,6 @@
 
 #include "standard.h"
 #include "render.h"
-#include "skeleton.h"
 #include "track.h"
 #include "ttf.h"
 #include "ships.h"

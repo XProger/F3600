@@ -1,4 +1,5 @@
-extern WeaponShape ctrlweaponShapes[WEAPON_SHAPE_NAX];
+extern Object* ctrlweaponShapes[WEAPON_SHAPE_NAX];
+extern TrackCamera gCamera;
 
 void raceInit(ConfigData* gameData);
 void raceCtrl(ConfigData* gameData);

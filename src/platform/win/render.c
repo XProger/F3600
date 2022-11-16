@@ -68,7 +68,7 @@ typedef struct
     int32 y;
     int32 z;
     float s, t;
-    uint8 r, g, b, a;
+    uint32 color;
 } VertexGL;
 
 typedef uint16 IndexGL;
@@ -76,7 +76,7 @@ typedef uint16 IndexGL;
 typedef struct
 {
     float e[4][4];
-} Matrix;
+} mat4;
 
 typedef struct Mesh
 {
@@ -130,7 +130,7 @@ typedef struct
 VertexGL gVertices[MAX_RENDER_VERTICES];
 IndexGL gIndices[MAX_RENDER_INDICES];
 IndexGL gIndicesMerged[MAX_RENDER_INDICES];
-Matrix gMatrices[MAX_RENDER_MATRICES];
+mat4 gMatrices[MAX_RENDER_MATRICES];
 Mesh gMeshes[MAX_RENDER_MESHES];
 RenderState gCurState;
 RenderState gStates[MAX_RENDER_STATES];
@@ -152,8 +152,6 @@ extern HWND hWnd;
 HDC hDC;
 HGLRC hRC;
 
-extern const TrackCamera ctrlcamera;
-
 int gRenderMode;
 
 int32 xOffset;
@@ -161,7 +159,7 @@ int32 yOffset;
 
 int gWidth, gHeight, gBorder;
 
-int gCylX, gCylZ;
+int32 gCylX, gCylZ;
 
 GLuint VAO;
 GLuint VBO[2];
@@ -177,10 +175,10 @@ Shader shaderGUI;
 Texture gTrackTex[MAX_TRACK_TEX];
 uint16 gTrackTexData[MAX_TRACK_TEX][128 * 128];
 
-extern TrackData* track;
+extern Texture* gEffectTextures;
 
-const CVECTOR colorGrey = { 128, 128, 128, 255 };
-const CVECTOR colorWhite = { 255, 255, 255, 255 };
+const uint32 colorGrey = 0xFF808080;
+const uint32 colorWhite = 0xFFFFFFFF;
 
 const char* GLSL_HEADER_VERT_GL3 = 
     "#version 150\n"
@@ -398,15 +396,15 @@ const char* sh_gui =
 
     "#endif\n";
 
-void matrixIdentity(Matrix* m)
+void matrixIdentity(mat4* m)
 {
     memset(m, 0, sizeof(Matrix));
     m->e[0][0] = m->e[1][1] = m->e[2][2] = m->e[3][3] = 1.0f;
 }
 
-void matrixOrtho(Matrix* m, float l, float r, float b, float t, float znear, float zfar)
+void matrixOrtho(mat4* m, float l, float r, float b, float t, float znear, float zfar)
 {
-    memset(m, 0, sizeof(Matrix));
+    memset(m, 0, sizeof(mat4));
     m->e[0][0] = 2.0f / (r - l);
     m->e[1][1] = 2.0f / (t - b);
     m->e[2][2] = 2.0f / (znear - zfar);
@@ -416,14 +414,14 @@ void matrixOrtho(Matrix* m, float l, float r, float b, float t, float znear, flo
     m->e[3][2] = (znear + zfar) / (znear - zfar);
 }
 
-void matrixPerspective(Matrix* m, float fov, float aspect, float xoff, float yoff, float znear, float zfar)
+void matrixPerspective(mat4* m, float fov, float aspect, float xoff, float yoff, float znear, float zfar)
 {
     float y = tanf(fov * 0.5f * DEG2RAD) * znear;
     float x = y;
 
     x = y * aspect;
 
-    memset(m, 0, sizeof(Matrix));
+    memset(m, 0, sizeof(mat4));
     m->e[0][0] = znear / x;
     m->e[1][1] = znear / y;
     m->e[2][2] = (znear + zfar) / (znear - zfar);
@@ -512,18 +510,6 @@ GLuint genTex(uint32 color)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color);
     setTexFilter(0, 0);
     return id;
-}
-
-int UnloadTexture(Texture* pTex)
-{
-#if 0
-    if (pTex->Texture == 0)
-        return FALSE;
-
-    glDeleteTextures(1, &pTex->Texture);
-    pTex->Texture = 0;
-#endif
-    return TRUE;
 }
 
 void compileShader(Shader* shader, const char* text)
@@ -724,7 +710,7 @@ void renderInit(void)
 
     glVertexAttribPointer(aCoord, 3, GL_INT, GL_FALSE, sizeof(*v), &v->x);
     glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(*v), &v->s);
-    glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(*v), &v->r);
+    glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(*v), &v->color);
 
     whiteTex = genTex(0xFFFFFFFF);
 
@@ -854,7 +840,7 @@ void addQuad()
     gStatePtr->mesh->iCount += 6;
 }
 
-void addVertex(int32 x, int32 y, int32 z, float s, float t, const CVECTOR* color)
+void addVertex(int32 x, int32 y, int32 z, float s, float t, uint32 color)
 {
     ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
 
@@ -864,13 +850,10 @@ void addVertex(int32 x, int32 y, int32 z, float s, float t, const CVECTOR* color
     v->z = z;
     v->s = s;
     v->t = t;
-    v->r = color->r;
-    v->g = color->g;
-    v->b = color->b;
-    v->a = 255;
+    v->color = color;
 }
 
-void addVertexI(const vec4i* pos, float s, float t, const CVECTOR* color)
+void addVertexI(const vec3i* pos, float s, float t, uint32 color)
 {
     ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
 
@@ -880,26 +863,7 @@ void addVertexI(const vec4i* pos, float s, float t, const CVECTOR* color)
     v->z = pos->z;
     v->s = s;
     v->t = t;
-    v->r = color->r;
-    v->g = color->g;
-    v->b = color->b;
-    v->a = 255;
-}
-
-void addVertexS(const vec4s* pos, float s, float t, const CVECTOR* color)
-{
-    ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
-
-    VertexGL* v = gVertices + gVerticesCount++;
-    v->x = pos->x;
-    v->y = pos->y;
-    v->z = pos->z;
-    v->s = s;
-    v->t = t;
-    v->r = color->r;
-    v->g = color->g;
-    v->b = color->b;
-    v->a = 255;
+    v->color = color;
 }
 
 void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
@@ -918,10 +882,10 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
     stateCheck();
 
     addQuad();
-    addVertex(x0, y0, 0, u0, v0, (CVECTOR*)&color);
-    addVertex(x1, y0, 0, u1, v0, (CVECTOR*)&color);
-    addVertex(x1, y1, 0, u1, v1, (CVECTOR*)&color);
-    addVertex(x0, y1, 0, u0, v1, (CVECTOR*)&color);
+    addVertex(x0, y0, 0, u0, v0, color);
+    addVertex(x1, y0, 0, u1, v0, color);
+    addVertex(x1, y1, 0, u1, v1, color);
+    addVertex(x0, y1, 0, u0, v1, color);
 }
 
 void renderImage(const Texture* t, int32 x, int32 y)
@@ -941,10 +905,10 @@ void renderImage(const Texture* t, int32 x, int32 y)
     stateCheck();
 
     addQuad();
-    addVertex(x0, y0, 0, u0, v0, (CVECTOR*)&color);
-    addVertex(x1, y0, 0, u1, v0, (CVECTOR*)&color);
-    addVertex(x1, y1, 0, u1, v1, (CVECTOR*)&color);
-    addVertex(x0, y1, 0, u0, v1, (CVECTOR*)&color);
+    addVertex(x0, y0, 0, u0, v0, color);
+    addVertex(x1, y0, 0, u1, v0, color);
+    addVertex(x1, y1, 0, u1, v1, color);
+    addVertex(x0, y1, 0, u0, v1, color);
 }
 
 void renderBackground(const Texture* t)
@@ -952,30 +916,32 @@ void renderBackground(const Texture* t)
     renderImage(t, 0, 0);
 }
 
-void renderShadow(const Shadow* s)
+#define SHADOW_SHIFT_N  3
+#define SHADOW_SHIFT_W  4
+
+extern Texture* gShadowTex;
+
+void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int32 dx, int32 dy, int32 dz, int32 rx, int32 ry, int32 rz)
 {
-    const Texture* t = s->texture;
-    CVECTOR color = { 255, 255, 255, 255 };
-    int32 x3, y3, z3;
+    uint32 color = (intensity << 24) | 0xFFFFFF;
+
+    dx >>= SHADOW_SHIFT_N;
+    dy >>= SHADOW_SHIFT_N;
+    dz >>= SHADOW_SHIFT_N;
+
+    rx >>= SHADOW_SHIFT_W;
+    ry >>= SHADOW_SHIFT_W;
+    rz >>= SHADOW_SHIFT_W;
 
     renderSetShader(&shaderBlob);
-    renderSetTexture(t);
+    renderSetTexture(gShadowTex);
     stateCheck();
 
-    x3 = s->v[1].x + s->v[2].x - s->v[0].x;
-    y3 = s->v[1].y + s->v[2].y - s->v[0].y;
-    z3 = s->v[1].z + s->v[2].z - s->v[0].z;
-
     addQuad();
-    addVertex(s->v[0].x, s->v[0].y, s->v[0].z, 0.0f, 0.0f, &color);
-    addVertex(s->v[1].x, s->v[1].y, s->v[1].z, 1.0f, 0.0f, &color);
-    addVertex(x3, y3, z3, 1.0f, 1.0f, &color);
-    addVertex(s->v[2].x, s->v[2].y, s->v[2].z, 0.0f, 1.0f, &color);
-
-    gVertices[gVerticesCount - 3].a =
-    gVertices[gVerticesCount - 2].a =
-    gVertices[gVerticesCount - 1].a =
-    gVertices[gVerticesCount - 0].a = s->intensity;
+    addVertex(px + dx - rx, py + dy - ry, pz + dz - rz, 0.0f, 0.0f, color);
+    addVertex(px + dx + rx, py + dy + ry, pz + dz + rz, 1.0f, 0.0f, color);
+    addVertex(px - dx + rx, py - dy + ry, pz - dz + rz, 1.0f, 1.0f, color);
+    addVertex(px - dx - rx, py - dy - ry, pz - dz - rz, 0.0f, 1.0f, color);
 }
 
 void renderColorQuad(const ColorQuad* q)
@@ -984,31 +950,36 @@ void renderColorQuad(const ColorQuad* q)
     stateCheck();
 
     addQuad();
-    addVertex(q->x0, q->y0, 0, 0.0f, 0.0f, q->color + 0);
-    addVertex(q->x1, q->y1, 0, 0.0f, 0.0f, q->color + 1);
-    addVertex(q->x2, q->y2, 0, 0.0f, 0.0f, q->color + 2);
-    addVertex(q->x3, q->y3, 0, 0.0f, 0.0f, q->color + 3);
+    addVertex(q->x0, q->y0, 0, 0.0f, 0.0f, q->color[0]);
+    addVertex(q->x1, q->y1, 0, 0.0f, 0.0f, q->color[1]);
+    addVertex(q->x2, q->y2, 0, 0.0f, 0.0f, q->color[2]);
+    addVertex(q->x3, q->y3, 0, 0.0f, 0.0f, q->color[3]);
 }
 
 void renderBillboard(const Billboard* b)
 {
-    int sx, sy, sz, size;
+    int rx, ry, rz, ux, uy, uz, size;
     const Texture* t = b->texture;
 
     size = b->size * 8;
-    sx = size * gCylX >> FIXED_SHIFT;
-    sy = size;
-    sz = size * gCylZ >> FIXED_SHIFT;
+
+    rx = gMatrixPtr->e00 * size >> FIXED_SHIFT;
+    ry = gMatrixPtr->e01 * size >> FIXED_SHIFT;
+    rz = gMatrixPtr->e02 * size >> FIXED_SHIFT;
+
+    ux = gMatrixPtr->e10 * size >> FIXED_SHIFT;
+    uy = gMatrixPtr->e11 * size >> FIXED_SHIFT;
+    uz = gMatrixPtr->e12 * size >> FIXED_SHIFT;
 
     renderSetTexture(t);
     renderSetShader(&shaderObject);
     stateCheck();
 
     addQuad();
-    addVertex(b->x - sx, b->y - sy, b->z - sz, 0.0f, 0.0f, &colorGrey);
-    addVertex(b->x + sx, b->y - sy, b->z + sz, 1.0f, 0.0f, &colorGrey);
-    addVertex(b->x + sx, b->y + sy, b->z + sz, 1.0f, 1.0f, &colorGrey);
-    addVertex(b->x - sx, b->y + sy, b->z - sz, 0.0f, 1.0f, &colorGrey);
+    addVertex(b->x - rx - ux, b->y - ry - uy, b->z - rz - uz, 0.0f, 0.0f, colorGrey);
+    addVertex(b->x + rx - ux, b->y - ry - uy, b->z + rz - uz, 1.0f, 0.0f, colorGrey);
+    addVertex(b->x + rx + ux, b->y + ry + uy, b->z + rz + uz, 1.0f, 1.0f, colorGrey);
+    addVertex(b->x - rx + ux, b->y + ry + uy, b->z - rz + uz, 0.0f, 1.0f, colorGrey);
 }
 
 void renderBackFill(int x, int y, int w, int h)
@@ -1022,10 +993,10 @@ void renderBackFill(int x, int y, int w, int h)
     q.y2 = y + h;
     q.x3 = x;
     q.y3 = y + h;
-    q.color[0].r = q.color[0].g = q.color[0].b =
-    q.color[1].r = q.color[1].g = q.color[1].b =
-    q.color[2].r = q.color[2].g = q.color[2].b =
-    q.color[3].r = q.color[3].g = q.color[3].b = 64;
+    q.color[0] =
+    q.color[1] =
+    q.color[2] =
+    q.color[3] = 0xFF404040;
 
     renderNextLayer();
     renderSetBlend(BLEND_MUL);
@@ -1081,13 +1052,42 @@ void renderPrepare(void)
     prepareTrack();
 }
 
+void renderSetMatrix(const Matrix* matrix)
+{
+    mat4* m = gMatrices + gMatricesCount;
+
+    gCurState.viewMatrix = gMatricesCount++;
+    gStatePtr = NULL;
+
+    m->e[0][0] = matrix->e00 * i4096;
+    m->e[0][1] = matrix->e10 * i4096;
+    m->e[0][2] = matrix->e20 * i4096;
+    m->e[0][3] = 0.0f;
+
+    m->e[1][0] = matrix->e01 * i4096;
+    m->e[1][1] = matrix->e11 * i4096;
+    m->e[1][2] = matrix->e21 * i4096;
+    m->e[1][3] = 0.0f;
+
+    m->e[2][0] = matrix->e02 * i4096;
+    m->e[2][1] = matrix->e12 * i4096;
+    m->e[2][2] = matrix->e22 * i4096;
+    m->e[2][3] = 0.0f;
+
+    m->e[3][0] = matrix->e03;
+    m->e[3][1] = matrix->e13;
+    m->e[3][2] = matrix->e23;
+    m->e[3][3] = 1.0f;
+}
+
 void renderFrameBegin(void)
 {
-    Matrix* m;
+    mat4* m;
+
+    // get fixed right vector for sprites
+    rsincos(gCamera.hdg, gCylZ, gCylX);
 
     gBorder = ((gWidth * 240) / gHeight - 320) >> 1;
-
-    rsincos(-ctrlcamera.hdg, gCylZ, gCylX);
 
     gCurState.texture = NULL;
     gCurState.blend = BLEND_NONE;
@@ -1101,7 +1101,7 @@ void renderFrameBegin(void)
 
     gRenderMode = RENDER_MODE_3D;
     renderSetMode(RENDER_MODE_2D);
-    renderSetColor(0xFFFFFFFF);
+    renderSetColor(colorWhite);
 
     // identity matrix
     m = gMatrices + 0;
@@ -1182,7 +1182,7 @@ void renderFrameEnd(void)
             glBindTexture(GL_TEXTURE_2D, texture ? texture->id : whiteTex);
         }
 
-        // set proj matrix
+        // set geomProj matrix
         if (projMatrix != state->projMatrix)
         {
             projMatrix = state->projMatrix;
@@ -1297,49 +1297,14 @@ void renderFrameEnd(void)
     gStatesCount = 0;
 }
 
-void renderSetMatrix(const MATRIX* matrix, int x, int y, int z)
-{
-    Matrix* m = gMatrices + gMatricesCount;
-
-    gCurState.viewMatrix = gMatricesCount++;
-    gStatePtr = NULL;
-
-    m->e[0][0] = matrix->m[0][0] * i4096;
-    m->e[0][1] = matrix->m[1][0] * i4096;
-    m->e[0][2] = matrix->m[2][0] * i4096;
-    m->e[0][3] = 0.0f;
-
-    m->e[1][0] = matrix->m[0][1] * i4096;
-    m->e[1][1] = matrix->m[1][1] * i4096;
-    m->e[1][2] = matrix->m[2][1] * i4096;
-    m->e[1][3] = 0.0f;
-
-    m->e[2][0] = matrix->m[0][2] * i4096;
-    m->e[2][1] = matrix->m[1][2] * i4096;
-    m->e[2][2] = matrix->m[2][2] * i4096;
-    m->e[2][3] = 0.0f;
-
-    m->e[3][0] = x;
-    m->e[3][1] = y;
-    m->e[3][2] = z;
-    m->e[3][3] = 1.0f;
-}
-
-void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z)
-{
-    renderSetMatrix(GetSkeletonMatrix(skeleton), x, y, z);
-}
-
 void renderSection(const TrackSection* section)
 {
-    const Face* face = track->faces + section->faceStart;
-    const vec3i* vertices = track->vertices;
+    const Face* face = gTrack.faces + section->faceStart;
+    const vec3i* vertices = gTrack.vertices;
     const vec4i* v;
     int i;
     float u0, u1;
-    CVECTOR color;
-    
-    color.cd = 255;
+    uint32 color;
 
     for (i = 0; i < section->faceCount; i++, face++)
     {
@@ -1352,9 +1317,7 @@ void renderSection(const TrackSection* section)
         renderSetTexture(gTrackTex + face->texture);
         stateCheck();
 
-        color.r = face->red;
-        color.g = face->green;
-        color.b = face->blue;
+        color = face->red | (face->green << 8) | (face->blue << 16) | 0xFF000000;
 
         if (face->flags & FLIP_TEXTURE)
         {
@@ -1368,10 +1331,10 @@ void renderSection(const TrackSection* section)
         }
 
         addQuad();
-        addVertexI((vec4i*)(vertices + face->vertex[3]), u0, 1.0f, &color);
-        addVertexI((vec4i*)(vertices + face->vertex[2]), u1, 1.0f, &color);
-        addVertexI((vec4i*)(vertices + face->vertex[1]), u1, 0.0f, &color);
-        addVertexI((vec4i*)(vertices + face->vertex[0]), u0, 0.0f, &color);
+        addVertexI(vertices + face->vertex[3], u0, 1.0f, color);
+        addVertexI(vertices + face->vertex[2], u1, 1.0f, color);
+        addVertexI(vertices + face->vertex[1], u1, 0.0f, color);
+        addVertexI(vertices + face->vertex[0], u0, 0.0f, color);
     }
 }
 
@@ -1391,42 +1354,38 @@ void renderTrack(void)
     memset(texUsed, 0, MAX_TRACK_TEX);
 #endif
 
-    dir = TrackDirection(&ctrlcamera);
+    dir = TrackDirection(&gCamera);
 
-    cx = ctrlcamera.camPos->absolute.t[0];
-    cy = ctrlcamera.camPos->absolute.t[1];
-    cz = ctrlcamera.camPos->absolute.t[2];
-
-    renderSetSkeleton(ctrlcamera.camPos->super, cx, cy, cz);
+    renderSetMatrix(gMatrixPtr);
     renderSetShader(&shaderTrack);
 
     switch (dir)
     {
         case VIEW_DIR_NORTH:
-            counts = ctrlcamera.section->northViewCount;
-            sections = ctrlcamera.section->northViewSection;
+            counts = gCamera.section->northViewCount;
+            sections = gCamera.section->northViewSection;
             break;
         case VIEW_DIR_SOUTH:
-            counts = ctrlcamera.section->southViewCount;
-            sections = ctrlcamera.section->southViewSection;
+            counts = gCamera.section->southViewCount;
+            sections = gCamera.section->southViewSection;
             break;
         case VIEW_DIR_WEST:
-            counts = ctrlcamera.section->westViewCount;
-            sections = ctrlcamera.section->westViewSection;
+            counts = gCamera.section->westViewCount;
+            sections = gCamera.section->westViewSection;
             break;
         default: // VIEW_DIR_EAST
-            counts = ctrlcamera.section->eastViewCount;
-            sections = ctrlcamera.section->eastViewSection;
+            counts = gCamera.section->eastViewCount;
+            sections = gCamera.section->eastViewSection;
     }
 
-    section = track->sections + sections[0][0];
+    section = gTrack.sections + sections[0][0];
     renderSection(section->prevSection);
 
     for (i = 0; i < 3; i++)
     {
         for (j = 0; j < counts[i]; j += 2)
         {
-            section = track->sections + sections[i][j];
+            section = gTrack.sections + sections[i][j];
 
             for (s = 0; s < sections[i][j + 1]; s++)
             {
@@ -1444,430 +1403,167 @@ void renderTrack(void)
 #endif
 }
 
-void renderMesh(const vec4s* vertices, Primitive* prim, int32 count)
+void renderEffects(const Effect* fx)
 {
-    int i;
-    Prm poly;
-    const vec4s* v;
+    Billboard b;
 
-    poly.primitive = prim;
+    renderSetMatrix(gMatrixPtr);
+    renderDepthWrite(0);
+    renderSetBlend(BLEND_ADD);
 
-    for (i = 0; i < count; i++)
+    while (fx)
     {
-        switch (poly.primitive->type)
+        b.x = fx->pos.x;
+        b.y = fx->pos.y;
+        b.z = fx->pos.z;
+        b.size = fx->size;
+        b.texture = gEffectTextures + fx->type;
+        renderBillboard(&b);
+
+        fx = fx->next;
+    }
+
+    renderDepthWrite(1);
+    renderSetBlend(BLEND_NONE);
+}
+
+void renderMesh(const Object* obj)
+{
+    int32 i, dx, dz, rx, rz, len;
+    float iw, ih;
+    const vec3i* v = obj->vertices;
+    const ObjFace* f = obj->faces;
+    const ObjSprite* s = obj->sprites;
+
+    for (i = 0; i < obj->fCount; i++, f++)
+    {
+        uint32 texIndex = FACE_TEXTURE(f);
+
+        // TODO precalc float uv's
+        if (texIndex != NO_TEXTURE)
         {
-            case TypeF3:
-            {
-                const F3* f = poly.f3++;
-
-                renderSetTexture(NULL);
-                stateCheck();
-
-                addTriangle();
-                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, &f->colour);
-                break;
-            }
-
-            case TypeLSF3:
-            {
-                const LSF3* f = poly.lsf3++;
-
-                renderSetTexture(NULL);
-                stateCheck();
-
-                addTriangle();
-                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, &f->colour);
-                break;
-            }
-
-            case TypeFT3:
-            {
-                const FT3* f = poly.ft3++;
-                Texture* t = gTextures + f->texture;
-
-                renderSetTexture(t);
-
-                if (f->flag & ShipEngine)
-                {
-                    uint32 color = gCurState.color;
-
-                    renderSetColor(0xFFFFFFFF);
-                    renderSetBlend(BLEND_ADD);
-                    stateCheck();
-
-                    addTriangle();
-                    addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &colorWhite);
-                    addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &colorWhite);
-                    addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &colorWhite);
-
-                    renderSetBlend(BLEND_NONE);
-                    renderSetColor(color);
-                }
-                else
-                {
-                    stateCheck();
-
-                    addTriangle();
-                    addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &f->colour);
-                    addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &f->colour);
-                    addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &f->colour);
-                }
-                break;
-            }
-
-            case TypeLSFT3:
-            {
-                const LSFT3* f = poly.lsft3++;
-                Texture* t = gTextures + f->texture;
-
-                renderSetTexture(t);
-                stateCheck();
-
-                addTriangle();
-                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &f->colour);
-                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &f->colour);
-                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &f->colour);
-                break;
-            }
-
-            case TypeF4:
-            {
-                const F4* f = poly.f4++;
-
-                renderSetTexture(NULL);
-                stateCheck();
-
-                addQuad();
-                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[3], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, &f->colour);
-                break;
-            }
-
-            case TypeLSF4:
-            {
-                const LSF4* f = poly.lsf4++;
-
-                renderSetTexture(NULL);
-                stateCheck();
-
-                addQuad();
-                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[3], 0.0f, 0.0f, &f->colour);
-                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, &f->colour);
-                break;
-            }
-
-            case TypeFT4:
-            {
-                const FT4* f = poly.ft4++;
-                Texture* t = gTextures + f->texture;
-
-                renderSetTexture(t);
-                stateCheck();
-
-                addQuad();
-                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &f->colour);
-                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &f->colour);
-                addVertexS(vertices + f->coords[3], f->u3 * t->iw, f->v3 * t->ih, &f->colour);
-                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &f->colour);
-                break;
-            }
-
-            case TypeLSFT4:
-            {
-                const LSFT4* f = poly.lsft4++;
-                Texture* t = gTextures + f->texture;
-
-                renderSetTexture(t);
-                stateCheck();
-
-                addQuad();
-                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &f->colour);
-                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &f->colour);
-                addVertexS(vertices + f->coords[3], f->u3 * t->iw, f->v3 * t->ih, &f->colour);
-                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &f->colour);
-                break;
-            }
-
-            case TypeG3:
-            {
-                const G3* f = poly.g3++;
-
-                renderSetTexture(NULL);
-                stateCheck();
-
-                addTriangle();
-                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, f->colour + 0);
-                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, f->colour + 1);
-                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, f->colour + 2);
-                break;
-            }
-
-            case TypeLSG3:
-            {
-                const LSG3* f = poly.lsg3++;
-
-                renderSetTexture(NULL);
-                stateCheck();
-
-                addTriangle();
-                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, f->colour + 0);
-                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, f->colour + 1);
-                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, f->colour + 2);
-                break;
-            }
-
-            case TypeGT3:
-            {
-                const GT3* f = poly.gt3++;
-                Texture* t = gTextures + f->texture;
-
-                renderSetTexture(t);
-
-                if (f->flag & ShipEngine)
-                {
-                    uint32 color = gCurState.color;
-
-                    renderSetColor(0xFFFFFFFF);
-                    renderSetBlend(BLEND_ADD);
-                    stateCheck();
-
-                    addTriangle();
-                    addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, &colorWhite);
-                    addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, &colorWhite);
-                    addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, &colorWhite);
-
-                    renderSetBlend(BLEND_NONE);
-                    renderSetColor(color);
-                }
-                else
-                {
-                    stateCheck();
-
-                    addTriangle();
-                    addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, f->colour + 0);
-                    addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, f->colour + 1);
-                    addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, f->colour + 2);
-                }
-                break;
-            }
-
-            case TypeLSGT3:
-            {
-                const LSGT3* f = poly.lsgt3++;
-                Texture* t = gTextures + f->texture;
-
-                renderSetTexture(t);
-                stateCheck();
-
-                addTriangle();
-                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, f->colour + 0);
-                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, f->colour + 1);
-                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, f->colour + 2);
-                break;
-            }
-
-            case TypeG4:
-            {
-                const G4* f = poly.g4++;
-
-                renderSetTexture(NULL);
-                stateCheck();
-
-                addQuad();
-                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, f->colour + 0);
-                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, f->colour + 1);
-                addVertexS(vertices + f->coords[3], 0.0f, 0.0f, f->colour + 3);
-                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, f->colour + 2);
-                break;
-            }
-
-            case TypeLSG4:
-            {
-                const LSG4* f = poly.lsg4++;
-
-                renderSetTexture(NULL);
-                stateCheck();
-
-                addQuad();
-                addVertexS(vertices + f->coords[0], 0.0f, 0.0f, f->colour + 0);
-                addVertexS(vertices + f->coords[1], 0.0f, 0.0f, f->colour + 1);
-                addVertexS(vertices + f->coords[3], 0.0f, 0.0f, f->colour + 3);
-                addVertexS(vertices + f->coords[2], 0.0f, 0.0f, f->colour + 2);
-                break;
-            }
-
-            case TypeGT4:
-            {
-                const GT4* f = poly.gt4++;
-                Texture* t = gTextures + f->texture;
-
-                renderSetTexture(t);
-                stateCheck();
-
-                addQuad();
-                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, f->colour + 0);
-                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, f->colour + 1);
-                addVertexS(vertices + f->coords[3], f->u3 * t->iw, f->v3 * t->ih, f->colour + 3);
-                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, f->colour + 2);
-                break;
-            }
-
-            case TypeLSGT4:
-            {
-                const LSGT4* f = poly.lsgt4++;
-                Texture* t = gTextures + f->texture;
-
-                renderSetTexture(t);
-                stateCheck();
-
-                addQuad();
-                addVertexS(vertices + f->coords[0], f->u0 * t->iw, f->v0 * t->ih, f->colour + 0);
-                addVertexS(vertices + f->coords[1], f->u1 * t->iw, f->v1 * t->ih, f->colour + 1);
-                addVertexS(vertices + f->coords[3], f->u3 * t->iw, f->v3 * t->ih, f->colour + 3);
-                addVertexS(vertices + f->coords[2], f->u2 * t->iw, f->v2 * t->ih, f->colour + 2);
-                break;
-            }
-
-            case TypeTSPR:
-            case TypeBSPR:
-            {
-                const SPR* f = poly.spr;
-
-                int w, h0, h1;
-                int sx, sz;
-                Texture* t = gTextures + f->texture;
-
-                w = f->width >> 1;
-                if (poly.primitive->type == TypeTSPR)
-                {
-                    h0 = 0;
-                    h1 = f->height;
-                }
-                else
-                {
-                    h0 = f->height;
-                    h1 = 0;
-                }
-                poly.spr++;
-
-                v = vertices + f->coord;
-                sx = gCylX * w >> FIXED_SHIFT;
-                sz = gCylZ * w >> FIXED_SHIFT;
-
-                renderSetTexture(t);
-                stateCheck();
-
-                addQuad();
-                addVertex(v->x - sx, v->y - h0, v->z - sz, 0.0f, 0.0f, &f->colour);
-                addVertex(v->x + sx, v->y - h0, v->z + sz, 1.0f, 0.0f, &f->colour);
-                addVertex(v->x + sx, v->y + h1, v->z + sz, 1.0f, 1.0f, &f->colour);
-                addVertex(v->x - sx, v->y + h1, v->z - sz, 0.0f, 1.0f, &f->colour);
-                break;
-            }
-
-            case TypeInfiniteLight:
-                poly.infiniteLight++;
-                break;
-
-            case TypePointLight:
-                poly.pointLight++;
-                break;
-
-            case TypeSpotLight:
-                poly.spotLight++;
-                break;
-
-            default:
-                ASSERT(0);
-                break;
+            Texture* t = gTextures + FACE_TEXTURE(f);
+            renderSetTexture(t);
+            iw = t->iw;
+            ih = t->ih;
         }
+        else
+        {
+            renderSetTexture(NULL);
+            iw = 0.0f;
+            ih = 0.0f;
+        }
+
+        if (FACE_QUAD(f))
+        {
+            stateCheck();
+
+            addQuad();
+            addVertexI(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, f->color[0]);
+            addVertexI(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, f->color[1]);
+            addVertexI(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, f->color[2]);
+            addVertexI(v + f->index[3], f->uv[3][0] * iw, f->uv[3][1] * ih, f->color[3]);
+        }
+        else
+        {
+            if (f->flags & FACE_FLAG_ENGINE) // triangles only
+            {
+                uint32 color = gCurState.color;
+
+                renderSetColor(colorWhite);
+                renderSetBlend(BLEND_ADD);
+                stateCheck();
+
+                addTriangle();
+                addVertexI(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, colorWhite);
+                addVertexI(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, colorWhite);
+                addVertexI(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, colorWhite);
+
+                renderSetBlend(BLEND_NONE);
+                renderSetColor(color);
+            }
+            else
+            {
+                stateCheck();
+
+                addTriangle();
+                addVertexI(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, f->color[0]);
+                addVertexI(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, f->color[1]);
+                addVertexI(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, f->color[2]);
+            }
+        }
+    }
+
+    for (i = 0; i < obj->sCount; i++, s++)
+    {
+        Texture* t = gTextures + SPRITE_TEXTURE(s);
+        const vec3i* p = v + s->index;
+
+        int32 w = s->width >> 1;
+        int32 wx = gCylX * w >> FIXED_SHIFT;
+        int32 wz = gCylZ * w >> FIXED_SHIFT;
+        int32 h0, h1;
+
+        if (SPRITE_FLIP(s))
+        {
+            h0 = s->height;
+            h1 = 0;
+        }
+        else
+        {
+            h0 = 0;
+            h1 = s->height;
+        }
+
+        renderSetTexture(t);
+        stateCheck();
+
+        addQuad();
+        addVertex(p->x - wx, p->y - h0, p->z - wz, 0.0f, 0.0f, s->color);
+        addVertex(p->x + wx, p->y - h0, p->z + wz, 1.0f, 0.0f, s->color);
+        addVertex(p->x + wx, p->y + h1, p->z + wz, 1.0f, 1.0f, s->color);
+        addVertex(p->x - wx, p->y + h1, p->z - wz, 0.0f, 1.0f, s->color);
     }
 }
 
 void renderObject(const Object* object)
 {
-    const MATRIX* matrix;
-    int cx, cy, cz;
-
-    matrix = GetSkeletonMatrix(object->skeleton);
-
-    cx = matrix->t[0];
-    cy = matrix->t[1];
-    cz = matrix->t[2];
-
-    renderSetSkeleton(object->skeleton, cx, cy, cz);
+    renderSetMatrix(gMatrixPtr);
     renderSetShader(&shaderObject);
 
-    renderMesh(object->vertices, object->primitives, object->primitiveCount);
+    renderMesh(object);
 }
 
 void renderShip(const Object* object, uint32 color)
 {
-    const MATRIX* matrix;
-    int cx, cy, cz;
-
-    matrix = GetSkeletonMatrix(object->skeleton);
-
-    cx = matrix->t[0];
-    cy = matrix->t[1];
-    cz = matrix->t[2];
-
-    renderSetSkeleton(object->skeleton, cx, cy, cz);
+    renderSetMatrix(gMatrixPtr);
     renderSetShader(&shaderShip);
     renderSetColor(color);
 
-    renderMesh(object->vertices, object->primitives, object->primitiveCount);
+    renderMesh(object);
 
     renderSetColor(0xFFFFFFFF);
 }
 
 void renderShield(const Object* object, int32 counter)
 {
-    const MATRIX* matrix;
-    int cx, cy, cz;
-
-    matrix = GetSkeletonMatrix(object->skeleton);
-
-    cx = matrix->t[0];
-    cy = matrix->t[1];
-    cz = matrix->t[2];
-
-    renderSetSkeleton(object->skeleton, cx, cy, cz);
+    renderSetMatrix(gMatrixPtr);
     renderSetShader(&shaderShield);
     renderSetBlend(BLEND_ADD);
     renderSetColor(counter);
 
-    renderMesh(object->vertices, object->primitives, object->primitiveCount);
+    renderMesh(object);
 
     renderSetBlend(BLEND_NONE);
 }
 
 void renderSky(const Object* object)
 {
-    object->skeleton->update = 1;
-
-    const MATRIX* matrix;
-    int cx, cy, cz;
-
-    matrix = GetSkeletonMatrix(object->skeleton);
-
-    cx = matrix->t[0];
-    cy = matrix->t[1];
-    cz = matrix->t[2];
-
-    renderSetSkeleton(object->skeleton, cx, cy, cz);
+    renderSetMatrix(gMatrixPtr);
     renderSetShader(&shaderSky);
     renderDepthTest(0);
 
-    renderMesh(object->vertices, object->primitives, object->primitiveCount);
+    renderMesh(object);
 
     renderDepthTest(1);
 }
@@ -1892,6 +1588,8 @@ void renderSetMode(int renderMode)
     {
         renderDepthTest(1);
         renderSetBlend(BLEND_NONE);
+
+        matrixSetViewMenu();
 
         matrixPerspective(gMatrices + gMatricesCount, gCameraFOV / 4096.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, (float)64, (float)(64 * 1024));
 
@@ -2111,5 +1809,8 @@ Texture* renderCreateTexture(uint8* ptr)
 
 void renderDeleteTexture(Texture* texture)
 {
-    // TODO
+    if (texture->id == 0)
+        return;
+    glDeleteTextures(1, &texture->id);
+    texture->id = 0;
 }

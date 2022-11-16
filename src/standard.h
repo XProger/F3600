@@ -37,6 +37,7 @@
 #else
     #include <stdio.h>
 
+    #define USE_VERTEX_COLOR
     #define USE_COMPRESSION
     #define USE_SHIP_AMBIENT
     #define MENU_HAS_QUIT

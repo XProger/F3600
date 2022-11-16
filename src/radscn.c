@@ -4,61 +4,44 @@
 #define ObjectListMax 128
 
 /*TODO precalc this shit*/
-void SceneRadiusCheck(Object* objects)
+void SceneRadiusCheck(Object* objects, int32 count)
 {
     TrackSection* section;
     TrackSection* visSection;
-    short i, j;
+    int32 i, j, index;
     Object* object;
-    MATRIX* matrix;
     vec3i* sectionCentre;
-    short objectCount;
     vec4i vector;
     long distance;
     short objectList[ObjectListMax];
     short withinLocal;
     short withinGlobal;
     short allCount;
+    int32 objectCount;
 
     /* allocate and fill in a global object table */
 
-    object = objects;
-    objectCount = 0;
-    while (object)
-    {
-        object = object->next;
-        objectCount++;
-    }
-
-    ASSERT(objectCount <= ObjectTableMax);
-
-    object = objects;
-    for (i = 0; i < objectCount; i++)
-    {
-        objectTable[i] = object;
-        object = object->next;
-    }
-
     /* do the radius check */
 
-    section = track->sections;
+    section = gTrack.sections;
 
-    for (i = 0; i < track->sectionCount; i++)
+    for (i = 0; i < gTrack.sectionCount; i++)
     {
-        object = objects;
         objectCount = 0;
         allCount = 0;
-        while (object)
+
+        for (index = 0; index < count; index++)
         {
+            object = objects + index;
+
             withinLocal = 0;
             withinGlobal = 0;
 
-            matrix = &object->skeleton->relative;
             sectionCentre = &section->centre;
 
-            vector.x = matrix->t[0] - sectionCentre->x;
-            vector.y = matrix->t[1] - sectionCentre->y;
-            vector.z = matrix->t[2] - sectionCentre->z;
+            vector.x = object->pos.x - sectionCentre->x;
+            vector.y = object->pos.y - sectionCentre->y;
+            vector.z = object->pos.z - sectionCentre->z;
 
             if (section->flags & Jump)
             {
@@ -98,12 +81,11 @@ void SceneRadiusCheck(Object* objects)
                 visSection = section;
                 for (j = 0; (!withinLocal) && (j < 30); j++)
                 {
-                    matrix = &object->skeleton->relative;
                     sectionCentre = &visSection->centre;
 
-                    vector.x = matrix->t[0] - sectionCentre->x;
-                    vector.y = matrix->t[1] - sectionCentre->y;
-                    vector.z = matrix->t[2] - sectionCentre->z;
+                    vector.x = object->pos.x - sectionCentre->x;
+                    vector.y = object->pos.y - sectionCentre->y;
+                    vector.z = object->pos.z - sectionCentre->z;
 
                     if ((abs(vector.x) < section->localRadius) && (abs(vector.y) < section->localRadius) && (abs(vector.z) < section->localRadius))
                     {
@@ -125,12 +107,11 @@ void SceneRadiusCheck(Object* objects)
                 visSection = section;
                 for (j = 0; (!withinLocal) && (j < 30); j++)
                 {
-                    matrix = &object->skeleton->relative;
                     sectionCentre = &visSection->centre;
 
-                    vector.x = matrix->t[0] - sectionCentre->x;
-                    vector.y = matrix->t[1] - sectionCentre->y;
-                    vector.z = matrix->t[2] - sectionCentre->z;
+                    vector.x = object->pos.x - sectionCentre->x;
+                    vector.y = object->pos.y - sectionCentre->y;
+                    vector.z = object->pos.z - sectionCentre->z;
 
                     if ((abs(vector.x) < section->localRadius) && (abs(vector.y) < section->localRadius) && (abs(vector.z) < section->localRadius))
                     {
@@ -160,7 +141,6 @@ void SceneRadiusCheck(Object* objects)
                 }
             }
 
-            object = object->next;
             allCount++;
         }
 
@@ -170,7 +150,7 @@ void SceneRadiusCheck(Object* objects)
         {
             ASSERT(0);
         }
-        section->objectCount = objectCount;
+        section->objectsCount = objectCount;
 
         for (j = 0; j < objectCount; j++)
         {

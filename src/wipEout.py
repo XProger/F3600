@@ -181,8 +181,8 @@ def read_primitives(count):
         ret.append(p)
     return ret
 
-def read_obj():
-    name = read_str()
+def read_obj(objIdx):
+    name = str(objIdx) + "_" + read_str()
 
     vertexCount = read_uint16()
     skip(2) # padding
@@ -237,16 +237,60 @@ def read_obj():
 
 def read_scene(index):
     path = 'C:\\wipeout-xport\\bin\\WIPEOUT\\TRACK{:02d}\\SCENE.PRM'.format(index)
+    #path = 'C:\\Projects\\wipeout-xport\\bin\\WIPEOUT\\COMMON\\ALLSH.PRM'.format(index)
     global file;
     file = open(path, 'rb')
     file.seek(0, 2)
     size = file.tell()
     file.seek(0)
 
+    objIdx = 0
+
     while file.tell() < size:
-        obj = read_obj()
+        obj = read_obj(objIdx)
         bpy.context.collection.objects.link(obj)
+        objIdx += 1
+        
+    file.close()
+    
+def write_shadow_mesh(file, mesh):
+    file.write(struct.pack('>i', len(mesh.vertices)))
+    file.write(struct.pack('>i', len(mesh.polygons)))
+
+    for v in mesh.vertices:
+        v.co.x = round(v.co.x / 16) * 16
+        v.co.z = round(v.co.z / 16) * 16
+        # write coords shifted down by 4 to improve MUL perf
+        file.write(struct.pack('>h', round(v.co.x / 16)))
+        file.write(struct.pack('>h', round(v.co.z / 16)))
+        
+    for f in mesh.polygons:
+        for i in f.loop_indices:
+            idx = mesh.loops[i].vertex_index
+            file.write(struct.pack('B', idx))
+        # duplicate the last index for tri to make quad
+        if len(f.loop_indices) == 3:
+            idx = mesh.loops[2].vertex_index
+            file.write(struct.pack('B', idx))
+        # check for tri and quads
+        if len(f.loop_indices) > 4:
+            printf("too much indices for " + mesh.name)
 
 
-read_scene(2)
+def write_shadows(path):
+    global file;
+    file = open(path, 'wb')
+    
+    objs = bpy.context.selected_objects
+    objs.sort(key = lambda o: o.name)
+    print(str(len(objs)) + " shadows")
+    
+    for obj in objs:
+        write_shadow_mesh(file, obj.data)
+    
+    file.close()
+
+#read_scene(2)
+
+write_shadows('C:\\Projects\\wipeout-xport\\src\\platform\\3do\\CD\\WIPEOUT\\COMMON\\allsh.shd')
 

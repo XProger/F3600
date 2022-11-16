@@ -194,9 +194,9 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         CameraUpdate = UpdateCameraDroidView;
         shipIndex->attr |= REMOTE_VIEW;
         if (shipIndex->nearTrkSect->flags & Jump)
-            cameraPtr->section = shipIndex->nearTrkSect->nextSection;
+            gCamera.section = shipIndex->nearTrkSect->nextSection;
         else
-            cameraPtr->section = shipIndex->nearTrkSect;
+            gCamera.section = shipIndex->nearTrkSect;
     }
 
     SetDroidVectors(rescueDroid, shipShapes);
@@ -341,7 +341,7 @@ void SetDroidVectors(RescueData* rescueDroid, Object** shipShapes)
 
 void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shipIndex)
 {
-    rescueDroid->section = track->sections;
+    rescueDroid->section = gTrack.sections;
 
     while (1)
     {

@@ -7,49 +7,28 @@
 #define PrmMax 64
 #define AJSDELAY 60 * 30 // arbitrary number - linked to frame rate ? HOPE SO !
 
-extern long fr;
-extern ChampionShip winTable[];
+extern Cone ctrlcone;
 
 extern short startIceText;
 extern short startFireText;
 int ajscount = 0; // oh shit another global flag
 
 // All race locals now globals, as RaceCtrl has to be re-entrant
-TrackData ctrltrackStart;
 TexTemplate* ctrltexTemplate;
-Object* ctrlprm[PrmMax];
-short ctrlprmCount;
-Cone ctrlcone;
-TrackSection* ctrlnextSection;
 
 /**************************************************/
 /******           Dave additions              *****/
 /**************************************************/
 
-TrackCamera ctrlcamera;
-Skeleton* ctrlcamDir;
-
 Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 ShipData ctrlshipIndex[NO_OF_SHIPS];
 RescueData ctrlrescueDroid;
 
-WeaponShape ctrlweaponShapes[WEAPON_SHAPE_NAX];
+Object* ctrlweaponShapes[WEAPON_SHAPE_NAX];
 
-WeaponGrid ctrlweaponGrid[64];
-
-int ctrlnoWeaponGrids;
-
-short ctrlsky;
 int ctrlchoice;
-TrackSection* ctrlsection;
 Face* ctrlfacePtr;
-Object* ctrllostad[20]; /* It wouldn`t suprise me ! */
-int ctrlstadCount;
-short ctrlsectCount;
-TrackSection* ctrljsection;
 short ctrlbuttonPressed;
-Object* ctrlredLight;
-Object* ctrldonkey[2];
 int ctrldoneExtro;
 int ctrlplayCredits;
 int ctrlgameOverTime;
@@ -62,16 +41,11 @@ int HACK_TEX_FILTER;
 /**************************************************/
 /******           Stu additions               *****/
 /**************************************************/
-int ctrlframe_cnt;
 char ctrlshowMenu;
 char ctrlconfirm;
 char ctrllConfirm;
 HiScoreData ctrlhiScoreData;
-char ctrlrec[8];
-char ctrlactivated;
 int ctrlchoiceData;
-char ctrlquitFlag;
-int ctrlquitTwoPlayer;
 char ctrlshowGameOver;
 
 extern long ctrlmode;
@@ -116,29 +90,7 @@ const char* const PILOT_NAMES[] =
     "paul"
 };
 
-int InitCrowdSound(Object** prm, short prmCount, Object** lostad, int stadCount)
-{
-    int i;
-    Object* obj;
-
-    for (i = 0; i < prmCount; i++)
-    {
-        obj = prm[i];
-        while (obj)
-        {
-            if (!strncmp(obj->name, "lost", 4))
-            {
-                lostad[stadCount] = obj;
-                stadCount++;
-            }
-
-            obj = obj->next;
-        }
-    }
-    return (stadCount);
-}
-
-void AdjustCrowdSound(Object** lostad, int stadCount)
+void AdjustCrowdSound(Object* lost, int lostCount)
 {
     int i;
     vec3i distance;
@@ -156,11 +108,11 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
 
     /*TODO audio crowd lerp between two closest*/
 
-    for (i = 0; i < stadCount; i++)
+    for (i = 0; i < lostCount; i++)
     {
-        distance.x = (lostad[i]->skeleton->relative.t[0] + cameraPtr->camPos->relative.t[0]) >> 3;
-        distance.y = (lostad[i]->skeleton->relative.t[1] + cameraPtr->camPos->relative.t[1]) >> 3;
-        distance.z = (lostad[i]->skeleton->relative.t[2] + cameraPtr->camPos->relative.t[2]) >> 3;
+        distance.x = (lost[i].pos.x + gCamera.pos.x) >> 3;
+        distance.y = (lost[i].pos.y + gCamera.pos.y) >> 3;
+        distance.z = (lost[i].pos.z + gCamera.pos.z) >> 3;
 
         magSq = GetMagnitudeSqr(&distance);
 
@@ -173,9 +125,9 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
 
     if (smallestMagSq < (8192 * 8192))
     {
-        pos.x = lostad[chosen]->skeleton->relative.t[0];
-        pos.y = lostad[chosen]->skeleton->relative.t[1];
-        pos.z = lostad[chosen]->skeleton->relative.t[2];
+        pos.x = lost[chosen].pos.x;
+        pos.y = lost[chosen].pos.y;
+        pos.z = lost[chosen].pos.z;
 
         AdjustDirectionalNote(SFX_CROWD, &pos);
     }
@@ -185,14 +137,14 @@ void AdjustCrowdSound(Object** lostad, int stadCount)
     }
 }
 
-void Restart(ShipData* shipIndex, ConfigData* gameData, WeaponShape* weaponShapes, RescueData* rescueDroid, Object** shipShapes)
+void Restart(ShipData* shipIndex, ConfigData* gameData, Object** weaponShapes, RescueData* rescueDroid, Object** shipShapes)
 {
     KillNotes();
-    initShipData(track->sections, shipIndex, gameData);
+    initShipData(gTrack.sections, shipIndex, gameData);
     InitRescueDroid(rescueDroid, shipShapes, &(shipIndex[ownShip]));
-    cameraPtr->section = shipIndex[ownShip].nearTrkSect;
+    gCamera.section = shipIndex[ownShip].nearTrkSect;
 
-    ResetWeapons(ctrlweaponShapes, ctrlcamera.camPos);
+    ResetWeapons(ctrlweaponShapes);
     ResetEffects();
     ResetStartBoom();
 
@@ -221,11 +173,6 @@ void showLoadingScreen()
 
 void raceInit(ConfigData* gameData)
 {
-    int i, j;
-    int ctrlcheck;
-    int ctrljcheck;
-    char trackPath[64];
-
     printf("race init\n");
 
     renderOffset(0, 0);
@@ -250,164 +197,64 @@ void raceInit(ConfigData* gameData)
     gameData->newLapRecord = 0;
 
     ctrl_says_quit = 0;
-    ctrlprmCount = 0;
-    ctrlnoWeaponGrids = 0;
+
     ctrlchoice = -1;
-    ctrlcheck = 1;
-    ctrljcheck = 1;
     ctrlbuttonPressed = 0;
-    ctrlstadCount = 0;
     ctrlplayCredits = 0;
     ctrldoneExtro = START_EXTRO;
     ctrlgameOverTime = 0;
-    ctrlframe_cnt = 1;
     ctrlshowMenu = 1;
     ctrlconfirm = 0;
     ctrllConfirm = 0;
-    ctrlactivated = 0;
     ctrlchoiceData = -1;
-    ctrlquitFlag = 0;
-    ctrlquitTwoPlayer = 0;
     ctrlshowGameOver = 0;
     ctrlfirsttime = 1;
     finishedExtro = 0;
 
     /**********************************************************/
-    /***                 Initialise Camera                  ***/
-    /**********************************************************/
-
-    InitSkeleton(&gCamPos);
-    InitSkeleton(&gCamDir);
-
-    ctrlcamera.camPos = &gCamPos;
-    ctrlcamDir = &gCamDir;
-
-    ctrlcamera.camPos->super = ctrlcamDir;
-
-    cameraPtr = &ctrlcamera;
-
-    track = &ctrltrackStart;
-
-    /**********************************************************/
     /***                 Initialise Track                   ***/
     /**********************************************************/
-    LoadTrack(gameData->actTrackNum);
-
     /* firestar */
     if (gameData->actTrackNum == 14)
     {
-        camSpline[0] = LoadPrm("wipeout/common/cam1s.prm", 0);
-        camSpline[0]->skeleton->super = ctrlcamera.camPos;
+        camSpline[0] = LoadPrm("wipeout/common/cam1s.prm", 0, NULL);
+        shipSpline[0] = LoadPrm("wipeout/common/shp1s.prm", 0, NULL);
 
-        shipSpline[0] = LoadPrm("wipeout/common/shp1s.prm", 0);
-        shipSpline[0]->skeleton->super = ctrlcamera.camPos;
+        camSpline[1] = LoadPrm("wipeout/common/cam2s.prm", 0, NULL);
+        shipSpline[1] = LoadPrm("wipeout/common/shp2s.prm", 0, NULL);
 
-        camSpline[1] = LoadPrm("wipeout/common/cam2s.prm", 0);
-        camSpline[1]->skeleton->super = ctrlcamera.camPos;
+        camSpline[2] = LoadPrm("wipeout/common/cam3s.prm", 0, NULL);
+        shipSpline[2] = LoadPrm("wipeout/common/shp3s.prm", 0, NULL);
 
-        shipSpline[1] = LoadPrm("wipeout/common/shp2s.prm", 0);
-        shipSpline[1]->skeleton->super = ctrlcamera.camPos;
-
-        camSpline[2] = LoadPrm("wipeout/common/cam3s.prm", 0);
-        camSpline[2]->skeleton->super = ctrlcamera.camPos;
-
-        shipSpline[2] = LoadPrm("wipeout/common/shp3s.prm", 0);
-        shipSpline[2]->skeleton->super = ctrlcamera.camPos;
-
-        camSpline[3] = LoadPrm("wipeout/common/cam4s.prm", 0);
-        camSpline[3]->skeleton->super = ctrlcamera.camPos;
-
-        shipSpline[3] = LoadPrm("wipeout/common/shp4s.prm", 0);
-        shipSpline[3]->skeleton->super = ctrlcamera.camPos;
+        camSpline[3] = LoadPrm("wipeout/common/cam4s.prm", 0, NULL);
+        shipSpline[3] = LoadPrm("wipeout/common/shp4s.prm", 0, NULL);
     }
 
     /* silverstream */
     if (gameData->actTrackNum == 13)
     {
-        camSpline[4] = LoadPrm("wipeout/common/cam5s.prm", 0);
-        camSpline[4]->skeleton->super = ctrlcamera.camPos;
+        camSpline[4] = LoadPrm("wipeout/common/cam5s.prm", 0, NULL);
+        shipSpline[4] = LoadPrm("wipeout/common/shp5s.prm", 0, NULL);
 
-        shipSpline[4] = LoadPrm("wipeout/common/shp5s.prm", 0);
-        shipSpline[4]->skeleton->super = ctrlcamera.camPos;
+        camSpline[5] = LoadPrm("wipeout/common/cam6s.prm", 0, NULL);
+        shipSpline[5] = LoadPrm("wipeout/common/shp6s.prm", 0, NULL);
 
-        camSpline[5] = LoadPrm("wipeout/common/cam6s.prm", 0);
-        camSpline[5]->skeleton->super = ctrlcamera.camPos;
-
-        shipSpline[5] = LoadPrm("wipeout/common/shp6s.prm", 0);
-        shipSpline[5]->skeleton->super = ctrlcamera.camPos;
-
-        camSpline[6] = LoadPrm("wipeout/common/cam7s.prm", 0);
-        camSpline[6]->skeleton->super = ctrlcamera.camPos;
-
-        shipSpline[6] = LoadPrm("wipeout/common/shp7s.prm", 0);
-        shipSpline[6]->skeleton->super = ctrlcamera.camPos;
+        camSpline[6] = LoadPrm("wipeout/common/cam7s.prm", 0, NULL);
+        shipSpline[6] = LoadPrm("wipeout/common/shp7s.prm", 0, NULL);
     }
 
-    ctrlsection = track->sections;
+    InitScene(gameData->actTrackNum);
 
-    i = 0;
-    NoOfMainSections = 0;
-
-    while (ctrlcheck)
-    {
-        ctrlnoWeaponGrids = SetTrackAttributes(ctrlsection, i, ctrlweaponGrid, ctrlnoWeaponGrids);
-        ctrlsection->secNo = i;
-        if (ctrlsection->junction)
-        {
-            ctrljsection = ctrlsection;
-            j = i;
-            ctrlsection = ctrlsection->junction;
-            while (ctrljcheck)
-            {
-                i++;
-                ctrlnoWeaponGrids = SetTrackAttributes(ctrlsection, i, ctrlweaponGrid, ctrlnoWeaponGrids);
-                ctrlsection->secNo = i;
-                ctrlsection = ctrlsection->nextSection;
-                if (ctrlsection->junction)
-                    ctrljcheck = 0;
-            }
-            ctrljcheck = 1;
-            ctrlsection = ctrljsection;
-            i = j;
-        }
-        i++;
-        NoOfMainSections++;
-        ctrlsection = ctrlsection->nextSection;
-        if (ctrlsection == track->sections)
-            ctrlcheck = 0;
-    }
-
-    ctrlsky = InitScene(ctrlprm, &ctrlprmCount, ctrlcamera.camPos, gameData);
-
-    InitStartBoom(ctrlprm, ctrlprmCount);
-
-    ctrlstadCount = InitCrowdSound(ctrlprm, ctrlprmCount, ctrllostad, ctrlstadCount);
-
-    if ((trackNo == 8) || (trackNo == 11))
-    {
-        InitRedLight(ctrlprm, ctrlprmCount, &ctrlredLight);
-        InitDonkey(ctrlprm, ctrlprmCount, ctrldonkey);
-    }
-    else if ((trackNo == 1) /* || (trackNo == 6)*/)
-    {
-        InitRedLight(ctrlprm, ctrlprmCount, &ctrlredLight);
-    }
-
-    InitCamera(&ctrlcamera, track->sections);
+    InitCamera(&gCamera, gTrack.sections);
 
     InitShadow();
 
-    if (trackNo == 13)
-    {
-        InitAuroraBorialis(ctrlprm[ctrlsky]);
-    }
-
     InitWinLoseTex(PILOT_NAMES[gameData->shipNum]);
 
-    initShipData(track->sections, ctrlshipIndex, gameData);
+    initShipData(gTrack.sections, ctrlshipIndex, gameData);
     InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
 
-    ResetWeapons(ctrlweaponShapes, ctrlcamera.camPos);
+    ResetWeapons(ctrlweaponShapes);
     ResetEffects();
     ResetStartBoom();
 
@@ -424,14 +271,6 @@ void raceInit(ConfigData* gameData)
 
     ctrlhiScoreData.confirm = 2;
     ctrlhiScoreData.lConfirm = 0;
-
-    for (i = 0; i < NO_OF_SHIPS; i++)
-    {
-        ctrlcone.object[i] = ctrlshipShapes[ctrlshipIndex[i].highResTableIndex];
-        ctrlcone.ship[i] = &ctrlshipIndex[i];
-    }
-
-    InitCone(&ctrlcone);
 
     if (ctrlmode == ATTRACT)
     {
@@ -454,8 +293,6 @@ void raceInit(ConfigData* gameData)
             attractDelay = 60 * FR30; // was 30*30 but this was too short I think
         }
     }
-
-    ctrlnextSection = ctrlcamera.section;
 
     ctrlshipIndex[ownShip].haveFired = 0;
 
@@ -544,7 +381,7 @@ void raceCtrl(ConfigData* gameData)
                 SetVolume(SFX_ENG_THRUST, 0, 0);
                 SetVolume(SFX_TURBULENCE, 0, 0);
                 SetVolume(SFX_CROWD, 0, 0);
-                SetVolume(SFX_SHIELDS, 0, 0);
+                SetVolume(SFX_SHIELD, 0, 0);
             }
         }
     }
@@ -709,11 +546,11 @@ void raceCtrl(ConfigData* gameData)
 
         if (ctrldoneExtro == UPDATE_EXTRO)
         {
-            (CameraUpdate)(&ctrlcamera, ctrlshipIndex, &ctrlrescueDroid);
+            (CameraUpdate)(&gCamera, ctrlshipIndex, &ctrlrescueDroid);
         }
         else
         {
-            (CameraUpdate)(&ctrlcamera, &(ctrlshipIndex[ownShip]), &ctrlrescueDroid);
+            (CameraUpdate)(&gCamera, &(ctrlshipIndex[ownShip]), &ctrlrescueDroid);
         }
 
         UpdateCone(&ctrlcone);
@@ -734,15 +571,15 @@ void raceCtrl(ConfigData* gameData)
 
         UpdateEffects();
 
-        SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
+        SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
 
-        AdjustEngineSound(&(ctrlshipIndex[ownShip]), &ctrlcamera);
-        AdjustCrowdSound(ctrllostad, ctrlstadCount);
-        AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes, &ctrlcamera );
+        AdjustEngineSound(&(ctrlshipIndex[ownShip]), &gCamera);
+        AdjustCrowdSound(gTrack.lost, gTrack.lostCount);
+        AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes);
 
         if (raceType != TIME_TRIAL)
         {
-            CycleWeaponGrids(ctrlshipIndex, ctrlweaponGrid, ctrlnoWeaponGrids);
+            CycleWeaponGrids(ctrlshipIndex, gTrack.weapons, gTrack.weaponsCount);
         }
     }
 
@@ -1232,8 +1069,6 @@ void raceCtrl(ConfigData* gameData)
     }
 }
 
-int32 dbg_update;
-
 void raceLoop(ConfigData* gameData)
 {
     int i, count;
@@ -1260,31 +1095,38 @@ void raceLoop(ConfigData* gameData)
 
     if (trackNo == 13)
     {
-        AuroraBorialis(ctrlprm[ctrlsky]);
+        AuroraBorialis(gTrack.sky);
     }
 
     if ((trackNo == 8) || (trackNo == 11))
     {
-        ColourRedLight(ctrlredLight);
-        MoveDonkey(ctrldonkey);
+        ColourRedLight();
+        MoveDonkey();
     }
     else if ((trackNo == 1) /* || (trackNo == 6)*/)
     {
-        ColourRedLight(ctrlredLight);
+        ColourRedLight();
     }
     
     ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
 
     renderSetMode(RENDER_MODE_3D);
 
-    GetSkeletonMatrix(ctrlcamera.camPos);
+    if (CameraUpdate == UpdateCameraRaceInternal)
+    {
+        matrixSetViewInternal(&gCamera.pos, gCamera.pitch, gCamera.hdg, gCamera.roll);
+    }
+    else
+    {
+        matrixSetViewExternal(&gCamera.pos, gCamera.pitch, gCamera.hdg);
+    }
 
-    renderSky(ctrlprm[ctrlsky]);
-    DrawLandscape(&ctrlcamera);
-    renderTrack();
+    DrawSky(gTrack.sky);
+    DrawLandscape(&gCamera);
+    DrawTrack();
+    DrawShadows(ctrlshipIndex);
     DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip);
     DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
-    DrawShadows(ctrlshipIndex);
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
     DrawEffects();
 
@@ -1294,9 +1136,7 @@ void raceLoop(ConfigData* gameData)
         DrawTargetIcon(ctrlshipIndex, ctrlshipShapes);
 
     if (ctrlshipIndex[ownShip].attr & RACING)
-    {
         DrawHud(ctrlshipIndex, ctrlchoice, gameData);
-    }
 
     if (ctrlNeedDeSelectScreen)
         renderBackFill(-gBorder, 0, 320 + gBorder * 2, 240);

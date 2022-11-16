@@ -34,7 +34,6 @@ typedef struct Face
 #define JunctionStart   16
 #define JunctionSection 32
 
-#define ObjectTableMax  512 // 464
 #define TrackTextures   24
 
 typedef struct TrackRange
@@ -58,7 +57,7 @@ typedef struct TrackSection
     uint16 faceCount;
 
     int16* objects;
-    uint32 objectCount;
+    uint32 objectsCount;
 
     uint16 globalRadius;
     uint16 localRadius;
@@ -81,7 +80,7 @@ typedef struct TrackSection
     short unused_pad;
 
     short* objects;
-    short objectCount;
+    short objectsCount;
 
     short* northViewSection[3];
     short* southViewSection[3];
@@ -107,25 +106,48 @@ typedef struct TrackSection
 } TrackSection;
 #endif
 
+typedef struct WeaponGrid
+{
+    TrackSection* section;
+    short attr;
+    short cycleCount;
+    int count;
+    CVECTOR colour;
+} WeaponGrid;
+
 typedef struct TrackData
 {
-    long vertexCount;
-    long faceCount;
-    long sectionCount;
+    int32 vertexCount;
+    int32 faceCount;
+    int32 sectionCount;
+    int32 weaponsCount;
+
+    int32 objCount;
+    int32 startCount;
+    int32 lostCount;
+    int32 redCount;
+    int32 donkeyCount;
 
     vec3i* vertices;
     Face* faces;
     TrackSection* sections;
+    WeaponGrid* weapons;
     int16* viewList;
+
+    Object* objects;
+    Object* sky;
+    Object* start;
+    Object* lost;
+    Object* red;
+    Object* donkey;
 } TrackData;
 
 typedef struct TrackCamera
 {
-    Skeleton* camPos;
     TrackSection* section;
-    short hdg, pitch, roll;
-    short vhdg, vpitch, vroll;
-    vec4s vel;
+    int32 hdg, pitch, roll;
+    vec3i pos;
+    vec3i vel;
 } TrackCamera;
 
 TrackSection* NextIndexSection(TrackSection* section);
@@ -134,5 +156,5 @@ void LoadTrack(int32 trackNum);
 
 #ifdef _DEBUG
 void convertTrack3DO(int32 trackNum);
-void convertObjects3DO(const char* name, const Object* firstObject);
+void convertObjects3DO(const char* name, const Object* obj, int32 count);
 #endif

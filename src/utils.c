@@ -1560,7 +1560,7 @@ int GetAng(const vec3i* vec1, const vec3i* vec2)
     int product;
     int mag;
 
-    product = ScalarProduct(vec1, vec2);
+    product = dot(vec1, vec2);
     mag = (GetMagnitude(vec1) * GetMagnitude(vec2)) >> FIXED_SHIFT;
     if (mag == 0)
         product = 4095;
@@ -1594,23 +1594,9 @@ int32 GetMagnitudeApprox(int32 dx, int32 dy)
     return (dx > dy) ? (dx + (dy >> 1)) : (dy + (dx >> 1));
 }
 
-int ScalarProduct(const vec3i* vec1, const vec3i* vec2)
+int dot(const vec3i* vec1, const vec3i* vec2)
 {
     return vec1->x * vec2->x + vec1->y * vec2->y + vec1->z * vec2->z;
-}
-
-void CrossProduct(vec3i* result, const vec3i* A, const vec3i* B)
-{
-    result->x = (A->y * B->z - A->z * B->y) >> 9;
-    result->y = (A->z * B->x - A->x * B->z) >> 9;
-    result->z = (A->x * B->y - A->y * B->x) >> 9;
-}
-
-void MinusVector(const vec3i* v1, const vec3i* v2, vec3i* result)
-{
-    result->x = v2->x - v1->x;
-    result->y = v2->y - v1->y;
-    result->z = v2->z - v1->z;
 }
 
 int arccos(int value)
@@ -1942,4 +1928,170 @@ void IntelShort(short* svalue)
     cvalue[0] = cvalue[1];
     cvalue[1] = temp;
 #endif
+}
+
+Matrix gMatrixStack[MAX_MATRICES];
+Matrix* gMatrixPtr = gMatrixStack;
+vec3i gCameraViewPos;
+
+#define DP33(ax,ay,az,bx,by,bz)     (ax * bx + ay * by + az * bz)
+
+#define X_ROTX(x,y,s,c)  (((x) * (c) - (y) * (s)) >> FIXED_SHIFT)
+#define X_ROTY(x,y,s,c)  (((y) * (c) + (x) * (s)) >> FIXED_SHIFT)
+#define X_ROTXY(x,y,s,c) {\
+    int32 _x = X_ROTX(x,y,s,c);\
+    int32 _y = X_ROTY(x,y,s,c);\
+    x = _x;\
+    y = _y;\
+}
+
+void matrixPush(void)
+{
+    ASSERT(gMatrixPtr - gMatrixStack < MAX_MATRICES);
+    gMatrixPtr[1] = gMatrixPtr[0];
+    gMatrixPtr++;
+}
+
+void matrixSetViewMenu()
+{
+    Matrix* m = gMatrixPtr;
+
+    m->e00 = 1 << FIXED_SHIFT;
+    m->e01 = 0;
+    m->e02 = 0;
+
+    m->e10 = 0;
+    m->e11 = 1 << FIXED_SHIFT;
+    m->e12 = 0;
+
+    m->e20 = 0;
+    m->e21 = 0;
+    m->e22 = 1 << FIXED_SHIFT;
+
+    m->e03 = 0;
+    m->e13 = 0;
+    m->e23 = 0;
+
+    gCameraViewPos.x = 0;
+    gCameraViewPos.y = 0;
+    gCameraViewPos.z = 0;
+}
+
+void matrixSetViewInternal(const vec3i* pos, int32 angleX, int32 angleY, int32 angleZ)
+{
+    int32 sx, sy, sz, sysz, sycz;
+    int32 cx, cy, cz, cycz, cysz;
+    Matrix* m = gMatrixPtr;
+
+    rsincos(-angleX, sx, cx);
+    rsincos(-angleY, sy, cy);
+    rsincos(-angleZ, sz, cz);
+
+    sysz = sy * sz >> FIXED_SHIFT;
+    cycz = cy * cz >> FIXED_SHIFT;
+    sycz = sy * cz >> FIXED_SHIFT;
+    cysz = cy * sz >> FIXED_SHIFT;
+
+    m->e00 = cycz - (sysz * sx >> FIXED_SHIFT);
+    m->e01 = sz * cx >> FIXED_SHIFT;
+    m->e02 = -sycz - (cysz * sx >> FIXED_SHIFT);
+
+    m->e10 = -cysz - (sycz * sx >> FIXED_SHIFT);
+    m->e11 = cx * cz >> FIXED_SHIFT;
+    m->e12 = sysz - (cycz * sx >> FIXED_SHIFT);
+
+    m->e20 = sycz;
+    m->e21 = sx;
+    m->e22 = cx * cy >> FIXED_SHIFT;
+
+    m->e03 = 0;
+    m->e13 = 0;
+    m->e23 = 0;
+
+    gCameraViewPos.x = pos->x;
+    gCameraViewPos.y = pos->y;
+    gCameraViewPos.z = pos->z;
+}
+
+void matrixSetViewExternal(const vec3i* pos, int32 angleX, int32 angleY)
+{
+    int32 sx, sy;
+    int32 cx, cy;
+    Matrix* m = gMatrixPtr;
+
+    rsincos(-angleX, sx, cx);
+    rsincos(-angleY, sy, cy);
+
+    m->e00 = cy;
+    m->e01 = 0;
+    m->e02 = -sy;
+
+    m->e10 = -sx * sy >> FIXED_SHIFT;
+    m->e11 = cx;
+    m->e12 = -sx * cy >> FIXED_SHIFT;
+
+    m->e20 = cx * sy >> FIXED_SHIFT;
+    m->e21 = sx;
+    m->e22 = cx * cy >> FIXED_SHIFT;
+
+    m->e03 = 0;
+    m->e13 = 0;
+    m->e23 = 0;
+
+    gCameraViewPos.x = pos->x;
+    gCameraViewPos.y = pos->y;
+    gCameraViewPos.z = pos->z;
+}
+
+void matrixTranslate(int32 x, int32 y, int32 z)
+{
+    Matrix* m = gMatrixPtr;
+
+    x -= gCameraViewPos.x;
+    y -= gCameraViewPos.y;
+    z -= gCameraViewPos.z;
+
+    m->e03 = DP33(m->e00, m->e01, m->e02, x, y, z) >> FIXED_SHIFT;
+    m->e13 = DP33(m->e10, m->e11, m->e12, x, y, z) >> FIXED_SHIFT;
+    m->e23 = DP33(m->e20, m->e21, m->e22, x, y, z) >> FIXED_SHIFT;
+}
+
+void matrixRotateX(int32 angle)
+{
+    int32 s, c;
+    Matrix* m = gMatrixPtr;
+
+    rsincos(angle, s, c);
+    X_ROTXY(m->e02, m->e01, s, c);
+    X_ROTXY(m->e12, m->e11, s, c);
+    X_ROTXY(m->e22, m->e21, s, c);
+}
+
+void matrixRotateY(int32 angle)
+{
+    int32 s, c;
+    Matrix* m = gMatrixPtr;
+
+    rsincos(-angle, s, c);
+    X_ROTXY(m->e00, m->e02, s, c);
+    X_ROTXY(m->e10, m->e12, s, c);
+    X_ROTXY(m->e20, m->e22, s, c);
+}
+
+void matrixRotateZ(int32 angle)
+{
+    int32 s, c;
+    Matrix* m = gMatrixPtr;
+
+    rsincos(-angle, s, c);
+    X_ROTXY(m->e01, m->e00, s, c);
+    X_ROTXY(m->e11, m->e10, s, c);
+    X_ROTXY(m->e21, m->e20, s, c);
+}
+
+void matrixRotateYXZ(int32 angleX, int32 angleY, int32 angleZ)
+{
+    if (angleY) matrixRotateY(angleY);
+    if (angleX) matrixRotateX(angleX);
+    if (angleZ) matrixRotateZ(angleZ);
 }

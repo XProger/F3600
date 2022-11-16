@@ -36,7 +36,7 @@ LIBS = \
 	$(LIBPATH)/graphics.lib		\
 	$(LIBPATH)/input.lib		\
 
-SRC_S   = $(wildcard *.s)
+SRC_S   = $(wildcard asm/*.s)
 SRC_C   = $(wildcard *.c)
 SRC_C  += $(wildcard ../../*.c)
 

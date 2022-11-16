@@ -3,7 +3,464 @@
 
 #include "game.h"
 
-void IntelPrim(Prm prm)
+#ifdef __3DO__
+Object* LoadPrm(const char* name, int32 textureStart, int32* count)
+{
+    uint8* ptr;
+    int32 objCount;
+    int32 i, size;
+    Object* obj;
+
+    size = osLoadFile(name, pDRAM);
+    ptr = (uint8*)allocDRAM(size);
+
+    objCount = *(uint32*)ptr;
+    ptr += 4;
+
+    obj = (Object*)ptr;
+    for (i = 0; i < objCount; i++, obj++)
+    {
+        obj->vertices = (vec3i*)(ptr + (uint32)obj->vertices);
+        obj->faces = (ObjFace*)(ptr + (uint32)obj->faces);
+        obj->sprites = (ObjSprite*)(ptr + (uint32)obj->sprites);
+        obj->type = OBJ_TYPE_MAX; // TODO remove (use scene header)
+    }
+
+    if (count)
+    {
+        *count = objCount;
+    }
+
+    return obj - objCount;
+}
+#else
+
+#define CONV_COLOR(c) (c.r | (c.g << 8) | (c.b << 16) | 0xFF000000)
+
+#define SET_FACE_IDX_T(f, i)        f->index[0] = i->coords[0]; f->index[1] = i->coords[1]; f->index[2] = i->coords[2]; f->index[3] = i->coords[2];
+#define SET_FACE_IDX_Q(f, i)        f->index[0] = i->coords[0]; f->index[1] = i->coords[1]; f->index[2] = i->coords[3]; f->index[3] = i->coords[2];
+#define SET_FACE_TEX_Z(f)           f->flags = NO_TEXTURE; memset(f->uv, 0, sizeof(f->uv))
+#define SET_FACE_TEX_T(f, p)        f->flags = p->texture; f->uv[0][0] = p->u0; f->uv[0][1] = p->v0; f->uv[1][0] = p->u1; f->uv[1][1] = p->v1; f->uv[2][0] = p->u2; f->uv[2][1] = p->v2; f->uv[3][0] = f->uv[3][1] = 0
+#define SET_FACE_TEX_Q(f, p)        f->flags = p->texture; f->uv[0][0] = p->u0; f->uv[0][1] = p->v0; f->uv[1][0] = p->u1; f->uv[1][1] = p->v1; f->uv[2][0] = p->u3; f->uv[2][1] = p->v3; f->uv[3][0] = p->u2; f->uv[3][1] = p->v2
+#define SET_FACE_COLOR_FLAT(f, p)   f->color[0] = f->color[1] = f->color[2] = f->color[3] = CONV_COLOR(p->colour)
+#define SET_FACE_COLOR_T(f, p)      f->color[0] = CONV_COLOR(p->colour[0]); f->color[1] = CONV_COLOR(p->colour[1]); f->color[2] = CONV_COLOR(p->colour[2]); f->color[3] = 0
+#define SET_FACE_COLOR_Q(f, p)      f->color[0] = CONV_COLOR(p->colour[0]); f->color[1] = CONV_COLOR(p->colour[1]); f->color[2] = CONV_COLOR(p->colour[3]); f->color[3] = CONV_COLOR(p->colour[2])
+
+#define SET_SPRITE_IDX(s, p)        s->index = p->coord
+#define SET_SPRITE_TEX(s, p)        s->flags = p->texture
+#define SET_SPRITE_SIZE(s, p);      s->width = p->width; s->height = p->height
+#define SET_SPRITE_COLOR(s, p)      s->color = CONV_COLOR(p->colour)
+
+Object* convertObjects(ObjectPSX* firstObject, int32* objCount)
+{
+    int32 i;
+    int32 count = 0;
+    ObjectPSX* obj;
+    Object* retObj;
+    int32 vCount = 0;
+    int32 fCount = 0;
+    int32 sCount = 0;
+    PrmPSX prm;
+    uint8* ptr;
+    vec3i* v;
+    ObjFace* f;
+    ObjSprite* s;
+
+    obj = firstObject;
+    while (obj)
+    {
+        vCount += obj->vertexCount;
+
+        prm.primitive = obj->primitives;
+        for (i = 0; i < obj->primitiveCount; i++)
+        {
+            switch (prm.primitive->type)
+            {
+                case TypeF3:
+                    prm.f3++;
+                    fCount++;
+                    break;
+
+                case TypeF4:
+                    prm.f4++;
+                    fCount++;
+                    break;
+
+                case TypeFT3:
+                    prm.ft3++;
+                    fCount++;
+                    break;
+
+                case TypeFT4:
+                    prm.ft4++;
+                    fCount++;
+                    break;
+
+                case TypeG3:
+                    prm.g3++;
+                    fCount++;
+                    break;
+
+                case TypeG4:
+                    prm.g4++;
+                    fCount++;
+                    break;
+
+                case TypeGT3:
+                    prm.gt3++;
+                    fCount++;
+                    break;
+
+                case TypeGT4:
+                    prm.gt4++;
+                    fCount++;
+                    break;
+
+                case TypeTSPR:
+                case TypeBSPR:
+                    prm.spr++;
+                    sCount++;
+                    break;
+
+                case TypeLSF3:
+                    prm.lsf3++;
+                    break;
+
+                case TypeLSFT3:
+                    prm.lsft3++;
+                    break;
+
+                case TypeLSF4:
+                    prm.lsf4++;
+                    break;
+
+                case TypeLSFT4:
+                    prm.lsft4++;
+                    break;
+
+                case TypeLSG3:
+                    prm.lsg3++;
+                    break;
+
+                case TypeLSGT3:
+                    prm.lsgt3++;
+                    break;
+
+                case TypeLSG4:
+                    prm.lsg4++;
+                    break;
+
+                case TypeLSGT4:
+                    prm.lsgt4++;
+                    break;
+
+                case TypeSpline:
+                    prm.spline++;
+                    break;
+
+                case TypeInfiniteLight:
+                case TypePointLight:
+                case TypeSpotLight:
+                    break;
+
+                default:
+                    ASSERT(0);
+            }
+        }
+
+        count++;
+        obj = obj->next;
+    }
+
+    *objCount = count;
+
+    retObj = (Object*)allocDRAM(count * sizeof(Object) + vCount * sizeof(vec3i) + fCount * sizeof(ObjFace) + sCount * sizeof(ObjSprite));
+    
+    ptr = ((uint8*)retObj) + count * sizeof(Object);
+
+    obj = firstObject;
+    while (obj)
+    {
+        v = (vec3i*)ptr;
+        retObj->vertices = v;
+
+        //ASSERT(obj->vertexCount <= 255);
+        for (i = 0; i < obj->vertexCount; i++)
+        {
+            v->x = obj->vertices[i].x;
+            v->y = obj->vertices[i].y;
+            v->z = obj->vertices[i].z;
+            v++;
+        }
+        ptr = (uint8*)v;
+
+        f = (ObjFace*)ptr;
+        retObj->faces = f;
+
+        prm.primitive = obj->primitives;
+        for (i = 0; i < obj->primitiveCount; i++)
+        {
+            switch (prm.primitive->type)
+            {
+                case TypeF3:
+                    SET_FACE_IDX_T(f, prm.f3);
+                    SET_FACE_TEX_Z(f);
+                    SET_FACE_COLOR_FLAT(f, prm.f3);
+                    prm.f3++;
+                    f++;
+                    break;
+
+                case TypeF4:
+                    SET_FACE_IDX_Q(f, prm.f4);
+                    SET_FACE_TEX_Z(f);
+                    SET_FACE_COLOR_FLAT(f, prm.f4);
+                    prm.f4++;
+                    f++;
+                    break;
+
+                case TypeFT3:
+                    SET_FACE_IDX_T(f, prm.ft3);
+                    SET_FACE_TEX_T(f, prm.ft3);
+                    SET_FACE_COLOR_FLAT(f, prm.ft3);
+
+                    if (prm.ft3->flag & ShipEngine)
+                    {
+                        f->flags |= FACE_FLAG_ENGINE;
+                    }
+
+                    prm.ft3++;
+                    f++;
+                    break;
+
+                case TypeFT4:
+                    SET_FACE_IDX_Q(f, prm.ft4);
+                    SET_FACE_TEX_Q(f, prm.ft4);
+                    SET_FACE_COLOR_FLAT(f, prm.ft4);
+                    prm.ft4++;
+                    f++;
+                    break;
+
+                case TypeG3:
+                    SET_FACE_IDX_T(f, prm.g3);
+                    SET_FACE_TEX_Z(f);
+                    SET_FACE_COLOR_T(f, prm.g3);
+                    prm.g3++;
+                    f++;
+                    break;
+
+                case TypeG4:
+                    SET_FACE_IDX_Q(f, prm.g4);
+                    SET_FACE_TEX_Z(f);
+                    SET_FACE_COLOR_Q(f, prm.g4);
+                    prm.g4++;
+                    f++;
+                    break;
+
+                case TypeGT3:
+                    SET_FACE_IDX_T(f, prm.gt3);
+                    SET_FACE_TEX_T(f, prm.gt3);
+                    SET_FACE_COLOR_T(f, prm.gt3);
+
+                    if (prm.gt3->flag & ShipEngine)
+                    {
+                        f->flags |= FACE_FLAG_ENGINE;
+                    }
+
+                    prm.gt3++;
+                    f++;
+                    break;
+
+                case TypeGT4:
+                    SET_FACE_IDX_Q(f, prm.gt4);
+                    SET_FACE_TEX_Q(f, prm.gt4);
+                    SET_FACE_COLOR_Q(f, prm.gt4);
+                    prm.gt4++;
+                    f++;
+                    break;
+
+                case TypeTSPR:
+                case TypeBSPR:
+                    prm.spr++;
+                    break;
+
+                case TypeLSF3:
+                    prm.lsf3++;
+                    break;
+
+                case TypeLSFT3:
+                    prm.lsft3++;
+                    break;
+
+                case TypeLSF4:
+                    prm.lsf4++;
+                    break;
+
+                case TypeLSFT4:
+                    prm.lsft4++;
+                    break;
+
+                case TypeLSG3:
+                    prm.lsg3++;
+                    break;
+
+                case TypeLSGT3:
+                    prm.lsgt3++;
+                    break;
+
+                case TypeLSG4:
+                    prm.lsg4++;
+                    break;
+
+                case TypeLSGT4:
+                    prm.lsgt4++;
+                    break;
+
+                case TypeSpline:
+                    prm.spline++;
+                    break;
+
+                case TypeInfiniteLight:
+                case TypePointLight:
+                case TypeSpotLight:
+                    break;
+
+                default:
+                    ASSERT(0);
+            }
+        }
+        ptr = (uint8*)f;
+
+        s = (ObjSprite*)ptr;
+        retObj->sprites = s;
+
+        prm.primitive = obj->primitives;
+        for (i = 0; i < obj->primitiveCount; i++)
+        {
+            switch (prm.primitive->type)
+            {
+                case TypeF3:
+                    prm.f3++;
+                    break;
+
+                case TypeF4:
+                    prm.f4++;
+                    break;
+
+                case TypeFT3:
+                    prm.ft3++;
+                    break;
+
+                case TypeFT4:
+                    prm.ft4++;
+                    break;
+
+                case TypeG3:
+                    prm.g3++;
+                    break;
+
+                case TypeG4:
+                    prm.g4++;
+                    break;
+
+                case TypeGT3:
+                    prm.gt3++;
+                    break;
+
+                case TypeGT4:
+                    prm.gt4++;
+                    break;
+
+                case TypeTSPR:
+                case TypeBSPR:
+                    SET_SPRITE_IDX(s, prm.spr);
+                    SET_SPRITE_TEX(s, prm.spr);
+                    SET_SPRITE_SIZE(s, prm.spr);
+                    SET_SPRITE_COLOR(s, prm.spr);
+
+                    if (prm.spr->type == TypeBSPR) // flipped
+                    {
+                        s->flags |= (1 << 31);
+                    }
+
+                    prm.spr++;
+                    s++;
+                    break;
+
+                case TypeLSF3:
+                    prm.lsf3++;
+                    break;
+
+                case TypeLSFT3:
+                    prm.lsft3++;
+                    break;
+
+                case TypeLSF4:
+                    prm.lsf4++;
+                    break;
+
+                case TypeLSFT4:
+                    prm.lsft4++;
+                    break;
+
+                case TypeLSG3:
+                    prm.lsg3++;
+                    break;
+
+                case TypeLSGT3:
+                    prm.lsgt3++;
+                    break;
+
+                case TypeLSG4:
+                    prm.lsg4++;
+                    break;
+
+                case TypeLSGT4:
+                    prm.lsgt4++;
+                    break;
+
+                case TypeSpline:
+                    prm.spline++;
+                    break;
+
+                case TypeInfiniteLight:
+                case TypePointLight:
+                case TypeSpotLight:
+                    break;
+
+                default:
+                    ASSERT(0);
+            }
+        }
+        ptr = (uint8*)s;
+
+        if (!strncmp(obj->name, "start", 5))
+            retObj->type = OBJ_TYPE_START;
+        else if (!strncmp(obj->name, "lost", 4))
+            retObj->type = OBJ_TYPE_LOST;
+        else if (!strncmp(obj->name, "redl", 4))
+            retObj->type = OBJ_TYPE_RED;
+        else if (!strncmp(obj->name, "donkey", 6))
+            retObj->type = OBJ_TYPE_DONKEY;
+        else
+            retObj->type = OBJ_TYPE_MAX;
+
+        retObj->vCount = v - retObj->vertices;
+        retObj->fCount = f - retObj->faces;
+        retObj->sCount = s - retObj->sprites;
+
+        retObj->pos.x = obj->skeleton->relative.t[0];
+        retObj->pos.y = obj->skeleton->relative.t[1];
+        retObj->pos.z = obj->skeleton->relative.t[2];
+        retObj->extent = obj->extent;
+
+        obj = obj->next;
+        retObj++;
+    }
+
+    return retObj - count;
+}
+
+void IntelPrim(PrmPSX prm)
 {
     IntelShort((short*)&prm.f3->type);
     IntelShort((short*)&prm.f3->flag);
@@ -178,24 +635,28 @@ void IntelPrim(Prm prm)
     }
 }
 
-Object* LoadPrm(const char* name, short textureStart)
+Object* LoadPrm(const char* name, int32 textureStart, int32* count)
 {
-    Object* object;
-    Object* lastObject;
-    Object* firstObject;
+    Object* obj;
+    ObjectPSX* object;
+    ObjectPSX* lastObject;
+    ObjectPSX* firstObject;
+    int32 objCount;
 
-    Prm prm;
+    PrmPSX prm;
 
-    long length;
+    int32 length;
 
-    short i, j;
+    int32 i, j;
 
-    char* start;
-    char* finish;
+    uint8* start;
+    uint8* finish;
 
     length = osLoadFile(name, pDRAM);
 
-    start = allocDRAM(length);
+    start = (char*)malloc(length);
+    finish = start + length;
+    memcpy(start, pDRAM, length);
 
     prm.ptr = start;
     firstObject = prm.object;
@@ -207,7 +668,7 @@ Object* LoadPrm(const char* name, short textureStart)
         object = prm.object++;
 
         IntelShort(&object->vertexCount);
-        IntelShort(&object->unused_normalCount);
+        IntelShort(&object->normalCount);
         IntelShort(&object->primitiveCount);
         IntelLong(&object->extent);
 
@@ -247,14 +708,14 @@ Object* LoadPrm(const char* name, short textureStart)
 
         /* Normals */
 
-        object->unused_normals = prm.svector;
-        prm.svector += object->unused_normalCount;
+        object->normals = prm.svector;
+        prm.svector += object->normalCount;
 
-        for (i = 0; i < object->unused_normalCount; i++)
+        for (i = 0; i < object->normalCount; i++)
         {
-            IntelShort(&object->unused_normals[i].x);
-            IntelShort(&object->unused_normals[i].y);
-            IntelShort(&object->unused_normals[i].z);
+            IntelShort(&object->normals[i].x);
+            IntelShort(&object->normals[i].y);
+            IntelShort(&object->normals[i].z);
         }
 
         /* Primitives */
@@ -367,8 +828,6 @@ Object* LoadPrm(const char* name, short textureStart)
             }
         }
 
-        /* Bodged check for rubbish at end of file ( prm.ptr <= finish ) */
-
         if (lastObject)
         {
             lastObject->next = object;
@@ -377,9 +836,111 @@ Object* LoadPrm(const char* name, short textureStart)
         lastObject = object;
     }
 
+    obj = convertObjects(firstObject, &objCount);
+
+    if (count)
+    {
+        *count = objCount;
+    }
+
 #ifdef _DEBUG
-    convertObjects3DO(name, firstObject);
+    convertObjects3DO(name, obj, objCount);
 #endif
 
-    return (firstObject);
+    free(start);
+
+    return obj;
+}
+#endif
+
+void SortObjects(void)
+{
+    int i, swapped;
+
+    do
+    {
+        swapped = 0;
+        for (i = 1; i < gTrack.objCount; i++)
+        {
+            if (gTrack.objects[i - 1].type > gTrack.objects[i].type)
+            {
+                Object t = gTrack.objects[i - 1];
+                gTrack.objects[i - 1] = gTrack.objects[i];
+                gTrack.objects[i] = t;
+                swapped = 1;
+            }
+        }
+    } while (swapped);
+}
+
+void InitObjects()
+{
+    int32 i;
+
+    gTrack.startCount = 0;
+    gTrack.lostCount = 0;
+    gTrack.redCount = 0;
+    gTrack.donkeyCount = 0;
+
+    for (i = 0; i < gTrack.objCount; i++)
+    {
+        int32 type = gTrack.objects[i].type;
+
+        if (type == OBJ_TYPE_START)
+            gTrack.startCount++;
+        else if (type == OBJ_TYPE_LOST)
+            gTrack.lostCount++;
+        else if (type == OBJ_TYPE_RED)
+            gTrack.redCount++;
+        else if (type == OBJ_TYPE_DONKEY)
+            gTrack.donkeyCount++;
+        else
+            break;
+    }
+
+    gTrack.start = gTrack.objects;
+    gTrack.lost = gTrack.start + gTrack.startCount;
+    gTrack.red = gTrack.lost + gTrack.lostCount;
+    gTrack.donkey = gTrack.red + gTrack.redCount;
+}
+
+void InitScene(int32 trackNum)
+{
+    int sceneTextures;
+    int skyTextures;
+
+    char trackPath[64];
+
+    LoadTrack(trackNum);
+    InitWeaponGrids();
+
+    sceneTextures = gTexturePtr - gTextures;
+    getPath(trackPath, trackNum, "/scene.cmp");
+    LoadCompressedTextureSequence(trackPath, 1);
+
+    skyTextures = gTexturePtr - gTextures;
+    getPath(trackPath, trackNum, "/sky.cmp");
+    LoadCompressedTextureSequence(trackPath, 1);
+
+    getPath(trackPath, trackNum, "/scene.prm");
+
+    gTrack.objects = LoadPrm(trackPath, sceneTextures, &gTrack.objCount);
+
+    SortObjects();
+    InitObjects();
+
+    if (gTrack.redCount)
+    {
+        ASSERT((trackNo == 8) || (trackNo == 11) || (trackNo == 1));
+    }
+
+    getPath(trackPath, trackNum, "/sky.prm");
+    gTrack.sky = LoadPrm(trackPath, skyTextures, NULL);
+
+    SceneRadiusCheck(gTrack.objects, gTrack.objCount);
+
+    if (trackNo == 13)
+    {
+        InitAuroraBorialis(gTrack.sky);
+    }
 }

@@ -94,9 +94,6 @@ void memCheck(void)
 
 extern void drawInt(int32 x, int32 y, int32 number);
 
-extern int32 dbg_update;
-extern int32 dbg_render;
-
 int main(int argc, char *argv[])
 {
     int32 fpsFrameIndex;
@@ -133,8 +130,6 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        int32 dbg_frameTime;
-
         gLastFrameIndex = gFrameIndex;
 
         do
@@ -162,6 +157,8 @@ int main(int argc, char *argv[])
         drawInt(320 - 8, 28, dbg_update);
         drawInt(320 - 8, 36, dbg_render);
         drawInt(320 - 8, 36 + 12, dbg_frameTime);
+        drawInt(320 - 8, 36 + 12 + 12, dbg_v);
+        drawInt(320 - 8, 36 + 12 + 20, dbg_f);
 
         renderSwap();
     }

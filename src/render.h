@@ -3,29 +3,15 @@
 
 #include "standard.h"
 
-typedef struct Skeleton
-{
-    MATRIX relative; /* Relative rotation/translation matrix */
-    MATRIX absolute; /* Absolute rotation/translation matrix */
-
-    short update; /* Set if absolute matrix needs updating ( i.e. parent matrix has been changed ) */
-
-    struct Skeleton* super; /* Parent Skeleton */
-
-    /*TODO unused, remove from the custom file format*/
-    struct Skeleton* sub; /* First Child Skeleton of this Skeleton */
-    struct Skeleton* next; /* Next Child Skeleton of Parent Skeleton */
-} Skeleton;
-
-/* Primitive Structure Stub ( Structure varies with primitive type )
+/* PrimitivePSX Structure Stub ( Structure varies with primitive type )
  */
 
-typedef struct Primitive
+typedef struct PrimitivePSX
 {
-    short type; /* Type of Primitive */
-} Primitive;
+    short type; /* Type of PrimitivePSX */
+} PrimitivePSX;
 
-/* Actual Primitive Structures
+/* Actual PrimitivePSX Structures
  */
 
 /* FIXED COLOUR POLYGONS
@@ -344,43 +330,47 @@ typedef struct InfiniteLight
 /* Main Object Structure
  */
 
-typedef struct Object
+typedef struct SkeletonPSX
 {
-    char name[16];
+    MATRIX relative; /* Relative rotation/translation matrix */
+    MATRIX absolute; /* Absolute rotation/translation matrix */
 
-    short vertexCount; /* Number of Vertices */
-    vec4s* vertices; /* Pointer to 3D Points */
+    short update; /* Set if absolute matrix needs updating ( i.e. parent matrix has been changed ) */
 
-    /*TODO unused*/
-    short unused_normalCount; /* Number of Normals */
-    vec4s* unused_normals; /* Pointer to 3D Normals */
+    struct SkeletonPSX* super; /* Parent Skeleton */
 
-    short primitiveCount; /* Number of Primitives */
-    Primitive* primitives; /* Pointer to Z Sort Primitives */
+    /*TODO unused, remove from the custom file format*/
+    struct SkeletonPSX* sub; /* First Child Skeleton of this Skeleton */
+    struct SkeletonPSX* next; /* Next Child Skeleton of Parent Skeleton */
+} SkeletonPSX;
 
-    /*TODO remove unused for the custom file format*/
-    long unused_pad;
-    long unused_bspTree;
+/* TODO dumbest thing I've ever seen */
+typedef struct ObjectPSX
+{
+   char              name[16];
+   short             vertexCount;      /* Number of Vertices */
+   vec4s*            vertices;         /* Pointer to 3D Points */
+   short             normalCount;      /* Number of Normals */
+   vec4s*            normals;          /* Pointer to 3D Normals */
+   short             primitiveCount;   /* Number of Primitives */
+   PrimitivePSX*     primitives;       /* Pointer to Z Sort Primitives */
+   long              pad;
+   void*             bspTree;          /* Pointer to BSP Tree Primitives */
+   SkeletonPSX*      skeleton;         /* Pointer to Local Coordinates */
+   long              extent;           /* Flags for object characteristics */
+   short             flags;            /* Next object in list */
+   struct ObjectPSX* next;             /* Next object in list */
+} ObjectPSX;
 
-    Skeleton* skeleton; /* Pointer to Local Coordinates */
-
-    long extent; /* Flags for object characteristics */
-
-    /*TODO remove unused for the custom file format*/
-    short unused_flags; /* Next object in list */
-
-    struct Object* next; /* Next object in list */
-} Object;
-
-typedef union Prm
+typedef union PrmPSX
 {
     char* ptr;
     short* sptr;
     long* lptr;
-    Object* object;
-    Skeleton* skeleton;
+    ObjectPSX* object;
+    SkeletonPSX* skeleton;
     vec4s* svector;
-    Primitive* primitive;
+    PrimitivePSX* primitive;
 
     F3* f3;
     FT3* ft3;
@@ -407,7 +397,94 @@ typedef union Prm
     PointLight* pointLight;
     SpotLight* spotLight;
     InfiniteLight* infiniteLight;
-} Prm;
+} PrmPSX;
+
+// optimized Object & Primitive
+#define NO_TEXTURE 0xFFFF
+
+#define FACE_TEXTURE(face) (face->flags & 0xFFFF)
+#ifdef __3DO__
+#define FACE_QUAD(face) ((face->index >> 24) != ((face->index >> 16) & 0xFF))
+#else
+#define FACE_QUAD(face) (face->index[2] != face->index[3])
+#endif
+#define FACE_FLAG_ENGINE (1 << 31)
+
+#define SPRITE_TEXTURE(sprite) (sprite->flags & 0xFFFF)
+#define SPRITE_FLIP(face) (face->flags & (1 << 31))
+
+enum ObjType
+{
+    OBJ_TYPE_START,
+    OBJ_TYPE_LOST,
+    OBJ_TYPE_RED,
+    OBJ_TYPE_DONKEY,
+    OBJ_TYPE_MAX
+};
+
+typedef struct ObjFace
+{
+#ifdef __3DO__
+    uint32 flags;
+    uint32 index;
+#else
+    uint32 flags;
+    uint16 index[4];
+    uint8 uv[4][2];
+    uint32 color[4];
+#endif
+} ObjFace;
+
+typedef struct ObjSprite
+{
+#ifdef __3DO__
+    uint32 flags;
+    uint16 index;
+    uint16 size;
+#else
+    uint32 flags;
+    uint32 index;
+    int16 width;
+    int16 height;
+    uint32 color;
+#endif
+} ObjSprite;
+
+typedef struct Object
+{
+    int32 type;
+    int32 vCount;
+    int32 fCount;
+    int32 sCount;
+    vec3i pos;
+    int32 extent;
+
+    vec3i* vertices;
+    struct ObjFace* faces;
+    struct ObjSprite* sprites;
+} Object;
+
+enum FxType
+{
+    FX_FIRE,
+    FX_FIRE_WHITE,
+    FX_SMOKE,
+    FX_EBOLT,
+    FX_HALO,
+    FX_GREENY,
+    FX_MAX
+};
+
+typedef struct Effect
+{
+    vec3i pos;
+    vec3i vel;
+    int32 count;
+    short type;
+    short size;
+    struct Effect* next;
+    struct Effect* prev;
+} Effect;
 
 #define CrtClipped  0x80000000
 #define XLarge      0x01000000
@@ -545,7 +622,7 @@ typedef struct
     int16 x1, y1;
     int16 x2, y2;
     int16 x3, y3;
-    CVECTOR color[4];
+    uint32 color[4];
 } ColorQuad;
 
 typedef struct
@@ -582,7 +659,7 @@ void renderClear(void);
 void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color);
 void renderImage(const Texture* t, int32 x, int32 y);
 void renderBackground(const Texture* t);
-void renderShadow(const Shadow* s);
+void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int32 dx, int32 dy, int32 dz, int32 rx, int32 ry, int32 rz);
 void renderColorQuad(const ColorQuad* q);
 void renderBillboard(const Billboard* b);
 void renderBackFill(int x, int y, int w, int h);
@@ -590,9 +667,8 @@ void renderBackFill(int x, int y, int w, int h);
 void renderPrepare(void);
 void renderFrameBegin(void);
 void renderFrameEnd(void);
-void renderSetMatrix(const MATRIX* matrix, int x, int y, int z);
-void renderSetSkeleton(Skeleton* skeleton, int x, int y, int z);
 void renderTrack(void);
+void renderEffects(const Effect* fx);
 void renderObject(const Object* object);
 void renderShip(const Object* object, uint32 color);
 void renderShield(const Object* object, int32 counter);

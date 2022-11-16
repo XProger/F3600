@@ -39,7 +39,6 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
     vec3i distance;
     int collide;
     vec3i vc;
-    int ownMass, remMass;
     vec3i ship2ship;
     vec3i ship1React, ship2React;
     vec3i soundPos;
@@ -48,15 +47,10 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
     distance.y = (shipIndex[i].pos.y - shipIndex[j].pos.y) >> 3;
     distance.z = (shipIndex[i].pos.z - shipIndex[j].pos.z) >> 3;
 
-#if 1 // sphere vs sphere approx
     if (GetMagnitudeSqr(&distance) < (40 * 40)) 
     {
         collide = NOSE_COLLISION;
-#else
-    if (GetMagnitudeSqr(&distance) < (120 * 120)) /*** Do line/plane collision check ***/
-    {
-        collide = CollideLineToPlane(j, i, shipShapes, shipIndex);
-#endif
+
         if (collide == NOSE_COLLISION)
         {
             /**********************************************************/
@@ -147,182 +141,6 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
     }
 }
 
-/* ****************************************************************
-Line to plane collision routine
-
-  alpha = ((p-s).n)/(d.n)
-
-   X = s + alpha*d
-
-     p = one point of the poly
-     s = start of the line
-     n = normal
-     d = direction of the line
-******************************************************************** */
-
-int CollideLineToPlane(int shipNo1, int shipNo2, Object** shipShapes, ShipData* shipIndex)
-{
-    int i; /* index count (planes) */
-    int count; /* index count (lines) */
-    Prm poly;
-    short* coords;
-    short primitiveCount;
-
-    vec3i p1, p2, p3; /* the three plane points of other ship */
-
-    vec3i a, b, c, d; /* four vector points of the hero ship */
-
-    int factor2; /* intermediate calculation terms */
-    vec3i factor1;
-    vec3i term1;
-
-    vec3i res_vec; /* resultant intersection vector */
-    int alpha; /* the above alpha value */
-
-    vec3i DC, BC, AC; /* position vectors of hero ship */
-    vec3i BD, AB;
-    vec3i AD;
-
-    vec3i* start_vec; /* is assigned a, b, c or d from above */
-    vec3i* pos_vec; /* is assigned DC, BC, AC, BD, AB or AD */
-
-    vec3i plane1; /* normal of plane of other ship */
-
-    vec3i P1P2; /* 2 position vectors of other ship */
-    vec3i P1P3; /* (all that is needed to get normal) */
-
-    vec3i vec0, vec1, vec2; /* vectors between plane coords and intersection point */
-    int angle; /* total angle */
-
-    short high1, high2;
-    short low1, low2;
-
-    high1 = shipIndex[shipNo1].highResTableIndex;
-    low1 = shipIndex[shipNo1].lowResTableIndex;
-    high2 = shipIndex[shipNo2].highResTableIndex;
-    low2 = shipIndex[shipNo2].lowResTableIndex;
-
-    /** Get 4 points of collision model relative to the  **/
-    /**                   camera                          **/
-
-    GetWorldPoint(&a, shipShapes[high2], shipShapes[low2], 0);
-    GetWorldPoint(&b, shipShapes[high2], shipShapes[low2], 1);
-    GetWorldPoint(&c, shipShapes[high2], shipShapes[low2], 2);
-    GetWorldPoint(&d, shipShapes[high2], shipShapes[low2], 3);
-
-    /**    Calculate the 6 line vectors for the model    **/
-
-    MinusVector(&a, &c, &AC);
-    MinusVector(&b, &c, &BC);
-    MinusVector(&d, &c, &DC);
-    MinusVector(&a, &b, &AB);
-    MinusVector(&b, &d, &BD);
-    MinusVector(&a, &d, &AD);
-
-    poly.primitive = shipShapes[low2]->primitives;
-    primitiveCount = shipShapes[low2]->primitiveCount;
-
-    /*TODO optimize collision check*/
-    ASSERT(shipShapes[low2]->vertexCount == 4);
-    ASSERT(primitiveCount == 4);
-
-    for (i = 0; i < primitiveCount; i++) /* for all 4 planes of the enemy ship */
-    {
-        ASSERT(poly.primitive->type == TypeFT3);
-
-        coords = poly.ft3->coords;
-
-        GetWorldPoint(&p1, shipShapes[high1], shipShapes[low1], coords[0]);
-        GetWorldPoint(&p2, shipShapes[high1], shipShapes[low1], coords[1]);
-        GetWorldPoint(&p3, shipShapes[high1], shipShapes[low1], coords[2]);
-
-        poly.ft3++;
-
-        /* ********************************************** */
-        /*        Find polyGon line vectors                */
-        /* ********************************************** */
-        MinusVector(&p1, &p2, &P1P2);
-        MinusVector(&p1, &p3, &P1P3);
-
-        /* ********************************************** */
-        /*             Find plane equations                */
-        /* ********************************************** */
-        CrossProduct(&plane1, &P1P2, &P1P3);
-
-        for (count = 0; count < 6; count++)
-        {
-            switch (count)
-            {
-                case 0:
-                    start_vec = &b;
-                    pos_vec = &BC;
-                    break;
-                case 1:
-                    start_vec = &a;
-                    pos_vec = &AC;
-                    break;
-                case 2:
-                    start_vec = &d;
-                    pos_vec = &DC;
-                    break;
-                case 3:
-                    start_vec = &a;
-                    pos_vec = &AB;
-                    break;
-                case 4:
-                    start_vec = &a;
-                    pos_vec = &AD;
-                    break;
-                default: // 5
-                    start_vec = &b;
-                    pos_vec = &BD;
-                    break;
-            }
-
-            MinusVector(start_vec, &p1, &factor1); /* (p-s) */
-            alpha = (ScalarProduct(&factor1, &plane1) << 12); /* (p-s).n */
-            factor2 = (ScalarProduct(pos_vec, &plane1)); /* d.n */
-            if (factor2 != 0)
-            {
-                alpha = alpha / factor2;
-
-                term1.x = ((alpha * pos_vec->x) >> FIXED_SHIFT);
-                term1.y = ((alpha * pos_vec->y) >> FIXED_SHIFT);
-                term1.z = ((alpha * pos_vec->z) >> FIXED_SHIFT);
-
-                res_vec.x = start_vec->x + term1.x;
-                res_vec.y = start_vec->y + term1.y;
-                res_vec.z = start_vec->z + term1.z;
-
-                if ((alpha >= 0) && (alpha <= 4096))
-                {
-                    vec0.x = res_vec.x - p1.x;
-                    vec0.y = res_vec.y - p1.y;
-                    vec0.z = res_vec.z - p1.z;
-
-                    vec1.x = res_vec.x - p2.x;
-                    vec1.y = res_vec.y - p2.y;
-                    vec1.z = res_vec.z - p2.z;
-
-                    vec2.x = res_vec.x - p3.x;
-                    vec2.y = res_vec.y - p3.y;
-                    vec2.z = res_vec.z - p3.z;
-
-                    angle = GetAng(&vec0, &vec1);
-                    angle += GetAng(&vec1, &vec2);
-                    angle += GetAng(&vec2, &vec0);
-
-                    if ((angle >= 30000))
-                    {
-                        return 1;
-                    }
-                }
-            }
-        }
-    }
-    return 0;
-}
-
 int PlaneLineCollision(const vec3i* plane_point, const vec3i* ship_pos, const vec3s* normal)
 {
     int32 dot_product =
@@ -372,9 +190,9 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
     else
         playerShip->attr |= DIRECTION;
 
-    toFaceVector.x = track->vertices[(facePtr->vertex[0])].x - track->vertices[(facePtr->vertex[1])].x;
-    toFaceVector.y = track->vertices[(facePtr->vertex[0])].y - track->vertices[(facePtr->vertex[1])].y;
-    toFaceVector.z = track->vertices[(facePtr->vertex[0])].z - track->vertices[(facePtr->vertex[1])].z;
+    toFaceVector.x = gTrack.vertices[(facePtr->vertex[0])].x - gTrack.vertices[(facePtr->vertex[1])].x;
+    toFaceVector.y = gTrack.vertices[(facePtr->vertex[0])].y - gTrack.vertices[(facePtr->vertex[1])].y;
+    toFaceVector.z = gTrack.vertices[(facePtr->vertex[0])].z - gTrack.vertices[(facePtr->vertex[1])].z;
 
     direction.x = playerShip->nearTrkSect->centre.x - playerShip->pos.x;
     direction.y = playerShip->nearTrkSect->centre.y - playerShip->pos.y;
@@ -391,7 +209,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
         playerShip->attr |= LSIDE;
         if (1) //(facePtr == (track->faces + playerShip->nearTrkSect->faceStart)) || playerShip->nearTrkSect->junction)
         {
-            facePoint = track->vertices + facePtr->vertex[0];
+            facePoint = gTrack.vertices + facePtr->vertex[0];
 
             alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
 
@@ -406,7 +224,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                     }
                     else
                     {
-                        facePtr2 = track->faces + playerShip->nearTrkSect->nextSection->faceStart;
+                        facePtr2 = gTrack.faces + playerShip->nearTrkSect->nextSection->faceStart;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
                         {
@@ -423,7 +241,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                     }
                     else
                     {
-                        facePtr2 = track->faces + playerShip->nearTrkSect->prevSection->faceStart;
+                        facePtr2 = gTrack.faces + playerShip->nearTrkSect->prevSection->faceStart;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
                         {
@@ -490,7 +308,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
         if ((playerShip->nearTrkSect->faceCount > 3) || playerShip->nearTrkSect->junction)
         {
 
-            facePoint = track->vertices + facePtr->vertex[0];
+            facePoint = gTrack.vertices + facePtr->vertex[0];
 
             alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
             if (alpha <= 0)
@@ -504,7 +322,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                     }
                     else
                     {
-                        facePtr2 = track->faces + playerShip->nearTrkSect->nextSection->faceStart;
+                        facePtr2 = gTrack.faces + playerShip->nearTrkSect->nextSection->faceStart;
                         facePtr2 += 3;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
@@ -522,7 +340,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
                     }
                     else
                     {
-                        facePtr2 = track->faces + playerShip->nearTrkSect->prevSection->faceStart;
+                        facePtr2 = gTrack.faces + playerShip->nearTrkSect->prevSection->faceStart;
                         facePtr2 += 3;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
@@ -583,21 +401,21 @@ int CheckPolygonCollision(const Face* facePtr, const vec3i* pos, int alpha)
     planePoint.y = pos->y - ((facePtr->normal.y * alpha) >> FIXED_SHIFT);
     planePoint.z = pos->z - ((facePtr->normal.z * alpha) >> FIXED_SHIFT);
 
-    vec0.x = planePoint.x - track->vertices[(facePtr->vertex[1])].x;
-    vec0.y = planePoint.y - track->vertices[(facePtr->vertex[1])].y;
-    vec0.z = planePoint.z - track->vertices[(facePtr->vertex[1])].z;
+    vec0.x = planePoint.x - gTrack.vertices[(facePtr->vertex[1])].x;
+    vec0.y = planePoint.y - gTrack.vertices[(facePtr->vertex[1])].y;
+    vec0.z = planePoint.z - gTrack.vertices[(facePtr->vertex[1])].z;
 
-    vec1.x = planePoint.x - track->vertices[(facePtr->vertex[2])].x;
-    vec1.y = planePoint.y - track->vertices[(facePtr->vertex[2])].y;
-    vec1.z = planePoint.z - track->vertices[(facePtr->vertex[2])].z;
+    vec1.x = planePoint.x - gTrack.vertices[(facePtr->vertex[2])].x;
+    vec1.y = planePoint.y - gTrack.vertices[(facePtr->vertex[2])].y;
+    vec1.z = planePoint.z - gTrack.vertices[(facePtr->vertex[2])].z;
 
-    vec2.x = planePoint.x - track->vertices[(facePtr->vertex[0])].x;
-    vec2.y = planePoint.y - track->vertices[(facePtr->vertex[0])].y;
-    vec2.z = planePoint.z - track->vertices[(facePtr->vertex[0])].z;
+    vec2.x = planePoint.x - gTrack.vertices[(facePtr->vertex[0])].x;
+    vec2.y = planePoint.y - gTrack.vertices[(facePtr->vertex[0])].y;
+    vec2.z = planePoint.z - gTrack.vertices[(facePtr->vertex[0])].z;
 
-    vec3.x = planePoint.x - track->vertices[(facePtr->vertex[3])].x;
-    vec3.y = planePoint.y - track->vertices[(facePtr->vertex[3])].y;
-    vec3.z = planePoint.z - track->vertices[(facePtr->vertex[3])].z;
+    vec3.x = planePoint.x - gTrack.vertices[(facePtr->vertex[3])].x;
+    vec3.y = planePoint.y - gTrack.vertices[(facePtr->vertex[3])].y;
+    vec3.z = planePoint.z - gTrack.vertices[(facePtr->vertex[3])].z;
 
     /*TODO optimize this school math shit*/
     angle = GetAng(&vec0, &vec2);
@@ -620,9 +438,9 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     vec3i wingPos;
     int magnitude;
 
-    collisionVector.x = playerShip->nearTrkSect->centre.x - track->vertices[(facePtr->vertex[2])].x;
-    collisionVector.y = playerShip->nearTrkSect->centre.y - track->vertices[(facePtr->vertex[2])].y;
-    collisionVector.z = playerShip->nearTrkSect->centre.z - track->vertices[(facePtr->vertex[2])].z;
+    collisionVector.x = playerShip->nearTrkSect->centre.x - gTrack.vertices[(facePtr->vertex[2])].x;
+    collisionVector.y = playerShip->nearTrkSect->centre.y - gTrack.vertices[(facePtr->vertex[2])].y;
+    collisionVector.z = playerShip->nearTrkSect->centre.z - gTrack.vertices[(facePtr->vertex[2])].z;
 
     angle = AngleOfCollision(&collisionVector, &playerShip->unitVecNose);
 
@@ -684,9 +502,9 @@ void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
     vec3i nosePos;
     int magnitude;
 
-    collisionVector.x = playerShip->nearTrkSect->centre.x - track->vertices[(facePtr->vertex[2])].x;
-    collisionVector.y = playerShip->nearTrkSect->centre.y - track->vertices[(facePtr->vertex[2])].y;
-    collisionVector.z = playerShip->nearTrkSect->centre.z - track->vertices[(facePtr->vertex[2])].z;
+    collisionVector.x = playerShip->nearTrkSect->centre.x - gTrack.vertices[(facePtr->vertex[2])].x;
+    collisionVector.y = playerShip->nearTrkSect->centre.y - gTrack.vertices[(facePtr->vertex[2])].y;
+    collisionVector.z = playerShip->nearTrkSect->centre.z - gTrack.vertices[(facePtr->vertex[2])].z;
 
     angle = abs(AngleOfCollision(&collisionVector, &playerShip->unitVecNose));
 

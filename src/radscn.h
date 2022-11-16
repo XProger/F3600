@@ -1,1 +1,1 @@
-void SceneRadiusCheck(Object* objects);
+void SceneRadiusCheck(Object* objects, int32 count);

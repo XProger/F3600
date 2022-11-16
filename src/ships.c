@@ -4,7 +4,7 @@
 
 #include "game.h"
 
-extern TrackCamera ctrlcamera;
+Cone ctrlcone;
 
 const short startLinePos[16] = {
     27,     /* NULL             */
@@ -111,14 +111,8 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
     int32 i;
     int32 dist, dx, dy, dz, vz;
     Object* obj;
-    vec3s toCentre;
-    vec3i v2;
-    int32 flag;
-    MATRIX* matrix;
     ShipData* ship;
     int32 attr;
-
-    matrix = GetSkeletonMatrix(ctrlcamera.camPos->super);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
@@ -127,8 +121,8 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 
         ship = shipIndex + i;
 
-        dx = ship->pos.x + ctrlcamera.camPos->relative.t[0];
-        dz = ship->pos.z + ctrlcamera.camPos->relative.t[2];
+        dx = ship->pos.x - gCamera.pos.x;
+        dz = ship->pos.z - gCamera.pos.z;
 
         dist = GetMagnitudeApprox(dx, dz);
 
@@ -136,8 +130,8 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 
         if (dist < SHIP_VIS_DIST)
         {
-            dy = (ship->pos.y + ctrlcamera.camPos->relative.t[1]);
-            vz = (((dx * matrix->m[2][0]) + (dy * matrix->m[2][1]) + (dz * matrix->m[2][2])) >> FIXED_SHIFT) + matrix->t[2];
+            dy = ship->pos.y - gCamera.pos.y;
+            vz = ((dx * gMatrixPtr->e20) + (dy * gMatrixPtr->e21) + (dz * gMatrixPtr->e22)) >> FIXED_SHIFT;
 
             if (vz > 0)
             {
@@ -153,7 +147,14 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
                 if (!(attr & VIEW_IN) || (attr & REMOTE_VIEW))
                 {
                     attr |= VISIBLE;
-                    DrawShip(obj, ship);
+
+                    matrixPush();
+                    matrixTranslate(ship->pos.x, ship->pos.y, ship->pos.z);
+                    matrixRotateYXZ(ship->pitch, ship->hdg, ship->roll);
+
+                    renderShip(obj, ship->color);
+
+                    matrixPop();
                 }
             }
         }
@@ -162,11 +163,12 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
     }
 }
 
-void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
+void loadShipData(ShipData* shipIndex, Object** shipShapes)
 {
     int shipTextures, droidTextures, colTextures;
     Object* obj;
-    int count = 0;
+    int32 i, objCount;
+    int32 count = 0;
 
     /******************************************************/
     /** Load compressed texture files, first to allow    **/
@@ -182,39 +184,37 @@ void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos)
     droidTextures = gTexturePtr - gTextures;
     LoadCompressedTextureSequence("wipeout/common/rescu.cmp", 1);
 
-    obj = LoadPrm("wipeout/common/allsh.prm", shipTextures);
+    obj = LoadPrm("wipeout/common/allsh.prm", shipTextures, &objCount);
+    ASSERT(objCount == NO_OF_SHIPS);
 
-    while (obj)
+    for (i = 0; i < objCount; i++)
     {
         shipIndex[count].highResTableIndex = shipShapeOrder[count];
-        shipShapes[count] = obj;
+        shipShapes[count] = obj + i;
 
         count += 1;
-        obj->skeleton->super = camPos;
-        obj = obj->next;
     }
 
-    shipShapes[NO_OF_SHIPS] = LoadPrm("wipeout/common/alcol.prm", colTextures);
-    obj = shipShapes[NO_OF_SHIPS];
+    obj = LoadPrm("wipeout/common/alcol.prm", colTextures, &objCount);
+    ASSERT(objCount == NO_OF_SHIPS);
 
-    while (obj)
+    for (i = 0; i < objCount; i++)
     {
         shipIndex[count - NO_OF_SHIPS].lowResTableIndex = count;
-        shipShapes[count] = obj;
+        shipShapes[count] = obj + i;
+
         count += 1;
-
-        obj->skeleton->super = camPos;
-        obj = obj->next;
     }
 
-    shipShapes[RESCUE_DROID] = LoadPrm("wipeout/common/rescu.prm", droidTextures);
+    shipShapes[RESCUE_DROID] = LoadPrm("wipeout/common/rescu.prm", droidTextures, NULL);
 
-    obj = shipShapes[RESCUE_DROID];
-    while (obj)
+    for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        obj->skeleton->super = camPos;
-        obj = obj->next;
+        ctrlcone.object[i] = shipShapes[shipIndex[i].highResTableIndex];
+        ctrlcone.ship[i] = &shipIndex[i];
     }
+
+    InitCone(&ctrlcone);
 }
 
 void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData)
@@ -469,14 +469,14 @@ void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         ship->prevShipSect = startSection[position];
         SetSpread(ship, gameData, position);
 
-        face = track->faces + startSection[position]->faceStart;
+        face = gTrack.faces + startSection[position]->faceStart;
         face++;
         if ((position % 2) != 0)
             face++;
 
-        facePoint.x = (track->vertices[(face->vertex[0])].x + track->vertices[(face->vertex[2])].x) >> 1;
-        facePoint.y = (track->vertices[(face->vertex[0])].y + track->vertices[(face->vertex[2])].y) >> 1;
-        facePoint.z = (track->vertices[(face->vertex[0])].z + track->vertices[(face->vertex[2])].z) >> 1;
+        facePoint.x = (gTrack.vertices[(face->vertex[0])].x + gTrack.vertices[(face->vertex[2])].x) >> 1;
+        facePoint.y = (gTrack.vertices[(face->vertex[0])].y + gTrack.vertices[(face->vertex[2])].y) >> 1;
+        facePoint.z = (gTrack.vertices[(face->vertex[0])].z + gTrack.vertices[(face->vertex[2])].z) >> 1;
         ship->pos.x = facePoint.x + ((face->normal.x * 200) >> FIXED_SHIFT);
         ship->pos.y = facePoint.y + ((face->normal.y * 200) >> FIXED_SHIFT);
         ship->pos.z = facePoint.z + ((face->normal.z * 200) >> FIXED_SHIFT);

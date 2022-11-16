@@ -8,7 +8,7 @@ void ShipCalcAmbient(ShipData* playerShip)
 {
     Face* facePtr;
 
-    facePtr = track->faces + playerShip->nearTrkSect->faceStart;
+    facePtr = gTrack.faces + playerShip->nearTrkSect->faceStart;
 
     while (facePtr->flags != TRACK_BASE) // base track only (no speedups, weapons etc)
     {
@@ -62,14 +62,14 @@ void ShipTrkReaction(ShipData* playerShip)
 
     if (playerShip->nearTrkSect->flags & Jump)
     {
-        facePtr = track->faces + playerShip->nearTrkSect->faceStart;
+        facePtr = gTrack.faces + playerShip->nearTrkSect->faceStart;
 
         while ((facePtr->flags & TRACK_BASE) == 0)
         {
             facePtr++;
         }
 
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = gTrack.vertices + facePtr->vertex[0];
 
         alpha = PlaneLineCollision(facePoint, &playerShip->pos, &facePtr->normal);
 
@@ -77,23 +77,23 @@ void ShipTrkReaction(ShipData* playerShip)
         planePoint.y = playerShip->pos.y - ((facePtr->normal.y * alpha) >> FIXED_SHIFT);
         planePoint.z = playerShip->pos.z - ((facePtr->normal.z * alpha) >> FIXED_SHIFT);
 
-        vec0.x = planePoint.x - track->vertices[(facePtr->vertex[1])].x;
-        vec0.y = planePoint.y - track->vertices[(facePtr->vertex[1])].y;
-        vec0.z = planePoint.z - track->vertices[(facePtr->vertex[1])].z;
+        vec0.x = planePoint.x - gTrack.vertices[(facePtr->vertex[1])].x;
+        vec0.y = planePoint.y - gTrack.vertices[(facePtr->vertex[1])].y;
+        vec0.z = planePoint.z - gTrack.vertices[(facePtr->vertex[1])].z;
 
-        vec1.x = planePoint.x - track->vertices[(facePtr->vertex[2])].x;
-        vec1.y = planePoint.y - track->vertices[(facePtr->vertex[2])].y;
-        vec1.z = planePoint.z - track->vertices[(facePtr->vertex[2])].z;
+        vec1.x = planePoint.x - gTrack.vertices[(facePtr->vertex[2])].x;
+        vec1.y = planePoint.y - gTrack.vertices[(facePtr->vertex[2])].y;
+        vec1.z = planePoint.z - gTrack.vertices[(facePtr->vertex[2])].z;
 
         facePtr++;
 
-        vec2.x = planePoint.x - track->vertices[(facePtr->vertex[0])].x;
-        vec2.y = planePoint.y - track->vertices[(facePtr->vertex[0])].y;
-        vec2.z = planePoint.z - track->vertices[(facePtr->vertex[0])].z;
+        vec2.x = planePoint.x - gTrack.vertices[(facePtr->vertex[0])].x;
+        vec2.y = planePoint.y - gTrack.vertices[(facePtr->vertex[0])].y;
+        vec2.z = planePoint.z - gTrack.vertices[(facePtr->vertex[0])].z;
 
-        vec3.x = planePoint.x - track->vertices[(facePtr->vertex[3])].x;
-        vec3.y = planePoint.y - track->vertices[(facePtr->vertex[3])].y;
-        vec3.z = planePoint.z - track->vertices[(facePtr->vertex[3])].z;
+        vec3.x = planePoint.x - gTrack.vertices[(facePtr->vertex[3])].x;
+        vec3.y = planePoint.y - gTrack.vertices[(facePtr->vertex[3])].y;
+        vec3.z = planePoint.z - gTrack.vertices[(facePtr->vertex[3])].z;
 
         /*TODO optimize this school math shit*/
         angle = GetAng(&vec0, &vec2);
@@ -113,7 +113,7 @@ void ShipTrkReaction(ShipData* playerShip)
 
     if ((playerShip->attr & FLYING) == 0)
     {
-        facePtr = track->faces + playerShip->nearTrkSect->faceStart;
+        facePtr = gTrack.faces + playerShip->nearTrkSect->faceStart;
 
         while ((facePtr->flags & TRACK_BASE) == 0)
         {
@@ -142,7 +142,7 @@ void ShipTrkReaction(ShipData* playerShip)
             facePtr++;
         }
 
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = gTrack.vertices + facePtr->vertex[0];
 
         alpha = PlaneLineCollision(facePoint, &playerShip->pos, &facePtr->normal);
         noseAlpha = alpha;
@@ -342,18 +342,6 @@ void ShipTrkReaction(ShipData* playerShip)
 /** Returns the position of a point in space relative to **/
 /**                        the camera                    **/
 /**********************************************************/
-
-void GetWorldPoint(vec3i* output, Object* object, Object* objectCollide, int pointNo)
-{
-    long flag;
-    const MATRIX* matrix;
-    const vec3s* vertex = (vec3s*)(objectCollide->vertices + pointNo);
-
-    matrix = GetSkeletonMatrix(object->skeleton);
-
-    RotTrans(matrix, vertex, output, &flag);
-}
-
 void GetTargetPos(vec3i* result, const vec3i* pos, const vec3i* cent1, const vec3i* cent2)
 {
     int a_mag, b_mag, c_mag;
@@ -406,9 +394,6 @@ void SetUnitVectors(ShipData* shipIndex)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        int32 sx, sy, sz;
-        int32 cx, cy, cz;
-
         rsincos(shipIndex[i].pitch, sx, cx);
         rsincos(shipIndex[i].hdg, sy, cy);
         rsincos(shipIndex[i].roll, sz, cz);
@@ -427,16 +412,16 @@ void SetUnitVectors(ShipData* shipIndex)
         shipIndex[i].prevSecNo = shipIndex[i].prevShipSect->secNo;
         shipIndex[i].nearSecNo = shipIndex[i].nearTrkSect->secNo;
 
-        facePtr = track->faces + shipIndex[i].nearTrkSect->faceStart;
+        facePtr = gTrack.faces + shipIndex[i].nearTrkSect->faceStart;
 
         while ((facePtr->flags & TRACK_BASE) == 0)
         {
             facePtr++;
         }
 
-        toFaceVector.x = track->vertices[(facePtr->vertex[0])].x - track->vertices[(facePtr->vertex[1])].x;
-        toFaceVector.y = track->vertices[(facePtr->vertex[0])].y - track->vertices[(facePtr->vertex[1])].y;
-        toFaceVector.z = track->vertices[(facePtr->vertex[0])].z - track->vertices[(facePtr->vertex[1])].z;
+        toFaceVector.x = gTrack.vertices[(facePtr->vertex[0])].x - gTrack.vertices[(facePtr->vertex[1])].x;
+        toFaceVector.y = gTrack.vertices[(facePtr->vertex[0])].y - gTrack.vertices[(facePtr->vertex[1])].y;
+        toFaceVector.z = gTrack.vertices[(facePtr->vertex[0])].z - gTrack.vertices[(facePtr->vertex[1])].z;
 
         direction.x = shipIndex[i].nearTrkSect->centre.x - shipIndex[i].pos.x;
         direction.y = shipIndex[i].nearTrkSect->centre.y - shipIndex[i].pos.y;
@@ -455,7 +440,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
 {
     Face* facePtr;
 
-    facePtr = track->faces + section->faceStart;
+    facePtr = gTrack.faces + section->faceStart;
 
     while ((facePtr->flags & TRACK_BASE) == 0)
     {

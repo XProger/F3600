@@ -88,8 +88,6 @@ struct ConfigData;
 typedef struct Menu
 {
     const char* title;
-    Object** menuModel;
-    Object** menu2Model;
     void (*displayObject)(const struct Menu*, int);
     void (*displayMenu)(struct SelectionData*, struct ConfigData*);
     char numOptions;

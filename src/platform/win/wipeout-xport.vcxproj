@@ -43,7 +43,6 @@
     <ClCompile Include="..\..\search.c" />
     <ClCompile Include="..\..\sfx.c" />
     <ClCompile Include="..\..\ships.c" />
-    <ClCompile Include="..\..\skeleton.c" />
     <ClCompile Include="..\..\spline.c" />
     <ClCompile Include="..\..\track.c" />
     <ClCompile Include="..\..\ttf.c" />
@@ -79,7 +78,6 @@
     <ClInclude Include="..\..\search.h" />
     <ClInclude Include="..\..\sfx.h" />
     <ClInclude Include="..\..\ships.h" />
-    <ClInclude Include="..\..\skeleton.h" />
     <ClInclude Include="..\..\sound.h" />
     <ClInclude Include="..\..\spline.h" />
     <ClInclude Include="..\..\standard.h" />

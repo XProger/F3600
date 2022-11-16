@@ -309,13 +309,13 @@ void HoldLeft(vec3i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     vec3i faceVert1, faceVert2;
 
-    faceVert1.x = track->vertices[(facePtr->vertex[1])].x;
-    faceVert1.y = track->vertices[(facePtr->vertex[1])].y;
-    faceVert1.z = track->vertices[(facePtr->vertex[1])].z;
+    faceVert1.x = gTrack.vertices[(facePtr->vertex[1])].x;
+    faceVert1.y = gTrack.vertices[(facePtr->vertex[1])].y;
+    faceVert1.z = gTrack.vertices[(facePtr->vertex[1])].z;
 
-    faceVert2.x = track->vertices[(facePtr->vertex[0])].x;
-    faceVert2.y = track->vertices[(facePtr->vertex[0])].y;
-    faceVert2.z = track->vertices[(facePtr->vertex[0])].z;
+    faceVert2.x = gTrack.vertices[(facePtr->vertex[0])].x;
+    faceVert2.y = gTrack.vertices[(facePtr->vertex[0])].y;
+    faceVert2.z = gTrack.vertices[(facePtr->vertex[0])].z;
 
     result->x = (faceVert1.x - faceVert2.x) >> 1;
     result->y = (faceVert1.y - faceVert2.y) >> 1;
@@ -326,13 +326,13 @@ void HoldRight(vec3i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
     vec3i faceVert1, faceVert2;
 
-    faceVert1.x = track->vertices[(facePtr->vertex[0])].x;
-    faceVert1.y = track->vertices[(facePtr->vertex[0])].y;
-    faceVert1.z = track->vertices[(facePtr->vertex[0])].z;
+    faceVert1.x = gTrack.vertices[(facePtr->vertex[0])].x;
+    faceVert1.y = gTrack.vertices[(facePtr->vertex[0])].y;
+    faceVert1.z = gTrack.vertices[(facePtr->vertex[0])].z;
 
-    faceVert2.x = track->vertices[(facePtr->vertex[1])].x;
-    faceVert2.y = track->vertices[(facePtr->vertex[1])].y;
-    faceVert2.z = track->vertices[(facePtr->vertex[1])].z;
+    faceVert2.x = gTrack.vertices[(facePtr->vertex[1])].x;
+    faceVert2.y = gTrack.vertices[(facePtr->vertex[1])].y;
+    faceVert2.z = gTrack.vertices[(facePtr->vertex[1])].z;
 
     result->x = (faceVert1.x - faceVert2.x) >> 1;
     result->y = (faceVert1.y - faceVert2.y) >> 1;
@@ -437,7 +437,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
     if ((remoteShip->attr & FLYING) == 0)
     {
         /*** Find First track base section ***/
-        facePtr = track->faces + remoteShip->nearTrkSect->faceStart;
+        facePtr = gTrack.faces + remoteShip->nearTrkSect->faceStart;
         while ((facePtr->flags & TRACK_BASE) == 0)
         {
             facePtr++;
@@ -867,7 +867,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
 
         /****** Speed Test, should not make much difference ******/
         /****** to overall lap times of opposition          ******/
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = gTrack.vertices + facePtr->vertex[0];
         alpha = PlaneLineCollision(facePoint, &remoteShip->pos, &facePtr->normal);
 
         ApplyMagnet(&force, &facePtr->normal, alpha);

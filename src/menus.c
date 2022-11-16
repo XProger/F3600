@@ -43,14 +43,14 @@ int gCurrOption;
 extern long ctrlfirsttime;
 extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 
-Object* audioShapes[3];
-Object* pilotShapes[8];
-Object* teamShapes[4];
+Object* audioShapes;
+Object* pilotShapes;
+Object* teamShapes;
 
-Object* clsShapes[3];
-Object* gameShapes[4];
-Object* optShapes[7];
-Object* padShapes[3];
+Object* clsShapes;
+Object* gameShapes;
+Object* optShapes;
+Object* padShapes;
 SelectionData selectData;
 
 Texture* gTrackIcon;
@@ -58,25 +58,21 @@ Texture* gTrackIcon;
 void DrawControllerMenu(const Menu* menu, int shapeNo);
 void DrawControllerEdit(const Menu* menu, int shapeNo);
 void DrawGraphicDetail(const Menu* menu, int shapeNo);
-void DisplayPadMenu1(const Menu* menu, int shapeNo);
-void DisplayPadMenu2(const Menu* menu, int shapeNo);
+void DisplayPadMenu(const Menu* menu, int shapeNo);
 void DrawPilot(const Menu* menu, int shapeNo);
 void DrawTeams(const Menu* menu, int shapeNo);
 void DrawClass(const Menu* menu, int shapeNo);
 void DrawMainMenu(const Menu* menu, int shapeNo);
-void DrawPlayPad(const Menu* menu, int shapeNo);
 void DrawOptionMenus(const Menu* menu, int shapeNo);
-void DisplayPadMenu(const Menu* menu, int shapeNo);
 void DrawGames(const Menu* menu, int shapeNo);
 void DrawHiScoreMenu(const Menu* menu, int shapeNo);
 
-void KeyConfig(void);
 void ResetKeys(void);
 
 void CallMenuSelector(Object**, ConfigData*, SelectionData*);
 void CallMenuActivator(ConfigData*, SelectionData*);
-int LoadModel(Object** modelShapes, char* fileName);
-int LoadTexModel(Object** modelShapes, char* fileName);
+Object* LoadModel(char* fileName);
+Object* LoadTexModel(char* fileName);
 void MusicVSfx(SelectionData*, ConfigData*);
 void ShowHiScores(SelectionData*, ConfigData*);
 void InitSelectData(SelectionData*);
@@ -102,7 +98,7 @@ MenuHistory gMenuHistory[MAX_MENU_HISTORY];
 
 const Menu gMenuSystem[] = {
 // MAIN_MENU
-    { "WIPEOUT MAIN MENU", ctrlshipShapes, gameShapes, DrawMainMenu, 0, 
+    { "WIPEOUT MAIN MENU", DrawMainMenu, 0, 
     #ifdef MENU_HAS_QUIT
         3,
     #else
@@ -115,7 +111,7 @@ const Menu gMenuSystem[] = {
         }
     },
 // TRACK_MENU
-    { "SELECT RACING CIRCUIT", 0, 0, 0, 0, 7,
+    { "SELECT RACING CIRCUIT", 0, 0, 7,
         {
             "ALTIMA VII",
             "KARBONIS V",
@@ -127,9 +123,9 @@ const Menu gMenuSystem[] = {
         }
     },
 // AUDIO_MENU
-    { "AUDIO", 0, 0, 0, MusicVSfx, 0 },
+    { "AUDIO", 0, MusicVSfx, 0 },
 // OPTION_MENU
-    { "OPTIONS", optShapes, padShapes, DrawOptionMenus, 0, 4,
+    { "OPTIONS", DrawOptionMenus, 0, 4,
         { 
             "CONTROLS",
             "GRAPHICS",
@@ -138,14 +134,14 @@ const Menu gMenuSystem[] = {
         }
     },
 // CLASS_MENU
-    { "SELECT RACING CLASS", clsShapes, 0, DrawClass, 0, 2,
+    { "SELECT RACING CLASS", DrawClass, 0, 2,
         { 
             "VENOM CLASS",
             "RAPIER CLASS"
         }
     },
 // TEAM_MENU
-    { "SELECT YOUR TEAM", teamShapes, ctrlshipShapes, DrawTeams, 0, 4,
+    { "SELECT YOUR TEAM", DrawTeams, 0, 4,
         { 
             "AG SYSTEMS",
             "AURICOM",
@@ -154,35 +150,35 @@ const Menu gMenuSystem[] = {
         }
     },
 // PILOT_MENU_1 - AG_SYSTEMS
-    { "CHOOSE YOUR PILOT", pilotShapes, ctrlshipShapes, DrawPilot, 0, 2,
+    { "CHOOSE YOUR PILOT", DrawPilot, 0, 2,
         { 
             "JOHN DEKKA",
             "DANIEL CHANG"
         }
     },
 // PILOT_MENU_2 - AURICOM
-    { "CHOOSE YOUR PILOT", pilotShapes, ctrlshipShapes, DrawPilot, 0, 2,
+    { "CHOOSE YOUR PILOT", DrawPilot, 0, 2,
         { 
             "ARIAL TETSUO",
             "ANASTASIA CHEROVOSKI"
         }
     },
 // PILOT_MENU_3 - QIREX
-    { "CHOOSE YOUR PILOT", pilotShapes, ctrlshipShapes, DrawPilot, 0, 2,
+    { "CHOOSE YOUR PILOT", DrawPilot, 0, 2,
         { 
             "KEL SOLAAR",
             "ARIAN TETSUO"
         }
     },
 // PILOT_MENU_4 - FEISAR
-    { "CHOOSE YOUR PILOT", pilotShapes, ctrlshipShapes, DrawPilot, 0, 2,
+    { "CHOOSE YOUR PILOT", DrawPilot, 0, 2,
         { 
             "SOFIA DE LA RENTE",
             "PAUL JACKSON"
         }
     },
 // RACE_TYPE_MENU
-    { "SELECT RACE TYPE", gameShapes, optShapes, DrawGames, 0, 3,
+    { "SELECT RACE TYPE", DrawGames, 0, 3,
         { 
             "CHAMPIONSHIP RACE",
             "SINGLE RACE",
@@ -190,24 +186,24 @@ const Menu gMenuSystem[] = {
         }
     },
 // HIGH_SCORES_MENU
-    { "BEST RACE TIMES", 0, 0, 0, ShowHiScores, 0 },
+    { "BEST RACE TIMES", 0, ShowHiScores, 0 },
 // BEST_TIMES_MENU
-    { "BEST TIMES", optShapes, 0, DrawHiScoreMenu, 0, 2,
+    { "BEST TIMES", DrawHiScoreMenu, 0, 2,
         { 
             "BEST RACE TIMES",
             "BEST TIME TRIAL TIMES"
         }
     },
 // TIME_TRIAL_MENU
-    { "BEST TIME TRIAL TIMES", 0, 0, 0, ShowTimeTrialScores, 0 },
+    { "BEST TIME TRIAL TIMES", 0, ShowTimeTrialScores, 0 },
 // QUIT_MENU
-    { "", 0, 0, 0, QuitYesNo, 0 },
-    // DETAILS_MENU
-    { "GRAPHICS", ctrlshipShapes, 0, DrawGraphicDetail, GraphicOptions, 0 },
+    { "", 0, QuitYesNo, 0 },
+// DETAILS_MENU
+    { "GRAPHICS", DrawGraphicDetail, GraphicOptions, 0 },
 // CONTROLLER_MENU
-    { "CONTROLS", padShapes, padShapes, DrawControllerMenu, ControllerOptions, 0 },
+    { "CONTROLS", DrawControllerMenu, ControllerOptions, 0 },
 // CONTROL_EDIT_MENU
-    { "CONFIGURE KEYBOARD", padShapes, padShapes, DrawControllerEdit, ControllerEdit, 0 }
+    { "CONFIGURE KEYBOARD", DrawControllerEdit, ControllerEdit, 0 }
 };
 
 
@@ -215,21 +211,21 @@ const Menu gMenuSystem[] = {
 
 void menuInit(void)
 {
-    LoadTexModel(pilotShapes, "pilot");
-    LoadTexModel(audioShapes, "cdobj");
+    pilotShapes = LoadTexModel("pilot");
+    audioShapes = LoadTexModel("cdobj");
 
 #ifdef VER_PSX
-    LoadModel(teamShapes, "teams");
-    LoadModel(clsShapes, "class");
-    LoadTexModel(padShapes, "pad1");
-    LoadModel(gameShapes, "champ");
-    LoadTexModel(optShapes, "alopt");
+    teamShapes = LoadModel("teams");
+    clsShapes = LoadModel("class");
+    padShapes = LoadTexModel("pad1");
+    gameShapes = LoadModel("champ");
+    optShapes = LoadTexModel("alopt");
 #else
-    LoadTexModel(teamShapes, "team");
-    LoadTexModel(clsShapes, "leeg");
-    LoadTexModel(padShapes, "cntrl");
-    LoadTexModel(gameShapes, "msdos");
-    LoadTexModel(optShapes, "misc");
+    teamShapes = LoadTexModel("team");
+    clsShapes = LoadTexModel("leeg");
+    padShapes = LoadTexModel("cntrl");
+    gameShapes = LoadTexModel("msdos");
+    optShapes = LoadTexModel("misc");
 #endif
 
     gTrackIcon = gTexturePtr;
@@ -253,9 +249,6 @@ void menuInit(void)
 
     gCurrMenu = 0;
     gCurrOption = 0;
-
-    InitSkeleton(&gCamPos);
-    InitSkeleton(&gCamDir);
 }
 
 void menuLoop(ConfigData* gameData)
@@ -337,7 +330,7 @@ void GoBack(void)
     gCurrMenu = h->menu;
     gCurrOption = h->option;
 
-    KillNote(SFX_SHIELDS);
+    KillNote(SFX_SHIELD);
 
     PlayNote(SFX_MENU_2_MENU);
     renderOffset(0, -30);
@@ -632,33 +625,19 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
     }
 }
 
-int LoadModel(Object** modelShapes, char* fileName)
+Object* LoadModel(char* fileName)
 {
-    Object* obj;
-    int count = 0;
     char modelFile[64];
-
     strcpy(modelFile, "wipeout/common/");
     strcat(modelFile, fileName);
     strcat(modelFile, ".prm");
 
-    obj = LoadPrm(modelFile, 0);
-
-    while (obj)
-    {
-        modelShapes[count] = obj;
-        count++;
-        obj = obj->next;
-    }
-
-    return count;
+    return LoadPrm(modelFile, 0, NULL);
 }
 
-int LoadTexModel(Object** modelShapes, char* fileName)
+Object* LoadTexModel(char* fileName)
 {
-    int modelTextures = 0;
-    Object* obj;
-    int count = 0;
+    int32 modelTextures;
     char modelFile[64];
 
     /******************************************************/
@@ -677,16 +656,7 @@ int LoadTexModel(Object** modelShapes, char* fileName)
     strcat(modelFile, fileName);
     strcat(modelFile, ".prm");
 
-    obj = LoadPrm(modelFile, modelTextures);
-
-    while (obj)
-    {
-        modelShapes[count] = obj;
-        count++;
-        obj = obj->next;
-    }
-
-    return count;
+    return LoadPrm(modelFile, modelTextures, NULL);
 }
 
 void DrawMainMenu(const Menu* menu, int shapeNo)
@@ -695,7 +665,7 @@ void DrawMainMenu(const Menu* menu, int shapeNo)
     int heading = gFrameIndex * 5;
 
     if (shapeNo == 0)
-        DrawTeamShips(0, 0, MODELSIZE, heading, menu->menuModel[shipShapeOrder[0]]);
+        DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
 
     // if (shapeNo == 1)
     // {
@@ -705,7 +675,7 @@ void DrawMainMenu(const Menu* menu, int shapeNo)
 
     if (shapeNo == 1)
     {
-        DrawObject(menu->menu2Model[3], 0, 0, MODELSIZE, hdg, 0, 0);
+        DrawObject(gameShapes + 3, 0, 0, MODELSIZE, hdg, 0, 0);
     }
 }
 
@@ -714,23 +684,19 @@ void DrawTeams(const Menu* menu, int shapeNo)
     int hdg = gFrameIndex * 20;
     int heading = gFrameIndex * 10;
 
-    DrawObject(menu->menuModel[teamShapeOrder[shapeNo]], 0, 0, 9000, hdg, 0, 0);
+    DrawObject(teamShapes + teamShapeOrder[shapeNo], 0, 0, 9000, hdg, 0, 0);
 
-    DrawTeamShips(-900, 800, 1500, heading, menu->menu2Model[shipShapeOrder[shapeNo * 2]]);
-    DrawTeamShips(900, 800, 1500, heading, menu->menu2Model[shipShapeOrder[shapeNo * 2 + 1]]);
+    DrawTeamShips(-900, 800, 1500, heading, ctrlshipShapes[shipShapeOrder[shapeNo * 2]]);
+    DrawTeamShips(900, 800, 1500, heading, ctrlshipShapes[shipShapeOrder[shapeNo * 2 + 1]]);
 }
 
 void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
 {
-    ShipData shipData;
-    shipData.pos.x = x;
-    shipData.pos.y = y;
-    shipData.pos.z = size;
-    shipData.hdg = -heading;
-    shipData.pitch = 0;
-    shipData.roll = 0;
-    shipData.color = 0xFFFFFFFF;
-    DrawShip(shipModel, &shipData);
+    matrixPush();
+    matrixTranslate(x, y, size);
+    matrixRotateYXZ(0, -heading, 0);
+    renderShip(shipModel, 0xFFFFFFFF);
+    matrixPop();
 }
 
 void DrawPilot(const Menu* menu, int shapeNo)
@@ -738,15 +704,8 @@ void DrawPilot(const Menu* menu, int shapeNo)
     int hdg = gFrameIndex * 20;
     int shdg = gFrameIndex * 5;
 
-    DrawObject(menu->menuModel[pilotShapeOrder[shapeNo]], 0, -400, 11000, hdg, 0, 0);
-    DrawTeamShips(0, 700, 1300, shdg, menu->menu2Model[shipShapeOrder[shapeNo]]);
-}
-
-void DrawPlayPad(const Menu* menu, int shapeNo)
-{
-    renderOffset(0, 0);
-    DrawObject(menu->menuModel[0], 0, -1140, 6220 + zoomInOut, modelHdg, 0, 0);
-    DrawObject(menu->menuModel[1], 0, 2260 + downUp, 6670, 250, -3440, 10);
+    DrawObject(pilotShapes + pilotShapeOrder[shapeNo], 0, -400, 11000, hdg, 0, 0);
+    DrawTeamShips(0, 700, 1300, shdg, ctrlshipShapes[shipShapeOrder[shapeNo]]);
 }
 
 void DrawClass(const Menu* menu, int shipNo)
@@ -755,12 +714,12 @@ void DrawClass(const Menu* menu, int shipNo)
 
     if (shipNo == 0)
     {
-        DrawObject(menu->menuModel[0], 0, 0, 500, hdg, 0, 0);
+        DrawObject(clsShapes + 0, 0, 0, 500, hdg, 0, 0);
     }
 
     if (shipNo == 1)
     {
-        DrawObject(menu->menuModel[1], 0, -25, 500, hdg, 0, 0);
+        DrawObject(clsShapes + 1, 0, -25, 500, hdg, 0, 0);
     }
 }
 
@@ -801,33 +760,33 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
     {
         if (pad & IN_LEFT)
         {
-            if (WhatChannel(SFX_SHIELDS) == -1)
+            if (WhatChannel(SFX_SHIELD) == -1)
             {
-                PlayNote(SFX_SHIELDS);
-                SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
-                SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
+                PlayNote(SFX_SHIELD);
+                SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
+                SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
             SetMasterBalance(gMasterBalance - (gFrameIndex - gLastFrameIndex));
         }
         else if (pad & IN_RIGHT)
         {
-            if (WhatChannel(SFX_SHIELDS) == -1)
+            if (WhatChannel(SFX_SHIELD) == -1)
             {
-                PlayNote(SFX_SHIELDS);
-                SetPitch(SFX_SHIELDS, SND_DEF_PITCH >> 1);
-                SetVolume(SFX_SHIELDS, SND_MAX_VOLUME, SND_MAX_VOLUME);
+                PlayNote(SFX_SHIELD);
+                SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
+                SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
             SetMasterBalance(gMasterBalance + (gFrameIndex - gLastFrameIndex));
         }
         else
         {
-            KillNote(SFX_SHIELDS);
+            KillNote(SFX_SHIELD);
         }
     }
 
     if (selectData->optionNo == 1)
     {
-        KillNote(SFX_SHIELDS);
+        KillNote(SFX_SHIELD);
 
         if (xpad & IN_LEFT)
         {
@@ -1145,17 +1104,17 @@ void DrawGames(const Menu* menu, int shipNo)
 
     if (shipNo == 0)
     {
-        DrawObject(menu->menuModel[0], 0, -50, 600, hdg, 0, 0);
+        DrawObject(gameShapes + 0, 0, -50, 600, hdg, 0, 0);
     }
 
     if (shipNo == 1)
     {
-        DrawObject(menu->menuModel[2], 0, -50, 600, hdg, 0, 0);
+        DrawObject(gameShapes + 2, 0, -50, 600, hdg, 0, 0);
     }
 
     if (shipNo == 2)
     {
-        DrawObject(menu->menu2Model[2], 0, -50, 600, hdg, 0, 0);
+        DrawObject(optShapes + 2, 0, -50, 600, hdg, 0, 0);
     }
 }
 
@@ -1169,16 +1128,16 @@ void DrawOptionMenus(const Menu* menu, int shipNo)
     switch (shipNo)
     {
         case CONTROLS:
-            DisplayPadMenu1(menu, shipNo);
+            DisplayPadMenu(menu, shipNo);
             break;
         case DETAILS:
-            DrawTeamShips(0, 0, MODELSIZE, heading, gMenuSystem[DETAILS_MENU].menuModel[shipShapeOrder[0]]);
+            DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
             break;
         case AUDIO_CONFIG:
-            DrawObject(menu->menuModel[3], 0, 0, 600, hdg, 0, 0);
+            DrawObject(optShapes + 3, 0, 0, 600, hdg, 0, 0);
             break;
         case HIGH_SCORES:
-            DrawObject(menu->menuModel[2], 0, 0, 600, hdg, 0, 0);
+            DrawObject(optShapes + 2, 0, 0, 600, hdg, 0, 0);
             break;
     }
 }
@@ -1188,28 +1147,14 @@ void DrawHiScoreMenu(const Menu* menu, int shipNo)
     int hdg = gFrameIndex * 20;
 
     renderOffset(0, -30);
-    DrawObject(menu->menuModel[2], 0, 0, 600, hdg, 0, 0);
+    DrawObject(optShapes + 2, 0, 0, 600, hdg, 0, 0);
 }
 
 void DisplayPadMenu(const Menu* menu, int shapeNo)
 {
     int hdg = gFrameIndex * 20;
 
-    DrawObject(menu->menu2Model[0], 0, 0, 6500, hdg, 0, 0);
-}
-
-void DisplayPadMenu1(const Menu* menu, int shapeNo)
-{
-    int hdg = gFrameIndex * 20;
-
-    DrawObject(menu->menu2Model[1], 0, -5, 4500, hdg, 0, 0);
-}
-
-void DisplayPadMenu2(const Menu* menu, int shapeNo)
-{
-    int hdg = gFrameIndex * 20;
-
-    DrawObject(menu->menu2Model[2], 0, 0, 4500, hdg, 0, 0);
+    DrawObject(padShapes + 0, 0, 0, 6500, hdg, 0, 0);
 }
 
 void InitChampionship(void)
@@ -1249,7 +1194,7 @@ void ControllerOptions(SelectionData* selectData, ConfigData* gameData)
 
 void ControllerEdit(SelectionData* selectData, ConfigData* gameData)
 {
-    KeyConfig();
+    // TODO
 }
 
 void DrawControllerMenu(const Menu* menu, int shapeNo)
@@ -1257,20 +1202,16 @@ void DrawControllerMenu(const Menu* menu, int shapeNo)
     // TODO
 }
 
-void KeyConfig(void)
-{
-    // TODO
-}
-
 void DrawControllerEdit(const Menu* menu, int shapeNo)
 {
+    // TODO
 }
 
 void DrawGraphicDetail(const Menu* menu, int shapeNo)
 {
     int heading = gFrameIndex * 5;
 
-    DrawTeamShips(0, 0, MODELSIZE, heading, menu->menuModel[shipShapeOrder[0]]);
+    DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
 }
 
 char CheckKey(unsigned short code)

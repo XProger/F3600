@@ -11,7 +11,6 @@
 
 void ShipCalcAmbient(ShipData* playerShip);
 void ShipTrkReaction(ShipData* playerShip);
-void GetWorldPoint(vec3i* output, Object* object, Object* objectCollide, int pointNo);
 void GetTargetPos(vec3i* result, const vec3i* pos, const vec3i* cent1, const vec3i* cent2);
 void SetUnitVectors(ShipData* shipIndex);
 int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, int noWeaponGrids);

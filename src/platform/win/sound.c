@@ -263,19 +263,19 @@ int MusicGetTrack(void)
     return music.track;
 }
 
-void MusicPlay(int musicTrack)
+void MusicPlay(int track)
 {
     FILE* f;
     int32 size;
     char path[16];
 
-    ASSERT(musicTrack > 0);
-    if (musicTrack == music.track)
+    ASSERT(track > 0);
+    if (track == music.track)
     {
         stb_vorbis_seek_start(music.ogg);
         return;
     }
-    music.track = musicTrack;
+    music.track = track;
 
     if (music.ogg)
     {
@@ -290,7 +290,7 @@ void MusicPlay(int musicTrack)
     }
 
     strcpy(path, "audio/");
-    getTrackStrNo(path + 6, musicTrack + 1);
+    getTrackStrNo(path + 6, track + 1);
     strcat(path, ".ogg");
 
     f = fopen(path, "rb");

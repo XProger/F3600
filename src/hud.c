@@ -51,23 +51,25 @@ typedef struct
 {
     uint8 tx, ty;
     uint8 bx, by;
-    uint8 r, g, b, unused;
+    uint32 color;
 } BarPoint;
 
+#define BAR_COLOR(r, g, b) (r >> 1) | ((g >> 1) << 8) | ((b >> 1) << 16) | 0xFF000000
+
 const BarPoint gBarPoint[NUM_BARS + 1] = { 
-    {   6, 18,      1, 27,     52,  17,  46, 0 },
-    {  13, 18,      8, 27,    111,  31,  71, 0 },
-    {  20, 18,     15, 27,    140,  46, 144, 0 },
-    {  27, 18,     22, 27,    110,  84, 199, 0 },
-    {  34, 18,     29, 27,     77, 137, 187, 0 },
-    {  42, 17,     37, 27,     69, 173, 136, 0 },
-    {  50, 16,     45, 27,     71, 195,  61, 0 },
-    {  60, 13,     55, 25,    181, 218,  48, 0 },
-    {  70, 10,     64, 23,    240, 134,  32, 0 },
-    {  82,  8,     74, 22,    255, 193,  44, 0 },
-    {  95,  7,     87, 22,    255, 215, 107, 0 },
-    { 110,  7,    102, 22,    255, 234, 170, 0 },
-    { 125,  7,    118, 22,    255, 255, 255, 0 }
+    {   6, 18,      1, 27,   BAR_COLOR(  52,  17,  46 ) },
+    {  13, 18,      8, 27,   BAR_COLOR( 111,  31,  71 ) },
+    {  20, 18,     15, 27,   BAR_COLOR( 140,  46, 144 ) },
+    {  27, 18,     22, 27,   BAR_COLOR( 110,  84, 199 ) },
+    {  34, 18,     29, 27,   BAR_COLOR(  77, 137, 187 ) },
+    {  42, 17,     37, 27,   BAR_COLOR(  69, 173, 136 ) },
+    {  50, 16,     45, 27,   BAR_COLOR(  71, 195,  61 ) },
+    {  60, 13,     55, 25,   BAR_COLOR( 181, 218,  48 ) },
+    {  70, 10,     64, 23,   BAR_COLOR( 240, 134,  32 ) },
+    {  82,  8,     74, 22,   BAR_COLOR( 255, 193,  44 ) },
+    {  95,  7,     87, 22,   BAR_COLOR( 255, 215, 107 ) },
+    { 110,  7,    102, 22,   BAR_COLOR( 255, 234, 170 ) },
+    { 125,  7,    118, 22,   BAR_COLOR( 255, 255, 255 ) }
 };
 
 void InitSpeedo(void)
@@ -93,9 +95,10 @@ void fill_speedo(int speed, int thrust)
     {
         renderSetBlend(BLEND_ADD);
 
-        q.color[0].r = q.color[1].r = q.color[2].r = q.color[3].r = 64;
-        q.color[0].g = q.color[1].g = q.color[2].g = q.color[3].g = 0;
-        q.color[0].b = q.color[1].b = q.color[2].b = q.color[3].b = 0;
+        q.color[0] =
+        q.color[1] =
+        q.color[2] =
+        q.color[3] = 0xFF000040;
 
         for (i = 0; i < NUM_BARS; i++)
         {
@@ -138,12 +141,8 @@ void fill_speedo(int speed, int thrust)
         {
             p = gBarPoint + i;
 
-            q.color[0].r = q.color[3].r = p[0].r >> 1;
-            q.color[0].g = q.color[3].g = p[0].g >> 1;
-            q.color[0].b = q.color[3].b = p[0].b >> 1;
-            q.color[1].r = q.color[2].r = p[1].r >> 1;
-            q.color[1].g = q.color[2].g = p[1].g >> 1;
-            q.color[1].b = q.color[2].b = p[1].b >> 1;
+            q.color[0] = q.color[3] = p[0].color;
+            q.color[1] = q.color[2] = p[1].color;
 
             q.x0 = sx + p[0].tx;
             q.y0 = sy + p[0].ty;
@@ -295,7 +294,6 @@ void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
     int digit[12];
     int x, y;
     int size, charNum;
-    uint16 currLett = 0;
     Glyph* charSet;
 
     x = pos_data->start_pos_x;
@@ -726,8 +724,8 @@ int ComparePosision(ShipData* a, ShipData* b)
         da = GetMagnitude(&ca);
         db = GetMagnitude(&cb);
 
-        da = da ? (ScalarProduct(&ca, &dir) / da) : 0;
-        db = db ? (ScalarProduct(&cb, &dir) / db) : 0;
+        da = da ? (dot(&ca, &dir) / da) : 0;
+        db = db ? (dot(&cb, &dir) / db) : 0;
 
         if (da < db)
             return 1;

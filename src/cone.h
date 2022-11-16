@@ -1,9 +1,7 @@
-typedef struct
+typedef struct Cone
 {
-    short coneIndex[3][8];
-
-    vec4s oldVertex[3][8];
-
+    int16 coneIndex[3][8];
+    vec3i oldVertex[3][8];
     Object* object[8];
     ShipData* ship[8];
 } Cone;

@@ -1,84 +1,37 @@
 #include "game.h"
 
+#ifdef __3DO__ // TODO optimize
+void InitCone(Cone* cone) {}
+void ResetCone(Cone* cone) {}
+void UpdateCone(Cone* cone) {}
+#else
 void InitCone(Cone* cone)
 {
-    short h, i, j, k;
-    Prm prm;
+    int32 h, i, j, k;
+    ObjFace* face;
 
-    short seCount;
-    short similar;
+    int32 similar;
 
-    short booster;
+    int32 booster;
 
-    short allVert[64];
-    short allCount;
+    int16 allVert[64];
+    int32 allCount;
 
-    short shared[3];
-    short gotIt;
+    int16 shared[3];
+    int32 gotIt;
 
     for (h = 0; h < 8; h++)
     {
-        seCount = 0;
         allCount = 0;
-        prm.primitive = cone->object[h]->primitives;
+        face = cone->object[h]->faces;
 
-        for (i = 0; i < cone->object[h]->primitiveCount; i++)
+        for (i = 0; i < cone->object[h]->fCount; i++, face++)
         {
-            switch (prm.f3->type)
+            if (face->flags & FACE_FLAG_ENGINE)
             {
-                case TypeF3:
-                    prm.f3 += 1;
-                    break;
-
-                case TypeF4:
-                    prm.f4 += 1;
-                    break;
-
-                case TypeFT3:
-                    if (prm.ft3->flag & ShipEngine)
-                    {
-                        allVert[allCount++] = prm.ft3->coords[0];
-                        allVert[allCount++] = prm.ft3->coords[1];
-                        allVert[allCount++] = prm.ft3->coords[2];
-
-                        prm.ft3->flag |= Translucent;
-                        seCount++;
-                    }
-                    prm.ft3 += 1;
-                    break;
-
-                case TypeFT4:
-                    prm.ft4 += 1;
-                    break;
-
-                case TypeG3:
-                    prm.g3 += 1;
-                    break;
-
-                case TypeG4:
-                    prm.g4 += 1;
-                    break;
-
-                case TypeGT3:
-                    if (prm.gt3->flag & ShipEngine)
-                    {
-                        allVert[allCount++] = prm.gt3->coords[0];
-                        allVert[allCount++] = prm.gt3->coords[1];
-                        allVert[allCount++] = prm.gt3->coords[2];
-
-                        prm.gt3->flag |= Translucent;
-                        seCount++;
-                    }
-                    prm.gt3 += 1;
-                    break;
-
-                case TypeGT4:
-                    prm.gt4 += 1;
-                    break;
-
-                default:
-                    ASSERT(0);
-                    break;
+                allVert[allCount++] = face->index[0];
+                allVert[allCount++] = face->index[1];
+                allVert[allCount++] = face->index[2];
             }
         }
 
@@ -136,7 +89,7 @@ void InitCone(Cone* cone)
 
 void ResetCone(Cone* cone)
 {
-    short i, j;
+    int32 i, j;
 
     for (i = 0; i < 8; i++)
     {
@@ -154,9 +107,8 @@ void ResetCone(Cone* cone)
 
 void UpdateCone(Cone* cone)
 {
-#ifndef __3DO__ // TODO optimize
-    short disp;
-    short i, j;
+    int32 disp;
+    int32 i, j;
 
     for (i = 0; i < 8; i++)
     {
@@ -184,5 +136,5 @@ void UpdateCone(Cone* cone)
             }
         }
     }
-#endif
 }
+#endif

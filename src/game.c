@@ -13,7 +13,6 @@ int gTimeout;
 
 extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 extern ShipData ctrlshipIndex[NO_OF_SHIPS];
-extern const TrackCamera ctrlcamera;
 
 void showLoading(int32 track)
 {
@@ -108,7 +107,7 @@ void gameInit(void)
 
     showLoading(-1); // 1s
 
-    // 3.4s -> 2.3s (uncomp) -> 1.7s (conv tex)
+    // 3.4s -> 2.3s (uncomp) -> 1.7s (conv tex) -> 1.5s (conv prm)
     time = osGetSystemTimeMS();
     soundInit();
     SfxInit();
@@ -131,7 +130,7 @@ void gameInit(void)
     ctrlConfigData.Position = 8;
 
     /*TODO cheats*/
-#if 0
+#if 1
     ctrlConfigData.RapierClass = 1;
     totalTracks = 14;
     NumTracks = 7;
@@ -152,7 +151,7 @@ void gameInit(void)
     else
         gTimeout = 60 * 5;
 
-    loadShipData(ctrlshipIndex, ctrlshipShapes, &gCamPos);
+    loadShipData(ctrlshipIndex, ctrlshipShapes);
     InitSpeedo();
     InitWeaponSprtIcons();
     InitEffects();
@@ -188,7 +187,7 @@ void gameCtrl(void)
             memStateRestore();
             MusicReset();
             time = osGetSystemTimeMS();
-            menuInit(); // 4.7s -> 3.1s (uncomp) -> 2.1s (conv tex)
+            menuInit(); // 4.7s -> 3.1s (uncomp) -> 2.1s (conv tex) -> 2.2s (conv prm)
             printf("init menu %d ms\n", osGetSystemTimeMS() - time);
             ctrlGameLoop = GAME_LOOP_MENU;
             resetTimer();
@@ -200,7 +199,7 @@ void gameCtrl(void)
             memStateRestore();
             MusicReset();
             time = osGetSystemTimeMS();
-            raceInit(&ctrlConfigData); // 14s -> 10.3s (uncomp) -> 7.9s (conv tex)
+            raceInit(&ctrlConfigData); // 14s -> 10.3s (uncomp) -> 7.9s (conv tex) -> 6.9s (conv prm) -> 1.4s (obj vis opt)
             printf("race init %d ms\n", osGetSystemTimeMS() - time);
             renderPrepare();
             ctrlGameLoop = GAME_LOOP_RACE;

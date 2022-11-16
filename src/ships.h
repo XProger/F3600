@@ -29,7 +29,6 @@
 #define REVCONNED       0x1
 #define SPECIALED       0x2
 
-#define NEW_SHIP        0
 #define RESCUE_DROID    16
 
 struct WeaponData;
@@ -91,6 +90,6 @@ typedef struct ShipData
 
 } ShipData;
 
-void loadShipData(ShipData* shipIndex, Object** shipShapes, Skeleton* camPos);
+void loadShipData(ShipData* shipIndex, Object** shipShapes);
 void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip);
 void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData);

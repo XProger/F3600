@@ -8,7 +8,6 @@ Texture* gEffectTextures;
 Texture* gShadowTex;
 
 extern int gFrameIndex;
-extern const TrackCamera ctrlcamera;
 extern ShipData ctrlshipIndex[NO_OF_SHIPS];
 
 void InitEffects(void)
@@ -73,7 +72,6 @@ void RemoveEffect(Effect* fx)
 
 void UpdateEffects(void)
 {
-    int i;
     Effect* fx = gEffectsActive;
 
     while (fx)
@@ -107,36 +105,8 @@ void UpdateEffects(void)
 
 void DrawEffects(void)
 {
-#ifndef __3DO__ // TODO
-    int i;
-    Effect* fx = gEffectsActive;
-    Billboard b;
-    int cx, cy, cz;
-
-    cx = ctrlcamera.camPos->absolute.t[0];
-    cy = ctrlcamera.camPos->absolute.t[1];
-    cz = ctrlcamera.camPos->absolute.t[2];
-
-    renderSetSkeleton(ctrlcamera.camPos->super, cx, cy, cz);
-
-    renderDepthWrite(0);
-    renderSetBlend(BLEND_ADD);
-
-    while (fx)
-    {
-        b.x = fx->pos.x;
-        b.y = fx->pos.y;
-        b.z = fx->pos.z;
-        b.size = fx->size;
-        b.texture = gEffectTextures + fx->type;
-        renderBillboard(&b);
-
-        fx = fx->next;
-    }
-
-    renderDepthWrite(1);
-    renderSetBlend(BLEND_NONE);
-#endif
+    matrixTranslate(0, 0, 0);
+    renderEffects(gEffectsActive);
 }
 
 void AddTrail(WeaponData* weapon)
@@ -151,7 +121,7 @@ void AddTrail(WeaponData* weapon)
     else
         fxType = FX_SMOKE;
 
-    if (fx = CreateEffect())
+    if ((fx = CreateEffect()) != NULL)
     {
         fx->pos.x = weapon->pos.x;
         fx->pos.y = weapon->pos.y;
@@ -164,7 +134,7 @@ void AddTrail(WeaponData* weapon)
         fx->type = fxType;
     }
 
-    if (fx = CreateEffect())
+    if ((fx = CreateEffect()) != NULL)
     {
         fx->pos.x = weapon->pos.x - (weapon->vel.x >> 2);
         fx->pos.y = weapon->pos.y - (weapon->vel.y >> 2);
@@ -177,7 +147,7 @@ void AddTrail(WeaponData* weapon)
         fx->type = fxType;
     }
 
-    if (fx = CreateEffect())
+    if ((fx = CreateEffect()) != NULL)
     {
         fx->pos.x = weapon->pos.x - (weapon->vel.x >> 1);
         fx->pos.y = weapon->pos.y - (weapon->vel.y >> 1);
@@ -217,7 +187,7 @@ void AddExplosion(WeaponData* weapon, int32 targetShip)
 
     for (i = 0; i < WEAPON_FX_EXPLOSION_SPRITES; i++)
     {
-        if (fx = CreateEffect())
+        if ((fx = CreateEffect()) != NULL)
         {
             fx->pos.x = weapon->pos.x;
             fx->pos.y = weapon->pos.y;
@@ -230,9 +200,9 @@ void AddExplosion(WeaponData* weapon, int32 targetShip)
             if (targetShip >= 0)
             {
                 ShipData* ship = ctrlshipIndex + targetShip;
-                fx->vel.x += (int16)(ship->vel.x >> VELOCITY_SHIFT);
-                fx->vel.y += (int16)(ship->vel.y >> VELOCITY_SHIFT);
-                fx->vel.z += (int16)(ship->vel.z >> VELOCITY_SHIFT);
+                fx->vel.x += ship->vel.x >> VELOCITY_SHIFT;
+                fx->vel.y += ship->vel.y >> VELOCITY_SHIFT;
+                fx->vel.z += ship->vel.z >> VELOCITY_SHIFT;
             }
 
             fx->count = -((((uint8)randy()) >> 4) + 8);
@@ -246,126 +216,82 @@ void AddExplosion(WeaponData* weapon, int32 targetShip)
     }
 }
 
-const uint8 gStartBoomColors[4][3] = {
-    { 0x1C, 0x22, 0x2F }, // grey
-    { 0xFF, 0x00, 0x00 }, // red
-    { 0xFF, 0x80, 0x00 }, // orange
-    { 0x00, 0xFF, 0x00 }  // green
+const uint32 gStartBoomColors[4] = {
+    0xFF2F221C, // grey
+    0xFF0000FF, // red
+    0xFF0080FF, // orange
+    0xFF00FF00  // green
 };
 
 void ColourStartBoom(int noToLight)
 {
-    int i, j;
-    Prm prm;
+#ifdef USE_VERTEX_COLOR
+    int32 i;
+    ObjFace* face;
 
-    for (i = 0; i < startBoomCount; i++)
+    for (i = 0; i < gTrack.startCount; i++)
     {
-        prm.primitive = startBoom[i]->primitives;
+        face = gTrack.start[i].faces + noToLight - 1;
 
-        for (j = 1; j < noToLight; j++)
-        {
-            prm.gt4 += 1;
-        }
-
-        prm.gt4->colour[0].r = prm.gt4->colour[1].r = prm.gt4->colour[2].r = prm.gt4->colour[3].r = gStartBoomColors[noToLight][0];
-        prm.gt4->colour[0].g = prm.gt4->colour[1].g = prm.gt4->colour[2].g = prm.gt4->colour[3].g = gStartBoomColors[noToLight][1];
-        prm.gt4->colour[0].b = prm.gt4->colour[1].b = prm.gt4->colour[2].b = prm.gt4->colour[3].b = gStartBoomColors[noToLight][2];
+        face->color[0] =
+        face->color[1] =
+        face->color[2] =
+        face->color[3] = gStartBoomColors[noToLight];
     }
+#endif
 }
 
 void ResetStartBoom(void)
 {
-    int i, j;
-    Prm prm;
+#ifdef USE_VERTEX_COLOR
+    int32 i, j;
+    ObjFace* face;
 
-    for (i = 0; i < startBoomCount; i++)
+    for (i = 0; i < gTrack.startCount; i++)
     {
-        prm.primitive = startBoom[i]->primitives;
+        face = gTrack.start[i].faces;
 
-        for (j = 0; j < 3; j++)
+        for (j = 0; j < 3; j++, face++)
         {
-            prm.gt4->colour[0].r = prm.gt4->colour[1].r = prm.gt4->colour[2].r = prm.gt4->colour[3].r = gStartBoomColors[0][0];
-            prm.gt4->colour[0].g = prm.gt4->colour[1].g = prm.gt4->colour[2].g = prm.gt4->colour[3].g = gStartBoomColors[0][1];
-            prm.gt4->colour[0].b = prm.gt4->colour[1].b = prm.gt4->colour[2].b = prm.gt4->colour[3].b = gStartBoomColors[0][2];
-
-            prm.gt4++;
+            face->color[0] =
+            face->color[1] =
+            face->color[2] =
+            face->color[3] = gStartBoomColors[0];
         }
     }
+#endif
 }
 
-void InitStartBoom(Object** prm, short prmCount)
+void ColourRedLight(void)
 {
-    int i;
-    Object* obj;
+#ifdef USE_VERTEX_COLOR
+    int32 i, r;
+    ObjFace* face;
 
-    startBoomCount = 0;
-
-    for (i = 0; i < prmCount; i++)
+    for (i = 0; i < gTrack.redCount; i++)
     {
-        obj = prm[i];
-        while (obj)
-        {
-            if (!strncmp(obj->name, "start", 5))
-            {
-                startBoom[startBoomCount] = obj;
-                startBoomCount++;
-            }
+        r = (rsin(gFrameIndex * 140) >> 5) + 128;
+        if (r > 255)
+            r = 255;
 
-            if (startBoomCount > 4)
-            {
-                ASSERT(0);
-            }
-
-            obj = obj->next;
-        }
+        face = gTrack.red[i].faces;
+        
+        face->color[0] =
+        face->color[1] =
+        face->color[2] =
+        face->color[3] = r | 0xFF000000;
     }
-}
-
-void InitRedLight(Object** prm, short prmCount, Object** redLight)
-{
-    int i;
-    Object* obj;
-
-    for (i = 0; i < prmCount; i++)
-    {
-        obj = prm[i];
-        while (obj)
-        {
-            if (!strncmp(obj->name, "red", 3))
-            {
-                *redLight = obj;
-            }
-            obj = obj->next;
-        }
-    }
-}
-
-void ColourRedLight(Object* redLight)
-{
-    short r;
-    short count;
-
-    Prm prm;
-
-    count = gFrameIndex * 140;
-    r = (rsin(count) >> 5) + 128;
-    if (r > 255)
-        r = 255;
-
-    prm.primitive = redLight->primitives;
-
-    prm.gt4->colour[0].r = prm.gt4->colour[1].r = prm.gt4->colour[2].r = prm.gt4->colour[3].r = (uint8)r;
-    prm.gt4->colour[0].g = prm.gt4->colour[1].g = prm.gt4->colour[2].g = prm.gt4->colour[3].g = 0x00;
-    prm.gt4->colour[0].b = prm.gt4->colour[1].b = prm.gt4->colour[2].b = prm.gt4->colour[3].b = 0x00;
+#endif
 }
 
 void ColourDroidLights(Object* droid)
 {
-    short r, g, b;
-    short rf, gf, bf;
-    int i;
-    Prm prm;
-    short count = gFrameIndex * 70;
+#ifdef USE_VERTEX_COLOR
+    int32 i;
+    int32 r, g, b;
+    int32 rf, gf, bf;
+    int32 count = gFrameIndex * 70;
+    ObjFace* face;
 
     rf = (rsin(count) >> 5) + 128;
     if (rf > 255)
@@ -379,9 +305,8 @@ void ColourDroidLights(Object* droid)
     if (bf > 255)
         bf = 255;
 
-    prm.primitive = droid->primitives;
-
-    for (i = 0; i < 11; i++)
+    face = droid->faces;
+    for (i = 0; i < 11; i++, face++)
     {
         if (i < 2)
         {
@@ -402,48 +327,17 @@ void ColourDroidLights(Object* droid)
             g = 40;
         }
 
-        switch (prm.primitive->type)
-        {
-            case TypeGT3:
-                prm.gt3->colour[0].r = prm.gt3->colour[1].r = prm.gt3->colour[2].r = r;
-                prm.gt3->colour[0].g = prm.gt3->colour[1].g = prm.gt3->colour[2].g = g;
-                prm.gt3->colour[0].b = prm.gt3->colour[1].b = prm.gt3->colour[2].b = b;
-                prm.gt3++;
-                break;
-
-            case TypeGT4:
-                prm.gt4->colour[0].r = prm.gt4->colour[1].r = prm.gt4->colour[2].r = prm.gt4->colour[3].r = r;
-                prm.gt4->colour[0].g = prm.gt4->colour[1].g = prm.gt4->colour[2].g = prm.gt4->colour[3].g = g;
-                prm.gt4->colour[0].b = prm.gt4->colour[1].b = prm.gt4->colour[2].b = prm.gt4->colour[3].b = b;
-                prm.gt4++;
-                break;
-        }
+        face->color[0] =
+        face->color[1] =
+        face->color[2] =
+        face->color[3] = r | (g << 8) | (b << 16) | 0xFF000000;
     }
+#endif
 }
 
-void InitDonkey(Object** prm, short prmCount, Object** donkey)
+void MoveDonkey(void)
 {
-    int i;
-    Object* obj;
-    int count = 0;
-
-    for (i = 0; i < prmCount; i++)
-    {
-        obj = prm[i];
-        while (obj)
-        {
-            if (!strncmp(obj->name, "donkey", 6))
-            {
-                donkey[count] = obj;
-                count++;
-            }
-            obj = obj->next;
-        }
-    }
-}
-
-void MoveDonkey(Object** donkey)
-{
+#if 0 // TODO donkey animation
     int i;
     Object* obj;
     short count;
@@ -456,6 +350,7 @@ void MoveDonkey(Object** donkey)
 
         SetSkeletonDirection(obj->skeleton, rsin(count) >> 3, 0, 0);
     }
+#endif
 }
 
 #ifdef __3DO__
@@ -483,25 +378,17 @@ void InitShadow(void)
 }
 #endif
 
+#define SHADOW_BIAS     48
+
 void DrawShadows(ShipData* shipIndex)
 {
     const Face* facePtr;
-    Shadow s;
-    int i, j, px, py, pz, cx, cy, cz, nx, nz, wx, wz;
+    int i, px, py, pz, nx, ny, nz, dx, dy, dz, rx, ry, rz;
     int alpha, intensity;
     const vec3i* facePoint;
     ShipData* playerShip;
 
-    cx = ctrlcamera.camPos->absolute.t[0];
-    cy = ctrlcamera.camPos->absolute.t[1];
-    cz = ctrlcamera.camPos->absolute.t[2];
-
     renderSetBlend(BLEND_SUB);
-    renderSetSkeleton(ctrlcamera.camPos->super, cx, cy, cz);
-
-    #define SHADOW_SHIFT_N  3
-    #define SHADOW_SHIFT_W  4
-    #define SHADOW_BIAS     48
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
@@ -510,63 +397,62 @@ void DrawShadows(ShipData* shipIndex)
         if (!((playerShip->attr & VISIBLE) && ((playerShip->attr & FLYING) == 0)))
             continue;
 
-        facePtr = track->faces + playerShip->nearTrkSect->faceStart;
+        facePtr = gTrack.faces + playerShip->nearTrkSect->faceStart;
 
-        while ((facePtr->flags & TRACK_BASE) == 0)
+        while (!(facePtr->flags & TRACK_BASE))
         {
             facePtr++;
         }
 
-        facePoint = track->vertices + facePtr->vertex[0];
+        facePoint = gTrack.vertices + facePtr->vertex[0];
 
+        dx = playerShip->unitVecNose.x;
+        dy = playerShip->unitVecNose.y;
+        dz = playerShip->unitVecNose.z;
+
+        nx = facePtr->normal.x;
+        ny = facePtr->normal.y;
+        nz = facePtr->normal.z;
+
+        // get fixed right vector
+        rx = (dy * nz - dz * ny) >> FIXED_SHIFT;
+        ry = (dz * nx - dx * nz) >> FIXED_SHIFT;
+        rz = (dx * ny - dy * nx) >> FIXED_SHIFT;
+
+        alpha = rsqrt(rx * rx + ry * ry + rz * rz);
+        if (alpha == 0)
+            continue;
+
+        alpha = (1 << 16) / alpha;
+        rx = rx * alpha >> (16 - FIXED_SHIFT);
+        ry = ry * alpha >> (16 - FIXED_SHIFT);
+        rz = rz * alpha >> (16 - FIXED_SHIFT);
+
+        // get fixed direction vector
+        dx = (ny * rz - nz * ry) >> FIXED_SHIFT;
+        dy = (nz * rx - nx * rz) >> FIXED_SHIFT;
+        dz = (nx * ry - ny * rx) >> FIXED_SHIFT;
+
+        // get the shadow pivot point
         px = playerShip->pos.x;
         py = playerShip->pos.y;
         pz = playerShip->pos.z;
 
-        nx = playerShip->unitVecNose.x >> SHADOW_SHIFT_N;
-        nz = playerShip->unitVecNose.z >> SHADOW_SHIFT_N;
+        alpha = (nx * (px - facePoint->x) + ny * (py - facePoint->y) + nz * (pz - facePoint->z)) >> FIXED_SHIFT;
 
-        wx = playerShip->unitVecWing.x >> SHADOW_SHIFT_W;
-        wz = playerShip->unitVecWing.z >> SHADOW_SHIFT_W;
-
-        s.v[0].x = px + nx - wx;
-        s.v[0].y = py;
-        s.v[0].z = pz + nz - wz;
-
-        s.v[1].x = px + nx + wx;
-        s.v[1].y = py;
-        s.v[1].z = pz + nz + wz;
-
-        s.v[2].x = px - nx - wx;
-        s.v[2].y = py;
-        s.v[2].z = pz - nz - wz;
-
-        intensity = 0;
-
-        /*TODO optimize, single raycast + normal*/
-        for (j = 0; j < 3; j++)
-        {
-            alpha = PlaneLineCollision(facePoint, s.v + j, &facePtr->normal);
-            intensity += alpha;
-
-            alpha -= SHADOW_BIAS;
-
-            s.v[j].x -= (facePtr->normal.x * alpha) >> FIXED_SHIFT;
-            s.v[j].y -= (facePtr->normal.y * alpha) >> FIXED_SHIFT;
-            s.v[j].z -= (facePtr->normal.z * alpha) >> FIXED_SHIFT;
-        }
-
-        s.texture = gShadowTex;
-
-        intensity = 255 - (intensity >> 3);
+        intensity = 255 - (alpha >> 3);
         if (intensity < 0)
             intensity = 0;
         if (intensity > 255)
             intensity = 255;
 
-        s.intensity = intensity;
+        alpha -= SHADOW_BIAS;
 
-        renderShadow(&s);
+        px -= (nx * alpha) >> FIXED_SHIFT;
+        py -= (ny * alpha) >> FIXED_SHIFT;
+        pz -= (nz * alpha) >> FIXED_SHIFT;
+
+        renderShadow(0, intensity, px, py, pz, dx, dy, dz, rx, ry, rz);
     }
 
     renderSetBlend(BLEND_NONE);
@@ -598,111 +484,109 @@ void ShakeScreen(void)
     osJoyVibrate(0, shakeCount, shakeCount);
 }
 
-#ifdef __3DO__
-void InitAuroraBorialis(Object* object)
-{
-}
+#ifdef USE_VERTEX_COLOR
 
-void AuroraBorialis(Object* object)
-{
-}
-#else
 /*TODO optimize this shit!*/
 #define MAX_AURORA_PRIMS 80
 
-GT4* abPtr[MAX_AURORA_PRIMS];
-short* abCoords[MAX_AURORA_PRIMS];
-signed short greyCoords[MAX_AURORA_PRIMS];
-int abPhase;
+ObjFace* abPtr[MAX_AURORA_PRIMS];
+uint16* abCoords[MAX_AURORA_PRIMS];
+int16 greyCoords[MAX_AURORA_PRIMS];
+int32 abCount;
+int32 abPhase;
 
 void InitAuroraBorialis(Object* object)
 {
-    int i;
-    Prm poly;
-    short primitiveCount;
-    short* coords;
-    int count = 0;
-    short y;
-    vec4s* vertex;
+    int32 i;
+    ObjFace* face;
+    uint16* coords;
+    int32 y;
+    vec3i* vertex;
 
-    poly.primitive = object->primitives;
-    primitiveCount = object->primitiveCount;
+    abCount = 0;
+
+    face = object->faces;
     vertex = object->vertices;
 
-    for (i = 0; i < primitiveCount; i++)
+    for (i = 0; i < object->fCount; i++, face++)
     {
-        switch (poly.primitive->type)
-        {
-            case TypeGT3:
-                poly.gt3 += 1;
-                break;
+        coords = face->index;
+        y = vertex[coords[0]].y;
 
-            case TypeGT4:
-                coords = poly.gt4->coords;
-                y = vertex[coords[0]].y;
-                if (y < -6000) /* -8000 */
-                {
-                    ASSERT(count < MAX_AURORA_PRIMS);
-                    abPtr[count] = poly.gt4;
-                    if (y > -6800)
-                    {
-                        abCoords[count] = poly.gt4->coords;
-                        greyCoords[count] = -1;
-                    }
-                    else if (y < -11000)
-                    {
-                        abCoords[count] = poly.gt4->coords;
-                        greyCoords[count] = -2;
-                    }
-                    else
-                    {
-                        abCoords[count] = poly.gt4->coords;
-                        greyCoords[count] = 0;
-                    }
-                    count++;
-                }
-                poly.gt4 += 1;
-                break;
+        if (FACE_QUAD(face) && (y < -6000)) /* -8000 */
+        {
+            ASSERT(abCount < MAX_AURORA_PRIMS);
+            abPtr[abCount] = face;
+
+            if (y > -6800)
+            {
+                abCoords[abCount] = coords;
+                greyCoords[abCount] = -1;
+            }
+            else if (y < -11000)
+            {
+                abCoords[abCount] = coords;
+                greyCoords[abCount] = -2;
+            }
+            else
+            {
+                abCoords[abCount] = coords;
+                greyCoords[abCount] = 0;
+            }
+
+            abCount++;
         }
     }
 }
 
 void AuroraBorialis(Object* object)
 {
-    int i;
-
-    Prm poly;
+    int32 i, r, g, b;
+    ObjFace* face = object->faces;
     short* coords;
 
     abPhase++;
 
-    poly.primitive = object->primitives;
-
-    for (i = 0; i < MAX_AURORA_PRIMS; i++)
+    for (i = 0; i < abCount; i++)
     {
         coords = abCoords[i];
 
         if (greyCoords[i] != -2)
         {
-            abPtr[i]->colour[0].r = (rsin(coords[0] * abPhase) >> 6) + 190;
-            abPtr[i]->colour[0].g = (rsin(coords[0] * (abPhase + 54)) >> 6) + 190;
-            abPtr[i]->colour[0].b = (rsin(coords[0] * (abPhase + 39)) >> 6) + 190;
+            r = (rsin(coords[0] * abPhase) >> 6) + 190;
+            g = (rsin(coords[0] * (abPhase + 54)) >> 6) + 190;
+            b = (rsin(coords[0] * (abPhase + 39)) >> 6) + 190;
+            abPtr[i]->color[0] = r | (g << 8) | (b << 16) | 0xFF000000;
 
-            abPtr[i]->colour[1].r = (rsin(coords[1] * abPhase) >> 6) + 190;
-            abPtr[i]->colour[1].g = (rsin(coords[1] * (abPhase + 54)) >> 6) + 190;
-            abPtr[i]->colour[1].b = (rsin(coords[1] * (abPhase + 39)) >> 6) + 190;
+            r = (rsin(coords[1] * abPhase) >> 6) + 190;
+            g = (rsin(coords[1] * (abPhase + 54)) >> 6) + 190;
+            b = (rsin(coords[1] * (abPhase + 39)) >> 6) + 190;
+            abPtr[i]->color[1] = r | (g << 8) | (b << 16) | 0xFF000000;
         }
 
         if (greyCoords[i] != -1)
         {
-            abPtr[i]->colour[2].r = (rsin(coords[2] * abPhase) >> 6) + 190;
-            abPtr[i]->colour[2].g = (rsin(coords[2] * (abPhase + 54)) >> 6) + 190;
-            abPtr[i]->colour[2].b = (rsin(coords[2] * (abPhase + 39)) >> 6) + 190;
+            r = (rsin(coords[2] * abPhase) >> 6) + 190;
+            g = (rsin(coords[2] * (abPhase + 54)) >> 6) + 190;
+            b = (rsin(coords[2] * (abPhase + 39)) >> 6) + 190;
+            abPtr[i]->color[2] = r | (g << 8) | (b << 16) | 0xFF000000;
 
-            abPtr[i]->colour[3].r = (rsin(coords[3] * abPhase) >> 6) + 190;
-            abPtr[i]->colour[3].g = (rsin(coords[3] * (abPhase + 54)) >> 6) + 190;
-            abPtr[i]->colour[3].b = (rsin(coords[3] * (abPhase + 39)) >> 6) + 190;
+            r = (rsin(coords[3] * abPhase) >> 6) + 190;
+            g = (rsin(coords[3] * (abPhase + 54)) >> 6) + 190;
+            b = (rsin(coords[3] * (abPhase + 39)) >> 6) + 190;
+            abPtr[i]->color[3] = r | (g << 8) | (b << 16) | 0xFF000000;
         }
     }
 }
+
+#else // #ifdef USE_VERTEX_COLOR
+
+void InitAuroraBorialis(Object* object)
+{
+}
+
+void AuroraBorialis(Object* object)
+{
+}
+
 #endif

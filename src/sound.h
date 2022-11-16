@@ -31,7 +31,7 @@ enum SfxType
     SFX_MISS_LAUNCH,
     SFX_REMOTE_ENG,
     SFX_POWER_UP,
-    SFX_SHIELDS,
+    SFX_SHIELD,
     SFX_START_SIREN, // unused
     SFX_TRACTOR_BEAM,
     SFX_TURBULENCE,

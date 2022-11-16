@@ -1,18 +1,19 @@
 #include "game.h"
 
+const int gSkyPos[15] = { -820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0 };
+
 char TrackDirection(const TrackCamera* camera)
 {
-    vec4s reference;
+    int32 dx, dz;
     long angle;
     const TrackSection* nextSection;
 
     nextSection = camera->section->nextSection;
 
-    reference.x = (short)(nextSection->centre.x - camera->section->centre.x);
-    reference.y = (short)(nextSection->centre.y - camera->section->centre.y);
-    reference.z = (short)(nextSection->centre.z - camera->section->centre.z);
+    dx = nextSection->centre.x - camera->section->centre.x;
+    dz = nextSection->centre.z - camera->section->centre.z;
 
-    angle = -ratan2(reference.x, reference.z) + camera->hdg;
+    angle = -(ratan2(dx, dz) + camera->hdg);
     angle = ang(angle);
 
     if ((angle >= -512) && (angle < 512))
@@ -33,30 +34,34 @@ char TrackDirection(const TrackCamera* camera)
     }
 }
 
+void DrawSky(Object* sky)
+{
+    matrixTranslate(gCamera.pos.x, gCamera.pos.y + gSkyPos[trackNo - 1], gCamera.pos.z);
+    renderSky(sky);
+}
+
 void DrawLandscape(TrackCamera* camera)
 {
-#ifndef __3DO__ // TODO
     int32 i;
     int32 x, y, z, px, py;
     TrackSection* section;
     int32 extent;
     Object* obj;
-    MATRIX* matrix;
 
     section = camera->section;
 
-    for (i = 0; i < section->objectCount; i++)
+    for (i = 0; i < section->objectsCount; i++)
     {
-        obj = objectTable[section->objects[i]];
+        obj = gTrack.objects + section->objects[i];
 
-        obj->skeleton->update = 1;
-        matrix = GetSkeletonMatrix(obj->skeleton);
+        matrixTranslate(obj->pos.x, obj->pos.y, obj->pos.z);
+
         extent = obj->extent;
 
         // get object view-space coords
-        x = matrix->t[0];
-        y = matrix->t[1];
-        z = matrix->t[2];
+        x = gMatrixPtr->e03;
+        y = gMatrixPtr->e13;
+        z = gMatrixPtr->e23;
 
         px = z + (extent << 1);
         py = extent + ((z + extent) * 3 >> 2);
@@ -66,19 +71,19 @@ void DrawLandscape(TrackCamera* camera)
             renderObject(obj);
         }
     }
-#endif
+}
+
+void DrawTrack(void)
+{
+    matrixTranslate(0, 0, 0);
+    renderTrack();
 }
 
 void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short roll)
 {
-    SetSkeletonPosition(obj->skeleton, x, y, z);
-    SetSkeletonDirectionHPR(obj->skeleton, hdg, pitch, roll);
+    matrixPush();
+    matrixTranslate(x, y, z);
+    matrixRotateYXZ(pitch, hdg, roll);
     renderObject(obj);
-}
-
-void DrawShip(Object* obj, const ShipData* shipData)
-{
-    SetSkeletonPosition(obj->skeleton, shipData->pos.x, shipData->pos.y, shipData->pos.z);
-    SetSkeletonDirectionHPR(obj->skeleton, shipData->hdg, shipData->pitch, shipData->roll);
-    renderShip(obj, shipData->color);
+    matrixPop();
 }

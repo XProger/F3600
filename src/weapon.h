@@ -44,11 +44,6 @@ enum WeaponType
 #define DEACTIVATED 0
 #define ACTIVE 1
 
-typedef struct WeaponShape
-{
-    Object* shapePtr;
-} WeaponShape;
-
 typedef struct WeaponData
 {
     int16 count;
@@ -56,35 +51,26 @@ typedef struct WeaponData
     TrackSection* nearTrkSect;
     vec3i acc;
     vec3i vel;
-    vec3i pos;    
+    vec3i pos;
     int16 hdg;
     int16 pitch;
     int8 targetShip;
     uint8 fireShip;
     uint8 type;
     uint8 padding;
-    void (*updateWeapon)(ShipData*, WeaponShape*, struct WeaponData*);
+    void (*updateWeapon)(ShipData*, Object**, struct WeaponData*);
     struct WeaponData* next;
     struct WeaponData* prev;
 } WeaponData;
 
-typedef struct WeaponGrid
-{
-    TrackSection* section;
-    short attr;
-    short cycleCount;
-    int count;
-    CVECTOR colour;
-} WeaponGrid;
-
 extern WeaponData* gWeaponsActive;
 
-void UpdateWeapons(ShipData* shipIndex, WeaponShape* weaponShapes);
+void UpdateWeapons(ShipData* shipIndex, Object** weaponShapes);
 void FireWeapon(ShipData* playerShip, int shipNo, char decision);
 void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes);
-void InitWeapons(WeaponShape* weaponShapes);
-void ResetWeapons(WeaponShape* weaponShapes, Skeleton* camPos);
-
+void InitWeapons(Object** weaponShapes);
+void ResetWeapons(Object** weaponShapes);
+void InitWeaponGrids(void);
 void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids);
-void DrawWeapons(ShipData* shipIndex, WeaponShape* weaponShapes);
+void DrawWeapons(ShipData* shipIndex, Object** weaponShapes);
 void DrawTargetIcon(ShipData* shipIndex, Object** shipShapes);
