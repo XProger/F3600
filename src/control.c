@@ -9,16 +9,16 @@ extern int gPadStickY;
 /**********************************************************************/
 /***              Call update routine for each ship                 ***/
 /**********************************************************************/
-void UpdateShips(ShipData* shipIndex)
+void UpdateShips(ShipData* shipIndex, ConfigData* gameData)
 {
     int i;
 
-    SetUnitVectors(shipIndex);
-
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (!((i == ownShip) || (raceType != TIME_TRIAL)))
+        if (!((i == ownShip) || (gameData->gameType != TIME_TRIAL)))
             continue;
+
+        SetUnitVectors(shipIndex + i);
 
         (shipIndex[i].update)(shipIndex, i);
 

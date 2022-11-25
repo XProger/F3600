@@ -16,7 +16,6 @@ TrackData gTrack;
 TrackCamera gCamera;
 
 int trackNo;
-int raceType;
 char NumTracks = 6;
 char totalTracks = 13;
 int tempLapTimes[5];
@@ -34,7 +33,6 @@ Object* camSpline[20];
 Object* shipSpline[20];
 short finishedExtro;
 
-short trackNum;
 int32 gMusicTracksCount;
 int32 gMusicTrack;
 int32 gMasterBalance;

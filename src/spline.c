@@ -491,9 +491,9 @@ void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, Re
     step.y = (pos1.y - pos.y) >> 3;
     step.z = (pos1.z - pos.z) >> 3;
 
-    step.x = (pos.x + (step.x << 3) + gCamera.pos.x) >> 7;
-    step.y = (pos.y + (step.y << 3) + gCamera.pos.y) >> 7;
-    step.z = (pos.z + (step.z << 3) + gCamera.pos.z) >> 7;
+    step.x = (pos.x + (step.x << 3) - gCamera.pos.x) >> 7;
+    step.y = (pos.y + (step.y << 3) - gCamera.pos.y) >> 7;
+    step.z = (pos.z + (step.z << 3) - gCamera.pos.z) >> 7;
 
     camera->vel.x += step.x;
     camera->vel.y += step.y;

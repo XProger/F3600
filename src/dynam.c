@@ -3,6 +3,8 @@
 /************************************************************/
 #include "game.h"
 
+extern ConfigData ctrlConfigData;
+
 #ifdef USE_SHIP_AMBIENT
 void ShipCalcAmbient(ShipData* playerShip)
 {
@@ -382,7 +384,7 @@ void GetTargetPos(vec3i* result, const vec3i* pos, const vec3i* cent1, const vec
     }
 }
 
-void SetUnitVectors(ShipData* shipIndex)
+void SetUnitVectors(ShipData* ship)
 {
     int32 sx, sy, sz;
     int32 cx, cy, cz;
@@ -392,48 +394,45 @@ void SetUnitVectors(ShipData* shipIndex)
     int toFace;
     Face* facePtr;
 
-    for (i = 0; i < NO_OF_SHIPS; i++)
+    rsincos(ship->pitch, sx, cx);
+    rsincos(ship->hdg, sy, cy);
+    rsincos(ship->roll, sz, cz);
+
+    ship->unitVecNose.x = -frac(sy, cx);
+    ship->unitVecNose.y = -sx;
+    ship->unitVecNose.z = frac(cy, cx);
+
+    ship->unitVecWing.x = ((cy * cz) + (((sy * sz) >> FIXED_SHIFT) * sx)) >> FIXED_SHIFT;
+    ship->unitVecWing.y = -(sz * cx) >> FIXED_SHIFT;
+    ship->unitVecWing.z = ((sy * cz) - (((cy * sx) >> FIXED_SHIFT) * sz)) >> FIXED_SHIFT;
+
+    ship->prevShipSect = ship->nearTrkSect;
+    SectionSearch(ship);
+
+    ship->prevSecNo = ship->prevShipSect->secNo;
+    ship->nearSecNo = ship->nearTrkSect->secNo;
+
+    facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
+
+    while ((facePtr->flags & TRACK_BASE) == 0)
     {
-        rsincos(shipIndex[i].pitch, sx, cx);
-        rsincos(shipIndex[i].hdg, sy, cy);
-        rsincos(shipIndex[i].roll, sz, cz);
-
-        shipIndex[i].unitVecNose.x = -frac(sy, cx);
-        shipIndex[i].unitVecNose.y = -sx;
-        shipIndex[i].unitVecNose.z = frac(cy, cx);
-
-        shipIndex[i].unitVecWing.x = ((cy * cz) + (((sy * sz) >> FIXED_SHIFT) * sx)) >> FIXED_SHIFT;
-        shipIndex[i].unitVecWing.y = -(sz * cx) >> FIXED_SHIFT;
-        shipIndex[i].unitVecWing.z = ((sy * cz) - (((cy * sx) >> FIXED_SHIFT) * sz)) >> FIXED_SHIFT;
-
-        shipIndex[i].prevShipSect = shipIndex[i].nearTrkSect;
-        SectionSearch(&(shipIndex[i]));
-
-        shipIndex[i].prevSecNo = shipIndex[i].prevShipSect->secNo;
-        shipIndex[i].nearSecNo = shipIndex[i].nearTrkSect->secNo;
-
-        facePtr = gTrack.faces + shipIndex[i].nearTrkSect->faceStart;
-
-        while ((facePtr->flags & TRACK_BASE) == 0)
-        {
-            facePtr++;
-        }
-
-        toFaceVector.x = gTrack.vertices[(facePtr->vertex[0])].x - gTrack.vertices[(facePtr->vertex[1])].x;
-        toFaceVector.y = gTrack.vertices[(facePtr->vertex[0])].y - gTrack.vertices[(facePtr->vertex[1])].y;
-        toFaceVector.z = gTrack.vertices[(facePtr->vertex[0])].z - gTrack.vertices[(facePtr->vertex[1])].z;
-
-        direction.x = shipIndex[i].nearTrkSect->centre.x - shipIndex[i].pos.x;
-        direction.y = shipIndex[i].nearTrkSect->centre.y - shipIndex[i].pos.y;
-        direction.z = shipIndex[i].nearTrkSect->centre.z - shipIndex[i].pos.z;
-
-        toFace = ((direction.x * toFaceVector.x) + (direction.y * toFaceVector.y) + (direction.z * toFaceVector.z));
-
-        if (toFace > 0)
-            shipIndex[i].attr |= LSIDE;
-        else
-            shipIndex[i].attr &= ~LSIDE;
+        facePtr++;
     }
+
+    toFaceVector.x = gTrack.vertices[(facePtr->vertex[0])].x - gTrack.vertices[(facePtr->vertex[1])].x;
+    toFaceVector.y = gTrack.vertices[(facePtr->vertex[0])].y - gTrack.vertices[(facePtr->vertex[1])].y;
+    toFaceVector.z = gTrack.vertices[(facePtr->vertex[0])].z - gTrack.vertices[(facePtr->vertex[1])].z;
+
+    direction.x = ship->nearTrkSect->centre.x - ship->pos.x;
+    direction.y = ship->nearTrkSect->centre.y - ship->pos.y;
+    direction.z = ship->nearTrkSect->centre.z - ship->pos.z;
+
+    toFace = ((direction.x * toFaceVector.x) + (direction.y * toFaceVector.y) + (direction.z * toFaceVector.z));
+
+    if (toFace > 0)
+        ship->attr |= LSIDE;
+    else
+        ship->attr &= ~LSIDE;
 }
 
 int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, int noWeaponGrids)
@@ -449,9 +448,9 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
 
     if (facePtr->flags & WEAPON_GRID_LEFT)
     {
-        if (raceType != TIME_TRIAL)
+        if (ctrlConfigData.gameType != TIME_TRIAL)
         {
-        #ifndef __3DO__ // TODO track attribs
+        #ifdef USE_VERTEX_COLOR
             facePtr->red = 0xff;
             facePtr->green = 0x23;
             facePtr->blue = 0x75;
@@ -466,7 +465,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     }
     else if (facePtr->flags & SPEED_UP)
     {
-    #ifndef __3DO__ // TODO track attribs
+    #ifdef USE_VERTEX_COLOR
         facePtr->red = 0;
         facePtr->green = 0;
         facePtr->blue = 255;
@@ -477,9 +476,9 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
 
     if (facePtr->flags & WEAPON_GRID_RIGHT)
     {
-        if (raceType != TIME_TRIAL)
+        if (ctrlConfigData.gameType != TIME_TRIAL)
         {
-        #ifndef __3DO__ // TODO track attribs
+        #ifdef USE_VERTEX_COLOR
             facePtr->red = 0x54;
             facePtr->green = 0xee;
             facePtr->blue = 0x75;
@@ -493,7 +492,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     }
     else if (facePtr->flags & SPEED_UP)
     {
-    #ifndef __3DO__ // TODO track attribs
+    #ifdef USE_VERTEX_COLOR
         facePtr->red = 0;
         facePtr->green = 0;
         facePtr->blue = 255;

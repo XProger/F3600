@@ -415,6 +415,7 @@ typedef union PrmPSX
 
 enum ObjType
 {
+    OBJ_TYPE_SKY,
     OBJ_TYPE_START,
     OBJ_TYPE_LOST,
     OBJ_TYPE_RED,

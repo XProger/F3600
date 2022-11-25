@@ -57,19 +57,19 @@ typedef struct
 #define BAR_COLOR(r, g, b) (r >> 1) | ((g >> 1) << 8) | ((b >> 1) << 16) | 0xFF000000
 
 const BarPoint gBarPoint[NUM_BARS + 1] = { 
-    {   6, 18,      1, 27,   BAR_COLOR(  52,  17,  46 ) },
-    {  13, 18,      8, 27,   BAR_COLOR( 111,  31,  71 ) },
-    {  20, 18,     15, 27,   BAR_COLOR( 140,  46, 144 ) },
-    {  27, 18,     22, 27,   BAR_COLOR( 110,  84, 199 ) },
-    {  34, 18,     29, 27,   BAR_COLOR(  77, 137, 187 ) },
-    {  42, 17,     37, 27,   BAR_COLOR(  69, 173, 136 ) },
-    {  50, 16,     45, 27,   BAR_COLOR(  71, 195,  61 ) },
-    {  60, 13,     55, 25,   BAR_COLOR( 181, 218,  48 ) },
-    {  70, 10,     64, 23,   BAR_COLOR( 240, 134,  32 ) },
-    {  82,  8,     74, 22,   BAR_COLOR( 255, 193,  44 ) },
-    {  95,  7,     87, 22,   BAR_COLOR( 255, 215, 107 ) },
-    { 110,  7,    102, 22,   BAR_COLOR( 255, 234, 170 ) },
-    { 125,  7,    118, 22,   BAR_COLOR( 255, 255, 255 ) }
+    {   6, 18,      1, 27,    BAR_COLOR(  52,  17,  46 ) },
+    {  13, 18,      8, 27,    BAR_COLOR( 111,  31,  71 ) },
+    {  20, 18,     15, 27,    BAR_COLOR( 140,  46, 144 ) },
+    {  27, 18,     22, 27,    BAR_COLOR( 110,  84, 199 ) },
+    {  34, 18,     29, 27,    BAR_COLOR(  77, 137, 187 ) },
+    {  42, 17,     37, 27,    BAR_COLOR(  69, 173, 136 ) },
+    {  50, 16,     45, 27,    BAR_COLOR(  71, 195,  61 ) },
+    {  60, 13,     55, 25,    BAR_COLOR( 181, 218,  48 ) },
+    {  70, 10,     64, 23,    BAR_COLOR( 240, 134,  32 ) },
+    {  82,  8,     74, 22,    BAR_COLOR( 255, 193,  44 ) },
+    {  95,  7,     87, 22,    BAR_COLOR( 255, 215, 107 ) },
+    { 110,  7,    102, 22,    BAR_COLOR( 255, 234, 170 ) },
+    { 125,  7,    118, 22,    BAR_COLOR( 255, 255, 255 ) }
 };
 
 void InitSpeedo(void)
@@ -418,7 +418,7 @@ void UpdateShipSecNo(ShipData* shipIndex, int32 idx, ConfigData* gameData)
             }
 
             crossedLine++;
-            if (raceType == TIME_TRIAL)
+            if (gameData->gameType == TIME_TRIAL)
             {
                 ship->weaponType = WPN_TURBO;
             }
@@ -1105,7 +1105,7 @@ void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData)
 
         AddNumber(END_LAP, text_data((10 + width) - gBorder, 19, 16), TEXT_COLOR_WHITE);
 
-        if (raceType != TIME_TRIAL)
+        if (gameData->gameType != TIME_TRIAL)
         {
             AddText("POSITION", text_data(230 + gBorder, 8, 8), TEXT_COLOR_HIGHLIGHT);
             AddNumber(winTable[ownShip].racePosition, text_data(260 + gBorder, 19, 16), TEXT_COLOR_WHITE);

@@ -5,7 +5,6 @@ long ctrltimeout;
 long ctrlGameLoop;
 ConfigData ctrlConfigData;
 
-extern short trackNum; // SJR
 extern long ctrlfirsttime;
 
 Texture* titleScreen;
@@ -142,8 +141,6 @@ void gameInit(void)
 
     ctrltimeout = FR30 * 120;
 
-    trackNum = 16; // SJR
-
     ctrlGameLoop = GAME_LOOP_MAIN;
 
     if (ctrlfirsttime)
@@ -151,7 +148,7 @@ void gameInit(void)
     else
         gTimeout = 60 * 5;
 
-    loadShipData(ctrlshipIndex, ctrlshipShapes);
+    LoadShipData(ctrlshipIndex, ctrlshipShapes);
     InitSpeedo();
     InitWeaponSprtIcons();
     InitEffects();

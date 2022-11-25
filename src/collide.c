@@ -22,14 +22,11 @@ void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
 {
     int i, j;
 
-    if (raceType != TIME_TRIAL)
+    for (j = 0; j < (NO_OF_SHIPS - 1); j++)
     {
-        for (j = 0; j < (NO_OF_SHIPS - 1); j++)
+        for (i = j + 1; i < NO_OF_SHIPS; i++)
         {
-            for (i = j + 1; i < NO_OF_SHIPS; i++)
-            {
-                Ship2ShipCollision(shipIndex, shipShapes, i, j);
-            }
+            Ship2ShipCollision(shipIndex, shipShapes, i, j);
         }
     }
 }

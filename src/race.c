@@ -76,8 +76,6 @@ long ctrlfirsttime;
 long ctrl_says_quit;
 unsigned long ctrlFramesCount;
 
-extern short trackNum; // SJR
-
 const char* const PILOT_NAMES[] =
 {
     "dekka",
@@ -93,43 +91,38 @@ const char* const PILOT_NAMES[] =
 void AdjustCrowdSound(Object* lost, int lostCount)
 {
     int i;
-    vec3i distance;
-    int magSq;
+    int32 dx, dz;
+    int mag;
     int chosen;
-    int smallestMagSq;
+    int smallestMag;
     vec3i pos;
 
 #ifdef __3DO__ // TODO optimize
     return;
 #endif
 
-    smallestMagSq = 0x7FFFFFFF;
+    smallestMag = 0x7FFFFFFF;
     chosen = -1;
 
     /*TODO audio crowd lerp between two closest*/
 
     for (i = 0; i < lostCount; i++)
     {
-        distance.x = (lost[i].pos.x + gCamera.pos.x) >> 3;
-        distance.y = (lost[i].pos.y + gCamera.pos.y) >> 3;
-        distance.z = (lost[i].pos.z + gCamera.pos.z) >> 3;
+        dx = (lost[i].pos.x - gCamera.pos.x) >> 3;
+        dz = (lost[i].pos.z - gCamera.pos.z) >> 3;
 
-        magSq = GetMagnitudeSqr(&distance);
+        mag = GetMagnitudeApprox(dx, dz);
 
-        if (magSq < smallestMagSq)
+        if (mag < smallestMag)
         {
-            smallestMagSq = magSq;
+            smallestMag = mag;
             chosen = i;
         }
     }
 
-    if (smallestMagSq < (8192 * 8192))
+    if (smallestMag < 8192)
     {
-        pos.x = lost[chosen].pos.x;
-        pos.y = lost[chosen].pos.y;
-        pos.z = lost[chosen].pos.z;
-
-        AdjustDirectionalNote(SFX_CROWD, &pos);
+        AdjustDirectionalNote(SFX_CROWD, lost[chosen].pos.x, lost[chosen].pos.z);
     }
     else
     {
@@ -140,7 +133,7 @@ void AdjustCrowdSound(Object* lost, int lostCount)
 void Restart(ShipData* shipIndex, ConfigData* gameData, Object** weaponShapes, RescueData* rescueDroid, Object** shipShapes)
 {
     KillNotes();
-    initShipData(gTrack.sections, shipIndex, gameData);
+    InitShipData(gTrack.sections, shipIndex, gameData);
     InitRescueDroid(rescueDroid, shipShapes, &(shipIndex[ownShip]));
     gCamera.section = shipIndex[ownShip].nearTrkSect;
 
@@ -184,8 +177,6 @@ void raceInit(ConfigData* gameData)
 
     showLoading(ctrlConfigData.actTrackNum);
 
-    trackNum = gameData->trackNum; // for restoring - SJR
-
     attractDelay = 0;
 
     tempLapTimes[0] = 0;
@@ -211,38 +202,6 @@ void raceInit(ConfigData* gameData)
     ctrlfirsttime = 1;
     finishedExtro = 0;
 
-    /**********************************************************/
-    /***                 Initialise Track                   ***/
-    /**********************************************************/
-    /* firestar */
-    if (gameData->actTrackNum == 14)
-    {
-        camSpline[0] = LoadPrm("wipeout/common/cam1s.prm", 0, NULL);
-        shipSpline[0] = LoadPrm("wipeout/common/shp1s.prm", 0, NULL);
-
-        camSpline[1] = LoadPrm("wipeout/common/cam2s.prm", 0, NULL);
-        shipSpline[1] = LoadPrm("wipeout/common/shp2s.prm", 0, NULL);
-
-        camSpline[2] = LoadPrm("wipeout/common/cam3s.prm", 0, NULL);
-        shipSpline[2] = LoadPrm("wipeout/common/shp3s.prm", 0, NULL);
-
-        camSpline[3] = LoadPrm("wipeout/common/cam4s.prm", 0, NULL);
-        shipSpline[3] = LoadPrm("wipeout/common/shp4s.prm", 0, NULL);
-    }
-
-    /* silverstream */
-    if (gameData->actTrackNum == 13)
-    {
-        camSpline[4] = LoadPrm("wipeout/common/cam5s.prm", 0, NULL);
-        shipSpline[4] = LoadPrm("wipeout/common/shp5s.prm", 0, NULL);
-
-        camSpline[5] = LoadPrm("wipeout/common/cam6s.prm", 0, NULL);
-        shipSpline[5] = LoadPrm("wipeout/common/shp6s.prm", 0, NULL);
-
-        camSpline[6] = LoadPrm("wipeout/common/cam7s.prm", 0, NULL);
-        shipSpline[6] = LoadPrm("wipeout/common/shp7s.prm", 0, NULL);
-    }
-
     InitScene(gameData->actTrackNum);
 
     InitCamera(&gCamera, gTrack.sections);
@@ -251,7 +210,7 @@ void raceInit(ConfigData* gameData)
 
     InitWinLoseTex(PILOT_NAMES[gameData->shipNum]);
 
-    initShipData(gTrack.sections, ctrlshipIndex, gameData);
+    InitShipData(gTrack.sections, ctrlshipIndex, gameData);
     InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
 
     ResetWeapons(ctrlweaponShapes);
@@ -540,7 +499,7 @@ void raceCtrl(ConfigData* gameData)
                 ctrlbuttonPressed = 0;
         }
 
-        UpdateShips(ctrlshipIndex);
+        UpdateShips(ctrlshipIndex, gameData);
 
         (ctrlrescueDroid.droidUpdate)(&ctrlrescueDroid, &(ctrlshipIndex[ownShip]), ctrlshipShapes);
 
@@ -567,7 +526,10 @@ void raceCtrl(ConfigData* gameData)
 
         UpdateWeapons(ctrlshipIndex, ctrlweaponShapes);
 
-        CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
+        if (gameData->gameType != TIME_TRIAL)
+        {
+            CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
+        }
 
         UpdateEffects();
 
@@ -577,7 +539,7 @@ void raceCtrl(ConfigData* gameData)
         AdjustCrowdSound(gTrack.lost, gTrack.lostCount);
         AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes);
 
-        if (raceType != TIME_TRIAL)
+        if (gameData->gameType != TIME_TRIAL)
         {
             CycleWeaponGrids(ctrlshipIndex, gTrack.weapons, gTrack.weaponsCount);
         }
@@ -1125,7 +1087,7 @@ void raceLoop(ConfigData* gameData)
     DrawLandscape(&gCamera);
     DrawTrack();
     DrawShadows(ctrlshipIndex);
-    DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip);
+    DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip, gameData);
     DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
     DrawEffects();

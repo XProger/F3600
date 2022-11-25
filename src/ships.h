@@ -90,6 +90,6 @@ typedef struct ShipData
 
 } ShipData;
 
-void loadShipData(ShipData* shipIndex, Object** shipShapes);
-void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip);
-void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData);
+void LoadShipData(ShipData* shipIndex, Object** shipShapes);
+void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, ConfigData* gameData);
+void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData);

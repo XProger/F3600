@@ -120,18 +120,17 @@ void SfxFree(void)
 
 }
 
-void AdjustDirectionalNote(enum SfxType id, const vec3i* pos)
+void AdjustDirectionalNote(enum SfxType id, int32 x, int32 z)
 {
-    vec3i distance;
-    int mag;
-    int voll, volr;
-    short angle;
+    int32 dx, dz;
+    int32 mag;
+    int32 voll, volr;
+    int32 angle;
 
-    distance.x = (pos->x + gCamera.pos.x) >> 3;
-    distance.y = (pos->y + gCamera.pos.y) >> 3;
-    distance.z = (pos->z + gCamera.pos.z) >> 3;
+    dx = (x - gCamera.pos.x) >> 3;
+    dz = (z - gCamera.pos.z) >> 3;
 
-    mag = GetMagnitude(&distance);
+    mag = GetMagnitudeApprox(dx, dz);
     mag = mag << 2;
 
     voll = 0x2fff - mag;
@@ -140,7 +139,7 @@ void AdjustDirectionalNote(enum SfxType id, const vec3i* pos)
 
     volr = voll;
 
-    angle = -ratan2(distance.x, distance.z) + gCamera.hdg;
+    angle = -(ratan2(dx, dz) + gCamera.hdg);
     angle = ang(angle);
 
     if (angle > 1024)
@@ -150,9 +149,6 @@ void AdjustDirectionalNote(enum SfxType id, const vec3i* pos)
 
     voll += voll * angle >> 11;
     volr -= volr * angle >> 11;
-
-    //voll >>= 2;
-    //volr >>= 2;
 
     if ((voll > 0) && (volr > 0))
     {
@@ -167,13 +163,13 @@ void AdjustDirectionalNote(enum SfxType id, const vec3i* pos)
 void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
 {
     uint16 i;
-    vec3i distance;
-    int mag, smallestMag;
-    short ident;
-    int voll, volr;
-    short angle;
+    int32 dx, dz;
+    int32 mag, smallestMag;
+    int32 ident;
+    int32 voll, volr;
+    int32 angle;
     vec3i dopler;
-    int doplerMag;
+    int32 doplerMag;
 
 #ifdef __3DO__ // TODO optimize
     return;
@@ -186,11 +182,10 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
     {
         if (i != ownShip)
         {
-            distance.x = (shipIndex[i].pos.x + gCamera.pos.x) >> 3;
-            distance.y = (shipIndex[i].pos.y + gCamera.pos.y) >> 3;
-            distance.z = (shipIndex[i].pos.z + gCamera.pos.z) >> 3;
+            dx = (shipIndex[i].pos.x - gCamera.pos.x) >> 3;
+            dz = (shipIndex[i].pos.z - gCamera.pos.z) >> 3;
 
-            mag = GetMagnitude(&distance);
+            mag = GetMagnitudeApprox(dx, dz);
 
             if (mag < smallestMag)
             {
@@ -219,7 +214,7 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
         if (volr < 0)
             volr = 0;
 
-        angle = -ratan2(distance.x, distance.z) + gCamera.hdg;
+        angle = -(ratan2(dx, dz) + gCamera.hdg);
         angle = ang(angle);
 
         if (angle > 1024)
@@ -230,18 +225,10 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
         voll += (voll * angle) >> 11;
         volr -= (volr * angle) >> 11;
 
-        //voll >>= 2;
-        //volr >>= 2;
+        dx += ((shipIndex[ident].vel.x >> VELOCITY_SHIFT) - gCamera.vel.x);
+        dz += ((shipIndex[ident].vel.z >> VELOCITY_SHIFT) - gCamera.vel.z);
 
-        dopler.x = (shipIndex[ident].vel.x >> VELOCITY_SHIFT) - gCamera.vel.x;
-        dopler.y = (shipIndex[ident].vel.y >> VELOCITY_SHIFT) - gCamera.vel.y;
-        dopler.z = (shipIndex[ident].vel.z >> VELOCITY_SHIFT) - gCamera.vel.z;
-
-        dopler.x += distance.x;
-        dopler.y += distance.y;
-        dopler.z += distance.z;
-
-        doplerMag = mag - GetMagnitude(&dopler);
+        doplerMag = mag - GetMagnitudeApprox(dx, dz);
 
         SetPitch(SFX_REMOTE_ENG, (SND_DEF_PITCH >> 1) + doplerMag);
         SetVolume(SFX_REMOTE_ENG, voll, volr);
@@ -258,8 +245,8 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
 
 void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
 {
-    short vol;
-    short pitch;
+    int32 vol;
+    int32 pitch;
 
 #ifdef __3DO__ // TODO optimize
     return;
@@ -308,7 +295,7 @@ void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
 
 int PlayDirectionalNote(enum SfxType id, const vec3i* pos)
 {
-    int channel = PlayNote(id);
-    AdjustDirectionalNote(id, pos);
+    int32 channel = PlayNote(id);
+    AdjustDirectionalNote(id, pos->x, pos->z);
     return channel;
 }

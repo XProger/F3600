@@ -1472,8 +1472,6 @@ int GetNewWeapon(void)
         return WPN_ELEC_BOLT;
 }
 
-WeaponGrid temp_weaponGrid[64]; // TODO remove
-
 void InitWeaponGrids(void)
 {
     int32 i, j;
@@ -1484,8 +1482,6 @@ void InitWeaponGrids(void)
     TrackSection* ctrljsection;
 
     weaponsCount = 0;
-    gTrack.weapons = temp_weaponGrid;
-
     ctrlsection = gTrack.sections;
 
     i = 0;

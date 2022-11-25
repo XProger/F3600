@@ -33,6 +33,35 @@ Object* LoadPrm(const char* name, int32 textureStart, int32* count)
 
     return obj - objCount;
 }
+
+/* TODO Scene WAD
+void InitSceneVRAM(uint8* ptr)
+{
+    //
+}
+
+void InitSceneDRAM(uint8* ptr)
+{
+    //
+}
+
+void InitScene(int32 trackNum)
+{
+    char trackPath[64];
+    int32 size;
+    uint8* ptr;
+
+    getPath(trackPath, trackNum, "/track.d");
+    size = osLoadFile(trackPath, pDRAM);
+    ptr = (uint8*)allocDRAM(size);
+    InitSceneDRAM(ptr);
+
+    getPath(trackPath, trackNum, "/track.v");
+    size = osLoadFile(trackPath, pVRAM);
+    ptr = (uint8*)allocVRAM(size);
+    InitSceneVRAM(ptr);
+}
+*/
 #else
 
 #define CONV_COLOR(c) (c.r | (c.g << 8) | (c.b << 16) | 0xFF000000)
@@ -852,7 +881,6 @@ Object* LoadPrm(const char* name, int32 textureStart, int32* count)
     return obj;
 }
 #endif
-
 void SortObjects(void)
 {
     int i, swapped;
@@ -904,6 +932,8 @@ void InitObjects()
     gTrack.donkey = gTrack.red + gTrack.redCount;
 }
 
+WeaponGrid gWeaponGrid[64]; // TODO remove
+
 void InitScene(int32 trackNum)
 {
     int sceneTextures;
@@ -912,6 +942,8 @@ void InitScene(int32 trackNum)
     char trackPath[64];
 
     LoadTrack(trackNum);
+    gTrack.weapons = gWeaponGrid;
+
     InitWeaponGrids();
 
     sceneTextures = gTexturePtr - gTextures;
@@ -942,5 +974,34 @@ void InitScene(int32 trackNum)
     if (trackNo == 13)
     {
         InitAuroraBorialis(gTrack.sky);
+    }
+
+    /* silverstream */
+    if (trackNo == 13)
+    {
+        camSpline[4] = LoadPrm("wipeout/common/cam5s.prm", 0, NULL);
+        shipSpline[4] = LoadPrm("wipeout/common/shp5s.prm", 0, NULL);
+
+        camSpline[5] = LoadPrm("wipeout/common/cam6s.prm", 0, NULL);
+        shipSpline[5] = LoadPrm("wipeout/common/shp6s.prm", 0, NULL);
+
+        camSpline[6] = LoadPrm("wipeout/common/cam7s.prm", 0, NULL);
+        shipSpline[6] = LoadPrm("wipeout/common/shp7s.prm", 0, NULL);
+    }
+
+    /* firestar */
+    if (trackNo == 14)
+    {
+        camSpline[0] = LoadPrm("wipeout/common/cam1s.prm", 0, NULL);
+        shipSpline[0] = LoadPrm("wipeout/common/shp1s.prm", 0, NULL);
+
+        camSpline[1] = LoadPrm("wipeout/common/cam2s.prm", 0, NULL);
+        shipSpline[1] = LoadPrm("wipeout/common/shp2s.prm", 0, NULL);
+
+        camSpline[2] = LoadPrm("wipeout/common/cam3s.prm", 0, NULL);
+        shipSpline[2] = LoadPrm("wipeout/common/shp3s.prm", 0, NULL);
+
+        camSpline[3] = LoadPrm("wipeout/common/cam4s.prm", 0, NULL);
+        shipSpline[3] = LoadPrm("wipeout/common/shp4s.prm", 0, NULL);
     }
 }

@@ -1,6 +1,5 @@
 #include "game.h"
 
-extern short trackNum; // SJR
 extern long ctrlmode;
 extern long ctrlGameLoop;
 
@@ -238,8 +237,6 @@ void menuInit(void)
 
     gMenuHistoryIndex = 0;
 
-    trackNum = 15; // pretend track for restoring - SJR
-
     renderOffset(0, -30);
 
     if (ctrlfirsttime)
@@ -473,8 +470,6 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
 
         case RACE_TYPE_MENU:
         {
-            raceType = 0; // TODO gameData->gameType ?
-
             switch (gCurrOption)
             {
                 case CHAMPIONSHIP:
@@ -487,7 +482,6 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
                     break;
                 case TIME_TRIAL:
                     gameData->gameType = TIME_TRIAL;
-                    raceType = TIME_TRIAL;
                     break;
             }
 

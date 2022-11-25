@@ -51,7 +51,6 @@ extern int trackNo;
 extern char NumTracks;
 extern char totalTracks;
 extern int attractDelay;
-extern int raceType;
 
 extern int tempLapTimes[5];
 
@@ -68,7 +67,6 @@ extern Object* camSpline[];
 extern Object* shipSpline[];
 extern short finishedExtro;
 
-extern short trackNum;
 extern int32 gMusicTracksCount;
 extern int32 gMusicTrack;
 extern int32 gMasterBalance;

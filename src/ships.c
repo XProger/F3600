@@ -106,7 +106,7 @@ void SetSpread(ShipData* ship, ConfigData* gameData, int position)
     ship->numtospeed = speed * position;
 }
 
-void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
+void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, ConfigData* gameData)
 {
     int32 i;
     int32 dist, dx, dy, dz, vz;
@@ -116,7 +116,7 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (!((i == ownShip) || (raceType != TIME_TRIAL)))
+        if (!((i == ownShip) || (gameData->gameType != TIME_TRIAL)))
             continue;
 
         ship = shipIndex + i;
@@ -163,7 +163,7 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
     }
 }
 
-void loadShipData(ShipData* shipIndex, Object** shipShapes)
+void LoadShipData(ShipData* shipIndex, Object** shipShapes)
 {
     int shipTextures, droidTextures, colTextures;
     Object* obj;
@@ -217,7 +217,7 @@ void loadShipData(ShipData* shipIndex, Object** shipShapes)
     InitCone(&ctrlcone);
 }
 
-void initShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData)
+void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData)
 {
     int i, j;
     Face* face;
