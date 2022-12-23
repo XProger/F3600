@@ -1,5 +1,6 @@
 enum InputKey
 {
+    IN_NONE     = 0,
     IN_LEFT     = (1 << 0),
     IN_DOWN     = (1 << 1),
     IN_RIGHT    = (1 << 2),

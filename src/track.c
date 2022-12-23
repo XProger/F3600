@@ -151,9 +151,9 @@ void IntelSection(void)
     section = gTrack.sections;
     for (i = 0; i < gTrack.sectionCount; i++)
     {
-        IntelLong(&(long)section->junction);
-        IntelLong(&(long)section->prevSection);
-        IntelLong(&(long)section->nextSection);
+        IntelLong(&section->junction);
+        IntelLong(&section->prevSection);
+        IntelLong(&section->nextSection);
 
         IntelLong(&section->centre.x);
         IntelLong(&section->centre.y);
@@ -442,7 +442,7 @@ void collectTrackGeometry(void)
         if (section->junction)
         {
             const TrackSection* jsection = section->junction;
-            do 
+            do
             {
                 collectTrackSectionGeometry(jsection);
                 jsection = jsection->nextSection;
@@ -739,7 +739,7 @@ void convertTrack3DO(int32 trackNum)
             writeShort(f, sec->objects[j]);
         }
     }
-    
+
     fclose(f);
 
     printf("track cluts: %d\n", clutsCount);
@@ -797,8 +797,8 @@ void convertObjects3DO(const char* name, const Object* objects, int32 count)
         {
             uint32 indices =
                 (obj->faces[j].index[0]) |
-                (obj->faces[j].index[1] << 8) | 
-                (obj->faces[j].index[2] << 16) | 
+                (obj->faces[j].index[1] << 8) |
+                (obj->faces[j].index[2] << 16) |
                 (obj->faces[j].index[3] << 24);
 
             writeInt(f, obj->faces[j].flags & 0xFFFF);

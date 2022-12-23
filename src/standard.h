@@ -11,6 +11,7 @@
     #include <windows.h>
 #endif
 
+
 #ifdef __3DO__
     #include <displayutils.h>
     #include <debug.h>
@@ -52,11 +53,20 @@ typedef int                 int32;
 typedef unsigned int        uint32;
 #endif
 
-#ifdef __3DO__
-    #define ASSERT(x)
+#ifdef _DEBUG
+    #if __LINUX__
+        #include <signal.h>
+        #define __debugbreak() raise(SIGTRAP)
+    #endif
+
+    #define LOG(...)        printf(__VA_ARGS__)
+    #define ASSERT(expr)    if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); __debugbreak(); }
 #else
-    #define ASSERT(x) if (!(x)) __debugbreak()
+    #define LOG(...)
+    #define ASSERT(x)
 #endif
+
+#define COUNT(x) (sizeof(x) / sizeof(x[0]))
 
 typedef struct
 {

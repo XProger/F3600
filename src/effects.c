@@ -275,7 +275,7 @@ void ColourRedLight(void)
             r = 255;
 
         face = gTrack.red[i].faces;
-        
+
         face->color[0] =
         face->color[1] =
         face->color[2] =
@@ -543,7 +543,7 @@ void AuroraBorialis(Object* object)
 {
     int32 i, r, g, b;
     ObjFace* face = object->faces;
-    short* coords;
+    uint16* coords;
 
     abPhase++;
 

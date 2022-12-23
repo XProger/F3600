@@ -14,7 +14,7 @@ extern short startFireText;
 int ajscount = 0; // oh shit another global flag
 
 // All race locals now globals, as RaceCtrl has to be re-entrant
-TexTemplate* ctrltexTemplate;
+extern TexTemplate* ctrltexTemplate;
 
 /**************************************************/
 /******           Dave additions              *****/
@@ -1034,7 +1034,7 @@ void raceCtrl(ConfigData* gameData)
 void raceLoop(ConfigData* gameData)
 {
     int i, count;
-    
+
     ctrlFramesCount += gFrameIndex - gLastFrameIndex;
 
     count = ctrlFramesCount >> 1; // 60 -> 30 Hz
@@ -1065,11 +1065,11 @@ void raceLoop(ConfigData* gameData)
         ColourRedLight();
         MoveDonkey();
     }
-    else if ((trackNo == 1) /* || (trackNo == 6)*/)
+    else if (trackNo == 1)
     {
         ColourRedLight();
     }
-    
+
     ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
 
     renderSetMode(RENDER_MODE_3D);
@@ -1105,7 +1105,7 @@ void raceLoop(ConfigData* gameData)
 
     if (ctrlNeedBackPoly)
         renderBackFill(180, 50, 128, 140);
-    
+
     if (ctrlmode == ATTRACT)
     {
         if (ctrlplayCredits == 1)

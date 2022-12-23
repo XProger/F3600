@@ -284,7 +284,7 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
 
 void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo)
 {
-    static startPos;
+    static int32 startPos;
 
     shipIndex = &(shipIndex[shipNo]);
 

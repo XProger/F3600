@@ -1,8 +1,21 @@
-#include <windows.h>
-#include <gl/GL.h>
-#include <gl/glu.h>
-#include <gl/glext.h>
-#include <gl/wglext.h>
+#ifdef __WIN32__
+    #include <windows.h>
+    #include <gl/GL.h>
+    #include <gl/glu.h>
+    #include <gl/glext.h>
+    #include <gl/wglext.h>
+
+    extern HWND hWnd;
+    HDC hDC;
+    HGLRC hRC;
+#elif __LINUX__
+    #include <GL/gl.h>
+    #include <GL/glext.h>
+    #include <GL/glx.h>
+
+    extern Display* dpy;
+    extern Window wnd;
+#endif
 
 #include "game.h"
 
@@ -14,13 +27,6 @@
 #define PI      3.14159265358979323846f
 #define DEG2RAD (PI / 180.0f)
 #define RAD2DEG (180.0f / PI)
-
-void* GetProc(const char *name)
-{
-    return (void*)wglGetProcAddress(name);
-}
-
-#define GetProcOGL(x) x=GetProc(#x)
 
 // Textures
 PFNGLGENERATEMIPMAPPROC             glGenerateMipmap;
@@ -116,7 +122,7 @@ typedef struct
     int32 viewMatrix;
     uint32 color;
     int32 layer;
-    BlendMode blend;
+    int32 blend;
     uint8 depthWrite;
     uint8 depthTest;
 } RenderState;
@@ -148,10 +154,6 @@ uint16 tempData[320 * 240];
 
 GLuint whiteTex;
 
-extern HWND hWnd;
-HDC hDC;
-HGLRC hRC;
-
 int gRenderMode;
 
 int32 xOffset;
@@ -180,14 +182,14 @@ extern Texture* gEffectTextures;
 const uint32 colorGrey = 0xFF808080;
 const uint32 colorWhite = 0xFFFFFFFF;
 
-const char* GLSL_HEADER_VERT_GL3 = 
+const char* GLSL_HEADER_VERT_GL3 =
     "#version 150\n"
     "#define VERTEX\n"
     "#define varying out\n"
     "#define attribute in\n"
     "#define texture2D texture\n";
 
-const char* GLSL_HEADER_FRAG_GL3 = 
+const char* GLSL_HEADER_FRAG_GL3 =
     "#version 150\n"
     "#define FRAGMENT\n"
     "#define varying in\n"
@@ -446,7 +448,7 @@ void matrixPerspective(mat4* m, float fov, float aspect, float xoff, float yoff,
 int32 stateCmp(const RenderState* a, const RenderState* b)
 {
     return (a->shader == b->shader) &&
-           (a->texture == b->texture) && 
+           (a->texture == b->texture) &&
            (a->projMatrix == b->projMatrix) &&
            (a->viewMatrix == b->viewMatrix) &&
            (a->color == b->color) &&
@@ -535,7 +537,7 @@ void compileShader(Shader* shader, const char* text)
         glGetShaderInfoLog(obj, sizeof(info), NULL, info);
         if (info[0] && strlen(info) > 8)
         {
-            OutputDebugString(info);
+            LOG("%s\n", info);
             ASSERT(0);
         }
 
@@ -552,7 +554,7 @@ void compileShader(Shader* shader, const char* text)
     glGetProgramInfoLog(shader->id, sizeof(info), NULL, info);
     if (info[0] && strlen(info) > 8)
     {
-        OutputDebugString(info);
+        LOG("%s\n", info);
         ASSERT(0);
     }
 
@@ -566,12 +568,26 @@ void compileShader(Shader* shader, const char* text)
     shader->uid[uColor] = glGetUniformLocation(shader->id, "uColor");
 }
 
-void renderInit(void)
+void* GetProc(const char *name)
+{
+#ifdef __WIN32__
+    return (void*)wglGetProcAddress(name);
+#elif __LINUX__
+    return (void*)glXGetProcAddress((GLubyte*)name);
+#endif
+    return NULL;
+}
+
+#define GetProcOGL(x) x=GetProc(#x)
+
+void renderInit()
 {
     VertexGL* v = NULL;
-    PIXELFORMATDESCRIPTOR pfd;
+#if defined(__WIN32__)
+    int format;
     PFNWGLCHOOSEPIXELFORMATARBPROC    wglChoosePixelFormatARB    = NULL;
     PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
+    PIXELFORMATDESCRIPTOR pfd;
 
     memset(&pfd, 0, sizeof(pfd));
     pfd.nSize = sizeof(pfd);
@@ -584,12 +600,15 @@ void renderInit(void)
     pfd.cAlphaBits = 8;
     pfd.cDepthBits = 24;
 
+    PFNWGLCHOOSEPIXELFORMATARBPROC    wglChoosePixelFormatARB    = NULL;
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
+
     {
         HWND fWnd = CreateWindow("static", NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
         HDC fDC = GetDC(fWnd);
         HGLRC fRC;
 
-        int format = ChoosePixelFormat(fDC, &pfd);
+        format = ChoosePixelFormat(fDC, &pfd);
         SetPixelFormat(fDC, format, &pfd);
         fRC = wglCreateContext(fDC);
         wglMakeCurrent(fDC, fRC);
@@ -619,7 +638,13 @@ void renderInit(void)
             0
         };
 
-        int format;
+        const int contextAttribs[] = {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+            WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
+        };
+
         UINT numFormats;
         int status = wglChoosePixelFormatARB(hDC, pixelAttribs, NULL, 1, &format, &numFormats);
         ASSERT(status && numFormats > 0);
@@ -627,22 +652,21 @@ void renderInit(void)
         DescribePixelFormat(hDC, format, sizeof(pfd), &pfd);
         SetPixelFormat(hDC, format, &pfd);
 
-        int contextAttribs[] = {
-            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-            WGL_CONTEXT_MINOR_VERSION_ARB, 2,
-            WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-            0
-        };
-
         hRC = wglCreateContextAttribsARB(hDC, 0, contextAttribs);
+        LOG("OpenGL 3.2\n");
     } else {
-        int format = ChoosePixelFormat(hDC, &pfd);
+        format = ChoosePixelFormat(hDC, &pfd);
         SetPixelFormat(hDC, format, &pfd);
         hRC = wglCreateContext(hDC);
-        ASSERT(0);
+        LOG("OpenGL 2.0\n");
     }
 
     wglMakeCurrent(hDC, hRC);
+#endif
+
+    LOG("Vendor   : %s\n", (char*)glGetString(GL_VENDOR));
+    LOG("Renderer : %s\n", (char*)glGetString(GL_RENDERER));
+    LOG("Version  : %s\n", (char*)glGetString(GL_VERSION));
 
     glClearColor(0, 0, 0, 1);
     glEnable(GL_CULL_FACE);
@@ -721,14 +745,20 @@ void renderFree(void)
 {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(2, VBO);
+ #if defined(__WIN32__)
     wglMakeCurrent(0, 0);
     wglDeleteContext(hRC);
     ReleaseDC(hWnd, hDC);
+#endif
 }
 
 void renderSwap(void)
 {
+#if defined(__WIN32__)
     SwapBuffers(hDC);
+#elif defined(__LINUX__)
+    glXSwapBuffers(dpy, wnd);
+#endif
 }
 
 void renderResize(int width, int height)
@@ -1126,7 +1156,7 @@ void renderFrameEnd(void)
     int32 viewMatrix = -1;
     int32 depthTest = 0;
     int32 depthWrite = 1;
-    BlendMode blend = BLEND_NONE;
+    int32 blend = BLEND_NONE;
     uint32 color = 0xBAAAAAAD;
 
     GLfloat colorValue[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -1284,9 +1314,7 @@ void renderFrameEnd(void)
         if (dbg_s < gStatesCount)
             dbg_s = gStatesCount;
 
-        char buf[256];
-        sprintf(buf, "v:%d i:%d x:%d m:%d s:%d\n", dbg_v, dbg_i, dbg_x, dbg_m, dbg_s);
-        OutputDebugString(buf);    
+        LOG("v:%d i:%d x:%d m:%d s:%d\n", dbg_v, dbg_i, dbg_x, dbg_m, dbg_s);
     }
 #endif
 
@@ -1344,7 +1372,7 @@ void renderTrack(void)
     int cx, cy, cz;
     int dir;
     short* counts;
-    const short** sections;
+    short** sections;
     TrackSection* section;
 
 //    #define CHECK_UNUSED_TEX
