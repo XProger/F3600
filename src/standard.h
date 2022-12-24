@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#ifdef WIN32
+#ifdef __WIN32__
     #include <windows.h>
 #endif
 
@@ -53,7 +53,7 @@ typedef int                 int32;
 typedef unsigned int        uint32;
 #endif
 
-#ifdef _DEBUG
+#if 1
     #if __LINUX__
         #include <signal.h>
         #define __debugbreak() raise(SIGTRAP)

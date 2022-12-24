@@ -1921,7 +1921,7 @@ void IntelShort(short* svalue)
     char* cvalue;
     char temp;
 
-    ASSERT(((int16)svalue & 1) == 0);
+    ASSERT(((int32)svalue & 1) == 0);
     cvalue = (char*)svalue;
 
     temp = cvalue[0];

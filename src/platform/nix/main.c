@@ -193,8 +193,8 @@ void inputInit()
 
         LOG("gamepad %d\n", i + 1);
         LOG(" name : %s\n", name);
-        LOG(" btns : %d\n", int(buttons));
-        LOG(" axes : %d\n", int(axes));
+        LOG(" btns : %d\n", (int)buttons);
+        LOG(" axes : %d\n", (int)axes);
 
         joy->fe = -1;
         for (int j = 0; j < 99; j++)
@@ -580,7 +580,9 @@ int main(int argc, char **argv)
         0
     };
 
-LOG("aaaa\n");
+    gDRAM = pDRAM = (char*)malloc(DRAM_SIZE);
+    gVRAM = pVRAM = (char*)malloc(VRAM_SIZE);
+
     dpy = XOpenDisplay(NULL);
     XVisualInfo* vis = glXChooseVisual(dpy, XDefaultScreen(dpy), XGLAttr);
 
@@ -608,8 +610,6 @@ LOG("aaaa\n");
 
     streamInit();
     inputInit();
-    soundInit();
-    renderInit();
     gameInit();
 
     while (!isQuit)
@@ -638,12 +638,14 @@ LOG("aaaa\n");
     };
 
     gameFree();
-    renderFree();
-    soundFree();
     inputFree();
     streamFree();
 
     glXMakeCurrent(dpy, 0, 0);
     XCloseDisplay(dpy);
+
+    free(gDRAM);
+    free(gVRAM);
+
     return 0;
 }

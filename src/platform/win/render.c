@@ -183,14 +183,14 @@ const uint32 colorGrey = 0xFF808080;
 const uint32 colorWhite = 0xFFFFFFFF;
 
 const char* GLSL_HEADER_VERT_GL3 =
-    "#version 150\n"
+    "#version 140\n"
     "#define VERTEX\n"
     "#define varying out\n"
     "#define attribute in\n"
     "#define texture2D texture\n";
 
 const char* GLSL_HEADER_FRAG_GL3 =
-    "#version 150\n"
+    "#version 140\n"
     "#define FRAGMENT\n"
     "#define varying in\n"
     "#define texture2D texture\n"
