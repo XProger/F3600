@@ -620,7 +620,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     hWnd = CreateWindow("static", "wipEout xport", WS_OVERLAPPEDWINDOW, wx + r.left, wy + r.top, r.right - r.left, r.bottom - r.top, 0, 0, hInstance, 0);
 
-    SetWindowLong(hWnd, GWL_WNDPROC, (LONG)&WndProc);
+    SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)&WndProc);
     ShowWindow(hWnd, SW_SHOWDEFAULT);
 
     timerInit();

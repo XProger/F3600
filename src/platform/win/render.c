@@ -600,9 +600,6 @@ void renderInit()
     pfd.cAlphaBits = 8;
     pfd.cDepthBits = 24;
 
-    PFNWGLCHOOSEPIXELFORMATARBPROC    wglChoosePixelFormatARB    = NULL;
-    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
-
     {
         HWND fWnd = CreateWindow("static", NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
         HDC fDC = GetDC(fWnd);
