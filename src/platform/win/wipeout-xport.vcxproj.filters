@@ -24,7 +24,6 @@
     <ClCompile Include="..\..\ships.c" />
     <ClCompile Include="..\..\spline.c" />
     <ClCompile Include="..\..\track.c" />
-    <ClCompile Include="..\..\ttf.c" />
     <ClCompile Include="..\..\utils.c" />
     <ClCompile Include="..\..\weapon.c" />
     <ClCompile Include="..\..\game.c" />
@@ -33,6 +32,7 @@
     <ClCompile Include="..\..\menus.c" />
     <ClCompile Include="..\..\sfx.c" />
     <ClCompile Include="sound.c" />
+    <ClCompile Include="..\..\convert.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\camera.h" />
@@ -62,7 +62,6 @@
     <ClInclude Include="..\..\spline.h" />
     <ClInclude Include="..\..\standard.h" />
     <ClInclude Include="..\..\track.h" />
-    <ClInclude Include="..\..\ttf.h" />
     <ClInclude Include="..\..\utils.h" />
     <ClInclude Include="..\..\weapon.h" />
     <ClInclude Include="..\..\render.h" />

@@ -383,7 +383,7 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
 
 void DrawDroid(Object* droid, const RescueData* rescueData)
 {
-#ifndef __3DO__ // TODO visibility check
+#ifndef __3DO__ // TODO 3DO visibility check
     DrawObject(droid, rescueData->pos.x, rescueData->pos.y, rescueData->pos.z, rescueData->hdg, rescueData->pitch, rescueData->roll);
 #endif
 }

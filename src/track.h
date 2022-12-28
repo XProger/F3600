@@ -25,6 +25,7 @@ typedef struct Face
     uint8 red;
     uint8 green;
     uint8 blue;
+    uint8 padding_unused;
 } Face;
 #endif
 
@@ -70,30 +71,15 @@ typedef struct TrackSection
 #else
 typedef struct TrackSection
 {
-    struct TrackSection* junction;
-    struct TrackSection* prevSection;
-    struct TrackSection* nextSection;
-
     vec3i centre;
 
-    short unused_version;
-    short unused_pad;
+    int16 objectsCount;
 
-    short* objects;
-    short objectsCount;
-
-    short* northViewSection[3];
-    short* southViewSection[3];
-    short* eastViewSection[3];
-    short* westViewSection[3];
-    short* allViewSection[3];
-    short northViewCount[3];
-    short southViewCount[3];
-    short eastViewCount[3];
-    short westViewCount[3];
-    short allViewCount[3];
-
-    short unused[8];
+    int16 northViewCount[3];
+    int16 southViewCount[3];
+    int16 eastViewCount[3];
+    int16 westViewCount[3];
+    int16 allViewCount[3];
 
     uint16 faceStart;
     uint16 faceCount;
@@ -103,6 +89,16 @@ typedef struct TrackSection
 
     uint16 flags;
     uint16 secNo;
+
+    struct TrackSection* junction;
+    struct TrackSection* prevSection;
+    struct TrackSection* nextSection;
+    int16* objects;
+    int16* northViewSection[3];
+    int16* southViewSection[3];
+    int16* eastViewSection[3];
+    int16* westViewSection[3];
+    int16* allViewSection[3];
 } TrackSection;
 #endif
 
@@ -151,10 +147,3 @@ typedef struct TrackCamera
 } TrackCamera;
 
 TrackSection* NextIndexSection(TrackSection* section);
-
-void LoadTrack(int32 trackNum);
-
-#ifdef _DEBUG
-void convertTrack3DO(int32 trackNum);
-void convertObjects3DO(const char* name, const Object* obj, int32 count);
-#endif

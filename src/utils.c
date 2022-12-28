@@ -1870,12 +1870,28 @@ long RotTransPers(const MATRIX* m, const vec3s* v0, vec2s* sxy, long* flag)
     return r0.z >> 2;
 }
 
-uint16 swap16(uint16 x) {
+uint16 swap16(uint16 x)
+{
     return ((x & 0x00FF) << 8) | ((x & 0xFF00) >> 8);
 }
 
-uint32 swap32(uint32 x) {
+uint32 swap32(uint32 x)
+{
     return ((x & 0x000000FF) << 24) | ((x & 0x0000FF00) << 8) | ((x & 0x00FF0000) >> 8) | ((x & 0xFF000000) >> 24);
+}
+
+void swap16p(void* ptr)
+{
+    ASSERT(((intptr_t)ptr & 1) == 0);
+    uint16* x = (uint16*)ptr;
+    *x = swap16(*x);
+}
+
+void swap32p(void* ptr)
+{
+    ASSERT(((intptr_t)ptr & 3) == 0);
+    uint32* x = (uint32*)ptr;
+    *x = swap32(*x);
 }
 
 int32 SwapLE32(int32 x)

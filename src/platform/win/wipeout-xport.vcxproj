@@ -23,6 +23,7 @@
     <ClCompile Include="..\..\collide.c" />
     <ClCompile Include="..\..\cone.c" />
     <ClCompile Include="..\..\control.c" />
+    <ClCompile Include="..\..\convert.c" />
     <ClCompile Include="..\..\credits.c" />
     <ClCompile Include="..\..\draw.c" />
     <ClCompile Include="..\..\droid.c" />
@@ -45,7 +46,6 @@
     <ClCompile Include="..\..\ships.c" />
     <ClCompile Include="..\..\spline.c" />
     <ClCompile Include="..\..\track.c" />
-    <ClCompile Include="..\..\ttf.c" />
     <ClCompile Include="..\..\utils.c" />
     <ClCompile Include="..\..\weapon.c" />
     <ClCompile Include="main.c" />
@@ -82,7 +82,6 @@
     <ClInclude Include="..\..\spline.h" />
     <ClInclude Include="..\..\standard.h" />
     <ClInclude Include="..\..\track.h" />
-    <ClInclude Include="..\..\ttf.h" />
     <ClInclude Include="..\..\utils.h" />
     <ClInclude Include="..\..\weapon.h" />
   </ItemGroup>

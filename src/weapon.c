@@ -10,7 +10,7 @@ extern long ctrlNeedTargetIcon;
 extern int ctrlnearShip;
 extern TrackCamera gCamera;
 
-Texture* gTargetTex;
+extern Texture* gTargetTex;
 
 void UpdateWeapons(ShipData* shipIndex, Object** weaponShapes)
 {
@@ -170,20 +170,6 @@ void DrawTargetIcon(ShipData* shipIndex, Object** shipShapes)
     renderImage(gTargetTex, sxy.x - (gTargetTex->width >> 1), sxy.y - (gTargetTex->height >> 1));
     renderSetBlend(BLEND_ALPHA);
 #endif
-}
-
-void InitWeapons(Object** weaponShapes)
-{
-    int weaponTextures = gTexturePtr - gTextures;
-    LoadCompressedTextureSequence("wipeout/common/mine.cmp", 1);
-
-    weaponShapes[WEAPON_SHAPE_ROCKET]  = LoadPrm("wipeout/common/rock.prm", weaponTextures, NULL);
-    weaponShapes[WEAPON_SHAPE_MINE]    = LoadPrm("wipeout/common/mine.prm", weaponTextures, NULL);
-    weaponShapes[WEAPON_SHAPE_MISSILE] = LoadPrm("wipeout/common/miss.prm", weaponTextures, NULL);
-    weaponShapes[WEAPON_SHAPE_SHIELD]  = LoadPrm("wipeout/common/shld.prm", weaponTextures, NULL);
-    weaponShapes[WEAPON_SHAPE_EBOLT]   = LoadPrm("wipeout/common/ebolt.prm", weaponTextures, NULL);
-
-    gTargetTex = LoadTexture("wipeout/textures/target2.tim");
 }
 
 void ResetWeapons(Object** weaponShapes)
@@ -1472,60 +1458,12 @@ int GetNewWeapon(void)
         return WPN_ELEC_BOLT;
 }
 
-void InitWeaponGrids(void)
-{
-    int32 i, j;
-    int32 ctrlcheck = 1;
-    int32 ctrljcheck = 1;
-    int32 weaponsCount;
-    TrackSection* ctrlsection;
-    TrackSection* ctrljsection;
-
-    weaponsCount = 0;
-    ctrlsection = gTrack.sections;
-
-    i = 0;
-    NoOfMainSections = 0;
-
-    // TODO pre-calc secNo and weapon grids for 3DO
-    while (ctrlcheck)
-    {
-        weaponsCount = SetTrackAttributes(ctrlsection, i, gTrack.weapons, weaponsCount);
-        ctrlsection->secNo = i;
-        if (ctrlsection->junction)
-        {
-            ctrljsection = ctrlsection;
-            j = i;
-            ctrlsection = ctrlsection->junction;
-            while (ctrljcheck)
-            {
-                i++;
-                weaponsCount = SetTrackAttributes(ctrlsection, i, gTrack.weapons, weaponsCount);
-                ctrlsection->secNo = i;
-                ctrlsection = ctrlsection->nextSection;
-                if (ctrlsection->junction)
-                    ctrljcheck = 0;
-            }
-            ctrljcheck = 1;
-            ctrlsection = ctrljsection;
-            i = j;
-        }
-        i++;
-        NoOfMainSections++;
-        ctrlsection = ctrlsection->nextSection;
-        if (ctrlsection == gTrack.sections)
-            ctrlcheck = 0;
-    }
-
-    gTrack.weaponsCount = weaponsCount;
-}
-
 void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids)
 {
     int i, j;
     Face* facePtr;
 
-#ifdef __3DO__ // TODO optimize
+#ifdef __3DO__ // TODO 3DO optimize
     return;
 #endif
 

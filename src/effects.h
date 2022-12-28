@@ -2,7 +2,6 @@
 
 #define WEAPON_FX_EXPLOSION_SPRITES 16
 
-void InitEffects(void);
 void ResetEffects(void);
 void UpdateEffects(void);
 void ColourStartBoom(int noToLight);

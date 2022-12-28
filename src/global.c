@@ -45,14 +45,14 @@ int32 dbg_f;
 
 const char gTrackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 }; // TODO 15?
 
-char* gDRAM;
-char* gVRAM;
-char* pDRAM;
-char* pVRAM;
+uint8* gDRAM;
+uint8* gVRAM;
+uint8* pDRAM;
+uint8* pVRAM;
 
-char* allocDRAM(int size)
+uint8* allocDRAM(int32 size)
 {
-    char* ret = pDRAM;
+    uint8* ret = pDRAM;
     size = (size + 3) & ~3;
     pDRAM += size;
     ASSERT(pDRAM - gDRAM <= DRAM_SIZE);
@@ -62,9 +62,9 @@ char* allocDRAM(int size)
     return ret;
 }
 
-char* allocVRAM(int size)
+uint8* allocVRAM(int32 size)
 {
-    char* ret = pVRAM;
+    uint8* ret = pVRAM;
     size = (size + 3) & ~3;
     pVRAM += size;
     ASSERT(pVRAM - gVRAM <= VRAM_SIZE);
@@ -76,8 +76,8 @@ char* allocVRAM(int size)
 
 typedef struct MemState
 {
-    char* pDRAM;
-    char* pVRAM;
+    uint8* pDRAM;
+    uint8* pVRAM;
     Texture* pTexture;
 } MemState;
 
@@ -104,4 +104,29 @@ void memStateRestore(void)
     pDRAM = gMemState.pDRAM;
     pVRAM = gMemState.pVRAM;
     gTexturePtr = gMemState.pTexture;
+}
+
+void getTrackStrNo(char* trackStr, char trackNo)
+{
+    if (trackNo <= 9)
+    {
+        trackStr[0] = '0';
+        trackStr[1] = '0' + trackNo;
+    }
+    else
+    {
+        trackStr[0] = '1';
+        trackStr[1] = '0' + (trackNo - 10);
+    }
+    trackStr[2] = 0;
+}
+
+void getPath(char* trackPath, char trackNo, char* name)
+{
+    char No[3];
+
+    strcpy(trackPath, "wipeout/track");
+    getTrackStrNo(No, trackNo);
+    strcat(trackPath, No);
+    strcat(trackPath, name);
 }

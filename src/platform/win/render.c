@@ -893,6 +893,19 @@ void addVertexI(const vec3i* pos, float s, float t, uint32 color)
     v->color = color;
 }
 
+void addVertexS(const vec3s* pos, float s, float t, uint32 color)
+{
+    ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
+
+    VertexGL* v = gVertices + gVerticesCount++;
+    v->x = pos->x;
+    v->y = pos->y;
+    v->z = pos->z;
+    v->s = s;
+    v->t = t;
+    v->color = color;
+}
+
 void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
 {
     const Texture* t = g->texture;
@@ -1456,7 +1469,7 @@ void renderMesh(const Object* obj)
 {
     int32 i, dx, dz, rx, rz, len;
     float iw, ih;
-    const vec3i* v = obj->vertices;
+    const vec3s* v = obj->vertices;
     const ObjFace* f = obj->faces;
     const ObjSprite* s = obj->sprites;
 
@@ -1484,10 +1497,10 @@ void renderMesh(const Object* obj)
             stateCheck();
 
             addQuad();
-            addVertexI(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, f->color[0]);
-            addVertexI(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, f->color[1]);
-            addVertexI(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, f->color[2]);
-            addVertexI(v + f->index[3], f->uv[3][0] * iw, f->uv[3][1] * ih, f->color[3]);
+            addVertexS(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, f->color[0]);
+            addVertexS(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, f->color[1]);
+            addVertexS(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, f->color[2]);
+            addVertexS(v + f->index[3], f->uv[3][0] * iw, f->uv[3][1] * ih, f->color[3]);
         }
         else
         {
@@ -1500,9 +1513,9 @@ void renderMesh(const Object* obj)
                 stateCheck();
 
                 addTriangle();
-                addVertexI(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, colorWhite);
-                addVertexI(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, colorWhite);
-                addVertexI(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, colorWhite);
+                addVertexS(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, colorWhite);
+                addVertexS(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, colorWhite);
+                addVertexS(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, colorWhite);
 
                 renderSetBlend(BLEND_NONE);
                 renderSetColor(color);
@@ -1512,9 +1525,9 @@ void renderMesh(const Object* obj)
                 stateCheck();
 
                 addTriangle();
-                addVertexI(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, f->color[0]);
-                addVertexI(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, f->color[1]);
-                addVertexI(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, f->color[2]);
+                addVertexS(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, f->color[0]);
+                addVertexS(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, f->color[1]);
+                addVertexS(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, f->color[2]);
             }
         }
     }
@@ -1522,7 +1535,7 @@ void renderMesh(const Object* obj)
     for (i = 0; i < obj->sCount; i++, s++)
     {
         Texture* t = gTextures + SPRITE_TEXTURE(s);
-        const vec3i* p = v + s->index;
+        const vec3s* p = v + s->index;
 
         int32 w = s->width >> 1;
         int32 wx = gCylX * w >> FIXED_SHIFT;
@@ -1789,6 +1802,10 @@ Texture* renderCreateTexture(uint8* ptr)
     tex->iw = 1.0f / w;
     tex->ih = 1.0f / h;
 
+#ifdef _DEBUG
+    tex->tim = tim;
+#endif
+
     if (HACK_LOAD_TRACK)
     {
         ASSERT(w == 32);
@@ -1796,9 +1813,6 @@ Texture* renderCreateTexture(uint8* ptr)
         FillTrackTex(tempData);
 
         tex->id = 0;
-    #ifdef _DEBUG
-        tex->tim = tim;
-    #endif
     }
     else
     {

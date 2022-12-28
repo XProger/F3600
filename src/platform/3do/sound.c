@@ -417,7 +417,7 @@ int MusicGetTrack(void)
 void MusicPlay(int track)
 {
     musicTrack = track;
-
+    return;
     if (track >= 0) {
         SendSignal(musicThread, musicSignal);
     }

@@ -16,6 +16,7 @@ extern ShipData ctrlshipIndex[NO_OF_SHIPS];
 void showLoading(int32 track)
 {
     Texture* loadingScreen;
+    Texture* texPtr = gTexturePtr;
     char* vramPtr = pVRAM;
     
     if (track == -1)
@@ -45,12 +46,16 @@ void showLoading(int32 track)
     renderFrameBegin();
     renderSetMode(RENDER_MODE_2D);
     renderBackground(loadingScreen);
-    CentreText("LOADING", text_data(0, 200, 8), TEXT_COLOR_WHITE);
+    if (track != -1)
+    {
+        CentreText("LOADING", text_data(0, 200, 8), TEXT_COLOR_WHITE);
+    }
     renderFrameEnd();
     renderSwap();
 
     renderDeleteTexture(loadingScreen);
 
+    gTexturePtr = texPtr;
     pVRAM = vramPtr;
 }
 
@@ -99,11 +104,6 @@ void gameInit(void)
 
     renderOffset(0, 0);
 
-    time = osGetSystemTimeMS();
-
-    InitText(); // 0.27s -> 0.15s (uncomp) -> 0.07s (conv tex)
-    printf("init text %d ms\n", osGetSystemTimeMS() - time);
-
     showLoading(-1); // 1s
 
     // 3.4s -> 2.3s (uncomp) -> 1.7s (conv tex) -> 1.5s (conv prm)
@@ -148,11 +148,7 @@ void gameInit(void)
     else
         gTimeout = 60 * 5;
 
-    LoadShipData(ctrlshipIndex, ctrlshipShapes);
-    InitSpeedo();
-    InitWeaponSprtIcons();
-    InitEffects();
-    InitWeapons(ctrlweaponShapes);
+    LoadCommon();
 
     memStateSave();
 

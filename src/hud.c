@@ -26,27 +26,6 @@ Texture* gSpeedoTex;
 Texture* gWinLoseTex;
 Texture* gWeaponIcon;
 
-void InitText(void)
-{
-    LoadCompressedTextureSequence("wipeout/textures/drfonts.cmp", 0);
-
-    SetCharTextures(8);
-    SetCharTextures(12);
-    SetCharTextures(16);
-
-    glyphEnd.x = 0;
-    glyphEnd.y = 0;
-    glyphEnd.w = 24;
-    glyphEnd.h = 16;
-    glyphEnd.texture = gTextures + DRTEXT_RED + 3;
-
-    glyphDel.x = 0;
-    glyphDel.y = 0;
-    glyphDel.w = 24;
-    glyphDel.h = 16;
-    glyphDel.texture = gTextures + DRTEXT_RED + 4;
-}
-
 typedef struct 
 {
     uint8 tx, ty;
@@ -71,11 +50,6 @@ const BarPoint gBarPoint[NUM_BARS + 1] = {
     { 110,  7,    102, 22,    BAR_COLOR( 255, 234, 170 ) },
     { 125,  7,    118, 22,    BAR_COLOR( 255, 255, 255 ) }
 };
-
-void InitSpeedo(void)
-{
-    gSpeedoTex = LoadTexture("wipeout/textures/speedo.tim");
-}
 
 #define BAR_THRUST      70
 #define BAR_SPEED       2000
@@ -329,9 +303,9 @@ void SetCharTextures(int32 size)
     int32 i, j;
     int32 x, y;
     int32 searchLett, row;
+    Glyph* glyph;
     const Texture* texture;
     const uint16* pos;
-    Glyph* glyph;
 
     if (size == 8)
     {
@@ -889,24 +863,6 @@ void DisplayRacePoints(void)
     }
 }
 
-void InitWinLoseTex(const char* fileName)
-{
-    char modelFile[64];
-
-    strcpy(modelFile, "wipeout/textures/");
-    strcat(modelFile, fileName);
-    strcat(modelFile, ".cmp");
-
-    gWinLoseTex = gTexturePtr;
-    LoadCompressedTextureSequence(modelFile, 0);
-}
-
-void InitWeaponSprtIcons(void)
-{
-    gWeaponIcon = gTexturePtr;
-    LoadCompressedTextureSequence("wipeout/common/wicons.cmp", 0);
-}
-
 void DrawWeaponSprtIcons(ShipData* playerShip)
 {
     int icon = playerShip->weaponType;
@@ -951,7 +907,7 @@ void DisplayWinLose(int32 index)
 
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData)
 {
-    short i;
+    int32 i;
 
     AddText("RACE STATISTICS", text_data(15, 80, 8), TEXT_COLOR_HIGHLIGHT);
 

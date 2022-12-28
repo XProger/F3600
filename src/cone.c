@@ -1,6 +1,8 @@
 #include "game.h"
 
-#ifdef __3DO__ // TODO optimize
+Cone ctrlcone;
+
+#ifdef __3DO__ // TODO 3DO optimize
 void InitCone(Cone* cone) {}
 void ResetCone(Cone* cone) {}
 void UpdateCone(Cone* cone) {}
@@ -20,7 +22,7 @@ void InitCone(Cone* cone)
     int16 shared[3];
     int32 gotIt;
 
-    for (h = 0; h < 8; h++)
+    for (h = 0; h < NO_OF_SHIPS; h++)
     {
         allCount = 0;
         face = cone->object[h]->faces;
@@ -91,7 +93,7 @@ void ResetCone(Cone* cone)
 {
     int32 i, j;
 
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < NO_OF_SHIPS; i++)
     {
         for (j = 0; j < 3; j++)
         {
@@ -110,8 +112,11 @@ void UpdateCone(Cone* cone)
     int32 disp;
     int32 i, j;
 
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < NO_OF_SHIPS; i++)
     {
+        if (!(cone->ship[i]->attr & VISIBLE))
+            continue;
+
         if (i == ownShip)
         {
             /* get the z displacement related to speed or thrust */

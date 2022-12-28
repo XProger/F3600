@@ -45,6 +45,8 @@ OBJ += $(SRC_C:%.c=%.c.o)
 
 all: clean launchme modbin banner iso run
 
+usb: clean launchme modbin banner iso copy_usb run
+
 launchme: builddir $(OBJ)
 	$(LD) -dupok -o $(EXENAME) $(LDFLAGS) $(STARTUP) $(LIBS) $(addprefix build/, $(notdir $(OBJ)))
 
@@ -61,6 +63,9 @@ iso:
 run:
 	/c/RetroArch/retroarch.exe -L C:\RetroArch\cores\opera_libretro.dll C:\Projects\wipeout-xport\src\platform\3do\wipeout.iso
 
+copy_usb:
+	cp ./wipeout.iso /k/wipeout.iso
+	
 builddir:
 	mkdir -p build/
 

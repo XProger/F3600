@@ -4,8 +4,6 @@
 
 #include "game.h"
 
-Cone ctrlcone;
-
 const short startLinePos[16] = {
     27,     /* NULL             */
     27,     /* V - TerrorMax    */
@@ -161,60 +159,6 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, ConfigData
 
         ship->attr = attr;
     }
-}
-
-void LoadShipData(ShipData* shipIndex, Object** shipShapes)
-{
-    int shipTextures, droidTextures, colTextures;
-    Object* obj;
-    int32 i, objCount;
-    int32 count = 0;
-
-    /******************************************************/
-    /** Load compressed texture files, first to allow    **/
-    /** temporary memory to be allocated                 **/
-    /******************************************************/
-
-    shipTextures = gTexturePtr - gTextures;
-    LoadCompressedTextureSequence("wipeout/common/allsh.cmp", 1);
-
-    colTextures = gTexturePtr - gTextures;
-    LoadCompressedTextureSequence("wipeout/common/alcol.cmp", 1);
-
-    droidTextures = gTexturePtr - gTextures;
-    LoadCompressedTextureSequence("wipeout/common/rescu.cmp", 1);
-
-    obj = LoadPrm("wipeout/common/allsh.prm", shipTextures, &objCount);
-    ASSERT(objCount == NO_OF_SHIPS);
-
-    for (i = 0; i < objCount; i++)
-    {
-        shipIndex[count].highResTableIndex = shipShapeOrder[count];
-        shipShapes[count] = obj + i;
-
-        count += 1;
-    }
-
-    obj = LoadPrm("wipeout/common/alcol.prm", colTextures, &objCount);
-    ASSERT(objCount == NO_OF_SHIPS);
-
-    for (i = 0; i < objCount; i++)
-    {
-        shipIndex[count - NO_OF_SHIPS].lowResTableIndex = count;
-        shipShapes[count] = obj + i;
-
-        count += 1;
-    }
-
-    shipShapes[RESCUE_DROID] = LoadPrm("wipeout/common/rescu.prm", droidTextures, NULL);
-
-    for (i = 0; i < NO_OF_SHIPS; i++)
-    {
-        ctrlcone.object[i] = shipShapes[shipIndex[i].highResTableIndex];
-        ctrlcone.ship[i] = &shipIndex[i];
-    }
-
-    InitCone(&ctrlcone);
 }
 
 void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData)

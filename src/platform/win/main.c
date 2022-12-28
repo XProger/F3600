@@ -167,8 +167,7 @@ void inputReset()
     for (index = 0; index < INPUT_JOY_COUNT; index++)
     {
         if (!joyDevice[index].ready)
-            return;
-
+            break;
         XINPUT_VIBRATION vibration;
         vibration.wLeftMotorSpeed = 0;
         vibration.wRightMotorSpeed = 0;
@@ -186,6 +185,7 @@ enum JoyMode
 };
 
 int32 joyMode = JOY_MODE_XINPUT;
+int32 joyIndex = 0;
 
 void inputUpdate()
 {
@@ -194,7 +194,8 @@ void inputUpdate()
 
     gPadStickX = gPadStickY = 256;
 
-    for (int i = 0; i < INPUT_JOY_COUNT; i++)
+    //for (int i = 0; i < INPUT_JOY_COUNT; i++)
+    int i = joyIndex;
     {
         int32 curMask = 0;
         int32 oldMask = joyDevice[i].mask;
@@ -205,13 +206,13 @@ void inputUpdate()
             JOYINFOEX info;
 
             if (!joyDevice[i].readyLegacy)
-                continue;
+                return;
 
             info.dwSize  = sizeof(info);
             info.dwFlags = JOY_RETURNALL;
 
             if (joyGetPosEx(i, &info) != JOYERR_NOERROR)
-                continue;
+                return;
 
             joyGetDevCaps(i, &caps, sizeof(caps));
 
@@ -278,7 +279,7 @@ void inputUpdate()
             XINPUT_STATE state;
 
             if (!joyDevice[i].ready)
-                continue;
+                return;
 
             joyRumble(i);
 
@@ -286,7 +287,7 @@ void inputUpdate()
             {
                 inputFree();
                 inputInit();
-                break;
+                return;
             }
 
             static const int buttons[] = { IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_SELECT, IN_L, IN_R, IN_LB, IN_RB, 0, 0, IN_A, IN_B, IN_X, IN_Y, IN_LT, IN_RT };
@@ -353,7 +354,6 @@ void inputUpdate()
         }
 
         joyDevice[i].mask = curMask;
-        break;
     }
 }
 

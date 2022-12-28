@@ -231,12 +231,77 @@ def read_obj(objIdx):
     obj = bpy.data.objects.new(name, mesh)
     mat_scale = Matrix.Diagonal(Vector([SCALE, SCALE, SCALE, 1]))
     mat_trans = Matrix.Translation(Vector([pos[0], pos[1], pos[2], 0]))
-    mat_rot = Matrix.Rotation(radians(90.0), 4, 'X')
+    mat_rot = Matrix.Rotation(radians(-90.0), 4, 'X')
     obj.matrix_local = mat_rot @ mat_scale @ mat_trans
     return obj
 
+def read_track(index):
+    global file;
+    meshVertices = []
+    meshFaces = []
+
+    # read track vertices
+    path = 'C:\\Projects\\wipeout-xport\\bin\\WIPEOUT\\TRACK{:02d}\\TRACK.TRV'.format(index)
+
+    file = open(path, 'rb')
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    
+    for i in range(int(size / 16)):
+        v = struct.unpack('>3i', file.read(12))
+        meshVertices.append(v)
+        skip(4) # skip padding
+        
+    file.close()
+    
+    # read faces (quads)
+    path = 'C:\\Projects\\wipeout-xport\\bin\\WIPEOUT\\TRACK{:02d}\\TRACK.TRF'.format(index)
+
+    file = open(path, 'rb')
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    
+    for i in range(int(size / 20)):
+        idx = struct.unpack('>4h', file.read(8))
+        meshFaces.append(idx)
+        skip(12) # skip normal, flags, texture, color & padding
+        
+    file.close()
+        
+    name = "track"
+
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(meshVertices, [], meshFaces)
+    mesh.update()
+
+    obj = bpy.data.objects.new(name, mesh)
+    mat_scale = Matrix.Diagonal(Vector([SCALE, SCALE, SCALE, 1]))
+    mat_rot = Matrix.Rotation(radians(-90.0), 4, 'X')
+    obj.matrix_local = mat_rot @ mat_scale
+    bpy.context.collection.objects.link(obj)
+
+
+def read_ships():
+    path = 'C:\\Projects\\wipeout-xport\\bin\\WIPEOUT\\COMMON\\ALLSH.PRM'
+    global file;
+    file = open(path, 'rb')
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+
+    objIdx = 0
+
+    while file.tell() < size:
+        obj = read_obj(objIdx)
+        bpy.context.collection.objects.link(obj)
+        objIdx += 1
+        
+    file.close()
+
 def read_scene(index):
-    path = 'C:\\wipeout-xport\\bin\\WIPEOUT\\TRACK{:02d}\\SCENE.PRM'.format(index)
+    path = 'C:\\Projects\\wipeout-xport\\bin\\WIPEOUT\\TRACK{:02d}\\SCENE.PRM'.format(index)
     #path = 'C:\\Projects\\wipeout-xport\\bin\\WIPEOUT\\COMMON\\ALLSH.PRM'.format(index)
     global file;
     file = open(path, 'rb')
@@ -252,6 +317,8 @@ def read_scene(index):
         objIdx += 1
         
     file.close()
+    
+    read_track(index)
     
 def write_shadow_mesh(file, mesh):
     file.write(struct.pack('>i', len(mesh.vertices)))
@@ -290,7 +357,8 @@ def write_shadows(path):
     
     file.close()
 
-#read_scene(2)
+read_scene(2)
+#read_ships()
 
-write_shadows('C:\\Projects\\wipeout-xport\\src\\platform\\3do\\CD\\WIPEOUT\\COMMON\\allsh.shd')
+#write_shadows('C:\\Projects\\wipeout-xport\\src\\platform\\3do\\CD\\WIPEOUT\\COMMON\\allsh.shd')
 

@@ -169,8 +169,8 @@ void menuLoop(ConfigData*);
 
 void InitGameData(ConfigData*);
 void InitChampionship(void);
-void ContinueGameConfirm(char*, short, char*);
-void RestartGameConfirm(char* confirm, short xpad, char* lConfirm);
+void ContinueGameConfirm(int32 lConfirm);
+void RestartGameConfirm(int32 lConfirm);
 void SetNormPadPresets(ConfigData*);
 
 void GoPrevMusic(void);

@@ -4,17 +4,10 @@ Effect gEffects[MAX_EFFECTS];
 Effect* gEffectsFree;
 Effect* gEffectsActive;
 
-Texture* gEffectTextures;
 Texture* gShadowTex;
 
 extern int gFrameIndex;
 extern ShipData ctrlshipIndex[NO_OF_SHIPS];
-
-void InitEffects(void)
-{
-    gEffectTextures = gTexturePtr;
-    LoadCompressedTextureSequence("wipeout/common/effects.cmp", 1);
-}
 
 void ResetEffects(void)
 {
@@ -353,31 +346,6 @@ void MoveDonkey(void)
 #endif
 }
 
-#ifdef __3DO__
-void InitShadow(void)
-{
-}
-#else
-void InitShadow(void)
-{
-    const char* name;
-
-    if (ownShip < 2)
-        name = "wipeout/textures/shad1.tim";
-    else if (ownShip < 4)
-        name = "wipeout/textures/shad2.tim";
-    else if (ownShip < 6)
-        name = "wipeout/textures/shad3.tim";
-    else
-        name = "wipeout/textures/shad4.tim";
-
-    HACK_LOAD_SHADOW = 1;
-    gShadowTex = gTexturePtr;
-    LoadTexture(name);
-    HACK_LOAD_SHADOW = 0;
-}
-#endif
-
 #define SHADOW_BIAS     48
 
 void DrawShadows(ShipData* shipIndex)
@@ -501,7 +469,7 @@ void InitAuroraBorialis(Object* object)
     ObjFace* face;
     uint16* coords;
     int32 y;
-    vec3i* vertex;
+    vec3s* vertex;
 
     abCount = 0;
 

@@ -171,7 +171,7 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
     vec3i dopler;
     int32 doplerMag;
 
-#ifdef __3DO__ // TODO optimize
+#ifdef __3DO__ // TODO 3DO optimize
     return;
 #endif
 
@@ -248,7 +248,7 @@ void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
     int32 vol;
     int32 pitch;
 
-#ifdef __3DO__ // TODO optimize
+#ifdef __3DO__ // TODO 3DO optimize
     return;
 #endif
 

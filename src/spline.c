@@ -369,13 +369,14 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
 
 void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo)
 {
+#if 0 // TODO splines
     vec4i pos;
     vec4i pos1;
     vec4i step;
     PrmPSX prm;
     vec4i targetVector;
     long temp;
-#if 0 // TODO splines
+
     if (shipstepCount == 8)
     {
         shipsplineCount += 1;
@@ -454,6 +455,7 @@ void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo)
 
 void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, RescueData* rescueDroid)
 {
+#if 0 // TODO splines
     vec4i pos1;
     vec4i step;
     vec4i targetVector;
@@ -461,7 +463,7 @@ void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, Re
     long temp;
     PrmPSX prm;
     int32 vhdg, vpitch;
-#if 0 // TODO splines
+
     if (camerastepCount == 8)
     {
         camerasplineCount += 1;
@@ -614,7 +616,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     TrackSection* startSection;
     TrackSection* nextSection;
     vec4i targetVector;
+#if 0 // TODO splines
     PrmPSX prm;
+#endif
     long temp;
 
     /* firestar */

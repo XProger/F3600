@@ -268,7 +268,7 @@ void MusicPlay(int track)
     FILE* f;
     int32 size;
     char path[16];
-
+return;
     ASSERT(track > 0);
     if (track == music.track)
     {

@@ -54,6 +54,8 @@ void DrawLandscape(TrackCamera* camera)
     {
         obj = gTrack.objects + section->objects[i];
 
+        // TODO check z first then x and y
+
         matrixTranslate(obj->pos.x, obj->pos.y, obj->pos.z);
 
         extent = obj->extent;

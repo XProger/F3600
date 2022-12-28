@@ -737,7 +737,7 @@ void renderBillboard(const Billboard* b) {}
 
 void renderBackFill(int x, int y, int w, int h)
 {
-    // TODO compare with 16-bpp
+    // TODO perf compare with 16-bpp
     FaceCEL* face;
 
     face = faceAdd(0);
@@ -1094,7 +1094,6 @@ void renderMesh(const Object* obj)
     {
         uint32 texIndex = FACE_TEXTURE(f);
 
-        // TODO precalc float uv's
         if (texIndex == NO_TEXTURE)
         {
             texIndex = 0;

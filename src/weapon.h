@@ -68,7 +68,6 @@ extern WeaponData* gWeaponsActive;
 void UpdateWeapons(ShipData* shipIndex, Object** weaponShapes);
 void FireWeapon(ShipData* playerShip, int shipNo, char decision);
 void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes);
-void InitWeapons(Object** weaponShapes);
 void ResetWeapons(Object** weaponShapes);
 void InitWeaponGrids(void);
 void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids);

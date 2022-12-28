@@ -7,8 +7,6 @@
 #define PrmMax 64
 #define AJSDELAY 60 * 30 // arbitrary number - linked to frame rate ? HOPE SO !
 
-extern Cone ctrlcone;
-
 extern short startIceText;
 extern short startFireText;
 int ajscount = 0; // oh shit another global flag
@@ -97,7 +95,7 @@ void AdjustCrowdSound(Object* lost, int lostCount)
     int smallestMag;
     vec3i pos;
 
-#ifdef __3DO__ // TODO optimize
+#ifdef __3DO__ // TODO 3DO optimize
     return;
 #endif
 
@@ -149,21 +147,6 @@ void QuitGame()
     KillNotes();
 }
 
-void showLoadingScreen()
-{
-    char loadPath[48];
-    char loadNo[3];
-
-    /* load screen stuff */
-    strcpy(loadPath, "wipeout/textures/load");
-    getTrackStrNo(loadNo, ctrlConfigData.actTrackNum);
-    strcat(loadPath, loadNo);
-    strcat(loadPath, ".tim");
-
-    //TODO render/swap/render/swap
-    //JJSLoad16BitTexture(loadPath, SCREEN);
-}
-
 void raceInit(ConfigData* gameData)
 {
     printf("race init\n");
@@ -202,13 +185,10 @@ void raceInit(ConfigData* gameData)
     ctrlfirsttime = 1;
     finishedExtro = 0;
 
-    InitScene(gameData->actTrackNum);
+    LoadScene(gameData->actTrackNum);
+    LoadWinLoseTex(PILOT_NAMES[gameData->shipNum]);
 
     InitCamera(&gCamera, gTrack.sections);
-
-    InitShadow();
-
-    InitWinLoseTex(PILOT_NAMES[gameData->shipNum]);
 
     InitShipData(gTrack.sections, ctrlshipIndex, gameData);
     InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
@@ -270,10 +250,6 @@ void raceInit(ConfigData* gameData)
     UpdateEffects();
 
     ctrlFramesCount = 1;
-
-#ifdef _DEBUG
-    convertTrack3DO(gameData->actTrackNum);
-#endif
 }
 
 void raceCtrl(ConfigData* gameData)
@@ -1154,9 +1130,9 @@ void raceLoop(ConfigData* gameData)
     if (ctrlNeedVenomComplete)
         DisplayVenomComplete();
     if (ctrlNeedContinueGameConfirm)
-        ContinueGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm));
+        ContinueGameConfirm(ctrlhiScoreData.lConfirm);
     if (ctrlNeedInSingleGameConfirm)
-        RestartGameConfirm(&(ctrlhiScoreData.confirm), xpad, &(ctrlhiScoreData.lConfirm));
+        RestartGameConfirm(ctrlhiScoreData.lConfirm);
     if (ctrlNeedInGameReset)
         InGameReset(ctrlchoice);
     if (ctrlNeedInGameConfirm)

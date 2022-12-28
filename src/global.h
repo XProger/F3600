@@ -93,15 +93,18 @@ extern const char gTrackList[15];
 #define DRAM_SIZE (32 * DRAM_BLOCK_SIZE)
 #define VRAM_SIZE (44 * VRAM_BLOCK_SIZE)
 
-extern char* gDRAM;
-extern char* gVRAM;
-extern char* pDRAM;
-extern char* pVRAM;
-char* allocDRAM(int size);
-char* allocVRAM(int size);
+extern uint8* gDRAM;
+extern uint8* gVRAM;
+extern uint8* pDRAM;
+extern uint8* pVRAM;
+uint8* allocDRAM(int32 size);
+uint8* allocVRAM(int32 size);
 
 void memStateSave(void);
 void memStateRestore(void);
+
+void getTrackStrNo(char* trackStr, char trackNo);
+void getPath(char* trackPath, char trackNo, char* name);
 
 extern int32 dbg_update;
 extern int32 dbg_render;

@@ -20,8 +20,6 @@ Texture* gButtonTex;
 Texture* slideTex;
 Texture* sliderTex;
 
-char CheckKey(unsigned short code);
-
 #define NONE        0
 #define LEFT        1
 #define RIGHT       2
@@ -66,18 +64,15 @@ void DrawOptionMenus(const Menu* menu, int shapeNo);
 void DrawGames(const Menu* menu, int shapeNo);
 void DrawHiScoreMenu(const Menu* menu, int shapeNo);
 
-void ResetKeys(void);
-
 void CallMenuSelector(Object**, ConfigData*, SelectionData*);
 void CallMenuActivator(ConfigData*, SelectionData*);
-Object* LoadModel(char* fileName);
-Object* LoadTexModel(char* fileName);
+Object* LoadModel(const char* fileName);
+Object* LoadTexModel(const char* fileName);
 void MusicVSfx(SelectionData*, ConfigData*);
 void ShowHiScores(SelectionData*, ConfigData*);
 void InitSelectData(SelectionData*);
 
 void DrawTeamShips(int, int, int, int, Object*);
-void InitButtons(char*);
 void ShowTimeTrialScores(SelectionData*, ConfigData*);
 void QuitYesNo(SelectionData*, ConfigData*);
 void GraphicOptions(SelectionData*, ConfigData*);
@@ -210,30 +205,7 @@ const Menu gMenuSystem[] = {
 
 void menuInit(void)
 {
-    pilotShapes = LoadTexModel("pilot");
-    audioShapes = LoadTexModel("cdobj");
-
-#ifdef VER_PSX
-    teamShapes = LoadModel("teams");
-    clsShapes = LoadModel("class");
-    padShapes = LoadTexModel("pad1");
-    gameShapes = LoadModel("champ");
-    optShapes = LoadTexModel("alopt");
-#else
-    teamShapes = LoadTexModel("team");
-    clsShapes = LoadTexModel("leeg");
-    padShapes = LoadTexModel("cntrl");
-    gameShapes = LoadTexModel("msdos");
-    optShapes = LoadTexModel("misc");
-#endif
-
-    gTrackIcon = gTexturePtr;
-    LoadCompressedTextureSequence("wipeout/textures/track.cmp", 0);
-
-    InitButtons("wipeout/textures/buttons.cmp");
-    slideTex = LoadTexture("wipeout/textures/slider1.tim");
-    sliderTex = LoadTexture("wipeout/textures/slide1.tim");
-    menuScreen = LoadTexture("wipeout/textures/wipeout1.tim");
+    LoadMainMenu();
 
     gMenuHistoryIndex = 0;
 
@@ -540,10 +512,10 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
 
 void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* selectData)
 {
-    int i;
-    const Menu* menu = gMenuSystem + gCurrMenu;
-    int numOptions = menu->numOptions;
+    int32 i;
     const char* title;
+    const Menu* menu = gMenuSystem + gCurrMenu;
+    int32 numOptions = menu->numOptions;
 
     if (gCurrMenu == TRACK_MENU)
     {
@@ -588,7 +560,7 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
         renderSetMode(RENDER_MODE_2D);
     }
 
-    DrawButtons();
+    //DrawButtons();
     CentreText(menu->title, text_data(0, 21, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < numOptions; i++)
@@ -608,55 +580,22 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
 
     if (GetMenuKey(M_BACK) && (gMenuHistoryIndex > 0))
     {
+        /* TODO input mapping
         if (gCurrMenu == CONTROL_EDIT_MENU)
         {
             ResetKeys();
         }
-
+        */
         GoBack();
 
         KeyToChange = NONE;
     }
 }
 
-Object* LoadModel(char* fileName)
-{
-    char modelFile[64];
-    strcpy(modelFile, "wipeout/common/");
-    strcat(modelFile, fileName);
-    strcat(modelFile, ".prm");
-
-    return LoadPrm(modelFile, 0, NULL);
-}
-
-Object* LoadTexModel(char* fileName)
-{
-    int32 modelTextures;
-    char modelFile[64];
-
-    /******************************************************/
-    /** Load compressed texture files, first to allow    **/
-    /** temporary memory to be allocated                 **/
-    /******************************************************/
-
-    strcpy(modelFile, "wipeout/common/");
-    strcat(modelFile, fileName);
-    strcat(modelFile, ".cmp");
-
-    modelTextures = gTexturePtr - gTextures;
-    LoadCompressedTextureSequence(modelFile, 0);
-
-    strcpy(modelFile, "wipeout/common/");
-    strcat(modelFile, fileName);
-    strcat(modelFile, ".prm");
-
-    return LoadPrm(modelFile, modelTextures, NULL);
-}
-
 void DrawMainMenu(const Menu* menu, int shapeNo)
 {
-    int hdg = gFrameIndex * 20;
-    int heading = gFrameIndex * 5;
+    int32 hdg = gFrameIndex * 20;
+    int32 heading = gFrameIndex * 5;
 
     if (shapeNo == 0)
         DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
@@ -675,8 +614,8 @@ void DrawMainMenu(const Menu* menu, int shapeNo)
 
 void DrawTeams(const Menu* menu, int shapeNo)
 {
-    int hdg = gFrameIndex * 20;
-    int heading = gFrameIndex * 10;
+    int32 hdg = gFrameIndex * 20;
+    int32 heading = gFrameIndex * 10;
 
     DrawObject(teamShapes + teamShapeOrder[shapeNo], 0, 0, 9000, hdg, 0, 0);
 
@@ -695,8 +634,8 @@ void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
 
 void DrawPilot(const Menu* menu, int shapeNo)
 {
-    int hdg = gFrameIndex * 20;
-    int shdg = gFrameIndex * 5;
+    int32 hdg = gFrameIndex * 20;
+    int32 shdg = gFrameIndex * 5;
 
     DrawObject(pilotShapes + pilotShapeOrder[shapeNo], 0, -400, 11000, hdg, 0, 0);
     DrawTeamShips(0, 700, 1300, shdg, ctrlshipShapes[shipShapeOrder[shapeNo]]);
@@ -704,7 +643,7 @@ void DrawPilot(const Menu* menu, int shapeNo)
 
 void DrawClass(const Menu* menu, int shipNo)
 {
-    int hdg = gFrameIndex * 20;
+    int32 hdg = gFrameIndex * 20;
 
     if (shipNo == 0)
     {
@@ -795,7 +734,7 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
 
 void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
 {
-    short actualTrack = 0;
+    int32 actualTrack = 0;
 
     if (GetMenuKey(M_RIGHT))
     {
@@ -887,7 +826,7 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
 
 void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
 {
-    short actualTrack = 0;
+    int32 actualTrack = 0;
 
     if (GetMenuKey(M_RIGHT))
     {
@@ -1003,21 +942,20 @@ void InitGameData(ConfigData* gameData)
     gameData->showGameOver = 0;
 }
 
-/*TODO lconfirm? xpad?*/
-void ContinueGameConfirm(char* confirm, short xpad, char* lConfirm)
+void ContinueGameConfirm(int32 lConfirm)
 {
     CentreText("CONTINUE QUALIFYING OR QUIT", text_data(77, 95, 8), TEXT_COLOR_WHITE);
 
-    AddText("QUIT", text_data(215, 120, 16), (*lConfirm) ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    AddText("QUALIFY", text_data(45, 120, 16), (*lConfirm) ? TEXT_COLOR_WHITE : BLINK_TEXT);
+    AddText("QUIT", text_data(215, 120, 16), lConfirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText("QUALIFY", text_data(45, 120, 16), lConfirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
-void RestartGameConfirm(char* confirm, short xpad, char* lConfirm)
+void RestartGameConfirm(int32 lConfirm)
 {
     CentreText("RESTART RACE", text_data(77, 95, 16), TEXT_COLOR_WHITE);
 
-    AddText("NO", text_data(215, 120, 16), (*lConfirm) ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    AddText("YES", text_data(68, 120, 16), (*lConfirm) ? TEXT_COLOR_WHITE : BLINK_TEXT);
+    AddText("NO", text_data(215, 120, 16), lConfirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText("YES", text_data(68, 120, 16), lConfirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
 void SetNormPadPresets(ConfigData* gameData)
@@ -1092,7 +1030,7 @@ void SetNormPadPresets(ConfigData* gameData)
 
 void DrawGames(const Menu* menu, int shipNo)
 {
-    int hdg = gFrameIndex * 20;
+    int32 hdg = gFrameIndex * 20;
 
     renderOffset(0, -30);
 
@@ -1114,8 +1052,8 @@ void DrawGames(const Menu* menu, int shipNo)
 
 void DrawOptionMenus(const Menu* menu, int shipNo)
 {
-    int hdg = gFrameIndex * 20;
-    int heading = gFrameIndex * 5;
+    int32 hdg = gFrameIndex * 20;
+    int32 heading = gFrameIndex * 5;
 
     renderOffset(0, -30);
 
@@ -1138,7 +1076,7 @@ void DrawOptionMenus(const Menu* menu, int shipNo)
 
 void DrawHiScoreMenu(const Menu* menu, int shipNo)
 {
-    int hdg = gFrameIndex * 20;
+    int32 hdg = gFrameIndex * 20;
 
     renderOffset(0, -30);
     DrawObject(optShapes + 2, 0, 0, 600, hdg, 0, 0);
@@ -1146,7 +1084,7 @@ void DrawHiScoreMenu(const Menu* menu, int shipNo)
 
 void DisplayPadMenu(const Menu* menu, int shapeNo)
 {
-    int hdg = gFrameIndex * 20;
+    int32 hdg = gFrameIndex * 20;
 
     DrawObject(padShapes + 0, 0, 0, 6500, hdg, 0, 0);
 }
@@ -1154,12 +1092,6 @@ void DisplayPadMenu(const Menu* menu, int shapeNo)
 void InitChampionship(void)
 {
     memset(winTable, 0, sizeof(winTable));
-}
-
-void InitButtons(char* fileName)
-{
-    gButtonTex = gTexturePtr;
-    LoadCompressedTextureSequence(fileName, 0);
 }
 
 void QuitYesNo(SelectionData* selectData, ConfigData* gameData)
@@ -1178,89 +1110,31 @@ void QuitYesNo(SelectionData* selectData, ConfigData* gameData)
 
 void GraphicOptions(SelectionData* selectData, ConfigData* gameData)
 {
-    // TODO
+    // TODO menu graphics
 }
 
 void ControllerOptions(SelectionData* selectData, ConfigData* gameData)
 {
-    // TODO
+    // TODO menu controls
 }
 
 void ControllerEdit(SelectionData* selectData, ConfigData* gameData)
 {
-    // TODO
+    // TODO menu controls
 }
 
 void DrawControllerMenu(const Menu* menu, int shapeNo)
 {
-    // TODO
+    // TODO menu controls
 }
 
 void DrawControllerEdit(const Menu* menu, int shapeNo)
 {
-    // TODO
+    // TODO menu controls
 }
 
 void DrawGraphicDetail(const Menu* menu, int shapeNo)
 {
-    int heading = gFrameIndex * 5;
-
+    int32 heading = gFrameIndex * 5;
     DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
-}
-
-char CheckKey(unsigned short code)
-{
-    /*TODO input remap
-    if(NewOriginalKeyCodes[15] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[13] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[12] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[14] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[0] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[1] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[6] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[5] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[4] == code)
-       return(0);
-    else if(NewOriginalKeyCodes[11] == code)
-       return(0);
-
-    if(code == 0x1c)
-       return(0);
-       */
-    return (1);
-}
-
-void ResetKeys(void)
-{
-    /*TODO input default keys
-       OriginalKeyCodes[15] = Keycons[0];
-       OriginalKeyCodes[13] = Keycons[1];
-       OriginalKeyCodes[12] = Keycons[2];
-       OriginalKeyCodes[14] = Keycons[3];
-       OriginalKeyCodes[0] = Keycons[4];
-       OriginalKeyCodes[1] = Keycons[5];
-       OriginalKeyCodes[6] = Keycons[6];
-       OriginalKeyCodes[5] = Keycons[7];
-       OriginalKeyCodes[4] = Keycons[8];
-       OriginalKeyCodes[11] = Keycons[9];
-
-       SetKey(15, OriginalKeyCodes[15]);
-       SetKey(13, OriginalKeyCodes[13]);
-       SetKey(12, OriginalKeyCodes[12]);
-       SetKey(14, OriginalKeyCodes[14]);
-       SetKey(0,  OriginalKeyCodes[0]);
-       SetKey(1,  OriginalKeyCodes[1]);
-       SetKey(6,  OriginalKeyCodes[6]);
-       SetKey(5,  OriginalKeyCodes[5]);
-       SetKey(4,  OriginalKeyCodes[4]);
-       SetKey(11, OriginalKeyCodes[11]);
-    */
 }

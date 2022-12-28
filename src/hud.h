@@ -13,8 +13,6 @@ typedef struct
     short x, y;
 } PilotData;
 
-void InitText(void);
-void InitSpeedo(void);
 void fill_speedo(int, int);
 void AddNumber(int, TEXT_DATA*, uint32);
 void AddTime(int, TEXT_DATA*, uint32);
@@ -29,11 +27,9 @@ int CalcPosition(ShipData* shipIndex);
 void InitChampTable(void);
 void DisplayChampTable(void);
 void DisplayRacePoints(void);
-void InitWinLoseTex(const char* fileName);
 void DisplayVenomComplete(void);
 void DisplayAllVenomComplete(void);
 void DisplayWinLose(int32 index);
 void DisplayRaceInfo(ConfigData* gameData, HiScoreData* hiScoreData);
 void DrawHud(ShipData* shipIndex, int choice, ConfigData* gameData);
-void InitWeaponSprtIcons(void);
 void DrawWeaponSprtIcons(ShipData* playerShip);
