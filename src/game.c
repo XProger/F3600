@@ -18,7 +18,7 @@ void showLoading(int32 track)
     Texture* loadingScreen;
     Texture* texPtr = gTexturePtr;
     char* vramPtr = pVRAM;
-    
+
     if (track == -1)
     {
         loadingScreen = LoadTexture("wipeout/textures/wiptitle.tim");
@@ -99,7 +99,7 @@ void titleLoop(void)
 void gameInit(void)
 {
     int32 time;
-
+#
     renderInit();
 
     renderOffset(0, 0);

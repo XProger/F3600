@@ -108,7 +108,7 @@ typedef struct vec4i
     #define NULL 0
 #endif
 
-#define randy() rand()
+#define randy() (rand() & 0x7FFF)
 
 extern int gPad;
 

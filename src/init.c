@@ -40,7 +40,7 @@ int32 getTexSize(uint8* ptr)
         {
             size = 4 + 16 * sizeof(uint16) + (size >> 1);
             break;
-        }        
+        }
         case TEX_TYPE_16:
         {
             size = 4 + (size << 1);
@@ -599,7 +599,7 @@ void InitSections(const char* fileName)
 
         for (j = 0; j < 3; j++)
         {
-            section->northViewCount[j] = sectionPSX->northViewCount[j]; 
+            section->northViewCount[j] = sectionPSX->northViewCount[j];
             section->southViewCount[j] = sectionPSX->southViewCount[j];
             section->eastViewCount[j]  = sectionPSX->eastViewCount[j];
             section->westViewCount[j]  = sectionPSX->westViewCount[j];
@@ -866,7 +866,7 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
     uint8* start = (uint8*)malloc(size);
     uint8* ptr = start;
     uint8* end = start + size;
-    
+
     uint8* data = pDRAM;
     Object* objects = (Object*)malloc(sizeof(Object) * MAX_OBJECTS);
     Object* obj = objects;

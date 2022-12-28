@@ -1721,7 +1721,7 @@ Texture* renderCreateTexture(uint8* ptr)
     Tim* tim = (Tim*)ptr;
     Texture* tex;
     int32 w, h;
-    int i, j;
+    int32 i, j;
 
     if (TimType(tim) == TIM_4)
     {

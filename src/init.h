@@ -339,10 +339,10 @@ typedef struct ObjectPSX
    int   normals_dummy;    /* Pointer to 3D Normals */
    short primitiveCount;   /* Number of Primitives */
    int   primitives_dummy; /* Pointer to Z Sort Primitives */
-   long  padding_dummy;
+   int   padding_dummy;
    int   bspTree_dummy;    /* Pointer to BSP Tree Primitives */
    int   skeleton_dummy;   /* Pointer to Local Coordinates */
-   long  extent;           /* Flags for object characteristics */
+   int   extent;           /* Flags for object characteristics */
    short flags_dummy;      /* Next object in list */
    int   next_dummy;       /* Next object in list */
 } ObjectPSX;

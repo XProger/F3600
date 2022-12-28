@@ -84,8 +84,8 @@ typedef struct Effect
     vec3i pos;
     vec3i vel;
     int32 count;
-    short type;
-    short size;
+    int16 type;
+    int16 size;
     struct Effect* next;
     struct Effect* prev;
 } Effect;
@@ -103,55 +103,55 @@ typedef struct Effect
 // Tim
 typedef struct TimHeader
 {
-    long id;
-    long flags;
+    uint32 id;
+    uint32 flags;
 } TimHeader;
 
 typedef struct Tim4
 {
     TimHeader header;
 
-    long clutBytes;
-    short clutX;
-    short clutY;
-    short clutW;
-    short clutH;
+    uint32 clutBytes;
+    int16 clutX;
+    int16 clutY;
+    int16 clutW;
+    int16 clutH;
     uint16 clut[16];
 
-    long textureBytes;
-    short textureX;
-    short textureY;
-    short textureW;
-    short textureH;
+    uint32 textureBytes;
+    int16 textureX;
+    int16 textureY;
+    int16 textureW;
+    int16 textureH;
 } Tim4;
 
 typedef struct Tim8
 {
     TimHeader header;
 
-    long clutBytes;
-    short clutX;
-    short clutY;
-    short clutW;
-    short clutH;
+    uint32 clutBytes;
+    int16 clutX;
+    int16 clutY;
+    int16 clutW;
+    int16 clutH;
     uint16 clut[256];
 
-    long textureBytes;
-    short textureX;
-    short textureY;
-    short textureW;
-    short textureH;
+    uint32 textureBytes;
+    int16 textureX;
+    int16 textureY;
+    int16 textureW;
+    int16 textureH;
 } Tim8;
 
 typedef struct Tim16
 {
     TimHeader header;
 
-    long textureBytes;
-    short textureX;
-    short textureY;
-    short textureW;
-    short textureH;
+    uint32 textureBytes;
+    int16 textureX;
+    int16 textureY;
+    int16 textureW;
+    int16 textureH;
 } Tim16;
 
 typedef union Tim

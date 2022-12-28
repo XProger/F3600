@@ -48,7 +48,9 @@ void osQuit()
     isQuit = 1;
 }
 
-#define WND_TITLE   "OpenResident"
+#define WND_TITLE   "wipEout xport"
+#define WND_WIDTH   1280
+#define WND_HEIGHT  720
 
 // input
 void setDown(int32 key, int32 isDown)
@@ -321,25 +323,20 @@ int32 keyToInputKey(Display *dpy, XKeyEvent event)
         KeySym code;
         int32 key;
     } keyMapping[] = {
+        { XK_A,         IN_LT },
+        { XK_D,         IN_RT },
+        { XK_Q,         IN_LB },
+        { XK_E,         IN_RB },
+        { XK_W,         IN_A },
         { XK_Return,    IN_A },
-        { XK_c,         IN_A },
-        { XK_v,         IN_X },
-        { XK_z,         IN_B },
-        { XK_x,         IN_RB },
+        { XK_space,     IN_B },
         { XK_Tab,       IN_Y },
-        { XK_Control_L, IN_START },
-        { XK_Escape,    IN_SELECT },
+        { XK_Escape,    IN_START },
         { XK_Left,      IN_LEFT },
         { XK_Right,     IN_RIGHT },
         { XK_Up,        IN_UP },
         { XK_Down,      IN_DOWN }
     };
-
-    KeySym code = XLookupKeysym(&event, 0);
-
-    if (code == XK_Shift_R)   code = XK_Shift_L;
-    if (code == XK_Control_R) code = XK_Control_L;
-    if (code == XK_Alt_R)     code = XK_Alt_L;
 
     for (int i = 0; i < COUNT(keyMapping); i++)
     {
@@ -523,7 +520,7 @@ const char* getFileName(const char* fileName)
     {
         if (!strcasecmp(fileName, gFiles[i]))
         {
-            LOG("open file %s -> %s\n", fileName, gFiles[i]);
+            //LOG("open file %s -> %s\n", fileName, gFiles[i]);
             return gFiles[i];
         }
     }
@@ -593,7 +590,7 @@ int main(int argc, char **argv)
 
     wnd = XCreateWindow(
         dpy, RootWindow(dpy, vis->screen),
-        0, 0, 960, 720, 0,
+        0, 0, WND_WIDTH, WND_HEIGHT, 0,
         vis->depth, InputOutput, vis->visual,
         CWColormap | CWBorderPixel | CWEventMask, &attr);
     XStoreName(dpy, wnd, WND_TITLE);
@@ -604,6 +601,8 @@ int main(int argc, char **argv)
 
     Atom WM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", 0);
     XSetWMProtocols(dpy, wnd, &WM_DELETE_WINDOW, 1);
+
+    renderResize(WND_WIDTH, WND_HEIGHT);
 
     gTimerStart = osGetSystemTimeMS();
     srand(gTimerStart);

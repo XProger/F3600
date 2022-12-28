@@ -1882,14 +1882,14 @@ uint32 swap32(uint32 x)
 
 void swap16p(void* ptr)
 {
-    ASSERT(((intptr_t)ptr & 1) == 0);
+    //ASSERT(((intptr_t)ptr & 1) == 0);
     uint16* x = (uint16*)ptr;
     *x = swap16(*x);
 }
 
 void swap32p(void* ptr)
 {
-    ASSERT(((intptr_t)ptr & 3) == 0);
+    //ASSERT(((intptr_t)ptr & 3) == 0);
     uint32* x = (uint32*)ptr;
     *x = swap32(*x);
 }
@@ -1918,7 +1918,7 @@ void IntelLong(long* lvalue)
     char* cvalue;
     char temp;
 
-    ASSERT(((int32)lvalue & 3) == 0);
+    //ASSERT(((int32)lvalue & 3) == 0);
     cvalue = (char*)lvalue;
 
     temp = cvalue[0];
@@ -1937,7 +1937,7 @@ void IntelShort(short* svalue)
     char* cvalue;
     char temp;
 
-    ASSERT(((int32)svalue & 1) == 0);
+    //ASSERT(((int32)svalue & 1) == 0);
     cvalue = (char*)svalue;
 
     temp = cvalue[0];

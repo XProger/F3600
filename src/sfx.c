@@ -37,18 +37,18 @@ int32 SfxLoadBankVAB(const char* vh, const char* vb)
 
     FILE* f;
     int32 i, offset;
-    VabHdr header;
+    VabHdr* header;
+    uint8* ptr = pDRAM;
 
-    f = fopen(vh, "rb");
-    if (!f) return 0;
-    fread(&header, sizeof(header), 1, f);
-    ASSERT(SFX_MAX == header.vs);
-    fseek(f, 128 * 16 + (32 * 16 * header.ps) + 2, SEEK_CUR); // skip programs and tones
-    fread(vagSize, 2, header.vs, f);
-    fclose(f);
+    osLoadFile(vh, ptr);
+    header = (VabHdr*)ptr;
+    ASSERT(SFX_MAX == header->vs);
+    ptr += sizeof(VabHdr);
+    ptr += 128 * 16 + (32 * 16 * header->ps) + 2;
+    memcpy(vagSize, ptr, header->vs * sizeof(uint16));
 
     offset = 0;
-    for (i = 0; i < header.vs; i++)
+    for (i = 0; i < header->vs; i++)
     {
         vagOffset[i] = offset;
         offset += vagSize[i];
@@ -57,10 +57,7 @@ int32 SfxLoadBankVAB(const char* vh, const char* vb)
 
     ASSERT(offset * 8 < sizeof(vagData));
 
-    f = fopen(vb, "rb");
-    if (!f) return 0;
-    fread(vagData, 1, offset * 8, f);
-    fclose(f);
+    osLoadFile(vb, vagData);
 
     //dump_vags();
 
@@ -288,7 +285,7 @@ void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
     /******* Needs re-balancing ********/
 
     vol = playerShip->speed >> 1;
-    SetVolume(SFX_TURBULENCE, 
+    SetVolume(SFX_TURBULENCE,
         (vol >> 2) + ((vol * playerShip->r_brake_rot) >> 9),
         (vol >> 2) + ((vol * playerShip->l_brake_rot) >> 9));
 }
