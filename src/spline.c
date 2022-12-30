@@ -95,9 +95,9 @@ TrackSection* FindAllNearestSection(const vec3i* pos)
     TrackSection* nearSection = NULL;
     TrackSection* trk;
     vec3i distance;
-    long smallestMag = 0x7fffffff; // pretty big // PCwipeout
-    long mag;
-    long i;
+    int32 smallestMag = 0x7fffffff; // pretty big // PCwipeout
+    int32 mag;
+    int32 i;
 
     trk = gTrack.sections;
 
@@ -375,7 +375,7 @@ void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo)
     vec4i step;
     PrmPSX prm;
     vec4i targetVector;
-    long temp;
+    int32 temp;
 
     if (shipstepCount == 8)
     {
@@ -460,7 +460,7 @@ void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, Re
     vec4i step;
     vec4i targetVector;
     vec3i pos;
-    long temp;
+    int32 temp;
     PrmPSX prm;
     int32 vhdg, vpitch;
 
@@ -550,7 +550,7 @@ This is the camera high up looking down
 */
 void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueDroid)
 {
-    long temp;
+    int32 temp;
     vec4i targetVector;
 
     camera->section = ship[ownShip].nearTrkSect;
@@ -584,7 +584,7 @@ This is the camera high up looking down
 */
 void UpdateCameraStationary(TrackCamera* camera, ShipData* ship, RescueData* rescueDroid)
 {
-    long temp;
+    int32 temp;
     vec4i targetVector;
 
     timeOut--;
@@ -619,7 +619,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 #if 0 // TODO splines
     PrmPSX prm;
 #endif
-    long temp;
+    int32 temp;
 
     /* firestar */
     if (ctrlConfigData.actTrackNum == 14)

@@ -1,11 +1,11 @@
 #include "game.h"
 
-long ctrlmode;
-long ctrltimeout;
-long ctrlGameLoop;
+int32 ctrlmode;
+int32 ctrltimeout;
+int32 ctrlGameLoop;
 ConfigData ctrlConfigData;
 
-extern long ctrlfirsttime;
+extern int32 ctrlfirsttime;
 
 Texture* titleScreen;
 int gTimeout;

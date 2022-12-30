@@ -1,7 +1,7 @@
 #include "game.h"
 
-extern long ctrlmode;
-extern long ctrlGameLoop;
+extern int32 ctrlmode;
+extern int32 ctrlGameLoop;
 
 Texture* menuScreen;
 
@@ -37,7 +37,7 @@ char KeyToChange = NONE;
 int gCurrMenu;
 int gCurrOption;
 
-extern long ctrlfirsttime;
+extern int32 ctrlfirsttime;
 extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 
 Object* audioShapes;

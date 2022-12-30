@@ -1,6 +1,6 @@
 #include "game.h"
 
-extern long ctrlmode;
+extern int32 ctrlmode;
 
 void ForceFeedback(int mag)
 {
@@ -556,12 +556,12 @@ void Reflection(vec3i* incidence, const vec3s* normal)
 
 int AngleOfCollision(const vec3s* normal, const vec3i* ship_point)
 {
-    int dot_product;
-    int norm_dist, shpoint_dist;
-    int dist_product;
+    int32 dot_product;
+    int32 norm_dist, shpoint_dist;
+    int32 dist_product;
 
-    int tmp1, tmp2;
-    long sx, sy, sz;
+    int32 tmp1, tmp2;
+    int32 sx, sy, sz;
 
     sx = ship_point->x >> 9;
     sy = ship_point->y >> 9;

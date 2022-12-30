@@ -19,7 +19,7 @@ TrackSection* NextIndexSection(TrackSection* section)
 void InitPLUT(char* file)
 {
     int32 i;
-    long size = osLoadFile(file, (char*)pVRAM);
+    int32 size = osLoadFile(file, (char*)pVRAM);
     uint32 plutsAddr = (uint32)allocVRAM(size);
 
     for (i = 0; i < gTrack.faceCount; i++)

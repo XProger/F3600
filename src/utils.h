@@ -34,8 +34,8 @@ uint32 rsqrt(uint32 x);
 #define FIXED_SHIFT 12 /* number of bits to shift for 4096 */
 
 void ApplyMatrix(const MATRIX* m, const vec3s* v0, vec3i* v1);
-void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, long* flag);
-long RotTransPers(const MATRIX* m, const vec3s* v0, vec2s* sxy, long* flag);
+void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, int32* flag);
+int32 RotTransPers(const MATRIX* m, const vec3s* v0, vec2s* sxy, int32* flag);
 void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret);
 
 uint16 swap16(uint16 x);
@@ -45,8 +45,6 @@ void swap32p(void* ptr);
 
 int32 SwapLE32(int32 x);
 int16 SwapLE16(int16 x);
-void IntelLong(long* lvalue);
-void IntelShort(short* svalue);
 
 typedef struct Matrix
 {

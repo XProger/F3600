@@ -464,9 +464,8 @@ void soundFill()
 int32 osLoadFile(const char* name, void* buffer)
 {
     FILE* f;
-    long size;
+    int32 size;
 
-    ASSERT(buffer);
     f = fopen(name, "rb");
     if (!f)
     {
@@ -477,13 +476,15 @@ int32 osLoadFile(const char* name, void* buffer)
     fseek(f, 0, SEEK_END);
     size = ftell(f);
 
-    //printf("load file %s\n", name);
-    fseek(f, 0, SEEK_SET);
-    if (fread(buffer, 1, size, f) != size)
+    if (buffer)
     {
-        fclose(f);
-        ASSERT(0);
-        return 0;
+        fseek(f, 0, SEEK_SET);
+        if (fread(buffer, 1, size, f) != size)
+        {
+            fclose(f);
+            ASSERT(0);
+            return 0;
+        }
     }
 
     fclose(f);

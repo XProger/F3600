@@ -12,11 +12,11 @@ void SceneRadiusCheck(Object* objects, int32 count)
     Object* object;
     vec3i* sectionCentre;
     vec4i vector;
-    long distance;
-    short objectList[ObjectListMax];
-    short withinLocal;
-    short withinGlobal;
-    short allCount;
+    int32 distance;
+    int16 objectList[ObjectListMax];
+    int16 withinLocal;
+    int16 withinGlobal;
+    int16 allCount;
     int32 objectCount;
 
     /* allocate and fill in a global object table */

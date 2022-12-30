@@ -349,9 +349,6 @@ typedef struct ObjectPSX
 
 typedef union PrmPSX
 {
-    char* ptr;
-    short* sptr;
-    long* lptr;
     ObjectPSX* object;
     SkeletonPSX* skeleton;
     vec4s* svector;

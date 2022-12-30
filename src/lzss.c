@@ -28,17 +28,17 @@
 /***************************************************************************/
 void ExpandData(unsigned char* inData, unsigned char* outData)
 {
-    short i;
-    short current_position;
-    unsigned char cc;
-    short match_length;
-    short match_position;
-    unsigned long mask;
-    unsigned long return_value;
-    unsigned char inBfile_mask;
-    short inBfile_rack;
-    short value;
-    unsigned char window[WINDOW_SIZE];
+    int16 i;
+    int16 current_position;
+    uint8 cc;
+    int16 match_length;
+    int16 match_position;
+    uint32 mask;
+    uint32 return_value;
+    uint8 inBfile_mask;
+    int16 inBfile_rack;
+    int16 value;
+    uint8 window[WINDOW_SIZE];
 
     inBfile_rack = 0;
     inBfile_mask = 0x80;

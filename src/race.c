@@ -46,33 +46,33 @@ HiScoreData ctrlhiScoreData;
 int ctrlchoiceData;
 char ctrlshowGameOver;
 
-extern long ctrlmode;
-extern long ctrltimeout;
-extern long ctrlGameLoop;
+extern int32 ctrlmode;
+extern int32 ctrltimeout;
+extern int32 ctrlGameLoop;
 extern ConfigData ctrlConfigData;
 
 /*          Andy Y's additions*/
-long ctrlNeedEndText;
-long ctrlNeedWinLose;
-long ctrlNeedBackPoly;
-long ctrlNeedRaceInfo;
-long ctrlNeedDeSelectScreen;
-long ctrlNeedNewHighScores;
-long ctrlNeedRacePoints;
-long ctrlNeedChampTable;
-long ctrlNeedAllVenomComplete;
-long ctrlNeedVenomComplete;
-long ctrlNeedContinueGameConfirm;
-long ctrlNeedEndTextVar;
-long ctrlNeedWinLoseVar;
-long ctrlNeedInGameReset;
-long ctrlNeedInSingleGameConfirm;
-long ctrlNeedInGameConfirm;
-long ctrlNeedTargetIcon;
-long ctrlfirsttime;
+int32 ctrlNeedEndText;
+int32 ctrlNeedWinLose;
+int32 ctrlNeedBackPoly;
+int32 ctrlNeedRaceInfo;
+int32 ctrlNeedDeSelectScreen;
+int32 ctrlNeedNewHighScores;
+int32 ctrlNeedRacePoints;
+int32 ctrlNeedChampTable;
+int32 ctrlNeedAllVenomComplete;
+int32 ctrlNeedVenomComplete;
+int32 ctrlNeedContinueGameConfirm;
+int32 ctrlNeedEndTextVar;
+int32 ctrlNeedWinLoseVar;
+int32 ctrlNeedInGameReset;
+int32 ctrlNeedInSingleGameConfirm;
+int32 ctrlNeedInGameConfirm;
+int32 ctrlNeedTargetIcon;
+int32 ctrlfirsttime;
 
-long ctrl_says_quit;
-unsigned long ctrlFramesCount;
+int32 ctrl_says_quit;
+uint32 ctrlFramesCount;
 
 const char* const PILOT_NAMES[] =
 {

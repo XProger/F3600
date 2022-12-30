@@ -1677,47 +1677,47 @@ uint32 rsqrt(uint32 x)
 
 void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret)
 {
-    ret->m[0][0] = (((long)m0->m[0][0] * (long)m1->m[0][0]) + ((long)m0->m[0][1] * (long)m1->m[1][0]) + ((long)m0->m[0][2] * (long)m1->m[2][0])) >> FIXED_SHIFT;
-    ret->m[0][1] = (((long)m0->m[0][0] * (long)m1->m[0][1]) + ((long)m0->m[0][1] * (long)m1->m[1][1]) + ((long)m0->m[0][2] * (long)m1->m[2][1])) >> FIXED_SHIFT;
-    ret->m[0][2] = (((long)m0->m[0][0] * (long)m1->m[0][2]) + ((long)m0->m[0][1] * (long)m1->m[1][2]) + ((long)m0->m[0][2] * (long)m1->m[2][2])) >> FIXED_SHIFT;
+    ret->m[0][0] = (((int32)m0->m[0][0] * (int32)m1->m[0][0]) + ((int32)m0->m[0][1] * (int32)m1->m[1][0]) + ((int32)m0->m[0][2] * (int32)m1->m[2][0])) >> FIXED_SHIFT;
+    ret->m[0][1] = (((int32)m0->m[0][0] * (int32)m1->m[0][1]) + ((int32)m0->m[0][1] * (int32)m1->m[1][1]) + ((int32)m0->m[0][2] * (int32)m1->m[2][1])) >> FIXED_SHIFT;
+    ret->m[0][2] = (((int32)m0->m[0][0] * (int32)m1->m[0][2]) + ((int32)m0->m[0][1] * (int32)m1->m[1][2]) + ((int32)m0->m[0][2] * (int32)m1->m[2][2])) >> FIXED_SHIFT;
 
-    ret->m[1][0] = (((long)m0->m[1][0] * (long)m1->m[0][0]) + ((long)m0->m[1][1] * (long)m1->m[1][0]) + ((long)m0->m[1][2] * (long)m1->m[2][0])) >> FIXED_SHIFT;
-    ret->m[1][1] = (((long)m0->m[1][0] * (long)m1->m[0][1]) + ((long)m0->m[1][1] * (long)m1->m[1][1]) + ((long)m0->m[1][2] * (long)m1->m[2][1])) >> FIXED_SHIFT;
-    ret->m[1][2] = (((long)m0->m[1][0] * (long)m1->m[0][2]) + ((long)m0->m[1][1] * (long)m1->m[1][2]) + ((long)m0->m[1][2] * (long)m1->m[2][2])) >> FIXED_SHIFT;
+    ret->m[1][0] = (((int32)m0->m[1][0] * (int32)m1->m[0][0]) + ((int32)m0->m[1][1] * (int32)m1->m[1][0]) + ((int32)m0->m[1][2] * (int32)m1->m[2][0])) >> FIXED_SHIFT;
+    ret->m[1][1] = (((int32)m0->m[1][0] * (int32)m1->m[0][1]) + ((int32)m0->m[1][1] * (int32)m1->m[1][1]) + ((int32)m0->m[1][2] * (int32)m1->m[2][1])) >> FIXED_SHIFT;
+    ret->m[1][2] = (((int32)m0->m[1][0] * (int32)m1->m[0][2]) + ((int32)m0->m[1][1] * (int32)m1->m[1][2]) + ((int32)m0->m[1][2] * (int32)m1->m[2][2])) >> FIXED_SHIFT;
 
-    ret->m[2][0] = (((long)m0->m[2][0] * (long)m1->m[0][0]) + ((long)m0->m[2][1] * (long)m1->m[1][0]) + ((long)m0->m[2][2] * (long)m1->m[2][0])) >> FIXED_SHIFT;
-    ret->m[2][1] = (((long)m0->m[2][0] * (long)m1->m[0][1]) + ((long)m0->m[2][1] * (long)m1->m[1][1]) + ((long)m0->m[2][2] * (long)m1->m[2][1])) >> FIXED_SHIFT;
-    ret->m[2][2] = (((long)m0->m[2][0] * (long)m1->m[0][2]) + ((long)m0->m[2][1] * (long)m1->m[1][2]) + ((long)m0->m[2][2] * (long)m1->m[2][2])) >> FIXED_SHIFT;
+    ret->m[2][0] = (((int32)m0->m[2][0] * (int32)m1->m[0][0]) + ((int32)m0->m[2][1] * (int32)m1->m[1][0]) + ((int32)m0->m[2][2] * (int32)m1->m[2][0])) >> FIXED_SHIFT;
+    ret->m[2][1] = (((int32)m0->m[2][0] * (int32)m1->m[0][1]) + ((int32)m0->m[2][1] * (int32)m1->m[1][1]) + ((int32)m0->m[2][2] * (int32)m1->m[2][1])) >> FIXED_SHIFT;
+    ret->m[2][2] = (((int32)m0->m[2][0] * (int32)m1->m[0][2]) + ((int32)m0->m[2][1] * (int32)m1->m[1][2]) + ((int32)m0->m[2][2] * (int32)m1->m[2][2])) >> FIXED_SHIFT;
 }
 
 void ApplyMatrix(const MATRIX* m, const vec3s* v0, vec3i* v1)
 {
-    long xt, yt, zt;
-    long stage1, stage2, stage3;
+    int32 xt, yt, zt;
+    int32 stage1, stage2, stage3;
 
-    xt = (long)(v0->x);
-    yt = (long)(v0->y);
-    zt = (long)(v0->z);
+    xt = v0->x;
+    yt = v0->y;
+    zt = v0->z;
 
-    stage1 = xt * (long)(m->m[0][0]);
-    stage2 = yt * (long)(m->m[0][1]);
-    stage3 = zt * (long)(m->m[0][2]);
+    stage1 = xt * m->m[0][0];
+    stage2 = yt * m->m[0][1];
+    stage3 = zt * m->m[0][2];
     v1->x = ((stage1 + stage2 + stage3) >> FIXED_SHIFT) + m->t[0];
 
-    stage1 = xt * (long)(m->m[1][0]);
-    stage2 = yt * (long)(m->m[1][1]);
-    stage3 = zt * (long)(m->m[1][2]);
+    stage1 = xt * m->m[1][0];
+    stage2 = yt * m->m[1][1];
+    stage3 = zt * m->m[1][2];
     v1->y = ((stage1 + stage2 + stage3) >> FIXED_SHIFT) + m->t[1];
 
-    stage1 = xt * (long)(m->m[2][0]);
-    stage2 = yt * (long)(m->m[2][1]);
-    stage3 = zt * (long)(m->m[2][2]);
+    stage1 = xt * m->m[2][0];
+    stage2 = yt * m->m[2][1];
+    stage3 = zt * m->m[2][2];
     v1->z = ((stage1 + stage2 + stage3) >> FIXED_SHIFT) + m->t[2];
 }
 
-void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, long* flag)
+void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, int32* flag)
 {
-    long x, y, z, f = 0;
+    int32 x, y, z, f = 0;
 
     ApplyMatrix(m, v0, v1);
 
@@ -1775,9 +1775,9 @@ void RotTrans(const MATRIX* m, const vec3s* v0, vec3i* v1, long* flag)
     *flag = f;
 }
 
-void DLSRotTransPers(vec2s* sxy, const vec3i* r0, long* flag)
+void DLSRotTransPers(vec2s* sxy, const vec3i* r0, int32* flag)
 {
-    long x, y, z, f = 0;
+    int32 x, y, z, f = 0;
 
     x = r0->x;
     y = r0->y;
@@ -1860,7 +1860,7 @@ void DLSRotTransPers(vec2s* sxy, const vec3i* r0, long* flag)
     *flag = f;
 }
 
-long RotTransPers(const MATRIX* m, const vec3s* v0, vec2s* sxy, long* flag)
+int32 RotTransPers(const MATRIX* m, const vec3s* v0, vec2s* sxy, int32* flag)
 {
     vec3i r0;
 
@@ -1892,58 +1892,6 @@ void swap32p(void* ptr)
     //ASSERT(((intptr_t)ptr & 3) == 0);
     uint32* x = (uint32*)ptr;
     *x = swap32(*x);
-}
-
-int32 SwapLE32(int32 x)
-{
-#ifdef CPU_BIG_ENDIAN
-    return swap32(x);
-#else
-    return x;
-#endif
-}
-
-int16 SwapLE16(int16 x)
-{
-#ifdef CPU_BIG_ENDIAN
-    return swap16(x);
-#else
-    return x;
-#endif
-}
-
-void IntelLong(long* lvalue)
-{
-#ifndef CPU_BIG_ENDIAN
-    char* cvalue;
-    char temp;
-
-    //ASSERT(((int32)lvalue & 3) == 0);
-    cvalue = (char*)lvalue;
-
-    temp = cvalue[0];
-    cvalue[0] = cvalue[3];
-    cvalue[3] = temp;
-
-    temp = cvalue[1];
-    cvalue[1] = cvalue[2];
-    cvalue[2] = temp;
-#endif
-}
-
-void IntelShort(short* svalue)
-{
-#ifndef CPU_BIG_ENDIAN
-    char* cvalue;
-    char temp;
-
-    //ASSERT(((int32)svalue & 1) == 0);
-    cvalue = (char*)svalue;
-
-    temp = cvalue[0];
-    cvalue[0] = cvalue[1];
-    cvalue[1] = temp;
-#endif
 }
 
 Matrix gMatrixStack[MAX_MATRICES];

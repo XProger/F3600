@@ -1,11 +1,11 @@
 #include "game.h"
 
-const int gSkyPos[15] = { -820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0 };
+const int32 gSkyPos[15] = { -820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0 };
 
 char TrackDirection(const TrackCamera* camera)
 {
     int32 dx, dz;
-    long angle;
+    int32 angle;
     const TrackSection* nextSection;
 
     nextSection = camera->section->nextSection;

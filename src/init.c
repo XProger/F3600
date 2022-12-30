@@ -3,14 +3,16 @@
 #ifdef USE_COMPRESSION
 void LoadCompressedTextureSequence(const char* fileName, int filter)
 {
-    int i;
-    int numTex;
-    int timSize, timTotalSize;
+    uint32 i;
+    uint32 numTex;
+    uint32 timSize, timTotalSize;
     uint8* compBuffer = pDRAM; // use available DRAM as scratch buffer
 
     osLoadFile(fileName, compBuffer);
-    numTex = *(int*)compBuffer;
-    SwapLE32(numTex);
+    numTex = *(uint32*)compBuffer;
+#ifdef CPU_BIG_ENDIAN
+    numTex = swap32(numTex);
+#endif
 
     ExpandData((uint8*)compBuffer + 4 + numTex * 4, (uint8*)pVRAM);
 
@@ -19,8 +21,10 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
     for (i = 0; i < numTex; i++)
     {
         renderCreateTexture((uint8*)(pVRAM + timTotalSize));
-        timSize = *(int*)(compBuffer + 4 + i * 4);
-        SwapLE32(timSize);
+        timSize = *(uint32*)(compBuffer + 4 + i * 4);
+    #ifdef CPU_BIG_ENDIAN
+        timSize = swap32(timSize);
+    #endif
         timTotalSize += timSize;
     }
     HACK_TEX_FILTER = 0;
@@ -74,7 +78,7 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
 
 Texture* LoadTexture(const char* fileName)
 {
-    long size;
+    int32 size;
     Tim* tim;
     Texture* tex = gTexturePtr;
 
@@ -369,20 +373,22 @@ void LoadMainMenuOld(void)
 
 TexTemplate* LoadTtfFile(char* file)
 {
-    short* tex;
-    short i;
+    int32 i;
+    uint16* tex;
 
-    long size = osLoadFile(file, gTTF);
+    int32 size = osLoadFile(file, gTTF);
     ASSERT(size <= TTF_SIZE_MAX);
 
     ctrlnumLib = 0;
 
-    tex = (short*)gTTF;
-    while (tex < ((short*)(gTTF + size)))
+    tex = (uint16*)gTTF;
+    while (tex < ((uint16*)(gTTF + size)))
     {
         for (i = 0; i < 21; i++)
         {
-            IntelShort(tex);
+        #ifndef CPU_BIG_ENDIAN
+            swap16p(tex);
+        #endif
             tex += 1;
         }
         ctrlnumLib++; /* count of textures */
@@ -633,18 +639,20 @@ void InitSections(const char* fileName)
 void InitViewList(char* file)
 {
     TrackSection* section;
-    long total;
+    int32 total;
     int32 i, j;
-    int viewListCount;
+    int32 viewListCount;
 
-    long size = osLoadFile(file, pDRAM);
+    int32 size = osLoadFile(file, pDRAM);
     gTrack.viewList = (int16*)allocDRAM(size);
     viewListCount = size / 2;
 
+#ifndef CPU_BIG_ENDIAN
     for (i = 0; i < viewListCount; i++)
     {
-        IntelShort(&gTrack.viewList[i]);
+        swap16p(&gTrack.viewList[i]);
     }
+#endif
 
     section = gTrack.sections;
     total = 0;

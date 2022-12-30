@@ -6,7 +6,7 @@ WeaponData gWeapons[MAX_WEAPONS];
 WeaponData* gWeaponsFree;
 WeaponData* gWeaponsActive;
 
-extern long ctrlNeedTargetIcon;
+extern int32 ctrlNeedTargetIcon;
 extern int ctrlnearShip;
 extern TrackCamera gCamera;
 
@@ -154,7 +154,7 @@ void DrawTargetIcon(ShipData* shipIndex, Object** shipShapes)
 #if 0 // TODO renderTargetIcon
     vec3s* vertex;
     vec2s sxy;
-    long flag;
+    int32 flag;
     const MATRIX* matrix;
 
     shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton->update = 1;
