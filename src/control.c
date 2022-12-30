@@ -211,10 +211,12 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
     }
     else
     {
-        if (playerShip->vhdg > 0)
+        if (playerShip->vhdg > headingInc)
             playerShip->vhdg -= headingInc;
-        else if (playerShip->vhdg < 0)
+        else if (playerShip->vhdg < -headingInc)
             playerShip->vhdg += headingInc;
+        else
+            playerShip->vhdg = 0;
     }
     if (playerShip->vhdg < -playerShip->maxHeading)
         playerShip->vhdg = -playerShip->maxHeading;

@@ -589,7 +589,7 @@ void initDivTable()
 
     printf("const uint16 divTable[DIV_TABLE_SIZE] = {\n");
     for (int i = 0; i < DIV_TABLE_SIZE; i += 8) {
-        printf("    0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X,\n", 
+        printf("    0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X,\n",
             divTable[i + 0], divTable[i + 1], divTable[i + 2], divTable[i + 3],
             divTable[i + 4], divTable[i + 5], divTable[i + 6], divTable[i + 7]);
     }

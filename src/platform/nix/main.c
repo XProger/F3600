@@ -68,7 +68,8 @@ void setDown(int32 key, int32 isDown)
 #define INPUT_JOY_COUNT         1
 #define JOY_DEAD_ZONE_STICK     8192
 #define JOY_DEAD_ZONE_TRIGGER   8192
-#define JOY_MIN_UPDATE_FX_TIME  50.0f
+#define JOY_MIN_UPDATE_FX_TIME  50
+#define JOY_RUMBLE_FADE         16
 
 struct JoyDevice
 {
@@ -150,6 +151,12 @@ void joyRumble(struct JoyDevice* joy)
 
     joy->oL = joy->vL;
     joy->oR = joy->vR;
+    joy->vL -= JOY_RUMBLE_FADE;
+    joy->vR -= JOY_RUMBLE_FADE;
+    if (joy->vL < 0)
+        joy->vL = 0;
+    if (joy->vR < 0)
+        joy->vR = 0;
 
     joy->time = osGetSystemTimeMS() + joy->fx.replay.length;
 }
@@ -253,9 +260,9 @@ void inputReset()
 
 void inputUpdate()
 {
-    //static const InputKey buttons[] = {
-    //    IN_A, IN_B, IN_X, IN_Y, IN_LB, IN_RB, IN_SELECT, IN_START, IN_HOME, IN_L, IN_R
-    //};
+    static const int32 buttons[] = {
+        IN_A, IN_B, IN_X, IN_Y, IN_LB, IN_RB, IN_SELECT, IN_START, IN_NONE, IN_L, IN_R
+    };
 
     gPadStickX = gPadStickY = 256;
 
@@ -263,18 +270,25 @@ void inputUpdate()
     {
         struct js_event event;
         struct JoyDevice* joy = joyDevice + i;
+        int32 oldLx, oldLy;
 
         if (joy->fd == -1)
             continue;
 
         joyRumble(joy);
 
+        oldLx = joy->Lx;
+        oldLy = joy->Ly;
+
         while (read(joy->fd, &event, sizeof(event)) != -1)
         {
         // buttons
             if (event.type & JS_EVENT_BUTTON)
             {
-            //    setDown(event.number >= COUNT(buttons) ? IN_NONE : buttons[event.number], event.value == 1);
+                if (event.number >= 0 && event.number < COUNT(buttons))
+                {
+                    setDown(buttons[event.number], event.value == 1);
+                }
             }
 
         // axes
@@ -283,37 +297,63 @@ void inputUpdate()
                 switch (joy->axismap[event.number])
                 {
                 // Left stick
-                    case ABS_X  : joy->Lx = joyAxisValue(event.value); break;
-                    case ABS_Y  : joy->Ly = joyAxisValue(event.value); break;
+                    case ABS_X:
+                        joy->Lx = joyAxisValue(event.value);
+                        break;
+                    case ABS_Y:
+                        joy->Ly = joyAxisValue(event.value);
+                        break;
                 // Right stick
-                //    case ABS_RX : joy.Rx = joyAxisValue(event.value); break;
-                //    case ABS_RY : joy.Ry = joyAxisValue(event.value); break;
+                /*
+                    case ABS_RX:
+                        joy.Rx = joyAxisValue(event.value);
+                        break;
+                    case ABS_RY:
+                        joy.Ry = joyAxisValue(event.value);
+                        break;
+                */
                 // Left trigger
-                //    case ABS_Z  : setJoyPos(i, jkLT, joyTrigger(event.value)); break;
+                    case ABS_Z:
+                        setDown(IN_LT, event.value > 0);
+                        break;
                 // Right trigger
-                //    case ABS_RZ : setJoyPos(i, jkRT, joyTrigger(event.value)); break;
+                    case ABS_RZ:
+                        setDown(IN_RT, event.value > 0);
+                        break;
                 // D-PAD
-                    case ABS_HAT0X    :
-                    case ABS_THROTTLE :
+                    case ABS_HAT0X:
+                    case ABS_THROTTLE:
                         setDown(IN_LEFT,  event.value < -0x4000);
                         setDown(IN_RIGHT, event.value >  0x4000);
                         break;
-                    case ABS_HAT0Y    :
-                    case ABS_RUDDER   :
+                    case ABS_HAT0Y:
+                    case ABS_RUDDER:
                         setDown(IN_UP,    event.value < -0x4000);
                         setDown(IN_DOWN,  event.value >  0x4000);
                         break;
                 }
-
-                gPadStickX = (joy->Lx + 0x8000) >> 8;
-                gPadStickY = (joy->Ly + 0x8000) >> 8;
-
-                if (gPadStickX > 256)
-                    gPadStickX = 256;
-                if (gPadStickY > 256)
-                    gPadStickY = 256;
             }
         }
+
+        if (joy->Lx != oldLx)
+        {
+            setDown(IN_LEFT,  joy->Lx < 0);
+            setDown(IN_RIGHT, joy->Lx > 0);
+        }
+
+        if (joy->Ly != oldLy)
+        {
+            setDown(IN_UP,   joy->Ly < 0);
+            setDown(IN_DOWN, joy->Ly > 0);
+        }
+
+        gPadStickX = joy->Lx ? ((abs(joy->Lx) + 1) >> 7) : 256;
+        gPadStickY = joy->Ly ? ((abs(joy->Ly) + 1) >> 6) : 256;
+
+        if (gPadStickX > 256)
+            gPadStickX = 256;
+        if (gPadStickY > 256)
+            gPadStickY = 256;
     }
 }
 
