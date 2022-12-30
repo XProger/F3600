@@ -149,7 +149,7 @@ void dump_vags()
 
 int WhatChannel(enum SfxType id)
 {
-    int i;
+    int32 i;
 
     for (i = 0; i < MAX_CHANNELS; i++)
     {
@@ -170,12 +170,12 @@ int IsPlaying(int channel)
 void InitNotes(void)
 {
     music.alloc.alloc_buffer_length_in_bytes = sizeof(music.temp);
-    music.alloc.alloc_buffer = music.temp;
+    music.alloc.alloc_buffer = (char*)music.temp;
 }
 
 void KillNote(enum SfxType id)
 {
-    int i = WhatChannel(id);
+    int32 i = WhatChannel(id);
 
     if (IsPlaying(i))
     {
@@ -198,7 +198,7 @@ void KillNotes(void)
 int PlayNote(enum SfxType id)
 {
     Channel* channel;
-    int i;
+    int32 i;
 
     for (i = 0; i < MAX_CHANNELS; i++)
     {
@@ -268,7 +268,7 @@ void MusicPlay(int track)
     FILE* f;
     int32 size;
     char path[16];
-return;
+
     ASSERT(track > 0);
     if (track == music.track)
     {
@@ -293,16 +293,13 @@ return;
     getTrackStrNo(path + 6, track + 1);
     strcat(path, ".ogg");
 
-    f = fopen(path, "rb");
-    ASSERT(f);
-    if (!f)
+    size = osLoadFile(path, NULL);
+    if (size == 0)
         return;
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
+
     music.data = (uint8*)malloc(size);
-    fread(music.data, 1, size, f);
-    fclose(f);
+
+    osLoadFile(path, music.data);
 
     music.ogg = stb_vorbis_open_memory(music.data, size, NULL, &music.alloc);
     ASSERT(music.ogg);
@@ -421,7 +418,7 @@ void FillNotes(int16* samples, int32 count)
 
             if (!channel->data)
                 continue;
-            
+
             if (!gSfxParams[channel->id].volL && !gSfxParams[channel->id].volR)
             {
                 if (!gSfxParams[channel->id].loop)

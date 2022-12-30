@@ -60,7 +60,7 @@ void inputUpdate()
     if (joyMask & ControlX)          gPad |= IN_SELECT;
 }
 
-long osLoadFile(const char* name, char* buffer)
+int32 osLoadFile(const char* name, void* buffer)
 {
     Stream* fs;
     int32 size;
@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
 
     memCheck();
 
-    gDRAM = pDRAM = (char*)AllocMem(DRAM_SIZE, MEMTYPE_DRAM);
-    gVRAM = pVRAM = (char*)AllocMem(VRAM_SIZE, MEMTYPE_VRAM);
+    gDRAM = pDRAM = (uint8*)AllocMem(DRAM_SIZE, MEMTYPE_DRAM);
+    gVRAM = pVRAM = (uint8*)AllocMem(VRAM_SIZE, MEMTYPE_VRAM);
 
     if (!gDRAM) printf("DRAM failed!\n");
     if (!gVRAM) printf("VRAM failed!\n");

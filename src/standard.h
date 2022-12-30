@@ -117,7 +117,7 @@ unsigned short GetKeyNoBlock(void);
 int32 osGetSystemTimeMS(void);
 void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
-long osLoadFile(const char* name, char* buffer);
+int32 osLoadFile(const char* name, void* buffer);
 
 void showLoading(int32 track);
 

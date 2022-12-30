@@ -461,7 +461,7 @@ void soundFill()
 }
 
 // filesystem
-long osLoadFile(const char* name, char* buffer)
+int32 osLoadFile(const char* name, void* buffer)
 {
     FILE* f;
     long size;
@@ -608,8 +608,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #endif
     //initDivTable();
 
-    gDRAM = pDRAM = (char*)malloc(DRAM_SIZE);
-    gVRAM = pVRAM = (char*)malloc(VRAM_SIZE);
+    gDRAM = pDRAM = (uint8*)malloc(DRAM_SIZE);
+    gVRAM = pVRAM = (uint8*)malloc(VRAM_SIZE);
 
     MSG msg;
     RECT r = { 0, 0, WND_WIDTH, WND_HEIGHT };

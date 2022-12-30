@@ -17,7 +17,7 @@ void showLoading(int32 track)
 {
     Texture* loadingScreen;
     Texture* texPtr = gTexturePtr;
-    char* vramPtr = pVRAM;
+    uint8* vramPtr = pVRAM;
 
     if (track == -1)
     {

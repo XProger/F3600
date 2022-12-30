@@ -12,8 +12,8 @@
 #include <pthread.h>
 #include <dirent.h>
 
-//#include <pulse/pulseaudio.h>
-//#include <pulse/simple.h>
+#include <pulse/pulseaudio.h>
+#include <pulse/simple.h>
 
 #include <GL/gl.h>
 #include <GL/glext.h>
@@ -391,31 +391,25 @@ int32 keyToInputKey(Display *dpy, XKeyEvent event)
 
 
 // sound
-#if 0
-#define SND_FRAME_SIZE 4
-#define SND_DATA_SIZE (2352 * SND_FRAME_SIZE)
+#define SND_DATA_SIZE   (SND_SAMPLES * sizeof(int16))
 
 pa_simple *sndOut;
 pthread_t sndThread;
 
-Sound::Frame *sndData;
-#endif
+int16 *sndData;
 
 void* soundFill(void* arg)
 {
-#if 0
     while (1)
     {
-        Sound::fill(sndData, SND_DATA_SIZE / SND_FRAME_SIZE);
+        FillNotes(sndData, SND_SAMPLES / 2);
         pa_simple_write(sndOut, sndData, SND_DATA_SIZE, NULL);
     }
-#endif
     return NULL;
 }
 
 void soundInit()
 {
-#if 0
     static const pa_sample_spec spec = {
         .format   = PA_SAMPLE_S16LE,
         .rate     = 44100,
@@ -438,21 +432,18 @@ void soundInit()
         return;
     }
 
-    sndData = new Sound::Frame[SND_DATA_SIZE / SND_FRAME_SIZE];
-    pthread_create(&sndThread, NULL, sndFill, NULL);
-#endif
+    sndData = (int16*)malloc(SND_DATA_SIZE);
+    pthread_create(&sndThread, NULL, soundFill, NULL);
 }
 
 void soundFree()
 {
-#if 0
     if (sndOut) {
         pthread_cancel(sndThread);
     //    pa_simple_flush(sndOut, NULL);
     //    pa_simple_free(sndOut);
-        delete[] sndData;
+        free(sndData);
     }
-#endif
 }
 
 void toggle_fullscreen(Display* dpy, Window win)
@@ -568,10 +559,10 @@ const char* getFileName(const char* fileName)
     return NULL;
 }
 
-long osLoadFile(const char* name, char* buffer)
+int32 osLoadFile(const char* name, void* buffer)
 {
     FILE* f;
-    long size;
+    int32 size;
 
     name = getFileName(name);
     ASSERT(name);
@@ -580,7 +571,6 @@ long osLoadFile(const char* name, char* buffer)
         return 0;
     }
 
-    ASSERT(buffer);
     f = fopen(name, "rb");
     ASSERT(f);
     if (!f)
@@ -591,13 +581,15 @@ long osLoadFile(const char* name, char* buffer)
     fseek(f, 0, SEEK_END);
     size = ftell(f);
 
-    //printf("load file %s\n", name);
-    fseek(f, 0, SEEK_SET);
-    if (fread(buffer, 1, size, f) != size)
+    if (buffer)
     {
-        fclose(f);
-        ASSERT(0);
-        return 0;
+        fseek(f, 0, SEEK_SET);
+        if (fread(buffer, 1, size, f) != size)
+        {
+            fclose(f);
+            ASSERT(0);
+            return 0;
+        }
     }
 
     fclose(f);
@@ -617,8 +609,8 @@ int main(int argc, char **argv)
         0
     };
 
-    gDRAM = pDRAM = (char*)malloc(DRAM_SIZE);
-    gVRAM = pVRAM = (char*)malloc(VRAM_SIZE);
+    gDRAM = pDRAM = (uint8*)malloc(DRAM_SIZE);
+    gVRAM = pVRAM = (uint8*)malloc(VRAM_SIZE);
 
     dpy = XOpenDisplay(NULL);
     XVisualInfo* vis = glXChooseVisual(dpy, XDefaultScreen(dpy), XGLAttr);
@@ -666,7 +658,7 @@ int main(int argc, char **argv)
         else
         {
             gLastFrameIndex = gFrameIndex;
-            gFrameIndex = osGetSystemTimeMS() * 60 / 1000;
+            gFrameIndex = osGetSystemTimeMS() * 3 / 50; // * 60 / 1000
 
             inputUpdate();
 

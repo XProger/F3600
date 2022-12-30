@@ -6,7 +6,7 @@ void LoadCompressedTextureSequence(const char* fileName, int filter)
     int i;
     int numTex;
     int timSize, timTotalSize;
-    char* compBuffer = pDRAM; // use available DRAM as scratch buffer
+    uint8* compBuffer = pDRAM; // use available DRAM as scratch buffer
 
     osLoadFile(fileName, compBuffer);
     numTex = *(int*)compBuffer;
