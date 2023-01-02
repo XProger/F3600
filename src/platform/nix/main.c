@@ -21,13 +21,6 @@
 
 #include "game.h"
 
-int32 gPad;
-int32 gPadStickX;
-int32 gPadStickY;
-
-int32 gFrameIndex;
-int32 gLastFrameIndex;
-
 int32 isQuit;
 
 Display* dpy;
@@ -49,8 +42,8 @@ void osQuit()
 }
 
 #define WND_TITLE   "wipEout xport"
-#define WND_WIDTH   1280
-#define WND_HEIGHT  720
+#define WND_WIDTH   854
+#define WND_HEIGHT  480
 
 // input
 void setDown(int32 key, int32 isDown)
@@ -657,8 +650,10 @@ int main(int argc, char **argv)
         }
         else
         {
+            int32 time = osGetSystemTimeMS();
             gLastFrameIndex = gFrameIndex;
-            gFrameIndex = osGetSystemTimeMS() * 3 / 50; // * 60 / 1000
+            gFrameIndex = time * 30 / 1000;
+            gFrameDelta = (time - gFrameIndex * 1000 / 30) * 256 * 30 / 1000;
 
             inputUpdate();
 
