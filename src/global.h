@@ -62,6 +62,7 @@ extern int crossedLine;
 extern Texture gTextures[MAX_TEXTURES];
 extern Texture* gTexturePtr;
 
+#define MAX_SPRITES_PER_OBJECT 64
 #define MAX_OBJECTS 512
 extern Object gObjects[MAX_OBJECTS];
 extern Object* gObjectPtr;

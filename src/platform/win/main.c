@@ -461,7 +461,7 @@ int32 osLoadFile(const char* name, void* buffer)
     f = fopen(name, "rb");
     if (!f)
     {
-        ASSERT(0);
+        //ASSERT(0);
         return 0;
     }
 

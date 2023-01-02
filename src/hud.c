@@ -672,6 +672,7 @@ int ComparePosision(ShipData* a, ShipData* b)
     }
 
     // a->DPASectDiff == b->DPASectDiff
+    if (a->nearTrkSect == b->nearTrkSect)
     {
         vec3i ca, cb, dir;
         int32 da, db;

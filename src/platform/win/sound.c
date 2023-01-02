@@ -272,7 +272,10 @@ void MusicPlay(int track)
     ASSERT(track > 0);
     if (track == music.track)
     {
-        stb_vorbis_seek_start(music.ogg);
+        if (music.ogg)
+        {
+            stb_vorbis_seek_start(music.ogg);
+        }
         return;
     }
     music.track = track;

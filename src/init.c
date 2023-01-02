@@ -905,6 +905,8 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
     Object* obj = gObjectPtr;
     Object* retObj;
 
+    ObjSprite* sprites = (ObjSprite*)malloc(sizeof(ObjSprite) * MAX_SPRITES_PER_OBJECT);
+
     // copy PSX data to the temporary buffer
     memcpy(start, pDRAM, size);
 
@@ -916,6 +918,7 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
         ObjectPSX* objectPSX;
         SkeletonPSX* skeletonPSX;
         ObjFace* f;
+        ObjSprite* s;
 
         objectPSX = (ObjectPSX*)ptr;
         ptr += sizeof(ObjectPSX);
@@ -984,6 +987,7 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
         prm.primitive = (PrimitivePSX*)ptr;
         obj->faces = (ObjFace*)data;
         f = obj->faces;
+        s = sprites;
 
         for (i = 0; i < objectPSX->primitiveCount; i++)
         {
@@ -1076,50 +1080,61 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
                 case TypeTSPR:
                 case TypeBSPR:
                     prm.spr->texture += textureStart;
-                    // TODO sprites
+
+                    SET_SPRITE_IDX(s, prm.spr);
+                    SET_SPRITE_TEX(s, prm.spr);
+                    SET_SPRITE_SIZE(s, prm.spr);
+                    SET_SPRITE_COLOR(s, prm.spr);
+
+                    if (prm.spr->type == TypeBSPR) // flipped
+                    {
+                        s->flags |= (1 << 31);
+                    }
                     prm.spr++;
+                    s++;
                     break;
 
                 case TypeLSF3:
+                    ASSERT(0);
                     prm.lsf3++;
                     break;
 
                 case TypeLSFT3:
                     prm.lsft3->texture += textureStart;
-                    // TODO sprites
+                    ASSERT(0);
                     prm.lsft3++;
                     break;
 
                 case TypeLSF4:
-                    // TODO
+                    ASSERT(0);
                     prm.lsf4++;
                     break;
 
                 case TypeLSFT4:
                     prm.lsft4->texture += textureStart;
-                    // TODO
+                    ASSERT(0);
                     prm.lsft4++;
                     break;
 
                 case TypeLSG3:
-                    // TODO
+                    ASSERT(0);
                     prm.lsg3++;
                     break;
 
                 case TypeLSGT3:
                     prm.lsgt3->texture += textureStart;
-                    // TODO
+                    ASSERT(0);
                     prm.lsgt3++;
                     break;
 
                 case TypeLSG4:
-                    // TODO
+                    ASSERT(0);
                     prm.lsg4++;
                     break;
 
                 case TypeLSGT4:
                     prm.lsgt4->texture += textureStart;
-                    // TODO
+                    ASSERT(0);
                     prm.lsgt4++;
                     break;
 
@@ -1144,15 +1159,31 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
             }
         }
         obj->fCount = f - obj->faces;
+        if (obj->fCount == 0)
+        {
+            obj->faces = NULL;
+        }
         data += sizeof(ObjFace) * obj->fCount;
-        ptr = (uint8*)prm.primitive;
 
-        obj->sCount = 0; // TODO sprites
+        obj->sCount = s - sprites;
+        if (obj->sCount)
+        {
+            obj->sprites = (ObjSprite*)data;
+            memcpy(obj->sprites, sprites, sizeof(ObjSprite) * obj->sCount);
+        }
+        else
+        {
+            obj->sprites = NULL;
+        }
+        data += sizeof(ObjSprite) * obj->sCount;
+
+        ptr = (uint8*)prm.primitive;
 
         obj++;
         ASSERT(obj - gObjects < MAX_OBJECTS);
     }
 
+    free(sprites);
     free(start);
 
     allocDRAM(data - pDRAM);
