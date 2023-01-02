@@ -3,31 +3,26 @@
 extern short behindSpeed[];
 extern short shipOrder[];
 
-extern int gPadStickX;
-extern int gPadStickY;
-
 /**********************************************************************/
 /***              Call update routine for each ship                 ***/
 /**********************************************************************/
 void UpdateShips(ShipData* shipIndex, ConfigData* gameData)
 {
     int i;
+    ShipData* ship;
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
         if (!((i == ownShip) || (gameData->gameType != TIME_TRIAL)))
             continue;
 
-        SetUnitVectors(shipIndex + i);
+        ship = shipIndex + i;
 
-        (shipIndex[i].update)(shipIndex, i);
+        SetUnitVectors(ship);
 
-    #ifdef USE_SHIP_AMBIENT
-        if (shipIndex[i].attr & VISIBLE)
-        {
-            ShipCalcAmbient(shipIndex + i);
-        }
-    #endif
+        FRAME_LERP_INIT(ship);
+
+        (ship->update)(shipIndex, i);
     }
 }
 

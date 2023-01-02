@@ -251,11 +251,9 @@ typedef enum
     RENDER_MODE_3D
 } RenderMode;
 
-extern int gFrameIndex;
-extern int gLastFrameIndex;
-
 void renderInit(void);
 void renderFree(void);
+void renderSetVSync(int32 enable);
 void renderSwap(void);
 void renderResize(int width, int height);
 void renderOffset(int x, int y);

@@ -61,7 +61,7 @@ void showLoading(int32 track)
 
 void resetTimer()
 {
-    gLastFrameIndex = gFrameIndex - 2;
+    gLastFrameIndex = gFrameIndex - 1;
 }
 
 void titleInit(void)
@@ -152,7 +152,7 @@ void gameInit(void)
 
     memStateSave();
 
-    printf("init main %d ms\n", osGetSystemTimeMS() - time);
+    LOG("init main %d ms\n", osGetSystemTimeMS() - time);
 }
 
 void gameFree(void)
@@ -181,7 +181,7 @@ void gameCtrl(void)
             MusicReset();
             time = osGetSystemTimeMS();
             menuInit(); // 4.7s -> 3.1s (uncomp) -> 2.1s (conv tex) -> 2.2s (conv prm)
-            printf("init menu %d ms\n", osGetSystemTimeMS() - time);
+            LOG("init menu %d ms\n", osGetSystemTimeMS() - time);
             ctrlGameLoop = GAME_LOOP_MENU;
             resetTimer();
         case GAME_LOOP_MENU:
@@ -193,7 +193,7 @@ void gameCtrl(void)
             MusicReset();
             time = osGetSystemTimeMS();
             raceInit(&ctrlConfigData); // 14s -> 10.3s (uncomp) -> 7.9s (conv tex) -> 6.9s (conv prm) -> 1.4s (obj vis opt)
-            printf("race init %d ms\n", osGetSystemTimeMS() - time);
+            LOG("race init %d ms\n", osGetSystemTimeMS() - time);
             renderPrepare();
             ctrlGameLoop = GAME_LOOP_RACE;
             resetTimer();

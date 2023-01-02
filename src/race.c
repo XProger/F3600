@@ -72,7 +72,6 @@ int32 ctrlNeedTargetIcon;
 int32 ctrlfirsttime;
 
 int32 ctrl_says_quit;
-uint32 ctrlFramesCount;
 
 const char* const PILOT_NAMES[] =
 {
@@ -149,7 +148,7 @@ void QuitGame()
 
 void raceInit(ConfigData* gameData)
 {
-    printf("race init\n");
+    LOG("race init\n");
 
     renderOffset(0, 0);
 
@@ -248,8 +247,6 @@ void raceInit(ConfigData* gameData)
     }
 
     UpdateEffects();
-
-    ctrlFramesCount = 1;
 }
 
 void raceCtrl(ConfigData* gameData)
@@ -477,15 +474,22 @@ void raceCtrl(ConfigData* gameData)
 
         UpdateShips(ctrlshipIndex, gameData);
 
+        FRAME_LERP_INIT(&ctrlrescueDroid);
+
         (ctrlrescueDroid.droidUpdate)(&ctrlrescueDroid, &(ctrlshipIndex[ownShip]), ctrlshipShapes);
 
-        if (ctrldoneExtro == UPDATE_EXTRO)
         {
-            (CameraUpdate)(&gCamera, ctrlshipIndex, &ctrlrescueDroid);
-        }
-        else
-        {
-            (CameraUpdate)(&gCamera, &(ctrlshipIndex[ownShip]), &ctrlrescueDroid);
+            TrackCamera* cam = &gCamera;
+            FRAME_LERP_INIT(cam);
+
+            if (ctrldoneExtro == UPDATE_EXTRO)
+            {
+                (CameraUpdate)(cam, ctrlshipIndex, &ctrlrescueDroid);
+            }
+            else
+            {
+                (CameraUpdate)(cam, &(ctrlshipIndex[ownShip]), &ctrlrescueDroid);
+            }
         }
 
         UpdateCone(&ctrlcone);
@@ -1011,10 +1015,7 @@ void raceLoop(ConfigData* gameData)
 {
     int i, count;
 
-    ctrlFramesCount += gFrameIndex - gLastFrameIndex;
-
-    count = ctrlFramesCount >> 1; // 60 -> 30 Hz
-    ctrlFramesCount -= count << 1;
+    count = gFrameIndex - gLastFrameIndex;
 
     if (count > 10) // max frame skip
     {
@@ -1026,6 +1027,11 @@ void raceLoop(ConfigData* gameData)
         dbg_update = osGetSystemTimeMS();
         raceCtrl(gameData);
         dbg_update = osGetSystemTimeMS() - dbg_update;
+    }
+
+    if (ctrlNeedInGameReset)
+    {
+        gFrameDelta = 255;
     }
 
     renderFrameBegin();
@@ -1050,13 +1056,26 @@ void raceLoop(ConfigData* gameData)
 
     renderSetMode(RENDER_MODE_3D);
 
-    if (CameraUpdate == UpdateCameraRaceInternal)
     {
-        matrixSetViewInternal(&gCamera.pos, gCamera.pitch, gCamera.hdg, gCamera.roll);
-    }
-    else
-    {
-        matrixSetViewExternal(&gCamera.pos, gCamera.pitch, gCamera.hdg);
+        TrackCamera* cam = &gCamera;
+
+        int32 px = cam->pos.x;
+        int32 py = cam->pos.y;
+        int32 pz = cam->pos.z;
+        int32 rx = cam->pitch;
+        int32 ry = cam->hdg;
+        int32 rz = cam->roll;
+
+        FRAME_LERP(cam);
+
+        if (CameraUpdate == UpdateCameraRaceInternal)
+        {
+            matrixSetViewInternal(px, py, pz, rx, ry, rz);
+        }
+        else
+        {
+            matrixSetViewExternal(px, py, pz, rx, ry);
+        }
     }
 
     DrawSky(gTrack.sky);

@@ -253,7 +253,7 @@ void InitShadow(void)
 void writeTextures(FILE* f, Texture* tex, Texture* last)
 {
     int32 count = last - tex;
-    fwrite(f, &count, 1, f);
+    fwrite(&count, sizeof(count), 1, f);
     LOG("write textures: %d\n", count);
 
     while (tex < last)
@@ -284,12 +284,46 @@ void writeTextures(FILE* f, Texture* tex, Texture* last)
         tex++;
     }
 }
+
+void writeObjects(FILE* f, Object* obj, Object* last)
+{
+    int32 count = last - obj;
+    fwrite(&count, sizeof(count), 1, f);
+    LOG("write objects: %d\n", count);
+
+    while (obj < last)
+    {
+        fwrite(&obj->vCount, sizeof(obj->vCount), 1, f);
+        fwrite(&obj->fCount, sizeof(obj->fCount), 1, f);
+        fwrite(&obj->sCount, sizeof(obj->sCount), 1, f);
+        fwrite(&obj->extent, sizeof(obj->extent), 1, f);
+        fwrite(&obj->pos.x, sizeof(obj->pos.x), 1, f);
+        fwrite(&obj->pos.y, sizeof(obj->pos.y), 1, f);
+        fwrite(&obj->pos.z, sizeof(obj->pos.z), 1, f);
+
+        fwrite(obj->vertices, sizeof(obj->vertices[0]), obj->vCount, f);
+        fwrite(obj->faces, sizeof(obj->faces[0]), obj->fCount, f);
+        fwrite(obj->sprites, sizeof(obj->sprites[0]), obj->sCount, f);
+
+        obj++;
+    }
+}
+
+void writeWAD(const char* fileName, Texture* firstTex, Texture* lastTex, Object* firstObj, Object* lastObj)
+{
+    FILE* f = fopen(fileName, "wb");
+    ASSERT(f);
+    writeTextures(f, firstTex, lastTex);
+    writeObjects(f, firstObj, lastObj);
+    fclose(f);
+}
 #endif
 
 void LoadCommonOld(void)
 {
 #ifdef CONV_FMT
     Texture* firstTex = gTexturePtr;
+    Object* firstObj = gObjectPtr;
 #endif
 
     Texture* weaponTextures;
@@ -320,12 +354,9 @@ void LoadCommonOld(void)
     gTargetTex = LoadTexture("wipeout/textures/target2.tim");
 
 #ifdef CONV_FMT
-    {
-        ASSERT(firstTex == gTextures);
-        FILE* f = fopen("wipeout/common.tex", "wb");
-        writeTextures(f, firstTex, gTexturePtr);
-        fclose(f);
-    }
+    ASSERT(firstTex == gTextures);
+    ASSERT(firstObj == gObjects);
+    writeWAD("wipeout/common.wad", firstTex, gTexturePtr, firstObj, gObjectPtr);
 #endif
 }
 
@@ -333,6 +364,7 @@ void LoadMainMenuOld(void)
 {
 #ifdef CONV_FMT
     Texture* firstTex = gTexturePtr;
+    Object* firstObj = gObjectPtr;
 #endif
 
     pilotShapes = LoadTexModel("pilot");
@@ -363,11 +395,7 @@ void LoadMainMenuOld(void)
     menuScreen = LoadTexture("wipeout/textures/wipeout1.tim");
 
 #ifdef CONV_FMT
-    {
-        FILE* f = fopen("wipeout/menu.tex", "wb");
-        writeTextures(f, firstTex, gTexturePtr);
-        fclose(f);
-    }
+    writeWAD("wipeout/menu.wad", firstTex, gTexturePtr, firstObj, gObjectPtr);
 #endif
 }
 
@@ -680,8 +708,6 @@ void InitViewList(char* file)
     }
 }
 
-#define MAX_OBJECTS 512
-
 #define CONV_COLOR(c) (c.r | (c.g << 8) | (c.b << 16) | 0xFF000000)
 
 #define SET_FACE_IDX_T(f, i)        f->index[0] = i->coords[0]; f->index[1] = i->coords[1]; f->index[2] = i->coords[2]; f->index[3] = i->coords[2];
@@ -876,8 +902,8 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
     uint8* end = start + size;
 
     uint8* data = pDRAM;
-    Object* objects = (Object*)malloc(sizeof(Object) * MAX_OBJECTS);
-    Object* obj = objects;
+    Object* obj = gObjectPtr;
+    Object* retObj;
 
     // copy PSX data to the temporary buffer
     memcpy(start, pDRAM, size);
@@ -1124,31 +1150,29 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
         obj->sCount = 0; // TODO sprites
 
         obj++;
-        ASSERT(obj - objects < MAX_OBJECTS);
+        ASSERT(obj - gObjects < MAX_OBJECTS);
     }
 
     free(start);
 
-    if (count)
-    {
-        *count = (obj - objects);
-    }
-
-    // copy objects to DRAM
-    size = (int32)sizeof(Object) * (obj - objects);
-    memcpy(data, objects, size);
-    obj = (Object*)data;
-    data += size;
-
     allocDRAM(data - pDRAM);
 
-    return obj;
+    if (count)
+    {
+        *count = (obj - gObjectPtr);
+    }
+
+    retObj = gObjectPtr;
+    gObjectPtr = obj;
+
+    return retObj;
 }
 
 void LoadSceneOld(int32 trackNum)
 {
 #ifdef CONV_FMT
     Texture* firstTex = gTexturePtr;
+    Object* firstObj = gObjectPtr;
 #endif
 
     Texture* sceneTextures;
@@ -1183,6 +1207,8 @@ void LoadSceneOld(int32 trackNum)
     LoadCompressedTextureSequence(trackPath, 1);
     getPath(trackPath, trackNum, "/scene.prm");
     gTrack.objects = LoadPrm(trackPath, sceneTextures, &gTrack.objCount, types);
+
+    LOG("OBJECTS: %d\n", gTrack.objCount);
 
     SortObjects(types);
     InitObjects(types);
@@ -1230,12 +1256,8 @@ void LoadSceneOld(int32 trackNum)
     }
 
 #ifdef CONV_FMT
-    getPath(trackPath, trackNum, ".tex");
-    {
-        FILE* f = fopen(trackPath, "wb");
-        writeTextures(f, firstTex, gTexturePtr);
-        fclose(f);
-    }
+    getPath(trackPath, trackNum, ".wad");
+    writeWAD(trackPath, firstTex, gTexturePtr, firstObj, gObjectPtr);
 #endif
 }
 

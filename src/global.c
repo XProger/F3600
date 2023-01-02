@@ -28,6 +28,9 @@ int gTargetFOV = CAMERA_FOV;
 Texture gTextures[MAX_TEXTURES];
 Texture* gTexturePtr = gTextures;
 
+Object gObjects[MAX_OBJECTS];
+Object* gObjectPtr = gObjects;
+
 /* spline stuff */
 Object* camSpline[20];
 Object* shipSpline[20];
@@ -36,6 +39,19 @@ short finishedExtro;
 int32 gMusicTracksCount;
 int32 gMusicTrack;
 int32 gMasterBalance;
+
+int32 gPad;
+int32 gPadStickX;
+int32 gPadStickY;
+int32 gLastKey;
+
+int32 gFrameIndex;
+int32 gLastFrameIndex;
+int32 gFrameDelta;
+
+#ifdef USE_FRAME_LERP
+int32 gEnableFrameLerp = 1;
+#endif
 
 int32 dbg_update;
 int32 dbg_render;
@@ -79,6 +95,7 @@ typedef struct MemState
     uint8* pDRAM;
     uint8* pVRAM;
     Texture* pTexture;
+    Object* pObject;
 } MemState;
 
 MemState gMemState;
@@ -88,6 +105,7 @@ void memStateSave(void)
     gMemState.pDRAM = pDRAM;
     gMemState.pVRAM = pVRAM;
     gMemState.pTexture = gTexturePtr;
+    gMemState.pObject = gObjectPtr;
 }
 
 void memStateRestore(void)
@@ -104,6 +122,7 @@ void memStateRestore(void)
     pDRAM = gMemState.pDRAM;
     pVRAM = gMemState.pVRAM;
     gTexturePtr = gMemState.pTexture;
+    gObjectPtr = gMemState.pObject;
 }
 
 void getTrackStrNo(char* trackStr, char trackNo)

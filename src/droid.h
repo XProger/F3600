@@ -2,12 +2,18 @@ typedef struct RescueData
 {
     TrackSection* section;
     short modelID;
-    vec4i pos;
-    vec4i vel;
-    vec4i acc;
-    short hdg, pitch, roll;
-    short vhdg, vpitch, vroll;
-    short updateCount;
+    vec3i vel;
+    vec3i acc;
+
+    vec3i pos;
+    int32 pitch, hdg, roll;
+#ifdef USE_FRAME_LERP
+    vec3i _pos;
+    int32 _pitch, _hdg, _roll;
+#endif
+
+    int16 vhdg, vpitch, vroll;
+    int16 updateCount;
     void (*droidUpdate)(struct RescueData*, ShipData*, Object**);
 } RescueData;
 

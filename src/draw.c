@@ -36,7 +36,12 @@ char TrackDirection(const TrackCamera* camera)
 
 void DrawSky(Object* sky)
 {
-    matrixTranslate(gCamera.pos.x, gCamera.pos.y + gSkyPos[trackNo - 1], gCamera.pos.z);
+    TrackCamera* cam = &gCamera;
+    int32 px = FRAME_LERP_POS(cam->_pos.x, cam->pos.x);
+    int32 py = FRAME_LERP_POS(cam->_pos.y, cam->pos.y);
+    int32 pz = FRAME_LERP_POS(cam->_pos.z, cam->pos.z);
+
+    matrixTranslate(px, py + gSkyPos[trackNo - 1], pz);
     renderSky(sky);
 }
 

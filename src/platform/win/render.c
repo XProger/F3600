@@ -68,6 +68,13 @@ PFNGLGENVERTEXARRAYSPROC    glGenVertexArrays;
 PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
 PFNGLBINDVERTEXARRAYPROC    glBindVertexArray;
 
+// VSync control
+#ifdef __WIN32__
+    PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+#elif __LINUX__
+    PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
+#endif
+
 typedef struct
 {
     int32 x;
@@ -707,6 +714,12 @@ void renderInit()
     GetProcOGL(glDeleteVertexArrays);
     GetProcOGL(glBindVertexArray);
 
+#ifdef __WIN32__
+    GetProcOGL(wglSwapIntervalEXT);
+#elif __LINUX__
+    GetProcOGL(glXSwapIntervalSGI);
+#endif
+
     compileShader(&shaderTrack, sh_track);
     compileShader(&shaderObject, sh_object);
     compileShader(&shaderShip, sh_ship);
@@ -736,6 +749,8 @@ void renderInit()
     whiteTex = genTex(0xFFFFFFFF);
 
     glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gMaxAniso);
+
+    renderSetVSync(1);
 }
 
 void renderFree(void)
@@ -746,6 +761,15 @@ void renderFree(void)
     wglMakeCurrent(0, 0);
     wglDeleteContext(hRC);
     ReleaseDC(hWnd, hDC);
+#endif
+}
+
+void renderSetVSync(int32 enable)
+{
+#ifdef __WIN32__
+    if (wglSwapIntervalEXT) wglSwapIntervalEXT(enable ? 1 : 0);
+#elif __LINUX__
+    if (glXSwapIntervalSGI) glXSwapIntervalSGI(enable ? 1 : 0);
 #endif
 }
 

@@ -5,20 +5,12 @@
 BOOL isActive;
 HWND hWnd;
 
-int gPad;
-int gPadStickX;
-int gPadStickY;
-
-int gLastKey;
-
-int gFrameIndex;
-int gLastFrameIndex;
-
 LARGE_INTEGER gTimerFreq;
 LARGE_INTEGER gTimerStart;
 
 void timerInit()
 {
+    timeBeginPeriod(1);
     QueryPerformanceFrequency(&gTimerFreq);
     QueryPerformanceCounter(&gTimerStart);
 }
@@ -571,8 +563,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-#define WND_WIDTH 1280
-#define WND_HEIGHT 720
+#define WND_WIDTH   854
+#define WND_HEIGHT  480
 /*
 #define DIV_TABLE_SIZE (4096 + 1)
 
@@ -636,8 +628,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         } else {
+            int32 time = osGetSystemTimeMS();
             gLastFrameIndex = gFrameIndex;
-            gFrameIndex = osGetSystemTimeMS() * 3 / 50; // * 60 / 1000
+            gFrameIndex = time * 30 / 1000;
+            gFrameDelta = (time - gFrameIndex * 1000 / 30) * 256 * 30 / 1000;
 
             inputUpdate();
 

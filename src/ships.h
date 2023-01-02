@@ -37,50 +37,56 @@ struct TrackCamera;
 typedef struct ShipData
 {
     /***** Graphics Attributes *****/
-    short highResTableIndex; /* Index into shipShapes for high-res model */
-    short lowResTableIndex; /* Index into shipShapes for low-res model */
+    int16 highResTableIndex; /* Index into shipShapes for high-res model */
+    int16 lowResTableIndex; /* Index into shipShapes for low-res model */
 
     /***** Dynamic Attributes *****/
     TrackSection *nearTrkSect, *prevShipSect;
-    int attr; /* Ship attributes */
-    int combatAttr; /* Ship attributes */
+    int32 attr; /* Ship attributes */
+    int32 combatAttr; /* Ship attributes */
     vec3i unitVecNose; /* vec4s  ? */ /* Unit vector along ships nose */
     vec3i unitVecWing; /* vec4s  ? */ /* Unit vector along ships nose */
-    vec3i pos; /* 32bit ship position */
     vec3i vel;
     vec3i thrust; /* Thrust vector */
-    short hdg, pitch, roll; /* Orientation attributes */
-    short vhdg, vpitch, vroll;
-    short ahdg;
-    short r_brake_rot, l_brake_rot; /* Air brakes */
+
+    vec3i pos; /* 32bit ship position */
+    int32 pitch, hdg, roll; /* Orientation attributes */
+#ifdef USE_FRAME_LERP
+    vec3i _pos;
+    int32 _pitch, _hdg, _roll;
+#endif
+
+    int16 vhdg, vpitch, vroll;
+    int16 ahdg;
+    int16 r_brake_rot, l_brake_rot; /* Air brakes */
     uint16 speed; /* speed */
-    short thrust_mag; /* Thrust magnitude */
-    short max_thrust; /* Miximum thrust */
-    short headingInc, maxHeading;
-    short resistance;
-    short skid;
+    int16 thrust_mag; /* Thrust magnitude */
+    int16 max_thrust; /* Miximum thrust */
+    int16 headingInc, maxHeading;
+    int16 resistance;
+    int16 skid;
 
     /***** Remote Ship Attributes *****/
-    short fightBack, numtospeed;
+    int16 fightBack, numtospeed;
     uint16 remoteThrustMag; /* Thrust magnitude */
     uint16 remoteMaxThrust; /* Miximum thrust */
-    short DPASectDiff;
+    int16 DPASectDiff;
 
     /***** Weapon Attributes *****/
     uint8 weaponType;
     uint8 targetShip;
-    short haveFired;
-    short electroCount;
-    short revConCount;
-    short specialCount;
+    int16 haveFired;
+    int16 electroCount;
+    int16 revConCount;
+    int16 specialCount;
 
     /***** Race Control Attributes *****/
-    int lapTime;
-    char lapNo;
-    char position;
-    short nearSecNo, prevSecNo;
-    int lapTimes[5];
-    int updateCount;
+    int32 lapTime;
+    int8 lapNo;
+    int8 position;
+    int16 nearSecNo, prevSecNo;
+    int32 lapTimes[5];
+    int32 updateCount;
 
     uint32 color;
 

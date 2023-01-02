@@ -51,9 +51,14 @@ typedef struct WeaponData
     TrackSection* nearTrkSect;
     vec3i acc;
     vec3i vel;
+
     vec3i pos;
-    int16 hdg;
-    int16 pitch;
+    int32 pitch, hdg, roll;
+#ifdef USE_FRAME_LERP
+    vec3i _pos;
+    int32 _pitch, _hdg, _roll;
+#endif
+
     int8 targetShip;
     uint8 fireShip;
     uint8 type;

@@ -1623,7 +1623,7 @@ int ang(int a)
         return (a - 4096);
     }
 
-    return (a);
+    return a; // -2047..2048
 }
 
 int32 ratan2(int32 y, int32 x)
@@ -1941,15 +1941,15 @@ void matrixSetViewMenu()
     gCameraViewPos.z = 0;
 }
 
-void matrixSetViewInternal(const vec3i* pos, int32 angleX, int32 angleY, int32 angleZ)
+void matrixSetViewInternal(int32 px, int32 py, int32 pz, int32 rx, int32 ry, int32 rz)
 {
     int32 sx, sy, sz, sysz, sycz;
     int32 cx, cy, cz, cycz, cysz;
     Matrix* m = gMatrixPtr;
 
-    rsincos(-angleX, sx, cx);
-    rsincos(-angleY, sy, cy);
-    rsincos(-angleZ, sz, cz);
+    rsincos(-rx, sx, cx);
+    rsincos(-ry, sy, cy);
+    rsincos(-rz, sz, cz);
 
     sysz = sy * sz >> FIXED_SHIFT;
     cycz = cy * cz >> FIXED_SHIFT;
@@ -1972,19 +1972,19 @@ void matrixSetViewInternal(const vec3i* pos, int32 angleX, int32 angleY, int32 a
     m->e13 = 0;
     m->e23 = 0;
 
-    gCameraViewPos.x = pos->x;
-    gCameraViewPos.y = pos->y;
-    gCameraViewPos.z = pos->z;
+    gCameraViewPos.x = px;
+    gCameraViewPos.y = py;
+    gCameraViewPos.z = pz;
 }
 
-void matrixSetViewExternal(const vec3i* pos, int32 angleX, int32 angleY)
+void matrixSetViewExternal(int32 px, int32 py, int32 pz, int32 rx, int32 ry)
 {
     int32 sx, sy;
     int32 cx, cy;
     Matrix* m = gMatrixPtr;
 
-    rsincos(-angleX, sx, cx);
-    rsincos(-angleY, sy, cy);
+    rsincos(-rx, sx, cx);
+    rsincos(-ry, sy, cy);
 
     m->e00 = cy;
     m->e01 = 0;
@@ -2002,9 +2002,9 @@ void matrixSetViewExternal(const vec3i* pos, int32 angleX, int32 angleY)
     m->e13 = 0;
     m->e23 = 0;
 
-    gCameraViewPos.x = pos->x;
-    gCameraViewPos.y = pos->y;
-    gCameraViewPos.z = pos->z;
+    gCameraViewPos.x = px;
+    gCameraViewPos.y = py;
+    gCameraViewPos.z = pz;
 }
 
 void matrixTranslate(int32 x, int32 y, int32 z)

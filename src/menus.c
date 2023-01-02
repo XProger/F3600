@@ -594,8 +594,8 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
 
 void DrawMainMenu(const Menu* menu, int shapeNo)
 {
-    int32 hdg = gFrameIndex * 20;
-    int32 heading = gFrameIndex * 5;
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 heading = FRAME_LERP_STEP(10);
 
     if (shapeNo == 0)
         DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
@@ -614,8 +614,8 @@ void DrawMainMenu(const Menu* menu, int shapeNo)
 
 void DrawTeams(const Menu* menu, int shapeNo)
 {
-    int32 hdg = gFrameIndex * 20;
-    int32 heading = gFrameIndex * 10;
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 heading = FRAME_LERP_STEP(20);
 
     DrawObject(teamShapes + teamShapeOrder[shapeNo], 0, 0, 9000, hdg, 0, 0);
 
@@ -634,16 +634,16 @@ void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
 
 void DrawPilot(const Menu* menu, int shapeNo)
 {
-    int32 hdg = gFrameIndex * 20;
-    int32 shdg = gFrameIndex * 5;
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 heading = FRAME_LERP_STEP(10);
 
     DrawObject(pilotShapes + pilotShapeOrder[shapeNo], 0, -400, 11000, hdg, 0, 0);
-    DrawTeamShips(0, 700, 1300, shdg, ctrlshipShapes[shipShapeOrder[shapeNo]]);
+    DrawTeamShips(0, 700, 1300, heading, ctrlshipShapes[shipShapeOrder[shapeNo]]);
 }
 
 void DrawClass(const Menu* menu, int shipNo)
 {
-    int32 hdg = gFrameIndex * 20;
+    int32 hdg = FRAME_LERP_STEP(40);
 
     if (shipNo == 0)
     {
@@ -699,7 +699,7 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
                 SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
                 SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
-            SetMasterBalance(gMasterBalance - (gFrameIndex - gLastFrameIndex));
+            SetMasterBalance(gMasterBalance - (gFrameIndex - gLastFrameIndex) * 2);
         }
         else if (pad & IN_RIGHT)
         {
@@ -709,7 +709,7 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
                 SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
                 SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
             }
-            SetMasterBalance(gMasterBalance + (gFrameIndex - gLastFrameIndex));
+            SetMasterBalance(gMasterBalance + (gFrameIndex - gLastFrameIndex) * 2);
         }
         else
         {
@@ -1030,7 +1030,7 @@ void SetNormPadPresets(ConfigData* gameData)
 
 void DrawGames(const Menu* menu, int shipNo)
 {
-    int32 hdg = gFrameIndex * 20;
+    int32 hdg = FRAME_LERP_STEP(40);
 
     renderOffset(0, -30);
 
@@ -1052,8 +1052,8 @@ void DrawGames(const Menu* menu, int shipNo)
 
 void DrawOptionMenus(const Menu* menu, int shipNo)
 {
-    int32 hdg = gFrameIndex * 20;
-    int32 heading = gFrameIndex * 5;
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 heading = FRAME_LERP_STEP(10);
 
     renderOffset(0, -30);
 
@@ -1076,7 +1076,7 @@ void DrawOptionMenus(const Menu* menu, int shipNo)
 
 void DrawHiScoreMenu(const Menu* menu, int shipNo)
 {
-    int32 hdg = gFrameIndex * 20;
+    int32 hdg = FRAME_LERP_STEP(40);
 
     renderOffset(0, -30);
     DrawObject(optShapes + 2, 0, 0, 600, hdg, 0, 0);
@@ -1084,7 +1084,7 @@ void DrawHiScoreMenu(const Menu* menu, int shipNo)
 
 void DisplayPadMenu(const Menu* menu, int shapeNo)
 {
-    int32 hdg = gFrameIndex * 20;
+    int32 hdg = FRAME_LERP_STEP(40);
 
     DrawObject(padShapes + 0, 0, 0, 6500, hdg, 0, 0);
 }
@@ -1135,6 +1135,7 @@ void DrawControllerEdit(const Menu* menu, int shapeNo)
 
 void DrawGraphicDetail(const Menu* menu, int shapeNo)
 {
-    int32 heading = gFrameIndex * 5;
+    int32 heading = FRAME_LERP_STEP(10);
+
     DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
 }

@@ -15,12 +15,12 @@
 #define TEXT_COLOR_HIGHLIGHT    0xFF19668C
 
 #ifdef __3DO__
-#define BLINK_TEXT (((gFrameIndex & 7) <= 3) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT) // ok for 15 fps :)
+#define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT) // ok for 15 fps :)
 #else
-#define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT)
+#define BLINK_TEXT ((gFrameIndex & 1) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT)
 #endif
 
-#define BLINK_SLOW ((gFrameIndex & 63) <= 42)
+#define BLINK_SLOW ((gFrameIndex & 31) <= 21)
 
 #define CAMERA_FOV          (75 << 12)
 #define CAMERA_FOV_EXTRA    (100 << 12)
@@ -62,6 +62,10 @@ extern int crossedLine;
 extern Texture gTextures[MAX_TEXTURES];
 extern Texture* gTexturePtr;
 
+#define MAX_OBJECTS 512
+extern Object gObjects[MAX_OBJECTS];
+extern Object* gObjectPtr;
+
 /* spline stuff */
 extern Object* camSpline[];
 extern Object* shipSpline[];
@@ -70,6 +74,50 @@ extern short finishedExtro;
 extern int32 gMusicTracksCount;
 extern int32 gMusicTrack;
 extern int32 gMasterBalance;
+
+extern int32 gPad;
+extern int32 gPadStickX;
+extern int32 gPadStickY;
+extern int32 gLastKey;
+
+extern int32 gFrameIndex;
+extern int32 gLastFrameIndex;
+extern int32 gFrameDelta;
+
+extern int32 gEnableFrameLerp;
+
+#ifdef USE_FRAME_LERP
+    #define FRAME_LERP_INIT(obj)\
+        if (gEnableFrameLerp) {\
+            (obj)->_pos.x = (obj)->pos.x;\
+            (obj)->_pos.y = (obj)->pos.y;\
+            (obj)->_pos.z = (obj)->pos.z;\
+            (obj)->_pitch = (obj)->pitch;\
+            (obj)->_hdg = (obj)->hdg;\
+            (obj)->_roll = (obj)->roll;\
+        }
+
+    #define FRAME_LERP(obj)\
+        if (gEnableFrameLerp) {\
+            px = FRAME_LERP_POS((obj)->_pos.x, px);\
+            py = FRAME_LERP_POS((obj)->_pos.y, py);\
+            pz = FRAME_LERP_POS((obj)->_pos.z, pz);\
+            rx = FRAME_LERP_ROT((obj)->_pitch, rx);\
+            ry = FRAME_LERP_ROT((obj)->_hdg, ry);\
+            rz = FRAME_LERP_ROT((obj)->_roll, rz);\
+        }
+
+    #define FRAME_LERP_VALUE(a, delta)  ((a) + ((delta) * gFrameDelta >> 8))
+    #define FRAME_LERP_POS(a, b)        FRAME_LERP_VALUE(a, (b) - (a))
+    #define FRAME_LERP_ROT(a, b)        FRAME_LERP_VALUE(a, ang((b) - (a)))
+    #define FRAME_LERP_STEP(step)       FRAME_LERP_VALUE(gFrameIndex * step, step)
+#else
+    #define FRAME_LERP_INIT(obj)
+    #define FRAME_LERP(obj)
+    #define FRAME_LERP_STEP(step)   (gFrameIndex * step)
+    #define FRAME_LERP_POS(a, b)    b
+    #define FRAME_LERP_ROT(a, b)    b
+#endif
 
 #define frameRate30 30
 

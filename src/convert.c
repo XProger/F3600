@@ -204,6 +204,7 @@ int32 trackFaceCount;
 
 int32 clutAdd(int32 faceTexIndex, float r, float g, float b)
 {
+#if 0
     int32 i, pr, pg, pb;
     uint16 clut[16];
     Tim* tim = gTextures[faceTexIndex + ctrllibraryTextures].tim;
@@ -243,6 +244,8 @@ int32 clutAdd(int32 faceTexIndex, float r, float g, float b)
     ASSERT(clutsCount < MAX_TRACK_CLUTS);
     memcpy(cluts[clutsCount++], clut, sizeof(clut));
     return clutsCount - 1;
+#endif
+    return 0;
 }
 
 int32 vertexAdd(const vec3i* v)
@@ -416,14 +419,18 @@ void getVisibilityRange(const TrackSection* section, TrackRange* ranges, int32 f
 
 void writeShort(FILE* f, int16 value)
 {
+#if 0
     IntelShort(&value);
     fwrite(&value, sizeof(value), 1, f);
+#endif
 }
 
 void writeInt(FILE* f, int32 value)
 {
+#if 0
     IntelLong(&value);
     fwrite(&value, sizeof(value), 1, f);
+#endif
 }
 
 void convertTrack3DO(int32 trackNum)

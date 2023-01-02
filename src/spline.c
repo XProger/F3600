@@ -573,8 +573,6 @@ void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueD
 
     camera->hdg = -ratan2(targetVector.x, targetVector.z);
     camera->pitch = -ratan2(targetVector.y, temp);
-
-    matrixSetViewExternal(&camera->pos, camera->pitch, camera->hdg);
 }
 
 /*
@@ -605,8 +603,6 @@ void UpdateCameraStationary(TrackCamera* camera, ShipData* ship, RescueData* res
 
     camera->hdg = -ratan2(targetVector.x, targetVector.z);
     camera->pitch = -ratan2(targetVector.y, temp);
-
-    matrixSetViewExternal(&camera->pos, camera->pitch, camera->hdg);
 }
 
 void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)

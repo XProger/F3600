@@ -6,7 +6,6 @@ Effect* gEffectsActive;
 
 Texture* gShadowTex;
 
-extern int gFrameIndex;
 extern ShipData ctrlshipIndex[NO_OF_SHIPS];
 
 void ResetEffects(void)
@@ -258,21 +257,25 @@ void ResetStartBoom(void)
 void ColourRedLight(void)
 {
 #ifdef USE_VERTEX_COLOR
-    int32 i, r;
+    int32 i;
+    uint32 r;
     ObjFace* face;
+
+    int32 count = FRAME_LERP_STEP(280);
+
+    r = (rsin(count) >> 5) + 128;
+    if (r > 255)
+        r = 255;
+    r |= 0xFF000000;
 
     for (i = 0; i < gTrack.redCount; i++)
     {
-        r = (rsin(gFrameIndex * 140) >> 5) + 128;
-        if (r > 255)
-            r = 255;
-
         face = gTrack.red[i].faces;
 
         face->color[0] =
         face->color[1] =
         face->color[2] =
-        face->color[3] = r | 0xFF000000;
+        face->color[3] = r;
     }
 #endif
 }
@@ -283,8 +286,9 @@ void ColourDroidLights(Object* droid)
     int32 i;
     int32 r, g, b;
     int32 rf, gf, bf;
-    int32 count = gFrameIndex * 70;
     ObjFace* face;
+
+    int32 count = FRAME_LERP_STEP(140);
 
     rf = (rsin(count) >> 5) + 128;
     if (rf > 255)
@@ -331,11 +335,10 @@ void ColourDroidLights(Object* droid)
 void MoveDonkey(void)
 {
 #if 0 // TODO donkey animation
-    int i;
+    int32 i;
     Object* obj;
-    short count;
 
-    count = gFrameIndex * 20;
+    int32 count = FRAME_LERP_STEP(40);
 
     for (i = 0; i < 2; i++)
     {
@@ -402,9 +405,9 @@ void DrawShadows(ShipData* shipIndex)
         dz = (nx * ry - ny * rx) >> FIXED_SHIFT;
 
         // get the shadow pivot point
-        px = playerShip->pos.x;
-        py = playerShip->pos.y;
-        pz = playerShip->pos.z;
+        px = FRAME_LERP_POS(playerShip->_pos.x, playerShip->pos.x);
+        py = FRAME_LERP_POS(playerShip->_pos.y, playerShip->pos.y);
+        pz = FRAME_LERP_POS(playerShip->_pos.z, playerShip->pos.z);
 
         alpha = (nx * (px - facePoint->x) + ny * (py - facePoint->y) + nz * (pz - facePoint->z)) >> FIXED_SHIFT;
 

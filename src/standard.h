@@ -11,6 +11,7 @@
     #include <windows.h>
 #endif
 
+#define USE_FRAME_LERP
 
 #ifdef __3DO__
     #include <displayutils.h>
@@ -109,8 +110,6 @@ typedef struct vec4i
 #endif
 
 #define randy() (rand() & 0x7FFF)
-
-extern int gPad;
 
 unsigned short GetKeyNoBlock(void);
 

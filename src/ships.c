@@ -144,15 +144,28 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, ConfigData
 
                 if (!(attr & VIEW_IN) || (attr & REMOTE_VIEW))
                 {
-                    attr |= VISIBLE;
+                    int32 px = ship->pos.x;
+                    int32 py = ship->pos.y;
+                    int32 pz = ship->pos.z;
+                    int32 rx = ship->pitch;
+                    int32 ry = ship->hdg;
+                    int32 rz = ship->roll;
+
+                    FRAME_LERP(ship);
 
                     matrixPush();
-                    matrixTranslate(ship->pos.x, ship->pos.y, ship->pos.z);
-                    matrixRotateYXZ(ship->pitch, ship->hdg, ship->roll);
+                    matrixTranslate(px, py, pz);
+                    matrixRotateYXZ(rx, ry, rz);
+
+                #ifdef USE_SHIP_AMBIENT
+                    ShipCalcAmbient(ship);
+                #endif
 
                     renderShip(obj, ship->color);
 
                     matrixPop();
+
+                    attr |= VISIBLE;
                 }
             }
         }
@@ -434,5 +447,6 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         targetVector.y = nextSection->centre.y - startSection[position]->centre.y;
         targetVector.z = nextSection->centre.z - startSection[position]->centre.z;
         ship->hdg = -ratan2(targetVector.x, targetVector.z);
+        FRAME_LERP_INIT(ship);
     }
 }

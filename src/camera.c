@@ -65,8 +65,6 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
 
     camera->pitch = camShip->pitch;
     camera->hdg = camShip->hdg;
-
-    matrixSetViewExternal(&camera->pos, camera->pitch, camera->hdg);
 }
 
 void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -91,7 +89,6 @@ void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData
     camera->pos.x = camShip->pos.x - (unitFinVector.x >> 5);
     camera->pos.y = camShip->pos.y - (unitFinVector.y >> 5);
     camera->pos.z = camShip->pos.z - (unitFinVector.z >> 5);
-    matrixSetViewInternal(&camera->pos, camera->pitch, camera->hdg, camera->roll);
 }
 
 void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -120,8 +117,6 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
 
     camera->pitch = camShip->pitch >> 1;
     camera->hdg = -ratan2(targetVector.x, targetVector.z);
-
-    matrixSetViewExternal(&camera->pos, camera->pitch, camera->hdg);
 
     if (camShip->updateCount == SWITCH_TO_RACE_VIEW)
     {
@@ -182,8 +177,6 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
 
     camera->pitch = -ratan2(targetVector.y, temp);
     camera->hdg = -ratan2(targetVector.x, targetVector.z);
-    
-    matrixSetViewExternal(&camera->pos, camera->pitch, camera->hdg);
 }
 
 void UpdateCameraDroidView(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -203,8 +196,6 @@ void UpdateCameraDroidView(TrackCamera* camera, ShipData* camShip, RescueData* r
 
     camera->pitch = -ratan2(targetVector.y, temp);
     camera->hdg = -ratan2(targetVector.x, targetVector.z);
-
-    matrixSetViewExternal(&camera->pos, camera->pitch, camera->hdg);
 }
 
 void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)

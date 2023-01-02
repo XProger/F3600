@@ -141,9 +141,14 @@ typedef struct TrackData
 typedef struct TrackCamera
 {
     TrackSection* section;
-    int32 hdg, pitch, roll;
-    vec3i pos;
     vec3i vel;
+
+    vec3i pos;
+    int32 pitch, hdg, roll;
+#ifdef USE_FRAME_LERP
+    vec3i _pos;
+    int32 _pitch, _hdg, _roll;
+#endif
 } TrackCamera;
 
 TrackSection* NextIndexSection(TrackSection* section);

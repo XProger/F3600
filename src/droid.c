@@ -362,10 +362,6 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
     rescueDroid->acc.y = 0;
     rescueDroid->acc.z = 0;
 
-    rescueDroid->hdg = shipIndex->hdg;
-    rescueDroid->pitch = shipIndex->pitch;
-    rescueDroid->roll = shipIndex->roll;
-
     rescueDroid->vhdg = 0;
     rescueDroid->vpitch = 0;
     rescueDroid->vroll = 0;
@@ -377,6 +373,7 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
     rescueDroid->hdg = 0;
     rescueDroid->pitch = 0;
     rescueDroid->roll = 0;
+    FRAME_LERP_INIT(rescueDroid);
 
     rescueDroid->droidUpdate = UpdateDroidStart;
 }
@@ -384,6 +381,15 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
 void DrawDroid(Object* droid, const RescueData* rescueData)
 {
 #ifndef __3DO__ // TODO 3DO visibility check
-    DrawObject(droid, rescueData->pos.x, rescueData->pos.y, rescueData->pos.z, rescueData->hdg, rescueData->pitch, rescueData->roll);
+    int32 px = rescueData->pos.x;
+    int32 py = rescueData->pos.y;
+    int32 pz = rescueData->pos.z;
+    int32 rx = rescueData->pitch;
+    int32 ry = rescueData->hdg;
+    int32 rz = rescueData->roll;
+
+    FRAME_LERP(rescueData);
+
+    DrawObject(droid, px, py, pz, ry, rx, rz);
 #endif
 }

@@ -681,7 +681,7 @@ int ComparePosision(ShipData* a, ShipData* b)
         cy = a->nearTrkSect->centre.y;
         cz = a->nearTrkSect->centre.z;
 
-        ASSERT(a->nearTrkSect == b->nearTrkSect);
+        //ASSERT(a->nearTrkSect == b->nearTrkSect);
 
         ca.x = a->pos.x - cx;
         ca.y = a->pos.y - cy;
