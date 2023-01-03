@@ -611,10 +611,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     int wx = (GetSystemMetrics(SM_CXSCREEN) - (r.right - r.left)) / 2;
     int wy = (GetSystemMetrics(SM_CYSCREEN) - (r.bottom - r.top)) / 2;
 
-    hWnd = CreateWindow("static", "wipEout xport", WS_OVERLAPPEDWINDOW, wx + r.left, wy + r.top, r.right - r.left, r.bottom - r.top, 0, 0, hInstance, 0);
+    WNDCLASSEX wcex;
+    memset(&wcex, 0, sizeof(wcex));
+    wcex.cbSize         = sizeof(WNDCLASSEX);
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.hInstance      = GetModuleHandle(NULL);
+    wcex.hIcon          = LoadIcon(wcex.hInstance, "MAINICON");
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.lpszClassName  = "wipeoutWnd";
+    wcex.hIconSm        = wcex.hIcon;
+    wcex.lpfnWndProc    = &WndProc;
+    RegisterClassEx(&wcex);
 
-    SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)&WndProc);
-    ShowWindow(hWnd, SW_SHOWDEFAULT);
+    hWnd = CreateWindow(wcex.lpszClassName, "wipEout xport", WS_OVERLAPPEDWINDOW | WS_VISIBLE, wx + r.left, wy + r.top, r.right - r.left, r.bottom - r.top, 0, 0, hInstance, 0);
 
     timerInit();
     inputInit();

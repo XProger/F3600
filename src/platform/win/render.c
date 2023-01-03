@@ -790,7 +790,6 @@ void renderResize(int width, int height)
         height = 1;
     gWidth = width;
     gHeight = height;
-    glViewport(0, 0, width, height);
 }
 
 void renderOffset(int x, int y)
@@ -1176,6 +1175,8 @@ void renderFrameBegin(void)
     matrixOrtho(m, -gBorder, 320 + gBorder, 240, 0, 0, 1);
 
     gMatricesCount = 2;
+
+    glViewport(0, 0, gWidth, gHeight);
 }
 
 void renderFrameEnd(void)

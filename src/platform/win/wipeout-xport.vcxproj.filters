@@ -67,4 +67,7 @@
     <ClInclude Include="..\..\render.h" />
     <ClInclude Include="..\..\game.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="wipeout-xport.rc" />
+  </ItemGroup>
 </Project>

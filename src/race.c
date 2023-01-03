@@ -1029,7 +1029,7 @@ void raceLoop(ConfigData* gameData)
         dbg_update = osGetSystemTimeMS() - dbg_update;
     }
 
-    if (ctrlNeedInGameReset)
+    if (ctrlNeedInGameReset || ctrlNeedInGameConfirm)
     {
         gFrameDelta = 255;
     }

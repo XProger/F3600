@@ -85,6 +85,9 @@
     <ClInclude Include="..\..\utils.h" />
     <ClInclude Include="..\..\weapon.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="wipeout-xport.rc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
