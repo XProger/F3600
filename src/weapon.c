@@ -6,7 +6,7 @@ WeaponData gWeapons[MAX_WEAPONS];
 WeaponData* gWeaponsFree;
 WeaponData* gWeaponsActive;
 
-extern int ctrlnearShip;
+int ctrlnearShip;
 
 extern Texture* gTargetTex;
 
@@ -160,30 +160,20 @@ void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes)
         playerShip->targetShip = nearShip;
     }
     else
+    {
         playerShip->targetShip = 0xFF;
+    }
 }
 
-void DrawTargetIcon(ShipData* shipIndex, Object** shipShapes)
+void DrawTargetIcon(ShipData* shipIndex)
 {
-#if 0 // TODO renderTargetIcon
-    vec3s* vertex;
-    vec2s sxy;
-    int32 flag;
-    const MATRIX* matrix;
+    ShipData* ship = shipIndex + ctrlnearShip;
+    int32 px = FRAME_LERP_POS(ship->_pos.x, ship->pos.x);
+    int32 py = FRAME_LERP_POS(ship->_pos.y, ship->pos.y);
+    int32 pz = FRAME_LERP_POS(ship->_pos.z, ship->pos.z);
 
-    shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton->update = 1;
-    vertex = (vec3s*)shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->vertices;
-    matrix = GetSkeletonMatrix(shipShapes[shipIndex[ctrlnearShip].highResTableIndex]->skeleton);
-
-    RotTransPers(matrix, vertex, &sxy, &flag);
-
-    if ((flag & (CrtClipped | ZNegative | ZLarge | ZSmall)))
-        return;
-
-    renderSetBlend(BLEND_ADD);
-    renderImage(gTargetTex, sxy.x - (gTargetTex->width >> 1), sxy.y - (gTargetTex->height >> 1));
-    renderSetBlend(BLEND_ALPHA);
-#endif
+    matrixTranslate(px, py, pz);
+    renderTargetIcon(gTargetTex);
 }
 
 void ResetWeapons(Object** weaponShapes)

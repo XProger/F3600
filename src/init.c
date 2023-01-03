@@ -357,7 +357,9 @@ void LoadCommonOld(void)
     ctrlweaponShapes[WEAPON_SHAPE_SHIELD]  = LoadPrm("wipeout/common/shld.prm", weaponTextures, NULL, NULL);
     ctrlweaponShapes[WEAPON_SHAPE_EBOLT]   = LoadPrm("wipeout/common/ebolt.prm", weaponTextures, NULL, NULL);
 
+    HACK_TEX_FILTER = 1;
     gTargetTex = LoadTexture("wipeout/textures/target2.tim");
+    HACK_TEX_FILTER = 0;
 
 #ifdef CONV_FMT
     ASSERT(firstTex == gTextures);

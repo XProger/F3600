@@ -77,4 +77,4 @@ void ResetWeapons(Object** weaponShapes);
 void InitWeaponGrids(void);
 void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids);
 void DrawWeapons(ShipData* shipIndex, Object** weaponShapes);
-void DrawTargetIcon(ShipData* shipIndex, Object** shipShapes);
+void DrawTargetIcon(ShipData* shipIndex);

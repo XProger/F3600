@@ -275,6 +275,7 @@ void renderObject(const Object* object);
 void renderShip(const Object* object, uint32 color);
 void renderShield(const Object* object, int32 counter);
 void renderSky(const Object* object);
+void renderTargetIcon(Texture* tex);
 void renderSetMode(int renderMode);
 void renderSetBlend(int blend);
 void renderDepthWrite(int enable);

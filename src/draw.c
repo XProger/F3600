@@ -129,4 +129,7 @@ void DrawView(void)
     DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
     DrawEffects();
+
+    if (ctrlNeedTargetIcon == 1)
+        DrawTargetIcon(ctrlshipIndex);
 }

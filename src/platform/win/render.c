@@ -111,6 +111,7 @@ typedef enum
     uProjMatrix,
     uViewMatrix,
     uColor,
+    uResolution,
     uMAX
 } UniformType;
 
@@ -132,6 +133,7 @@ typedef struct
     int32 blend;
     uint8 depthWrite;
     uint8 depthTest;
+    int32 param;
 } RenderState;
 
 #define MAX_RENDER_VERTICES     (1024 * 16)
@@ -178,6 +180,7 @@ Shader shaderShip;
 Shader shaderShield;
 Shader shaderSky;
 Shader shaderBlob;
+Shader shaderTarget;
 Shader shaderGUI;
 
 #define MAX_TRACK_TEX   22
@@ -378,6 +381,35 @@ const char* sh_blob =
 
     "#endif\n";
 
+const char* sh_target =
+    "varying vec2 vTexCoord;\n"
+
+    "#ifdef VERTEX\n"
+        "uniform mat4 uProjMatrix;\n"
+        "uniform mat4 uViewMatrix;\n"
+        "uniform vec4 uResolution;\n"
+
+        "attribute vec3 aCoord;\n"
+        "attribute vec2 aTexCoord;\n"
+
+        "void main() {\n"
+            "vTexCoord = aTexCoord;\n"
+            "vec4 p = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
+            "vec2 d = (aTexCoord.xy * 2.0 - 1.0) * (16.0 * p.w);\n"
+            "p.xy += d * uResolution.xy;\n"
+            "gl_Position = p;\n"
+        "}\n"
+
+    "#else\n"
+
+        "uniform sampler2D sDiffuse;\n"
+
+        "void main() {\n"
+            "fragColor = texture2D(sDiffuse, vTexCoord) * 0.5;\n"
+        "}\n"
+
+    "#endif\n";
+
 const char* sh_gui =
     "varying vec2 vTexCoord;\n"
     "varying vec4 vColor;\n"
@@ -573,6 +605,7 @@ void compileShader(Shader* shader, const char* text)
     shader->uid[uProjMatrix] = glGetUniformLocation(shader->id, "uProjMatrix");
     shader->uid[uViewMatrix] = glGetUniformLocation(shader->id, "uViewMatrix");
     shader->uid[uColor] = glGetUniformLocation(shader->id, "uColor");
+    shader->uid[uResolution] = glGetUniformLocation(shader->id, "uResolution");
 }
 
 void* GetProc(const char *name)
@@ -726,6 +759,7 @@ void renderInit()
     compileShader(&shaderShield, sh_shield);
     compileShader(&shaderSky, sh_sky);
     compileShader(&shaderBlob, sh_blob);
+    compileShader(&shaderTarget, sh_target);
     compileShader(&shaderGUI, sh_gui);
 
     glGenVertexArrays(1, &VAO);
@@ -1193,8 +1227,16 @@ void renderFrameEnd(void)
     int32 depthWrite = 1;
     int32 blend = BLEND_NONE;
     uint32 color = 0xBAAAAAAD;
+    int32 resolution = 0;
 
-    GLfloat colorValue[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const GLfloat resolutionValue[4] = {
+        1.f / (240.0f * gWidth / gHeight), 1.0f / 240.0f, 1.0 / gWidth, 1.0 / gHeight
+    };
+
+    GLfloat colorValue[4] = {
+        1.0f, 1.0f, 1.0f, 1.0f
+    };
+
 
     count = 0;
     for (i = 0; i < gStatesCount; i++)
@@ -1237,6 +1279,7 @@ void renderFrameEnd(void)
             projMatrix = -1;
             viewMatrix = -1;
             color = 0xBAAAAAAD;
+            resolution = 0;
             glUseProgram(shader->id);
         }
 
@@ -1280,6 +1323,16 @@ void renderFrameEnd(void)
                 colorValue[1] = i255 * (0xFF & (color >> 8));
                 colorValue[2] = i255 * (0xFF & (color >> 16));
                 glUniform4fv(shader->uid[uColor], 1, colorValue);
+            }
+        }
+
+        // set screen resolution (for target icon only)
+        if (!resolution)
+        {
+            resolution = 1;
+            if (shader->uid[uResolution] > -1)
+            {
+                glUniform4fv(shader->uid[uResolution], 1, resolutionValue);
             }
         }
 
@@ -1629,6 +1682,26 @@ void renderSky(const Object* object)
     renderMesh(object);
 
     renderDepthTest(1);
+}
+
+void renderTargetIcon(Texture* tex)
+{
+    renderSetBlend(BLEND_ADD);
+    renderDepthTest(0);
+
+    renderSetMatrix(gMatrixPtr);
+    renderSetShader(&shaderTarget);
+    renderSetTexture(tex);
+    stateCheck();
+
+    addQuad();
+    addVertex(0, 0, 0, 0.0f, 1.0f, 0);
+    addVertex(0, 0, 0, 1.0f, 1.0f, 0);
+    addVertex(0, 0, 0, 1.0f, 0.0f, 0);
+    addVertex(0, 0, 0, 0.0f, 0.0f, 0);
+
+    renderDepthTest(1);
+    renderSetBlend(BLEND_ALPHA);
 }
 
 void renderSetMode(int renderMode)

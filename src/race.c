@@ -20,7 +20,6 @@ short ctrlbuttonPressed;
 int ctrldoneExtro;
 int ctrlplayCredits;
 int ctrlgameOverTime;
-int ctrlnearShip;
 
 int HACK_LOAD_TRACK;
 int HACK_LOAD_SHADOW;
@@ -1033,9 +1032,6 @@ void raceLoop(void)
     DrawView();
 
     renderSetMode(RENDER_MODE_2D);
-
-    if (ctrlNeedTargetIcon == 1)
-        DrawTargetIcon(ctrlshipIndex, ctrlshipShapes);
 
     if (ctrlshipIndex[ownShip].attr & RACING)
         DrawHud(ctrlshipIndex, ctrlchoice);
