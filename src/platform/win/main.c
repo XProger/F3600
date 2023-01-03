@@ -27,9 +27,11 @@ void osQuit()
     PostQuitMessage(0);
 }
 
-#define INPUT_JOY_COUNT 4
+#define GetProcAddr(lib, x) ((FARPROC)x = (lib ? GetProcAddress(lib, #x + 1) : NULL))
 
 // gamepad
+#define INPUT_JOY_COUNT 4
+
 typedef struct _XINPUT_GAMEPAD
 {
     WORD wButtons;
@@ -127,8 +129,6 @@ void inputInit()
 
     if (!h)
         return;
-
-#define GetProcAddr(lib, x) ((FARPROC)x = GetProcAddress(lib, #x + 1))
 
     GetProcAddr(h, _XInputGetState);
     GetProcAddr(h, _XInputSetState);
@@ -483,6 +483,17 @@ int32 osLoadFile(const char* name, void* buffer)
     return size;
 }
 
+// hint to the driver to use discrete GPU
+// NVIDIA
+__declspec(dllexport) int NvOptimusEnablement = 1;
+// AMD
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+
+// DPI API
+BOOL (WINAPI *_SetProcessDpiAwarenessContext)(HANDLE);  // Win 10
+BOOL (WINAPI *_SetProcessDpiAwareness)(int);            // Win 8.1
+BOOL (WINAPI *_SetProcessDPIAware)();                   // Win Vista
+BOOL (WINAPI *_EnableNonClientDpiScaling)(HWND);        // Win 10
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -556,6 +567,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             soundFill();
             break;
 
+        case WM_NCCREATE:
+            if (_EnableNonClientDpiScaling)
+            {
+                _EnableNonClientDpiScaling(hWnd);
+            }
         default:
             return DefWindowProc(hWnd, msg, wParam, lParam);
     }
@@ -565,30 +581,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 #define WND_WIDTH   854
 #define WND_HEIGHT  480
-/*
-#define DIV_TABLE_SIZE (4096 + 1)
-
-uint16 divTable[DIV_TABLE_SIZE];
-
-void initDivTable()
-{
-    divTable[0] = 0xFFFF;
-    divTable[1] = 0xFFFF;
-    for (uint32 i = 2; i < DIV_TABLE_SIZE; i++) {
-        divTable[i] = (1 << 16) / i;
-    }
-
-    ASSERT((DIV_TABLE_SIZE & 8) == 0);
-
-    printf("const uint16 divTable[DIV_TABLE_SIZE] = {\n");
-    for (int i = 0; i < DIV_TABLE_SIZE; i += 8) {
-        printf("    0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X, 0x%04X,\n",
-            divTable[i + 0], divTable[i + 1], divTable[i + 2], divTable[i + 3],
-            divTable[i + 4], divTable[i + 5], divTable[i + 6], divTable[i + 7]);
-    }
-    printf("};\n");
-}
-*/
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -599,7 +591,26 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     freopen_s(&fp, "CONOUT$", "w", stdout);
     freopen_s(&fp, "CONOUT$", "w", stderr);
 #endif
-    //initDivTable();
+
+    // High DPI support
+    if (strstr(lpCmdLine, "--high-dpi"))
+    {
+        HMODULE hUser32 = LoadLibrary("user32.dll");
+        HMODULE hShcore = LoadLibrary("SHCore.dll");
+
+        GetProcAddr(hUser32, _SetProcessDpiAwarenessContext);
+        GetProcAddr(hShcore, _SetProcessDpiAwareness);
+        GetProcAddr(hUser32, _SetProcessDPIAware);
+        GetProcAddr(hUser32, _EnableNonClientDpiScaling);
+
+        if (_SetProcessDpiAwarenessContext) {
+            _SetProcessDpiAwarenessContext((HANDLE)-3);   // DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE v1
+        } else if (_SetProcessDpiAwareness) {
+            _SetProcessDpiAwareness(2);                   // DPI_AWARENESS_PER_MONITOR_AWARE
+        } else if (_SetProcessDPIAware) {
+            _SetProcessDPIAware();
+        }
+    }
 
     gDRAM = pDRAM = (uint8*)malloc(DRAM_SIZE);
     gVRAM = pVRAM = (uint8*)malloc(VRAM_SIZE);
@@ -618,6 +629,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     wcex.hInstance      = GetModuleHandle(NULL);
     wcex.hIcon          = LoadIcon(wcex.hInstance, "MAINICON");
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)GetStockObject(BLACK_BRUSH);
     wcex.lpszClassName  = "wipeoutWnd";
     wcex.hIconSm        = wcex.hIcon;
     wcex.lpfnWndProc    = &WndProc;
