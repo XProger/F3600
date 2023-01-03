@@ -46,13 +46,13 @@ short championOrder[8];
 short raceOrder[8];
 short shipOrder[8];
 
-void SetSpread(ShipData* ship, ConfigData* gameData, int position)
+void SetSpread(ShipData* ship, int position)
 {
     int32 speed;
 
     position--;
 
-    switch (gameData->actTrackNum)
+    switch (gConfig.actTrackNum)
     {
         case 1:
             speed = 60 + position * 11;
@@ -104,7 +104,7 @@ void SetSpread(ShipData* ship, ConfigData* gameData, int position)
     ship->numtospeed = speed * position;
 }
 
-void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, ConfigData* gameData)
+void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 {
     int32 i;
     int32 dist, dx, dy, dz, vz;
@@ -114,7 +114,7 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, ConfigData
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (!((i == ownShip) || (gameData->gameType != TIME_TRIAL)))
+        if (!((i == ownShip) || (gConfig.raceType != TIME_TRIAL)))
             continue;
 
         ship = shipIndex + i;
@@ -174,7 +174,7 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip, ConfigData
     }
 }
 
-void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameData)
+void InitShipData(TrackSection* section, ShipData* shipIndex)
 {
     int i, j;
     Face* face;
@@ -237,7 +237,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 
     crossedLine = 0;
 
-    if (((gameData->gameType == CHAMPIONSHIP) && (gameData->trackNum == 1)) || ((gameData->gameType == CHAMPIONSHIP) && (gameData->trackNum == 8)) || (gameData->gameType != CHAMPIONSHIP))
+    if (((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 1)) || ((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 8)) || (gConfig.raceType != CHAMPIONSHIP))
     {
         for (i = 0; i < NO_OF_SHIPS; i++)
         {
@@ -265,7 +265,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         raceOrder[0] = ownShip;
         shipOrder[ownShip] = 0;
     }
-    else if (gameData->gameType == CHAMPIONSHIP)
+    else if (gConfig.raceType == CHAMPIONSHIP)
     {
         raceOrder[7] = championOrder[7];
         shipOrder[raceOrder[7]] = 7;
@@ -308,7 +308,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         raceOrder[0] = ownShip;
     }
 
-    for (i = 0; i < startLinePos[gameData->actTrackNum] - 15; i++)
+    for (i = 0; i < startLinePos[gConfig.actTrackNum] - 15; i++)
     {
         section = section->nextSection;
     }
@@ -349,7 +349,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
         ship->electroCount = 0;
         ship->revConCount = 0;
 
-        if (gameData->Class == 0)
+        if (gConfig.raceClass == 0)
         {
             ship->max_thrust = maxThrustBeg[i];
             ship->skid = skidBeg[i];
@@ -360,7 +360,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
             ship->skid = skidPro[i];
         }
 
-        if (gameData->Class == 0)
+        if (gConfig.raceClass == 0)
         {
             ship->headingInc = headingIncBeg[i];
             ship->maxHeading = maxHeadingBeg[i];
@@ -371,7 +371,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
             ship->maxHeading = maxHeadingPro[i];
         }
 
-        if (gameData->Class == 0)
+        if (gConfig.raceClass == 0)
         {
             ship->resistance = resistanceBeg[i];
             ship->fightBack = fightBackBeg[i];
@@ -408,7 +408,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
             position = shipOrder[i];
             ship->position = position;
 
-            if (gameData->Class == 0)
+            if (gConfig.raceClass == 0)
             {
                 ship->remoteMaxThrust = RMaxThrustBeg[position - 1];
                 ship->remoteThrustMag = RThrustMagBeg[position - 1];
@@ -424,7 +424,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex, ConfigData* gameDa
 
         ship->nearTrkSect = startSection[position];
         ship->prevShipSect = startSection[position];
-        SetSpread(ship, gameData, position);
+        SetSpread(ship, position);
 
         face = gTrack.faces + startSection[position]->faceStart;
         face++;

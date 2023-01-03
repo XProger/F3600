@@ -83,55 +83,40 @@ enum MenuScreen
 #define NO_GAME_SET     3
 
 struct SelectionData;
-struct ConfigData;
 
 typedef struct Menu
 {
     const char* title;
     void (*displayObject)(const struct Menu*, int);
-    void (*displayMenu)(struct SelectionData*, struct ConfigData*);
+    void (*displayMenu)(struct SelectionData*);
     char numOptions;
     const char* options[MAX_OPTIONS];
 } Menu;
 
 typedef struct ConfigData
 {
-    short gameOverCount;
-    short showPilotCount;
+    char raceClass;
+    char raceType;
+    char team;
+    char lives;
 
-    short showPointCount;
-    short showChampCount;
+    char gameOverCount;
+    char showPilotCount;
+    char showPointCount;
+    char showChampCount;
 
-    short currSliderPos;
-    short oldSliderPos;
-
-    char venomComplete;
-    signed char normpadPreset;
-    signed char oldPadPreset;
-    char unused_1;
-
-    char unused_2;
     char trackNum;
     char actTrackNum;
     char shipNum;
-
-    char ship2Num;
-    char Class;
-    char team;
-    char team2;
-
-    char oppMenu;
-    char gameType;
-    char NumTracks;
-    char Lives;
+    char padding_unused;
 
     char Position;
     char EndOfGame;
     char gameComplete;
-    char RapierClass;
+    char rapierClass;
 
-    char cardPresent;
-    char pad5;
+    char venomComplete;
+    char normpadPreset;
     char newLapRecord;
     char gotoMenu;
 
@@ -165,13 +150,13 @@ typedef struct SortTable
 } SortTable;
 
 void menuInit(void);
-void menuLoop(ConfigData*);
+void menuLoop(void);
 
-void InitGameData(ConfigData*);
+void InitGameData(void);
 void InitChampionship(void);
 void ContinueGameConfirm(int32 lConfirm);
 void RestartGameConfirm(int32 lConfirm);
-void SetNormPadPresets(ConfigData*);
+void SetNormPadPresets(void);
 
 void GoPrevMusic(void);
 void GoNextMusic(void);

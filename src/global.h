@@ -52,25 +52,33 @@ extern char NumTracks;
 extern char totalTracks;
 extern int attractDelay;
 
-extern int tempLapTimes[5];
+extern int tempLapTimes[];
 
-extern Object* startBoom[4];
+extern Object* startBoom[];
 extern short startBoomCount;
 extern int crossedLine;
 
 #define MAX_TEXTURES 512
-extern Texture gTextures[MAX_TEXTURES];
+extern Texture gTextures[];
 extern Texture* gTexturePtr;
 
 #define MAX_SPRITES_PER_OBJECT 64
 #define MAX_OBJECTS 512
-extern Object gObjects[MAX_OBJECTS];
+extern Object gObjects[];
 extern Object* gObjectPtr;
 
 /* spline stuff */
 extern Object* camSpline[];
 extern Object* shipSpline[];
 extern short finishedExtro;
+
+extern ConfigData gConfig;
+
+extern Object* ctrlshipShapes[];
+extern ShipData ctrlshipIndex[];
+extern RescueData ctrlrescueDroid;
+
+extern int32 ctrlNeedTargetIcon;
 
 extern int32 gMusicTracksCount;
 extern int32 gMusicTrack;

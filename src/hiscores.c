@@ -31,7 +31,7 @@ void FillHighScoreNames(HiScores* scoreTable, char* n1, char* n2, char* n3, char
     strcpy(scoreTable->names[4], n5);
 }
 
-void HighScore(ConfigData* gameData)
+void HighScore(void)
 {
     short charX = 40, charY = 185;
     char nameEntered[9];
@@ -179,7 +179,7 @@ void HighScore(ConfigData* gameData)
 
     for (i = 0; i < NumNames; i++)
     {
-        if (bestLap < scoreTable[(gameData->trackNum - 1)].lapTimes[i])
+        if (bestLap < scoreTable[(gConfig.trackNum - 1)].lapTimes[i])
         {
             highScore = 1;
         }
@@ -300,7 +300,7 @@ void HighScore(ConfigData* gameData)
 
                 userEntry = 0;
                 nameEntered[(numChars)] = 0;
-                AddEntry2Table(gameData, bestLap, nameEntered);
+                AddEntry2Table(bestLap, nameEntered);
                 numChars = 0;
                 nameEntered[0] = 0;
                 charX = 80;
@@ -313,18 +313,18 @@ void HighScore(ConfigData* gameData)
         /*
                  for (i=0; i < NumNames; i++)
                  {
-                    AddText (&(scoreTable[(gameData->trackNum-1)].names[i][0]), text_data (40, (80+(spacing*i)), 16), TEXT_COLOR_WHITE) ;
+                    AddText (&(scoreTable[(gConfig.trackNum-1)].names[i][0]), text_data (40, (80+(spacing*i)), 16), TEXT_COLOR_WHITE) ;
 
-                    if (scoreTable[(gameData->trackNum-1)].lapTimes[i] == 2000000000)
+                    if (scoreTable[(gConfig.trackNum-1)].lapTimes[i] == 2000000000)
                        AddTime(0,
                                  text_data (165, (80+(spacing*i)), 16), TEXT_COLOR_HIGHLIGHT);
                     else
-                       AddTime(scoreTable[(gameData->trackNum-1)].lapTimes[i],
+                       AddTime(scoreTable[(gConfig.trackNum-1)].lapTimes[i],
                                 text_data (165, (80+(spacing*i)), 16), TEXT_COLOR_HIGHLIGHT);
                  }
 
         */
-        DisplayHiScore((gameData->trackNum - 1));
+        DisplayHiScore((gConfig.trackNum - 1));
 
         if (userEntry)
         {
@@ -355,37 +355,34 @@ void HighScore(ConfigData* gameData)
 #endif
 }
 
-void AddEntry2Table(ConfigData* gameData, int bestLap, char nameEntered[])
+void AddEntry2Table(int bestLap, char nameEntered[])
 {
 
     int i, j;
     char tablePos;
     int scoreTrack = 0;
 
-    if (gameData->gameType == TIME_TRIAL)
-        scoreTrack = ((gameData->trackNum - 1) + HiScoreTracks);
-    else if (gameData->gameType == CHAMPIONSHIP)
-        scoreTrack = ((gameData->trackNum - 1) - gameData->trackInc);
+    if (gConfig.raceType == TIME_TRIAL)
+        scoreTrack = ((gConfig.trackNum - 1) + HiScoreTracks);
+    else if (gConfig.raceType == CHAMPIONSHIP)
+        scoreTrack = ((gConfig.trackNum - 1) - gConfig.trackInc);
     else
-        scoreTrack = (gameData->trackNum - 1);
+        scoreTrack = (gConfig.trackNum - 1);
 
     for (i = 0; i < NumNames; i++)
     {
-
         if (bestLap < scoreTable[scoreTrack].lapTimes[i])
         {
-
             if (scoreTable[scoreTrack].position[i] == -1)
             {
                 tablePos = i;
                 scoreTable[scoreTrack].position[i] = i;
                 scoreTable[scoreTrack].lapTimes[i] = bestLap;
-                scoreTable[scoreTrack].lapTimesPilot[i] = gameData->shipNum;
+                scoreTable[scoreTrack].lapTimesPilot[i] = gConfig.shipNum;
                 strcpy(scoreTable[scoreTrack].names[i], nameEntered);
             }
             else
             {
-
                 if (i < (NumNames))
                 {
                     for (j = (NumNames - 1); j > i; j--)
@@ -407,15 +404,15 @@ void AddEntry2Table(ConfigData* gameData, int bestLap, char nameEntered[])
     }
 }
 
-char CheckLapRecord(ConfigData* gameData, ShipData* shipInfo, int shipNo)
+char CheckLapRecord(ShipData* shipInfo, int shipNo)
 {
     int scoreTrack = 0;
     int check = 0;
 
-    if (gameData->gameType == TIME_TRIAL)
-        scoreTrack = ((gameData->trackNum - 1) + HiScoreTracks);
+    if (gConfig.raceType == TIME_TRIAL)
+        scoreTrack = ((gConfig.trackNum - 1) + HiScoreTracks);
     else
-        scoreTrack = (gameData->trackNum - 1);
+        scoreTrack = (gConfig.trackNum - 1);
 
     // printf ("track = %d \n", scoreTrack) ;
     // printf ("score table = %d \n", scoreTable[scoreTrack].lapRecord) ;
@@ -425,7 +422,7 @@ char CheckLapRecord(ConfigData* gameData, ShipData* shipInfo, int shipNo)
     if (shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo) - 2)] < scoreTable[scoreTrack].lapRecord)
     {
         scoreTable[scoreTrack].lapRecord = shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo) - 2)];
-        scoreTable[scoreTrack].lapRecordPilot = gameData->shipNum;
+        scoreTable[scoreTrack].lapRecordPilot = gConfig.shipNum;
 
         return 1;
     }
@@ -475,7 +472,7 @@ void DisplayHiScore(char trackNum)
 
 #if 1
 
-void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
+void NewHighScore(HiScoreData* hiScoreData)
 {
     short charX = 40, charY = 185;
     char spacing = 20;
@@ -571,7 +568,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
         {
             hiScoreData->userEntry = 0;
             hiScoreData->nameEntered[(hiScoreData->numChars)] = 0;
-            AddEntry2Table(gameData, hiScoreData->bestLap, hiScoreData->nameEntered);
+            AddEntry2Table(hiScoreData->bestLap, hiScoreData->nameEntered);
             hiScoreData->numChars = 0;
             hiScoreData->nameEntered[0] = 0;
             hiScoreData->charX = 80;
@@ -607,7 +604,7 @@ void NewHighScore(ConfigData* gameData, HiScoreData* hiScoreData)
     ajscount++;
 }
 
-void NewHighScoreDraw(ConfigData* gameData, HiScoreData* hiScoreData)
+void NewHighScoreDraw(HiScoreData* hiScoreData)
 {
     short charX = 40, charY = 185;
     char spacing = 20;
@@ -644,15 +641,15 @@ void NewHighScoreDraw(ConfigData* gameData, HiScoreData* hiScoreData)
     }
     CentreText("HALL OF FAME", text_data(107, 20, 16), TEXT_COLOR_WHITE);
 
-    if (gameData->gameType == TIME_TRIAL)
-        DisplayHiScore(((gameData->trackNum - 1) + HiScoreTracks));
-    else if (gameData->gameType == CHAMPIONSHIP)
-        DisplayHiScore((gameData->trackNum - 1) - gameData->trackInc);
+    if (gConfig.raceType == TIME_TRIAL)
+        DisplayHiScore(((gConfig.trackNum - 1) + HiScoreTracks));
+    else if (gConfig.raceType == CHAMPIONSHIP)
+        DisplayHiScore((gConfig.trackNum - 1) - gConfig.trackInc);
     else
-        DisplayHiScore((gameData->trackNum - 1));
+        DisplayHiScore((gConfig.trackNum - 1));
 }
 
-int CheckHiScore(ConfigData* gameData, HiScoreData* hiScoreData)
+int CheckHiScore(HiScoreData* hiScoreData)
 {
     int i, j;
     int highScore = 0;
@@ -660,12 +657,12 @@ int CheckHiScore(ConfigData* gameData, HiScoreData* hiScoreData)
     int serialRaceTime = 0, ownRaceTime = 0;
     char whichRecord = 0;
 
-    if (gameData->gameType == TIME_TRIAL)
-        scoreTrack = ((gameData->trackNum - 1) + HiScoreTracks);
-    else if (gameData->gameType == CHAMPIONSHIP)
-        scoreTrack = ((gameData->trackNum - 1) - gameData->trackInc);
+    if (gConfig.raceType == TIME_TRIAL)
+        scoreTrack = ((gConfig.trackNum - 1) + HiScoreTracks);
+    else if (gConfig.raceType == CHAMPIONSHIP)
+        scoreTrack = ((gConfig.trackNum - 1) - gConfig.trackInc);
     else
-        scoreTrack = (gameData->trackNum - 1);
+        scoreTrack = (gConfig.trackNum - 1);
 
     highScore = 0;
     hiScoreData->bestLap = 0;

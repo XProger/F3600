@@ -3,8 +3,6 @@
 /************************************************************/
 #include "game.h"
 
-extern ConfigData ctrlConfigData;
-
 #ifdef USE_SHIP_AMBIENT
 void ShipCalcAmbient(ShipData* playerShip)
 {
@@ -448,7 +446,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
 
     if (facePtr->flags & WEAPON_GRID_LEFT)
     {
-        if (ctrlConfigData.gameType != TIME_TRIAL)
+        if (gConfig.raceType != TIME_TRIAL)
         {
         #ifdef USE_VERTEX_COLOR
             facePtr->red = 0xff;
@@ -476,7 +474,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
 
     if (facePtr->flags & WEAPON_GRID_RIGHT)
     {
-        if (ctrlConfigData.gameType != TIME_TRIAL)
+        if (gConfig.raceType != TIME_TRIAL)
         {
         #ifdef USE_VERTEX_COLOR
             facePtr->red = 0x54;

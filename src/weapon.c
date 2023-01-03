@@ -6,9 +6,7 @@ WeaponData gWeapons[MAX_WEAPONS];
 WeaponData* gWeaponsFree;
 WeaponData* gWeaponsActive;
 
-extern int32 ctrlNeedTargetIcon;
 extern int ctrlnearShip;
-extern TrackCamera gCamera;
 
 extern Texture* gTargetTex;
 

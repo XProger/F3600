@@ -38,7 +38,6 @@ int gCurrMenu;
 int gCurrOption;
 
 extern int32 ctrlfirsttime;
-extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 
 Object* audioShapes;
 Object* pilotShapes;
@@ -64,20 +63,20 @@ void DrawOptionMenus(const Menu* menu, int shapeNo);
 void DrawGames(const Menu* menu, int shapeNo);
 void DrawHiScoreMenu(const Menu* menu, int shapeNo);
 
-void CallMenuSelector(Object**, ConfigData*, SelectionData*);
-void CallMenuActivator(ConfigData*, SelectionData*);
+void CallMenuSelector(Object**, SelectionData*);
+void CallMenuActivator(SelectionData*);
 Object* LoadModel(const char* fileName);
 Object* LoadTexModel(const char* fileName);
-void MusicVSfx(SelectionData*, ConfigData*);
-void ShowHiScores(SelectionData*, ConfigData*);
+void MusicVSfx(SelectionData*);
+void ShowHiScores(SelectionData*);
 void InitSelectData(SelectionData*);
 
 void DrawTeamShips(int, int, int, int, Object*);
-void ShowTimeTrialScores(SelectionData*, ConfigData*);
-void QuitYesNo(SelectionData*, ConfigData*);
-void GraphicOptions(SelectionData*, ConfigData*);
-void ControllerOptions(SelectionData*, ConfigData*);
-void ControllerEdit(SelectionData*, ConfigData*);
+void ShowTimeTrialScores(SelectionData*);
+void QuitYesNo(SelectionData*);
+void GraphicOptions(SelectionData*);
+void ControllerOptions(SelectionData*);
+void ControllerEdit(SelectionData*);
 
 #define MAX_MENU_HISTORY 8
 
@@ -220,7 +219,7 @@ void menuInit(void)
     gCurrOption = 0;
 }
 
-void menuLoop(ConfigData* gameData)
+void menuLoop(void)
 {
     UpdatePad();
 
@@ -231,7 +230,7 @@ void menuLoop(ConfigData* gameData)
     renderBackground(menuScreen);
 
     if (gCurrMenu >= 0)
-        CallMenuSelector(ctrlshipShapes, gameData, &selectData);
+        CallMenuSelector(ctrlshipShapes, &selectData);
 
     if (selectData.select)
     {
@@ -242,21 +241,21 @@ void menuLoop(ConfigData* gameData)
 
             if ((pad & IN_LEFT) && (pad & IN_A))
             {
-                gameData->RapierClass = 1;
+                gConfig.rapierClass = 1;
             }
 
             if ((pad & IN_RIGHT) && (pad & IN_Y))
             {
                 totalTracks = 14;
                 NumTracks = 7;
-                gameData->showBonusTrack = 1;
+                gConfig.showBonusTrack = 1;
             }
         }
 
-        CallMenuActivator(gameData, &selectData);
+        CallMenuActivator(&selectData);
     }
 
-    if (gCurrMenu == CLASS_MENU && gCurrOption == 1 && (!gameData->RapierClass))
+    if (gCurrMenu == CLASS_MENU && gCurrOption == 1 && (!gConfig.rapierClass))
         CentreText("NOT AVAILABLE", text_data(20, 190, 12), TEXT_COLOR_HIGHLIGHT);
 
     if (gCurrMenu == -1)
@@ -337,7 +336,7 @@ void DrawButtons(void)
         DisplayButtons(240, 210, PBACK);
 }
 
-void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
+void CallMenuActivator(SelectionData* selectData)
 {
     switch (gCurrMenu)
     {
@@ -361,8 +360,8 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
 
         case TRACK_MENU:
         {
-            gameData->trackNum = (gCurrOption + 1) + gameData->Class * 7;
-            gameData->actTrackNum = gTrackList[(gameData->trackNum - 1)];
+            gConfig.trackNum = (gCurrOption + 1) + gConfig.raceClass * 7;
+            gConfig.actTrackNum = gTrackList[(gConfig.trackNum - 1)];
             GoMenu(-1);
             break;
         }
@@ -380,7 +379,6 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
                 case AUDIO_CONFIG:
                     GoMenu(AUDIO_MENU);
                     renderOffset(0, 60);
-                    gameData->oldSliderPos = gameData->currSliderPos;
                     break;
                 case HIGH_SCORES:
                     GoMenu(BEST_TIMES_MENU);
@@ -392,21 +390,21 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
 
         case CLASS_MENU:
         {
-            gameData->Class = gCurrOption;
-            if (gameData->RapierClass == 0 && gCurrOption == RAPIER_CLASS)
+            gConfig.raceClass = gCurrOption;
+            if (gConfig.rapierClass == 0 && gCurrOption == RAPIER_CLASS)
                 return;
 
             if (gCurrOption == CHAMPIONSHIP)
             {
-                gameData->trackNum = 1;
+                gConfig.trackNum = 1;
             }
 
             if (gCurrOption == SINGLE_RACE)
             {
-                if (gameData->showBonusTrack == 0)
-                    gameData->trackNum = NumTracks + 2;
+                if (gConfig.showBonusTrack == 0)
+                    gConfig.trackNum = NumTracks + 2;
                 else
-                    gameData->trackNum = NumTracks + 1;
+                    gConfig.trackNum = NumTracks + 1;
             }
 
             GoMenu(RACE_TYPE_MENU);
@@ -415,7 +413,7 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
 
         case TEAM_MENU:
         {
-            gameData->team = gCurrOption;
+            gConfig.team = gCurrOption;
             GoMenu(PILOT_MENU_1 + gCurrOption);
             break;
         }
@@ -425,11 +423,11 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
         case PILOT_MENU_3:
         case PILOT_MENU_4:
         {
-            gameData->newLapRecord = 0;
-            gameData->shipNum = (gameData->team * 2) + gCurrOption;
-            ownShip = gameData->shipNum;
+            gConfig.newLapRecord = 0;
+            gConfig.shipNum = (gConfig.team * 2) + gCurrOption;
+            ownShip = gConfig.shipNum;
 
-            if (gameData->gameType == CHAMPIONSHIP)
+            if (gConfig.raceType == CHAMPIONSHIP)
             {
                 GoMenu(-1);
             }
@@ -445,15 +443,15 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
             switch (gCurrOption)
             {
                 case CHAMPIONSHIP:
-                    gameData->gameType = CHAMPIONSHIP;
-                    gameData->actTrackNum = gTrackList[gameData->trackNum - 1];
+                    gConfig.raceType = CHAMPIONSHIP;
+                    gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
                     InitChampTable();
                     break;
                 case SINGLE_RACE:
-                    gameData->gameType = SINGLE_RACE;
+                    gConfig.raceType = SINGLE_RACE;
                     break;
                 case TIME_TRIAL:
-                    gameData->gameType = TIME_TRIAL;
+                    gConfig.raceType = TIME_TRIAL;
                     break;
             }
 
@@ -510,7 +508,7 @@ void CallMenuActivator(ConfigData* gameData, SelectionData* selectData)
     }
 }
 
-void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* selectData)
+void CallMenuSelector(Object** shipShapes, SelectionData* selectData)
 {
     int32 i;
     const char* title;
@@ -521,7 +519,7 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
     {
         renderImage(gTrackIcon + gCurrOption, 96, 50);
 
-        if (gameData->Class == 0)
+        if (gConfig.raceClass == 0)
             title = "VENOM CLASS";
         else
             title = "RAPIER CLASS";
@@ -553,7 +551,7 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
         renderSetMode(RENDER_MODE_3D);
 
         if (gCurrMenu >= PILOT_MENU_1 && gCurrMenu <= PILOT_MENU_4)
-            (menu->displayObject)(gMenuSystem + gCurrMenu, (gameData->team * 2) + gCurrOption);
+            (menu->displayObject)(gMenuSystem + gCurrMenu, (gConfig.team * 2) + gCurrOption);
         else
             (menu->displayObject)(gMenuSystem + gCurrMenu, gCurrOption);
 
@@ -570,7 +568,7 @@ void CallMenuSelector(Object** shipShapes, ConfigData* gameData, SelectionData* 
     
     if (menu->displayMenu != 0)
     {
-        (menu->displayMenu)(selectData, gameData);
+        (menu->displayMenu)(selectData);
     }
 
     if (GetMenuKey(M_SELECT))
@@ -663,7 +661,7 @@ void InitSelectData(SelectionData* selectData)
     selectData->hiscoreTrack = 0;
 }
 
-void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
+void MusicVSfx(SelectionData* selectData)
 {
     if (xpad & IN_UP)
     {
@@ -732,7 +730,7 @@ void MusicVSfx(SelectionData* selectData, ConfigData* gameData)
     }
 }
 
-void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
+void ShowHiScores(SelectionData* selectData)
 {
     int32 actualTrack = 0;
 
@@ -740,14 +738,14 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
     {
         PlayNote(SFX_MENU_MOVE);
         selectData->hiscoreTrack++;
-        if (gameData->RapierClass == 0)
+        if (gConfig.rapierClass == 0)
         {
             if (selectData->hiscoreTrack == NumTracks)
                 selectData->hiscoreTrack = (NumTracks - 1);
         }
         else
         {
-            if (gameData->showBonusTrack == 0)
+            if (gConfig.showBonusTrack == 0)
             {
                 if (selectData->hiscoreTrack == NumTracks)
                     selectData->hiscoreTrack = (NumTracks + 1);
@@ -762,14 +760,14 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
     {
         PlayNote(SFX_MENU_MOVE);
         selectData->hiscoreTrack--;
-        if (gameData->RapierClass == 0)
+        if (gConfig.rapierClass == 0)
         {
             if (selectData->hiscoreTrack < 0)
                 selectData->hiscoreTrack = 0;
         }
         else
         {
-            if (gameData->showBonusTrack == 0)
+            if (gConfig.showBonusTrack == 0)
             {
                 if (selectData->hiscoreTrack == NumTracks)
                     selectData->hiscoreTrack = (NumTracks - 1);
@@ -784,7 +782,7 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
 
     if (selectData->hiscoreTrack >= NumTracks)
     {
-        if (gameData->showBonusTrack == 0)
+        if (gConfig.showBonusTrack == 0)
             actualTrack -= (NumTracks + 1);
         else
             actualTrack -= NumTracks;
@@ -795,7 +793,7 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
         CentreText("VENOM", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
     }
 
-    if (((gameData->RapierClass == 0) && (selectData->hiscoreTrack == (NumTracks - 1))) || ((gameData->RapierClass == 1) && (selectData->hiscoreTrack == (totalTracks - 1))))
+    if (((gConfig.rapierClass == 0) && (selectData->hiscoreTrack == (NumTracks - 1))) || ((gConfig.rapierClass == 1) && (selectData->hiscoreTrack == (totalTracks - 1))))
     {
     //    DisplayButtons(290, 116, ARROWR);
     }
@@ -824,7 +822,7 @@ void ShowHiScores(SelectionData* selectData, ConfigData* gameData)
     DisplayHiScore(selectData->hiscoreTrack);
 }
 
-void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
+void ShowTimeTrialScores(SelectionData* selectData)
 {
     int32 actualTrack = 0;
 
@@ -832,14 +830,14 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
     {
         PlayNote(SFX_MENU_MOVE);
         selectData->hiscoreTrack++;
-        if (gameData->RapierClass == 0)
+        if (gConfig.rapierClass == 0)
         {
             if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
                 selectData->hiscoreTrack = ((NumTracks - 1) + HiScoreTracks);
         }
         else
         {
-            if (gameData->showBonusTrack == 0)
+            if (gConfig.showBonusTrack == 0)
             {
                 if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
                     selectData->hiscoreTrack = ((NumTracks + 1) + HiScoreTracks);
@@ -854,14 +852,14 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
     {
         PlayNote(SFX_MENU_MOVE);
         selectData->hiscoreTrack--;
-        if (gameData->RapierClass == 0)
+        if (gConfig.rapierClass == 0)
         {
             if (selectData->hiscoreTrack < 14)
                 selectData->hiscoreTrack = 14;
         }
         else
         {
-            if (gameData->showBonusTrack == 0)
+            if (gConfig.showBonusTrack == 0)
             {
                 if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
                     selectData->hiscoreTrack = ((NumTracks - 1) + HiScoreTracks);
@@ -876,7 +874,7 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
 
     if ((selectData->hiscoreTrack - HiScoreTracks) >= (NumTracks))
     {
-        if (gameData->showBonusTrack == 0)
+        if (gConfig.showBonusTrack == 0)
             actualTrack -= ((NumTracks + 1));
         else
             actualTrack -= (NumTracks);
@@ -887,7 +885,7 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
         CentreText("VENOM", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
     }
 
-    if (((gameData->RapierClass == 0) && ((selectData->hiscoreTrack - HiScoreTracks) == (NumTracks - 1))) || ((gameData->RapierClass == 1) && ((selectData->hiscoreTrack - HiScoreTracks) == (totalTracks - 1))))
+    if (((gConfig.rapierClass == 0) && ((selectData->hiscoreTrack - HiScoreTracks) == (NumTracks - 1))) || ((gConfig.rapierClass == 1) && ((selectData->hiscoreTrack - HiScoreTracks) == (totalTracks - 1))))
     {
     //    DisplayButtons(290, 116, ARROWR);
     }
@@ -916,30 +914,29 @@ void ShowTimeTrialScores(SelectionData* selectData, ConfigData* gameData)
     DisplayHiScore(selectData->hiscoreTrack);
 }
 
-void InitGameData(ConfigData* gameData)
+void InitGameData(void)
 {
-    gameData->shipNum = randy() % 8;
-    gameData->trackNum = gameData->actTrackNum = gameData->ship2Num = 0;
-    gameData->oppMenu = gameData->Class = 0;
-    gameData->team = gameData->team2 = gameData->gameType = 0;
-    gameData->Lives = 3;
-    gameData->EndOfGame = 0;
-    gameData->NumTracks = 1;
-    gameData->Position = NO_OF_SHIPS;
-    gameData->RapierClass = 0;
-    gameData->gameComplete = 0;
-    gameData->showPilotCount = 0;
-    gameData->gameOverCount = 0;
-    gameData->venomComplete = 0;
-    gameData->newLapRecord = 0;
-    gameData->gotoMenu = 0;
-    gameData->normpadPreset = 0;
-    gameData->cardPresent = 0;
-    gameData->currSliderPos = 150;
-    gameData->showBonusTrack = 0;
-    gameData->trackInc = 1;
-    gameData->lostGame = 0;
-    gameData->showGameOver = 0;
+    gConfig.shipNum = randy() % 8;
+    gConfig.trackNum = 0;
+    gConfig.actTrackNum = 0;
+    gConfig.raceClass = 0;
+    gConfig.team = 0;
+    gConfig.raceType = 0;
+    gConfig.lives = 3;
+    gConfig.EndOfGame = 0;
+    gConfig.Position = NO_OF_SHIPS;
+    gConfig.rapierClass = 0;
+    gConfig.gameComplete = 0;
+    gConfig.showPilotCount = 0;
+    gConfig.gameOverCount = 0;
+    gConfig.venomComplete = 0;
+    gConfig.newLapRecord = 0;
+    gConfig.gotoMenu = 0;
+    gConfig.normpadPreset = 0;
+    gConfig.showBonusTrack = 0;
+    gConfig.trackInc = 1;
+    gConfig.lostGame = 0;
+    gConfig.showGameOver = 0;
 }
 
 void ContinueGameConfirm(int32 lConfirm)
@@ -958,9 +955,9 @@ void RestartGameConfirm(int32 lConfirm)
     AddText("YES", text_data(68, 120, 16), lConfirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
-void SetNormPadPresets(ConfigData* gameData)
+void SetNormPadPresets(void)
 {
-    switch (gameData->normpadPreset)
+    switch (gConfig.normpadPreset)
     {
         case 0:
             pCon.thrust = IN_A;
@@ -1094,7 +1091,7 @@ void InitChampionship(void)
     memset(winTable, 0, sizeof(winTable));
 }
 
-void QuitYesNo(SelectionData* selectData, ConfigData* gameData)
+void QuitYesNo(SelectionData* selectData)
 {
     CentreText("ARE YOU SURE YOU", text_data(77, 95, 8), TEXT_COLOR_HIGHLIGHT);
     CentreText("WANT TO QUIT", text_data(105, 105, 8), TEXT_COLOR_HIGHLIGHT);
@@ -1108,17 +1105,17 @@ void QuitYesNo(SelectionData* selectData, ConfigData* gameData)
     AddText("NO", text_data(210, 120, 16), selectData->confirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
-void GraphicOptions(SelectionData* selectData, ConfigData* gameData)
+void GraphicOptions(SelectionData* selectData)
 {
     // TODO menu graphics
 }
 
-void ControllerOptions(SelectionData* selectData, ConfigData* gameData)
+void ControllerOptions(SelectionData* selectData)
 {
     // TODO menu controls
 }
 
-void ControllerEdit(SelectionData* selectData, ConfigData* gameData)
+void ControllerEdit(SelectionData* selectData)
 {
     // TODO menu controls
 }

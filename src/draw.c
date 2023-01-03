@@ -94,3 +94,39 @@ void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short 
     renderObject(obj);
     matrixPop();
 }
+
+void DrawView(void)
+{
+    renderSetMode(RENDER_MODE_3D);
+
+    {
+        TrackCamera* cam = &gCamera;
+
+        int32 px = cam->pos.x;
+        int32 py = cam->pos.y;
+        int32 pz = cam->pos.z;
+        int32 rx = cam->pitch;
+        int32 ry = cam->hdg;
+        int32 rz = cam->roll;
+
+        FRAME_LERP(cam);
+
+        if (CameraUpdate == UpdateCameraRaceInternal)
+        {
+            matrixSetViewInternal(px, py, pz, rx, ry, rz);
+        }
+        else
+        {
+            matrixSetViewExternal(px, py, pz, rx, ry);
+        }
+    }
+
+    DrawSky(gTrack.sky);
+    DrawLandscape(&gCamera);
+    DrawTrack();
+    DrawShadows(ctrlshipIndex);
+    DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip);
+    DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
+    DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
+    DrawEffects();
+}

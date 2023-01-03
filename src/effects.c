@@ -6,8 +6,6 @@ Effect* gEffectsActive;
 
 Texture* gShadowTex;
 
-extern ShipData ctrlshipIndex[NO_OF_SHIPS];
-
 void ResetEffects(void)
 {
     int32 i;

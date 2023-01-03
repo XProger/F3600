@@ -34,12 +34,12 @@ typedef struct
     char lConfirm;
 } HiScoreData;
 
-void HighScore(ConfigData*);
-void AddEntry2Table(ConfigData*, int, char[]);
-char CheckLapRecord(ConfigData*, ShipData*, int);
+void HighScore(void);
+void AddEntry2Table(int, char[]);
+char CheckLapRecord(ShipData*, int);
 void DisplayHiScore(char);
 void InitHiScoreData(HiScoreData*);
-int CheckHiScore(ConfigData*, HiScoreData*);
-void NewHighScore(ConfigData*, HiScoreData*);
-char ChampLapRecord(ConfigData*, ShipData*);
-void NewHighScoreDraw(ConfigData* gameData, HiScoreData* hiScoreData);
+int CheckHiScore(HiScoreData*);
+void NewHighScore(HiScoreData*);
+char ChampLapRecord(ShipData*);
+void NewHighScoreDraw(HiScoreData* hiScoreData);

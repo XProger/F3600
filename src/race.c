@@ -4,25 +4,15 @@
 #define UPDATE_EXTRO    1
 #define DONE_EXTRO      2
 
-#define PrmMax 64
 #define AJSDELAY 60 * 30 // arbitrary number - linked to frame rate ? HOPE SO !
 
 extern short startIceText;
 extern short startFireText;
 int ajscount = 0; // oh shit another global flag
 
-// All race locals now globals, as RaceCtrl has to be re-entrant
-extern TexTemplate* ctrltexTemplate;
-
 /**************************************************/
 /******           Dave additions              *****/
 /**************************************************/
-
-Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
-ShipData ctrlshipIndex[NO_OF_SHIPS];
-RescueData ctrlrescueDroid;
-
-Object* ctrlweaponShapes[WEAPON_SHAPE_NAX];
 
 int ctrlchoice;
 Face* ctrlfacePtr;
@@ -49,7 +39,6 @@ char ctrlshowGameOver;
 extern int32 ctrlmode;
 extern int32 ctrltimeout;
 extern int32 ctrlGameLoop;
-extern ConfigData ctrlConfigData;
 
 /*          Andy Y's additions*/
 int32 ctrlNeedEndText;
@@ -68,7 +57,6 @@ int32 ctrlNeedWinLoseVar;
 int32 ctrlNeedInGameReset;
 int32 ctrlNeedInSingleGameConfirm;
 int32 ctrlNeedInGameConfirm;
-int32 ctrlNeedTargetIcon;
 int32 ctrlfirsttime;
 
 int32 ctrl_says_quit;
@@ -127,10 +115,10 @@ void AdjustCrowdSound(Object* lost, int lostCount)
     }
 }
 
-void Restart(ShipData* shipIndex, ConfigData* gameData, Object** weaponShapes, RescueData* rescueDroid, Object** shipShapes)
+void Restart(ShipData* shipIndex, Object** weaponShapes, RescueData* rescueDroid, Object** shipShapes)
 {
     KillNotes();
-    InitShipData(gTrack.sections, shipIndex, gameData);
+    InitShipData(gTrack.sections, shipIndex);
     InitRescueDroid(rescueDroid, shipShapes, &(shipIndex[ownShip]));
     gCamera.section = shipIndex[ownShip].nearTrkSect;
 
@@ -146,7 +134,7 @@ void QuitGame()
     KillNotes();
 }
 
-void raceInit(ConfigData* gameData)
+void raceInit(void)
 {
     LOG("race init\n");
 
@@ -154,10 +142,10 @@ void raceInit(ConfigData* gameData)
 
     if (ctrlmode != ATTRACT) // not demo mode
     {
-        trackNo = gameData->actTrackNum;
+        trackNo = gConfig.actTrackNum;
     }
 
-    showLoading(ctrlConfigData.actTrackNum);
+    showLoading(gConfig.actTrackNum);
 
     attractDelay = 0;
 
@@ -167,7 +155,7 @@ void raceInit(ConfigData* gameData)
     tempLapTimes[3] = 0;
     tempLapTimes[4] = 0;
 
-    gameData->newLapRecord = 0;
+    gConfig.newLapRecord = 0;
 
     ctrl_says_quit = 0;
 
@@ -184,12 +172,12 @@ void raceInit(ConfigData* gameData)
     ctrlfirsttime = 1;
     finishedExtro = 0;
 
-    LoadScene(gameData->actTrackNum);
-    LoadWinLoseTex(PILOT_NAMES[gameData->shipNum]);
+    LoadScene(gConfig.actTrackNum);
+    LoadWinLoseTex(PILOT_NAMES[gConfig.shipNum]);
 
     InitCamera(&gCamera, gTrack.sections);
 
-    InitShipData(gTrack.sections, ctrlshipIndex, gameData);
+    InitShipData(gTrack.sections, ctrlshipIndex);
     InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
 
     ResetWeapons(ctrlweaponShapes);
@@ -202,10 +190,10 @@ void raceInit(ConfigData* gameData)
 
     InitHiScoreData(&ctrlhiScoreData);
 
-    gameData->Lives = 3;
-    gameData->Position = NO_OF_SHIPS;
-    gameData->EndOfGame = 0;
-    gameData->gameOverCount = 0;
+    gConfig.lives = 3;
+    gConfig.Position = NO_OF_SHIPS;
+    gConfig.EndOfGame = 0;
+    gConfig.gameOverCount = 0;
 
     ctrlhiScoreData.confirm = 2;
     ctrlhiScoreData.lConfirm = 0;
@@ -234,14 +222,14 @@ void raceInit(ConfigData* gameData)
 
     ctrlshipIndex[ownShip].haveFired = 0;
 
-    SetNormPadPresets(gameData);
+    SetNormPadPresets();
 
-    if (gameData->actTrackNum == 13)
+    if (gConfig.actTrackNum == 13)
     {
         InitIceCongratulations();
     }
 
-    if (gameData->actTrackNum == 14)
+    if (gConfig.actTrackNum == 14)
     {
         InitFireCongratulations();
     }
@@ -249,7 +237,7 @@ void raceInit(ConfigData* gameData)
     UpdateEffects();
 }
 
-void raceCtrl(ConfigData* gameData)
+void raceCtrl(void)
 {
     // Reset all of my little Drawing markers
     ctrlNeedEndText = 0;
@@ -301,7 +289,7 @@ void raceCtrl(ConfigData* gameData)
     {
         if ((GetMenuKey(M_START)) && (ctrlchoice == -1))
         {
-            if (gameData->Lives)
+            if (gConfig.lives)
             {
                 PlayNote(SFX_MENU_SELECT); // go boing
                 ctrlchoice = 0; // set ctrlchoice to the first on the list
@@ -396,10 +384,10 @@ void raceCtrl(ConfigData* gameData)
                     ctrlchoice = -1; /* RESET */
                     ctrlchoiceData = 1;
 
-                    if (gameData->gameType == CHAMPIONSHIP) // Chanpionship mode, then lose a life for the prividge
+                    if (gConfig.raceType == CHAMPIONSHIP) // Chanpionship mode, then lose a life for the prividge
                     { // of restarting your race.
-                        gameData->Lives--;
-                        if (gameData->Lives == 0)
+                        gConfig.lives--;
+                        if (gConfig.lives == 0)
                         {
                             ctrlgameOverTime = 90; // 3 second
                             ctrlshowGameOver = 1;
@@ -407,14 +395,14 @@ void raceCtrl(ConfigData* gameData)
                             break;
                         }
                     }
-                    Restart(ctrlshipIndex, gameData, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                    Restart(ctrlshipIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                     break;
 
                 case 2:
                     ctrlchoice = -1;
                     ctrlchoiceData = 2;
                     QuitGame();
-                    gameData->gameType = NO_GAME_SET;
+                    gConfig.raceType = NO_GAME_SET;
                     ctrl_says_quit = 1;
                     return;
             } /*end switch*/
@@ -443,20 +431,14 @@ void raceCtrl(ConfigData* gameData)
         if (ctrlgameOverTime == 0)
         {
             ctrlshowGameOver = 0;
-            gameData->newLapRecord = 0;
+            gConfig.newLapRecord = 0;
         }
         ctrlgameOverTime--;
 
-        /*       if (GetMenuKey(M_SELECT))
-        {
-        ctrlshowGameOver = 0 ;
-        gameData->newLapRecord = 0 ;
-        }
-        */
         if (ctrlshowGameOver == 0)
         {
             QuitGame();
-            gameData->gameType = NO_GAME_SET;
+            gConfig.raceType = NO_GAME_SET;
             ctrl_says_quit = 1;
             return;
         }
@@ -472,7 +454,7 @@ void raceCtrl(ConfigData* gameData)
                 ctrlbuttonPressed = 0;
         }
 
-        UpdateShips(ctrlshipIndex, gameData);
+        UpdateShips(ctrlshipIndex);
 
         FRAME_LERP_INIT(&ctrlrescueDroid);
 
@@ -506,7 +488,7 @@ void raceCtrl(ConfigData* gameData)
 
         UpdateWeapons(ctrlshipIndex, ctrlweaponShapes);
 
-        if (gameData->gameType != TIME_TRIAL)
+        if (gConfig.raceType != TIME_TRIAL)
         {
             CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
         }
@@ -519,7 +501,7 @@ void raceCtrl(ConfigData* gameData)
         AdjustCrowdSound(gTrack.lost, gTrack.lostCount);
         AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes);
 
-        if (gameData->gameType != TIME_TRIAL)
+        if (gConfig.raceType != TIME_TRIAL)
         {
             CycleWeaponGrids(ctrlshipIndex, gTrack.weapons, gTrack.weaponsCount);
         }
@@ -530,7 +512,7 @@ void raceCtrl(ConfigData* gameData)
         attractDelay--;
         if ((GetMenuKey(M_START)) || (GetMenuKey(M_SELECT)) || (attractDelay == 0))
         {
-            gameData->gameType = NO_GAME_SET;
+            gConfig.raceType = NO_GAME_SET;
             QuitGame();
             ctrl_says_quit = 1;
             return;
@@ -540,12 +522,12 @@ void raceCtrl(ConfigData* gameData)
     {
         attractDelay--;
 
-        if (attractDelay == 0 && gameData->gameType == SINGLE_RACE)
+        if (attractDelay == 0 && gConfig.raceType == SINGLE_RACE)
         {
             attractDelay = 1;
-            if (gameData->showPilotCount != 0)
+            if (gConfig.showPilotCount != 0)
             {
-                if (gameData->Position == 1)
+                if (gConfig.Position == 1)
                 {
                     ctrlNeedWinLose = 1;
                     ctrlNeedEndText = 1;
@@ -569,19 +551,19 @@ void raceCtrl(ConfigData* gameData)
                 ajscount++;
                 if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                 {
-                    gameData->showPilotCount = 0;
+                    gConfig.showPilotCount = 0;
                     ajscount = 0;
                 }
             }
             else
             {
-                gameData->newLapRecord = 0;
+                gConfig.newLapRecord = 0;
 
-                if (gameData->EndOfGame)
+                if (gConfig.EndOfGame)
                 {
-                    if (gameData->Position == 1)
+                    if (gConfig.Position == 1)
                     {
-                        ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
+                        ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData);
                     }
                 }
 
@@ -593,9 +575,9 @@ void raceCtrl(ConfigData* gameData)
                 if (ctrlhiScoreData.displayHiScore)
                 {
                     ctrlNeedNewHighScores = 1;
-                    NewHighScore(gameData, &ctrlhiScoreData);
+                    NewHighScore(&ctrlhiScoreData);
                     ctrlNeedDeSelectScreen = 1;
-                    gameData->EndOfGame = 0;
+                    gConfig.EndOfGame = 0;
                 }
                 else
                 {
@@ -623,7 +605,7 @@ void raceCtrl(ConfigData* gameData)
                         ctrlhiScoreData.confirm = 2;
                         ctrlhiScoreData.lConfirm = 0;
                         attractDelay = 0;
-                        gameData->gameType = NO_GAME_SET;
+                        gConfig.raceType = NO_GAME_SET;
                         QuitGame();
                         ctrl_says_quit = 1;
                         return;
@@ -637,20 +619,20 @@ void raceCtrl(ConfigData* gameData)
                         ctrlNeedDeSelectScreen = 0;
                         InitHiScoreData(&ctrlhiScoreData);
 
-                        Restart(ctrlshipIndex, gameData, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                        Restart(ctrlshipIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                     }
                 }
             }
         }
 
-        if (attractDelay == 0 && gameData->gameType == TIME_TRIAL)
+        if (attractDelay == 0 && gConfig.raceType == TIME_TRIAL)
         {
             attractDelay = 1;
 
-            if (gameData->gameType == TIME_TRIAL)
+            if (gConfig.raceType == TIME_TRIAL)
             {
 
-                if (gameData->showPilotCount != 0)
+                if (gConfig.showPilotCount != 0)
                 {
 
                     ctrlNeedRaceInfo = 1;
@@ -659,15 +641,15 @@ void raceCtrl(ConfigData* gameData)
                     ajscount++;
                     if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                     {
-                        gameData->showPilotCount = 0;
+                        gConfig.showPilotCount = 0;
                         ajscount = 0;
                     }
                 }
                 else
                 {
-                    gameData->newLapRecord = 0;
-                    if (gameData->EndOfGame)
-                        ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
+                    gConfig.newLapRecord = 0;
+                    if (gConfig.EndOfGame)
+                        ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData);
 
                     if (ctrlhiScoreData.highScore)
                     {
@@ -678,9 +660,9 @@ void raceCtrl(ConfigData* gameData)
                     if (ctrlhiScoreData.displayHiScore)
                     {
                         ctrlNeedNewHighScores = 1;
-                        NewHighScore(gameData, &ctrlhiScoreData);
+                        NewHighScore(&ctrlhiScoreData);
                         ctrlNeedDeSelectScreen = 1;
-                        gameData->EndOfGame = 0;
+                        gConfig.EndOfGame = 0;
                     }
                     else
                     {
@@ -708,7 +690,7 @@ void raceCtrl(ConfigData* gameData)
                             ctrlhiScoreData.confirm = 2;
                             ctrlhiScoreData.lConfirm = 0;
                             attractDelay = 0;
-                            gameData->gameType = NO_GAME_SET;
+                            gConfig.raceType = NO_GAME_SET;
                             QuitGame();
                             ctrl_says_quit = 1;
                             return;
@@ -720,7 +702,7 @@ void raceCtrl(ConfigData* gameData)
                             ctrlhiScoreData.confirm = 2;
                             ctrlhiScoreData.lConfirm = 0;
                             InitHiScoreData(&ctrlhiScoreData);
-                            Restart(ctrlshipIndex, gameData, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                            Restart(ctrlshipIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                         }
                     }
                 }
@@ -728,16 +710,16 @@ void raceCtrl(ConfigData* gameData)
         }
 
         /****************** Do Extro ******************/
-        if (attractDelay == 0 && gameData->gameType == CHAMPIONSHIP)
+        if (attractDelay == 0 && gConfig.raceType == CHAMPIONSHIP)
         {
             attractDelay = 1;
 
-            if (gameData->gameType == CHAMPIONSHIP)
+            if (gConfig.raceType == CHAMPIONSHIP)
             {
 
-                if (gameData->Lives == 0) /*0*/
+                if (gConfig.lives == 0) /*0*/
                 {
-                    if (gameData->gameOverCount != 0)
+                    if (gConfig.gameOverCount != 0)
                     {
                         ctrlNeedWinLose = 1;
                         ctrlNeedEndText = 1;
@@ -751,41 +733,38 @@ void raceCtrl(ConfigData* gameData)
                         if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                         {
                             ajscount = 0;
-                            gameData->showGameOver = 1;
+                            gConfig.showGameOver = 1;
                             ctrlgameOverTime = 90; // 3 seconds
-                            gameData->gameOverCount = 0;
-                            gameData->newLapRecord = 0;
+                            gConfig.gameOverCount = 0;
+                            gConfig.newLapRecord = 0;
                         }
                     }
-                    else if (gameData->gotoMenu == 1)
+                    else if (gConfig.gotoMenu == 1)
                     {
-                        gameData->gotoMenu = 0;
-                        gameData->gameType = NO_GAME_SET;
-                        gameData->newLapRecord = 0;
+                        gConfig.gotoMenu = 0;
+                        gConfig.raceType = NO_GAME_SET;
+                        gConfig.newLapRecord = 0;
                         QuitGame();
                         ctrl_says_quit = 1;
                         return;
                     }
-                    else
-
-                        if (gameData->showGameOver == 1)
+                    else if (gConfig.showGameOver == 1)
                     {
-
                         ajscount++;
                         if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                         {
                             ajscount = 0;
-                            gameData->gotoMenu = 1;
-                            gameData->showGameOver = 0;
-                            gameData->newLapRecord = 0;
+                            gConfig.gotoMenu = 1;
+                            gConfig.showGameOver = 0;
+                            gConfig.newLapRecord = 0;
                         }
                     }
                 }
                 else
                 {
-                    if (gameData->showPilotCount != 0)
+                    if (gConfig.showPilotCount != 0)
                     {
-                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                        if (gConfig.Position >= 1 && gConfig.Position <= 3)
                         {
                             ctrlNeedWinLose = 1;
                             ctrlNeedEndText = 1;
@@ -810,13 +789,13 @@ void raceCtrl(ConfigData* gameData)
                         if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                         {
                             ajscount = 0;
-                            gameData->showPilotCount = 0;
-                            gameData->newLapRecord = 0;
+                            gConfig.showPilotCount = 0;
+                            gConfig.newLapRecord = 0;
                         }
                     }
-                    else if (gameData->showPointCount != 0)
+                    else if (gConfig.showPointCount != 0)
                     {
-                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                        if (gConfig.Position >= 1 && gConfig.Position <= 3)
                         {
                             ctrlNeedRacePoints = 1;
                             ctrlNeedDeSelectScreen = 1;
@@ -825,12 +804,12 @@ void raceCtrl(ConfigData* gameData)
                         if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                         {
                             ajscount = 0;
-                            gameData->showPointCount = 0;
+                            gConfig.showPointCount = 0;
                         }
                     }
-                    else if (gameData->showChampCount != 0)
+                    else if (gConfig.showChampCount != 0)
                     {
-                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                        if (gConfig.Position >= 1 && gConfig.Position <= 3)
                         {
                             ctrlNeedChampTable = 1;
                             ctrlNeedDeSelectScreen = 1;
@@ -839,12 +818,12 @@ void raceCtrl(ConfigData* gameData)
                         if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                         {
                             ajscount = 0;
-                            gameData->showChampCount = 0;
+                            gConfig.showChampCount = 0;
                         }
                     }
-                    else if (gameData->venomComplete != 0)
+                    else if (gConfig.venomComplete != 0)
                     {
-                        if (gameData->showBonusTrack == 1)
+                        if (gConfig.showBonusTrack == 1)
                             ctrlNeedAllVenomComplete = 1;
                         else
                             ctrlNeedVenomComplete = 1;
@@ -855,15 +834,15 @@ void raceCtrl(ConfigData* gameData)
                         if ((ajscount > (AJSDELAY / 2)))
                         {
                             ajscount = 0;
-                            gameData->venomComplete = 0;
+                            gConfig.venomComplete = 0;
                         }
                     }
                     else
                     {
-                        if (gameData->Position >= 1 && gameData->Position <= 3)
+                        if (gConfig.Position >= 1 && gConfig.Position <= 3)
                         {
-                            if (gameData->EndOfGame)
-                                ctrlhiScoreData.highScore = CheckHiScore(gameData, &ctrlhiScoreData);
+                            if (gConfig.EndOfGame)
+                                ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData);
                         }
 
                         if (ctrlhiScoreData.highScore)
@@ -875,28 +854,28 @@ void raceCtrl(ConfigData* gameData)
                         if (ctrlhiScoreData.displayHiScore)
                         {
                             ctrlNeedNewHighScores = 1;
-                            NewHighScore(gameData, &ctrlhiScoreData);
+                            NewHighScore(&ctrlhiScoreData);
                             ctrlNeedDeSelectScreen = 1;
 
-                            gameData->EndOfGame = 0;
+                            gConfig.EndOfGame = 0;
                         }
                         else
                         {
-                            if (gameData->lostGame == 1)
+                            if (gConfig.lostGame == 1)
                             {
 
                                 ajscount++;
                                 if ((GetMenuKey(M_SELECT)) || (ajscount > AJSDELAY))
                                 {
                                     ajscount = 0;
-                                    gameData->lostGame = 0;
-                                    gameData->gotoMenu = 1;
+                                    gConfig.lostGame = 0;
+                                    gConfig.gotoMenu = 1;
                                 }
                             }
                             else
                             {
 
-                                if (gameData->gameComplete == 1)
+                                if (gConfig.gameComplete == 1)
                                 {
                                     if (ctrldoneExtro == START_EXTRO)
                                     {
@@ -923,36 +902,33 @@ void raceCtrl(ConfigData* gameData)
 
                                     if (finishedExtro)
                                     {
-                                        gameData->gameType = NO_GAME_SET;
-                                        gameData->gotoMenu = 0;
+                                        gConfig.raceType = NO_GAME_SET;
+                                        gConfig.gotoMenu = 0;
                                         InitChampionship();
-                                        gameData->gameComplete = 0;
+                                        gConfig.gameComplete = 0;
                                         QuitGame();
                                         ctrl_says_quit = 1;
                                         return;
-
-                                        /* gameData->gameComplete = 0;
-                                        gameData->gotoMenu = 1;  */
                                     }
                                 }
                                 else
                                 {
 
-                                    if (gameData->gotoMenu != 0)
+                                    if (gConfig.gotoMenu != 0)
                                     {
-                                        gameData->gameType = NO_GAME_SET;
-                                        gameData->gotoMenu = 0;
+                                        gConfig.raceType = NO_GAME_SET;
+                                        gConfig.gotoMenu = 0;
                                         InitChampionship();
-                                        gameData->gameComplete = 0;
+                                        gConfig.gameComplete = 0;
                                         QuitGame();
                                         ctrl_says_quit = 1;
                                         return;
                                     }
 
-                                    gameData->EndOfGame = 0;
+                                    gConfig.EndOfGame = 0;
                                     InitHiScoreData(&ctrlhiScoreData);
-                                    gameData->newLapRecord = 0;
-                                    if (gameData->Position >= 1 && gameData->Position <= 3)
+                                    gConfig.newLapRecord = 0;
+                                    if (gConfig.Position >= 1 && gConfig.Position <= 3)
                                     {
                                         QuitGame();
                                         ctrl_says_quit = 1;
@@ -982,7 +958,7 @@ void raceCtrl(ConfigData* gameData)
                                             ctrlhiScoreData.confirm = 2;
                                             ctrlhiScoreData.lConfirm = 0;
                                             attractDelay = 0;
-                                            gameData->gameType = NO_GAME_SET;
+                                            gConfig.raceType = NO_GAME_SET;
                                             QuitGame();
                                             ctrl_says_quit = 1;
                                             return;
@@ -993,7 +969,7 @@ void raceCtrl(ConfigData* gameData)
                                             attractDelay = 0;
                                             ctrlhiScoreData.confirm = 2;
                                             ctrlhiScoreData.lConfirm = 0;
-                                            Restart(ctrlshipIndex, gameData, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                                            Restart(ctrlshipIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
                                         }
                                     }
                                 }
@@ -1007,11 +983,11 @@ void raceCtrl(ConfigData* gameData)
 
     if ((ctrlmode != ATTRACT))
     {
-        UpdateRaceHud(ctrlshipIndex, ctrlchoice, gameData);
+        UpdateRaceHud(ctrlshipIndex, ctrlchoice);
     }
 }
 
-void raceLoop(ConfigData* gameData)
+void raceLoop(void)
 {
     int i, count;
 
@@ -1025,7 +1001,7 @@ void raceLoop(ConfigData* gameData)
     for (i = 0; i < count; i++)
     {
         dbg_update = osGetSystemTimeMS();
-        raceCtrl(gameData);
+        raceCtrl();
         dbg_update = osGetSystemTimeMS() - dbg_update;
     }
 
@@ -1054,38 +1030,7 @@ void raceLoop(ConfigData* gameData)
 
     ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
 
-    renderSetMode(RENDER_MODE_3D);
-
-    {
-        TrackCamera* cam = &gCamera;
-
-        int32 px = cam->pos.x;
-        int32 py = cam->pos.y;
-        int32 pz = cam->pos.z;
-        int32 rx = cam->pitch;
-        int32 ry = cam->hdg;
-        int32 rz = cam->roll;
-
-        FRAME_LERP(cam);
-
-        if (CameraUpdate == UpdateCameraRaceInternal)
-        {
-            matrixSetViewInternal(px, py, pz, rx, ry, rz);
-        }
-        else
-        {
-            matrixSetViewExternal(px, py, pz, rx, ry);
-        }
-    }
-
-    DrawSky(gTrack.sky);
-    DrawLandscape(&gCamera);
-    DrawTrack();
-    DrawShadows(ctrlshipIndex);
-    DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip, gameData);
-    DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
-    DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
-    DrawEffects();
+    DrawView();
 
     renderSetMode(RENDER_MODE_2D);
 
@@ -1093,7 +1038,7 @@ void raceLoop(ConfigData* gameData)
         DrawTargetIcon(ctrlshipIndex, ctrlshipShapes);
 
     if (ctrlshipIndex[ownShip].attr & RACING)
-        DrawHud(ctrlshipIndex, ctrlchoice, gameData);
+        DrawHud(ctrlshipIndex, ctrlchoice);
 
     if (ctrlNeedDeSelectScreen)
         renderBackFill(-gBorder, 0, 320 + gBorder * 2, 240);
@@ -1110,7 +1055,7 @@ void raceLoop(ConfigData* gameData)
     }
 
     // All game overs
-    if ((ctrlshowGameOver == 1) || (gameData->showGameOver == 1) || (gameData->lostGame == 1))
+    if ((ctrlshowGameOver == 1) || (gConfig.showGameOver == 1) || (gConfig.lostGame == 1))
         CentreText("GAME OVER", text_data(60, 112, 16), TEXT_COLOR_HIGHLIGHT);
 
     // Text at end.
@@ -1137,9 +1082,9 @@ void raceLoop(ConfigData* gameData)
         DisplayWinLose(ctrlNeedWinLoseVar);
     // High score bollox
     if (ctrlNeedRaceInfo)
-        DisplayRaceInfo(gameData, &ctrlhiScoreData);
+        DisplayRaceInfo(&ctrlhiScoreData);
     if (ctrlNeedNewHighScores)
-        NewHighScoreDraw(gameData, &ctrlhiScoreData);
+        NewHighScoreDraw(&ctrlhiScoreData);
     if (ctrlNeedRacePoints)
         DisplayRacePoints();
     if (ctrlNeedChampTable)
@@ -1173,18 +1118,18 @@ void raceLoop(ConfigData* gameData)
         ctrlmode = INTERACTIVE;
 
         ResetCone(&ctrlcone);
-        ctrlGameLoop = (gameData->gameType == CHAMPIONSHIP) ? GAME_LOOP_RACE_INIT : GAME_LOOP_MAIN;
+        ctrlGameLoop = (gConfig.raceType == CHAMPIONSHIP) ? GAME_LOOP_RACE_INIT : GAME_LOOP_MAIN;
         return;
     }
 }
 
-void raceDemo(ConfigData* gameData)
+void raceDemo(void)
 {
     ctrlmode = ATTRACT;
     ownShip = randy() % 8;
 
-    gameData->gameType = SINGLE_RACE;
-    gameData->trackNum = 1 + (randy() % 6); // all venom
-    gameData->actTrackNum = trackNo = gTrackList[gameData->trackNum - 1];
+    gConfig.raceType = SINGLE_RACE;
+    gConfig.trackNum = 1 + (randy() % 6); // all venom
+    gConfig.actTrackNum = trackNo = gTrackList[gConfig.trackNum - 1];
     ctrlGameLoop = GAME_LOOP_RACE_INIT;
 }

@@ -3,15 +3,11 @@
 int32 ctrlmode;
 int32 ctrltimeout;
 int32 ctrlGameLoop;
-ConfigData ctrlConfigData;
 
 extern int32 ctrlfirsttime;
 
 Texture* titleScreen;
 int gTimeout;
-
-extern Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
-extern ShipData ctrlshipIndex[NO_OF_SHIPS];
 
 void showLoading(int32 track)
 {
@@ -90,7 +86,7 @@ void titleLoop(void)
     gTimeout -= (gFrameIndex - gLastFrameIndex);
     if (gTimeout <= 0)
     {
-        raceDemo(&ctrlConfigData);
+        raceDemo();
     }
 
     renderFrameEnd();
@@ -116,24 +112,24 @@ void gameInit(void)
     gMusicTrack = 0; // random
 
     SetMasterBalance(160); // ~60%
-    HighScore(0);
+    HighScore();
 
-    InitGameData(&ctrlConfigData);
+    InitGameData();
 
     /*TODO saves
-       LoadCardData(lfilename, 0, &ctrlConfigData, (SelectionData *) 0);
+       LoadCardData(lfilename, 0, &gConfig, (SelectionData *) 0);
     */
 
-    ctrlConfigData.Lives = 3;
-    ctrlConfigData.EndOfGame = 0;
-    ctrlConfigData.Position = 8;
+    gConfig.lives = 3;
+    gConfig.EndOfGame = 0;
+    gConfig.Position = 8;
 
     /*TODO cheats*/
 #if 1
-    ctrlConfigData.RapierClass = 1;
+    gConfig.rapierClass = 1;
     totalTracks = 14;
     NumTracks = 7;
-    ctrlConfigData.showBonusTrack = 1;
+    gConfig.showBonusTrack = 1;
 #endif
 
     InitPadSettings();
@@ -185,20 +181,20 @@ void gameCtrl(void)
             ctrlGameLoop = GAME_LOOP_MENU;
             resetTimer();
         case GAME_LOOP_MENU:
-            menuLoop(&ctrlConfigData);
+            menuLoop();
             break;
 
         case GAME_LOOP_RACE_INIT:
             memStateRestore();
             MusicReset();
             time = osGetSystemTimeMS();
-            raceInit(&ctrlConfigData); // 14s -> 10.3s (uncomp) -> 7.9s (conv tex) -> 6.9s (conv prm) -> 1.4s (obj vis opt)
+            raceInit(); // 14s -> 10.3s (uncomp) -> 7.9s (conv tex) -> 6.9s (conv prm) -> 1.4s (obj vis opt)
             LOG("race init %d ms\n", osGetSystemTimeMS() - time);
             renderPrepare();
             ctrlGameLoop = GAME_LOOP_RACE;
             resetTimer();
         case GAME_LOOP_RACE:
-            raceLoop(&ctrlConfigData);
+            raceLoop();
             break;
     }
 

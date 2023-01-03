@@ -94,8 +94,6 @@ extern Cone ctrlcone;
 
 extern Glyph glyphEnd;
 extern Glyph glyphDel;
-extern Object* ctrlshipShapes[];
-extern ShipData ctrlshipIndex[];
 extern const short shipShapeOrder[];
 extern Texture* gShadowTex;
 extern Texture* gSpeedoTex;
@@ -287,25 +285,33 @@ void writeTextures(FILE* f, Texture* tex, Texture* last)
 
 void writeObjects(FILE* f, Object* obj, Object* last)
 {
+    Object* cur;
     int32 count = last - obj;
     fwrite(&count, sizeof(count), 1, f);
     LOG("write objects: %d\n", count);
 
-    while (obj < last)
+    // write DRAM data
+    cur = obj;
+    while (cur < last)
     {
-        fwrite(&obj->vCount, sizeof(obj->vCount), 1, f);
-        fwrite(&obj->fCount, sizeof(obj->fCount), 1, f);
-        fwrite(&obj->sCount, sizeof(obj->sCount), 1, f);
-        fwrite(&obj->extent, sizeof(obj->extent), 1, f);
-        fwrite(&obj->pos.x, sizeof(obj->pos.x), 1, f);
-        fwrite(&obj->pos.y, sizeof(obj->pos.y), 1, f);
-        fwrite(&obj->pos.z, sizeof(obj->pos.z), 1, f);
+        fwrite(cur->vertices, sizeof(cur->vertices[0]), cur->vCount, f);
+        fwrite(cur->faces, sizeof(cur->faces[0]), cur->fCount, f);
+        fwrite(cur->sprites, sizeof(cur->sprites[0]), cur->sCount, f);
+        cur++;
+    }
 
-        fwrite(obj->vertices, sizeof(obj->vertices[0]), obj->vCount, f);
-        fwrite(obj->faces, sizeof(obj->faces[0]), obj->fCount, f);
-        fwrite(obj->sprites, sizeof(obj->sprites[0]), obj->sCount, f);
-
-        obj++;
+    // write Objects desc array
+    cur = obj;
+    while (cur < last)
+    {
+        fwrite(&cur->vCount, sizeof(cur->vCount), 1, f);
+        fwrite(&cur->fCount, sizeof(cur->fCount), 1, f);
+        fwrite(&cur->sCount, sizeof(cur->sCount), 1, f);
+        fwrite(&cur->extent, sizeof(cur->extent), 1, f);
+        fwrite(&cur->pos.x, sizeof(cur->pos.x), 1, f);
+        fwrite(&cur->pos.y, sizeof(cur->pos.y), 1, f);
+        fwrite(&cur->pos.z, sizeof(cur->pos.z), 1, f);
+        cur++;
     }
 }
 
@@ -1238,8 +1244,6 @@ void LoadSceneOld(int32 trackNum)
     LoadCompressedTextureSequence(trackPath, 1);
     getPath(trackPath, trackNum, "/scene.prm");
     gTrack.objects = LoadPrm(trackPath, sceneTextures, &gTrack.objCount, types);
-
-    LOG("OBJECTS: %d\n", gTrack.objCount);
 
     SortObjects(types);
     InitObjects(types);

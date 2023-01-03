@@ -36,6 +36,16 @@ Object* camSpline[20];
 Object* shipSpline[20];
 short finishedExtro;
 
+ConfigData gConfig;
+
+Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
+ShipData ctrlshipIndex[NO_OF_SHIPS];
+RescueData ctrlrescueDroid;
+
+int32 ctrlNeedTargetIcon;
+
+Object* ctrlweaponShapes[WEAPON_SHAPE_NAX];
+
 int32 gMusicTracksCount;
 int32 gMusicTrack;
 int32 gMasterBalance;

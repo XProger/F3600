@@ -88,8 +88,6 @@ Congrats con[30];
 
 #define GlobalDistance 32767
 
-extern ConfigData ctrlConfigData;
-
 TrackSection* FindAllNearestSection(const vec3i* pos)
 {
     TrackSection* nearSection = NULL;
@@ -618,7 +616,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     int32 temp;
 
     /* firestar */
-    if (ctrlConfigData.actTrackNum == 14)
+    if (gConfig.actTrackNum == 14)
     {
         switch (count)
         {
@@ -950,7 +948,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     }
 
     /* silverstream */
-    if (ctrlConfigData.actTrackNum == 13)
+    if (gConfig.actTrackNum == 13)
     {
         switch (count)
         {

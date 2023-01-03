@@ -6,14 +6,14 @@ extern short shipOrder[];
 /**********************************************************************/
 /***              Call update routine for each ship                 ***/
 /**********************************************************************/
-void UpdateShips(ShipData* shipIndex, ConfigData* gameData)
+void UpdateShips(ShipData* shipIndex)
 {
     int i;
     ShipData* ship;
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (!((i == ownShip) || (gameData->gameType != TIME_TRIAL)))
+        if (!((i == ownShip) || (gConfig.raceType != TIME_TRIAL)))
             continue;
 
         ship = shipIndex + i;
