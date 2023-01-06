@@ -114,8 +114,8 @@ static const struct { uint32 vendorId, productId; } JOY_VENDORS[] = {
     { 0x054C, 0x09CC }, // Sony DS4 CUH-ZCT2x
     { 0x054C, 0x0000 }, // Sony DS3
     { 0x2717, 0x0000 }, // Xiaomi
-    { 0x18D1, 0x9400 }  // Google Stadia Controller
-} ;
+    { 0x18D1, 0x9400 }, // Google Stadia Controller
+};
 
 #define JOY_MAX_VENDORS COUNT(JOY_VENDORS)
 #define JOY_MAX_BUTTONS 17
@@ -128,6 +128,7 @@ static const uint32 joyAxisTable[][6] = {
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, kHIDUsage_GD_Rx, kHIDUsage_GD_Ry },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
+    { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, kHIDUsage_GD_Z, kHIDUsage_GD_Rz },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, kHIDUsage_GD_Z, kHIDUsage_GD_Rz }
 };
 
@@ -327,7 +328,7 @@ void hidValueCallback(void *context, IOReturn result, void *sender, IOHIDValueRe
             bool down = IOHIDValueGetIntegerValue(value) != 0;
             InputKey key = joyButtonToKey(btns, button);
             setDown(joyIndex, key, down);
-            LOG("! joy: button %d\n", button);
+            //LOG("! joy: button %d\n", button);
             break;
         }
             
@@ -460,8 +461,6 @@ void inputUpdate()
         gPadStickX = 256;
     if (gPadStickY > 256)
         gPadStickY = 256;
-    
-    printf("%f %f - %f %f\n", joy->Lx, joy->Ly, joy->Rx, joy->Ry);
 }
 
 // filesystem
@@ -480,7 +479,7 @@ extern "C" int32 osLoadFile(const char* name, void* buffer)
     if (!f)
     {
         //ASSERT(0);
-        printf("can't open file!\n");
+        LOG("can't open file!\n");
         return 0;
     }
 
@@ -676,7 +675,6 @@ int main()
     [resourceURL getFileSystemRepresentation:contentDir maxLength:sizeof(contentDir)];
     strcat(contentDir, "/");
     
-    printf("content: %s\n", contentDir);
     /*
     [supportPath getCString:saveDir maxLength:sizeof(saveDir) encoding:NSUTF8StringEncoding];
     strcat(saveDir, "/");
