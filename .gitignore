@@ -3,6 +3,9 @@
 !bin/copy_psx_content_here
 !src/*
 
+# macOS trash
+*.DS_Store
+
 # Prerequisites
 *.d
 

@@ -114,6 +114,7 @@ static const struct { uint32 vendorId, productId; } JOY_VENDORS[] = {
     { 0x054C, 0x09CC }, // Sony DS4 CUH-ZCT2x
     { 0x054C, 0x0000 }, // Sony DS3
     { 0x2717, 0x0000 }, // Xiaomi
+    { 0x18D1, 0x9400 }  // Google Stadia Controller
 } ;
 
 #define JOY_MAX_VENDORS COUNT(JOY_VENDORS)
@@ -127,6 +128,7 @@ static const uint32 joyAxisTable[][6] = {
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, kHIDUsage_GD_Rx, kHIDUsage_GD_Ry },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
+    { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, kHIDUsage_GD_Z, kHIDUsage_GD_Rz }
 };
 
 static const InputKey joyButtonsTable[][JOY_MAX_BUTTONS] = {
@@ -137,11 +139,12 @@ static const InputKey joyButtonsTable[][JOY_MAX_BUTTONS] = {
     { IN_X, IN_A, IN_B, IN_Y, IN_LB, IN_RB, IN_LT, IN_RT, IN_SELECT, IN_START, IN_L, IN_R, IN_NONE, IN_NONE, IN_NONE, IN_NONE, IN_NONE },
     { IN_SELECT, IN_L, IN_R, IN_START, IN_UP, IN_RIGHT, IN_DOWN, IN_LEFT, IN_LT, IN_RT, IN_LB, IN_RB, IN_Y, IN_B, IN_A, IN_X, IN_NONE },
     { IN_A, IN_B, IN_NONE, IN_X, IN_Y, IN_NONE, IN_LB, IN_RB, IN_LT, IN_RT, IN_SELECT, IN_START, IN_NONE, IN_L, IN_R, IN_NONE, IN_NONE },
+    { IN_A, IN_B, IN_NONE, IN_X, IN_Y, IN_NONE, IN_LB, IN_RB, IN_NONE, IN_NONE, IN_SELECT, IN_START, IN_NONE, IN_L, IN_R, IN_NONE, IN_NONE }
 };
 
 InputKey joyButtonToKey(const InputKey *btns, uint32 button)
 {
-    if (button >= 0 || button < JOY_MAX_BUTTONS)
+    if (button >= 0 && button < JOY_MAX_BUTTONS)
         return btns[button];
     return IN_NONE;
 }
@@ -296,6 +299,11 @@ void hidValueCallback(void *context, IOReturn result, void *sender, IOHIDValueRe
             else if (usage == kHIDUsage_GD_Hatswitch)
             {
                 CFIndex p = IOHIDValueGetIntegerValue(value);
+                CFIndex min = IOHIDElementGetLogicalMin(element);
+                if (min == 0)
+                {
+                    p++;
+                }
                 setDown(joyIndex, IN_UP,    p == 8 || p == 1 || p == 2);
                 setDown(joyIndex, IN_RIGHT, p == 2 || p == 3 || p == 4);
                 setDown(joyIndex, IN_DOWN,  p == 4 || p == 5 || p == 6);
@@ -319,7 +327,7 @@ void hidValueCallback(void *context, IOReturn result, void *sender, IOHIDValueRe
             bool down = IOHIDValueGetIntegerValue(value) != 0;
             InputKey key = joyButtonToKey(btns, button);
             setDown(joyIndex, key, down);
-            //LOG("! joy: button %d\n", button);
+            LOG("! joy: button %d\n", button);
             break;
         }
             
@@ -452,6 +460,8 @@ void inputUpdate()
         gPadStickX = 256;
     if (gPadStickY > 256)
         gPadStickY = 256;
+    
+    printf("%f %f - %f %f\n", joy->Lx, joy->Ly, joy->Rx, joy->Ry);
 }
 
 // filesystem
