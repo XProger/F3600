@@ -1,5 +1,5 @@
 #include "game.h"
-#include "stb_vorbis/stb_vorbis.c"
+#include "../../libs/stb_vorbis/stb_vorbis.c"
 
 #define MAX_CHANNELS 16
 #define PITCH_SHIFT  12
@@ -68,7 +68,7 @@ void vagProcessBlock(Channel* channel, int16* dst)
     int32 s2 = channel->s2;
 
     uint8 pred = *src++;
-    uint8 flags = *src++;
+    src++; // skip flags
     uint8 shift = pred & 0x0F;
     pred >>= 4;
 
@@ -265,7 +265,6 @@ int MusicGetTrack(void)
 
 void MusicPlay(int track)
 {
-    FILE* f;
     int32 size;
     char path[16];
 
@@ -321,7 +320,7 @@ void MusicReset(void)
 
 void RenderVAG(Channel* channel, int32 count, int32 volume)
 {
-    int32 i, j, value;
+    int32 i, value;
 
     int32* samples32 = gFrames;
     int32 volL = gSfxParams[channel->id].volL * volume >> 8;
@@ -398,7 +397,7 @@ int32 RenderOGG(int16* temp, int32 count, int32 volume)
 void FillNotes(int16* samples, int32 count)
 {
     Channel* channel;
-    int32 i, j;
+    int32 i;
     int32* samples32 = gFrames;
 
     memset(gFrames, 0, sizeof(gFrames));

@@ -31,8 +31,16 @@
 #include "credits.h"
 #include "options.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void gameInit(void);
 void gameFree(void);
 void gameCtrl(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

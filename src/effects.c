@@ -511,7 +511,6 @@ void InitAuroraBorialis(Object* object)
 void AuroraBorialis(Object* object)
 {
     int32 i, r, g, b;
-    ObjFace* face = object->faces;
     uint16* coords;
 
     abPhase++;

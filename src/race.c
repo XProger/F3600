@@ -79,7 +79,6 @@ void AdjustCrowdSound(Object* lost, int lostCount)
     int mag;
     int chosen;
     int smallestMag;
-    vec3i pos;
 
 #ifdef __3DO__ // TODO 3DO optimize
     return;

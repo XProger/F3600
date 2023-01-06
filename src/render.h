@@ -251,6 +251,10 @@ typedef enum
     RENDER_MODE_3D
 } RenderMode;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void renderInit(void);
 void renderFree(void);
 void renderSetVSync(int32 enable);
@@ -282,5 +286,9 @@ void renderDepthWrite(int enable);
 void renderNextLayer(void);
 Texture* renderCreateTexture(uint8* ptr);
 void renderDeleteTexture(Texture* texture);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

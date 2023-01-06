@@ -76,7 +76,16 @@ int PlayNote(enum SfxType id);
 void SetMasterBalance(int32 value);
 void SetPitch(enum SfxType id, int32 pitch);
 void SetVolume(enum SfxType id, int32 volL, int32 volR);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void FillNotes(int16* samples, int32 count);
+
+#ifdef __cplusplus
+}
+#endif
 
 int MusicIsPlaying(void);
 int MusicGetTrack(void);

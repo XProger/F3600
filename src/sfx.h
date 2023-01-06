@@ -9,8 +9,6 @@ typedef struct
 
 extern SfxParam gSfxParams[SFX_MAX];
 
-void soundInit(void);
-
 void SfxInit(void);
 void SfxFree(void);
 

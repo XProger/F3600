@@ -35,7 +35,6 @@ int32 SfxLoadBankVAB(const char* vh, const char* vb)
         uint32 reserved1;
     } VabHdr;
 
-    FILE* f;
     int32 i, offset;
     VabHdr* header;
     uint8* ptr = pDRAM;
@@ -165,7 +164,6 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
     int32 ident;
     int32 voll, volr;
     int32 angle;
-    vec3i dopler;
     int32 doplerMag;
 
 #ifdef __3DO__ // TODO 3DO optimize

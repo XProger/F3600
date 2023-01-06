@@ -54,8 +54,8 @@ typedef int                 int32;
 typedef unsigned int        uint32;
 #endif
 
-#if 1
-    #if __LINUX__
+#if 0
+    #if defined(__LINUX__) || defined(__MAC__)
         #include <signal.h>
         #define __debugbreak() raise(SIGTRAP)
     #endif
@@ -63,8 +63,8 @@ typedef unsigned int        uint32;
     #define LOG(...)        printf(__VA_ARGS__)
     #define ASSERT(expr)    if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); __debugbreak(); }
 #else
-    #define LOG(...)
-    #define ASSERT(x)
+    #define LOG(...)        printf(__VA_ARGS__)
+    #define ASSERT(expr)    if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); }
 #endif
 
 #define COUNT(x) (sizeof(x) / sizeof(x[0]))
@@ -113,10 +113,19 @@ typedef struct vec4i
 
 unsigned short GetKeyNoBlock(void);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int32 osGetSystemTimeMS(void);
 void osQuit(void);
 void osJoyVibrate(int index, int L, int R);
 int32 osLoadFile(const char* name, void* buffer);
+void soundInit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 void showLoading(int32 track);
 

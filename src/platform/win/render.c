@@ -1,4 +1,4 @@
-#ifdef __WIN32__
+#if defined(__WIN32__)
     #include <windows.h>
     #include <gl/GL.h>
     #include <gl/glu.h>
@@ -8,13 +8,17 @@
     extern HWND hWnd;
     HDC hDC;
     HGLRC hRC;
-#elif __LINUX__
+#elif defined(__LINUX__)
     #include <GL/gl.h>
     #include <GL/glext.h>
     #include <GL/glx.h>
 
     extern Display* dpy;
     extern Window wnd;
+#elif defined(__MAC__)
+    #include <OpenGL/gl3.h>
+    #include <OpenGL/gl3ext.h>
+    #include <OpenGL/glext.h>
 #endif
 
 #include "game.h"
@@ -28,51 +32,59 @@
 #define DEG2RAD (PI / 180.0f)
 #define RAD2DEG (180.0f / PI)
 
-// Textures
-PFNGLGENERATEMIPMAPPROC             glGenerateMipmap;
+#if defined(__WIN32__) || defined(__LINUX__)
+    // Textures
+    PFNGLGENERATEMIPMAPPROC             glGenerateMipmap;
 
-// Shader
-PFNGLCREATEPROGRAMPROC              glCreateProgram;
-PFNGLDELETEPROGRAMPROC              glDeleteProgram;
-PFNGLLINKPROGRAMPROC                glLinkProgram;
-PFNGLUSEPROGRAMPROC                 glUseProgram;
-PFNGLGETPROGRAMINFOLOGPROC          glGetProgramInfoLog;
-PFNGLCREATESHADERPROC               glCreateShader;
-PFNGLDELETESHADERPROC               glDeleteShader;
-PFNGLSHADERSOURCEPROC               glShaderSource;
-PFNGLATTACHSHADERPROC               glAttachShader;
-PFNGLCOMPILESHADERPROC              glCompileShader;
-PFNGLGETSHADERINFOLOGPROC           glGetShaderInfoLog;
-PFNGLGETUNIFORMLOCATIONPROC         glGetUniformLocation;
-PFNGLUNIFORM1IVPROC                 glUniform1iv;
-PFNGLUNIFORM1FVPROC                 glUniform1fv;
-PFNGLUNIFORM2FVPROC                 glUniform2fv;
-PFNGLUNIFORM3FVPROC                 glUniform3fv;
-PFNGLUNIFORM4FVPROC                 glUniform4fv;
-PFNGLUNIFORMMATRIX4FVPROC           glUniformMatrix4fv;
-PFNGLBINDATTRIBLOCATIONPROC         glBindAttribLocation;
-PFNGLENABLEVERTEXATTRIBARRAYPROC    glEnableVertexAttribArray;
-PFNGLDISABLEVERTEXATTRIBARRAYPROC   glDisableVertexAttribArray;
-PFNGLVERTEXATTRIBPOINTERPROC        glVertexAttribPointer;
-PFNGLGETPROGRAMIVPROC               glGetProgramiv;
+    // Shader
+    PFNGLCREATEPROGRAMPROC              glCreateProgram;
+    PFNGLDELETEPROGRAMPROC              glDeleteProgram;
+    PFNGLLINKPROGRAMPROC                glLinkProgram;
+    PFNGLUSEPROGRAMPROC                 glUseProgram;
+    PFNGLGETPROGRAMINFOLOGPROC          glGetProgramInfoLog;
+    PFNGLCREATESHADERPROC               glCreateShader;
+    PFNGLDELETESHADERPROC               glDeleteShader;
+    PFNGLSHADERSOURCEPROC               glShaderSource;
+    PFNGLATTACHSHADERPROC               glAttachShader;
+    PFNGLCOMPILESHADERPROC              glCompileShader;
+    PFNGLGETSHADERINFOLOGPROC           glGetShaderInfoLog;
+    PFNGLGETUNIFORMLOCATIONPROC         glGetUniformLocation;
+    PFNGLUNIFORM1IVPROC                 glUniform1iv;
+    PFNGLUNIFORM1FVPROC                 glUniform1fv;
+    PFNGLUNIFORM2FVPROC                 glUniform2fv;
+    PFNGLUNIFORM3FVPROC                 glUniform3fv;
+    PFNGLUNIFORM4FVPROC                 glUniform4fv;
+    PFNGLUNIFORMMATRIX4FVPROC           glUniformMatrix4fv;
+    PFNGLBINDATTRIBLOCATIONPROC         glBindAttribLocation;
+    PFNGLENABLEVERTEXATTRIBARRAYPROC    glEnableVertexAttribArray;
+    PFNGLDISABLEVERTEXATTRIBARRAYPROC   glDisableVertexAttribArray;
+    PFNGLVERTEXATTRIBPOINTERPROC        glVertexAttribPointer;
+    PFNGLGETPROGRAMIVPROC               glGetProgramiv;
 
-// Mesh
-PFNGLGENBUFFERSARBPROC      glGenBuffers;
-PFNGLDELETEBUFFERSARBPROC   glDeleteBuffers;
-PFNGLBINDBUFFERARBPROC      glBindBuffer;
-PFNGLBUFFERDATAARBPROC      glBufferData;
-PFNGLBUFFERSUBDATAARBPROC   glBufferSubData;
+    // Mesh
+    PFNGLGENBUFFERSARBPROC      glGenBuffers;
+    PFNGLDELETEBUFFERSARBPROC   glDeleteBuffers;
+    PFNGLBINDBUFFERARBPROC      glBindBuffer;
+    PFNGLBUFFERDATAARBPROC      glBufferData;
+    PFNGLBUFFERSUBDATAARBPROC   glBufferSubData;
 
-// Vertex Arrays
-PFNGLGENVERTEXARRAYSPROC    glGenVertexArrays;
-PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
-PFNGLBINDVERTEXARRAYPROC    glBindVertexArray;
+    // Vertex Arrays
+    PFNGLGENVERTEXARRAYSPROC    glGenVertexArrays;
+    PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+    PFNGLBINDVERTEXARRAYPROC    glBindVertexArray;
+#endif
 
 // VSync control
-#ifdef __WIN32__
+#if defined(__WIN32__)
     PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
-#elif __LINUX__
+#elif defined(__LINUX__)
     PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
+#endif
+
+#if defined(__MAC__)
+    #define glGenVertexArrays    glGenVertexArraysAPPLE
+    #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
+    #define glBindVertexArray    glBindVertexArrayAPPLE
 #endif
 
 typedef struct
@@ -205,6 +217,15 @@ const char* GLSL_HEADER_FRAG_GL3 =
     "#define varying in\n"
     "#define texture2D texture\n"
     "out vec4 fragColor;\n";
+
+const char* GLSL_HEADER_VERT_GL2 =
+    "#version 110\n"
+    "#define VERTEX\n";
+
+const char* GLSL_HEADER_FRAG_GL2 =
+    "#version 110\n"
+    "#define FRAGMENT\n"
+    "#define fragColor gl_FragColor\n";
 
 const char* sh_track =
     "varying vec2 vTexCoord;\n"
@@ -560,11 +581,18 @@ void compileShader(Shader* shader, const char* text)
     GLuint obj;
     const GLenum type[2] = { GL_VERTEX_SHADER, GL_FRAGMENT_SHADER };
 
+#if defined(__MAC__)
+    const GLchar *code[2][3] = {
+        { GLSL_HEADER_VERT_GL2, "#line 0\n", text },
+        { GLSL_HEADER_FRAG_GL2, "#line 0\n", text }
+    };
+#else
     const GLchar *code[2][3] = {
         { GLSL_HEADER_VERT_GL3, "#line 0\n", text },
         { GLSL_HEADER_FRAG_GL3, "#line 0\n", text }
     };
-
+#endif
+    
     shader->id = glCreateProgram();
 
     for (i = 0; i < 2; i++)
@@ -610,9 +638,9 @@ void compileShader(Shader* shader, const char* text)
 
 void* GetProc(const char *name)
 {
-#ifdef __WIN32__
+#if defined(__WIN32__)
     return (void*)wglGetProcAddress(name);
-#elif __LINUX__
+#elif defined(__LINUX__)
     return (void*)glXGetProcAddress((GLubyte*)name);
 #endif
     return NULL;
@@ -711,6 +739,7 @@ void renderInit()
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+#if defined(__WIN32__) || defined(__LINUX__)
     GetProcOGL(glGenerateMipmap);
 
     GetProcOGL(glCreateProgram);
@@ -746,10 +775,11 @@ void renderInit()
     GetProcOGL(glGenVertexArrays);
     GetProcOGL(glDeleteVertexArrays);
     GetProcOGL(glBindVertexArray);
+#endif
 
-#ifdef __WIN32__
+#if defined(__WIN32__)
     GetProcOGL(wglSwapIntervalEXT);
-#elif __LINUX__
+#elif defined(__LINUX__)
     GetProcOGL(glXSwapIntervalSGI);
 #endif
 
@@ -800,9 +830,9 @@ void renderFree(void)
 
 void renderSetVSync(int32 enable)
 {
-#ifdef __WIN32__
+#if defined(__WIN32__)
     if (wglSwapIntervalEXT) wglSwapIntervalEXT(enable ? 1 : 0);
-#elif __LINUX__
+#elif defined(__LINUX__)
     if (glXSwapIntervalSGI) glXSwapIntervalSGI(enable ? 1 : 0);
 #endif
 }
@@ -1103,7 +1133,7 @@ void renderBackFill(int x, int y, int w, int h)
 
 void prepareTrack(void)
 {
-    int i, j, x, y;
+    int i;
 
     ASSERT(ctrlnumLib <= MAX_TRACK_TEX);
     for (i = 0; i < ctrlnumLib; i++)
@@ -1417,7 +1447,6 @@ void renderSection(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const vec3i* vertices = gTrack.vertices;
-    const vec4i* v;
     int i;
     float u0, u1;
     uint32 color;
@@ -1457,7 +1486,6 @@ void renderSection(const TrackSection* section)
 void renderTrack(void)
 {
     int i, j, s;
-    int cx, cy, cz;
     int dir;
     short* counts;
     short** sections;
@@ -1545,7 +1573,7 @@ void renderEffects(const Effect* fx)
 
 void renderMesh(const Object* obj)
 {
-    int32 i, dx, dz, rx, rz, len;
+    int32 i;
     float iw, ih;
     const vec3s* v = obj->vertices;
     const ObjFace* f = obj->faces;
@@ -1891,6 +1919,8 @@ Texture* renderCreateTexture(uint8* ptr)
     }
     else
     {
+        w = 1;
+        h = 1;
         ASSERT(0);
     }
 

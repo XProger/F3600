@@ -386,7 +386,6 @@ void SetUnitVectors(ShipData* ship)
 {
     int32 sx, sy, sz;
     int32 cx, cy, cz;
-    int i;
     vec4i direction;
     vec4i toFaceVector;
     int toFace;

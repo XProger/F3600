@@ -736,7 +736,6 @@ void UpdateRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
 
 void InitRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
 {
-    int i;
     Face* facePtr;
     ShipData* ship = shipIndex + weapon->fireShip;
 

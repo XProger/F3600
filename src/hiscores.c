@@ -33,6 +33,7 @@ void FillHighScoreNames(HiScores* scoreTable, char* n1, char* n2, char* n3, char
 
 void HighScore(void)
 {
+#if 0 // TODO highscores
     short charX = 40, charY = 185;
     char nameEntered[9];
     char currChar = 'A';
@@ -40,16 +41,18 @@ void HighScore(void)
     char dispChar[2];
     char tablePos = 0;
     char spacing = 20;
-    int toggleDisplay = 0, i, j;
-    static char firstUsed = 1;
+    int toggleDisplay = 0;
     char userEntry = 1;
     int lapTime = 0;
     int bestLap = 0;
-    char highScore = 0;
     char checkVal = 0;
     char enterHs = 1;
     int count = 0;
     int padDelay = 0;
+#endif
+    static char firstUsed = 1;
+    char highScore = 0;
+    int i, j;
 
     if (firstUsed)
     {
@@ -407,7 +410,6 @@ void AddEntry2Table(int bestLap, char nameEntered[])
 char CheckLapRecord(ShipData* shipInfo, int shipNo)
 {
     int scoreTrack = 0;
-    int check = 0;
 
     if (gConfig.raceType == TIME_TRIAL)
         scoreTrack = ((gConfig.trackNum - 1) + HiScoreTracks);
@@ -474,9 +476,6 @@ void DisplayHiScore(char trackNum)
 
 void NewHighScore(HiScoreData* hiScoreData)
 {
-    short charX = 40, charY = 185;
-    char spacing = 20;
-    static char firstUsed = 1;
     short select;
 
     if (hiScoreData->numChars != (nameLetters + 1) && (hiScoreData->userEntry))
@@ -606,9 +605,7 @@ void NewHighScore(HiScoreData* hiScoreData)
 
 void NewHighScoreDraw(HiScoreData* hiScoreData)
 {
-    short charX = 40, charY = 185;
-    char spacing = 20;
-    static char firstUsed = 1;
+    short charY = 185;
 
     if (hiScoreData->numChars != (nameLetters + 1) && (hiScoreData->userEntry))
     {
@@ -654,8 +651,6 @@ int CheckHiScore(HiScoreData* hiScoreData)
     int i, j;
     int highScore = 0;
     int scoreTrack = 0;
-    int serialRaceTime = 0, ownRaceTime = 0;
-    char whichRecord = 0;
 
     if (gConfig.raceType == TIME_TRIAL)
         scoreTrack = ((gConfig.trackNum - 1) + HiScoreTracks);

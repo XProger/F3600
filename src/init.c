@@ -1194,11 +1194,11 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
     free(sprites);
     free(start);
 
-    allocDRAM(data - pDRAM);
+    allocDRAM((int32)(data - pDRAM));
 
     if (count)
     {
-        *count = (obj - gObjectPtr);
+        *count = (int32)(obj - gObjectPtr);
     }
 
     retObj = gObjectPtr;
