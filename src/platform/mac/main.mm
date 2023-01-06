@@ -91,7 +91,7 @@ extern "C" bool osJoyReady(int index)
 
 extern "C" void osJoyVibrate(int index, int L, int R)
 {
-    // TODO
+    // TODO rumble
 }
 
 float joyAxisValue(IOHIDValueRef value)
