@@ -110,6 +110,7 @@ static const struct { uint32 vendorId, productId; } JOY_VENDORS[] = {
     { 0x045E, 0x02FD }, // Microsoft Xbox One
     { 0x045E, 0x0000 }, // Microsoft x360
     { 0x2DC8, 0x0000 }, // 8Bitdo
+    { 0x054C, 0x0CE6 }, // Sony DualSense
     { 0x054C, 0x05C4 }, // Sony DS4 CUH-ZCT1x
     { 0x054C, 0x09CC }, // Sony DS4 CUH-ZCT2x
     { 0x054C, 0x0000 }, // Sony DS3
@@ -125,6 +126,7 @@ static const uint32 joyAxisTable[][6] = {
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Rx, kHIDUsage_GD_Ry, kHIDUsage_GD_Z, kHIDUsage_GD_Rz },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
+    { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, kHIDUsage_GD_Rx, kHIDUsage_GD_Ry },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
     { kHIDUsage_GD_X, kHIDUsage_GD_Y, kHIDUsage_GD_Z,  kHIDUsage_GD_Rz, 0, 0 },
@@ -136,6 +138,7 @@ static const InputKey joyButtonsTable[][JOY_MAX_BUTTONS] = {
     { IN_A, IN_B, IN_NONE, IN_X, IN_Y, IN_NONE, IN_LB, IN_RB, IN_NONE, IN_NONE, IN_NONE, IN_START, IN_NONE, IN_L, IN_R, IN_NONE, IN_NONE },
     { IN_A, IN_B, IN_X, IN_Y, IN_LB, IN_RB, IN_LT, IN_RT, IN_START, IN_SELECT, IN_NONE, IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT, IN_NONE, IN_NONE },
     { IN_B, IN_A, IN_NONE, IN_Y, IN_X, IN_NONE, IN_LB, IN_RB, IN_LT, IN_RT, IN_SELECT, IN_START, IN_NONE, IN_L, IN_R, IN_NONE, IN_NONE },
+    { IN_X, IN_A, IN_B, IN_Y, IN_LB, IN_RB, IN_LT, IN_RT, IN_SELECT, IN_START, IN_L, IN_R, IN_NONE, IN_NONE, IN_NONE, IN_NONE, IN_NONE },
     { IN_X, IN_A, IN_B, IN_Y, IN_LB, IN_RB, IN_LT, IN_RT, IN_SELECT, IN_START, IN_L, IN_R, IN_NONE, IN_NONE, IN_NONE, IN_NONE, IN_NONE },
     { IN_X, IN_A, IN_B, IN_Y, IN_LB, IN_RB, IN_LT, IN_RT, IN_SELECT, IN_START, IN_L, IN_R, IN_NONE, IN_NONE, IN_NONE, IN_NONE, IN_NONE },
     { IN_SELECT, IN_L, IN_R, IN_START, IN_UP, IN_RIGHT, IN_DOWN, IN_LEFT, IN_LT, IN_RT, IN_LB, IN_RB, IN_Y, IN_B, IN_A, IN_X, IN_NONE },
