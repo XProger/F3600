@@ -68,8 +68,8 @@ typedef unsigned int        uint32;
     #define LOG(...)        printf(__VA_ARGS__)
     #define ASSERT(expr)    if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); __debugbreak(); }
 #else
-    #define LOG(...)        printf(__VA_ARGS__); fflush(stdout)
-    #define ASSERT(expr)    if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); }
+    #define LOG(...)        //printf(__VA_ARGS__); fflush(stdout)
+    #define ASSERT(expr)    //if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); }
 #endif
 
 #define COUNT(x) (sizeof(x) / sizeof(x[0]))
