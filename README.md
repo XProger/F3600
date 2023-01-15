@@ -1,2 +1,2 @@
 # F3600
-Porting project of the original wipE'out" game
+Source port of the original wipE'out" game
