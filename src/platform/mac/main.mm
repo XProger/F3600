@@ -649,7 +649,7 @@ int main()
     // init window
     NSRect rect = NSMakeRect(0, 0, WND_WIDTH, WND_HEIGHT);
     window = [[NSWindow alloc] initWithContentRect:rect styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask backing:NSBackingStoreBuffered defer:YES];
-    window.title = @"wipEout xport";
+    window.title = @"F3600";
     window.acceptsMouseMovedEvents = YES;
     window.delegate = [[WindowDelegate alloc] init];
     

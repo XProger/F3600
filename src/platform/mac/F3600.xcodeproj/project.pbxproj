@@ -118,8 +118,8 @@
 		99A9A614296740C100D4D138 /* WIPEOUT */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WIPEOUT; path = ../../../bin/WIPEOUT; sourceTree = "<group>"; };
 		99BF38CC21E7176900D90A38 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		99C4C0931796A96F0032DE85 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
-		99C4C09B1796AACF0032DE85 /* wipEout.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = wipEout.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		99C4C0A41796AACF0032DE85 /* wipEout-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "wipEout-Info.plist"; sourceTree = "<group>"; };
+		99C4C09B1796AACF0032DE85 /* F3600.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = F3600.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		99C4C0A41796AACF0032DE85 /* F3600-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "F3600-Info.plist"; sourceTree = "<group>"; };
 		99DF7BC31DCBA30B00C40D0A /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -215,7 +215,7 @@
 		99C4C0811796A8230032DE85 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				99C4C09B1796AACF0032DE85 /* wipEout.app */,
+				99C4C09B1796AACF0032DE85 /* F3600.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -235,18 +235,18 @@
 			isa = PBXGroup;
 			children = (
 				9975BF0A21E9F5D300F13342 /* Assets.xcassets */,
-				99C4C0A41796AACF0032DE85 /* wipEout-Info.plist */,
+				99C4C0A41796AACF0032DE85 /* F3600-Info.plist */,
 			);
 			name = "Supporting Files";
-			path = wipEout;
+			path = F3600;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		99C4C09A1796AACF0032DE85 /* wipEout */ = {
+		99C4C09A1796AACF0032DE85 /* F3600 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 99C4C0B41796AAD00032DE85 /* Build configuration list for PBXNativeTarget "wipEout" */;
+			buildConfigurationList = 99C4C0B41796AAD00032DE85 /* Build configuration list for PBXNativeTarget "F3600" */;
 			buildPhases = (
 				99C4C0971796AACF0032DE85 /* Sources */,
 				99C4C0981796AACF0032DE85 /* Frameworks */,
@@ -256,9 +256,9 @@
 			);
 			dependencies = (
 			);
-			name = wipEout;
-			productName = wipEout;
-			productReference = 99C4C09B1796AACF0032DE85 /* wipEout.app */;
+			name = F3600;
+			productName = F3600;
+			productReference = 99C4C09B1796AACF0032DE85 /* F3600.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -270,7 +270,7 @@
 				LastUpgradeCheck = 0810;
 				ORGANIZATIONNAME = XProger;
 			};
-			buildConfigurationList = 99C4C07B1796A8230032DE85 /* Build configuration list for PBXProject "wipEout" */;
+			buildConfigurationList = 99C4C07B1796A8230032DE85 /* Build configuration list for PBXProject "F3600" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -283,7 +283,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				99C4C09A1796AACF0032DE85 /* wipEout */,
+				99C4C09A1796AACF0032DE85 /* F3600 */,
 			);
 		};
 /* End PBXProject section */
@@ -293,7 +293,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				99A9A616296740C100D4D138 /* WIPEOUT in Resources */,
+				99A9A616296740C100D4D138 /* F3600 in Resources */,
 				9975BF0B21E9F5D300F13342 /* Assets.xcassets in Resources */,
 				99A9A615296740C100D4D138 /* audio in Resources */,
 			);
@@ -427,7 +427,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INFOPLIST_FILE = "wipEout-Info.plist";
+				INFOPLIST_FILE = "F3600-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "--verbose";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.xproger.${PRODUCT_NAME:rfc1034identifier}";
@@ -446,7 +446,7 @@
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INFOPLIST_FILE = "wipEout-Info.plist";
+				INFOPLIST_FILE = "F3600-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "--verbose";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.xproger.${PRODUCT_NAME:rfc1034identifier}";
@@ -458,7 +458,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		99C4C07B1796A8230032DE85 /* Build configuration list for PBXProject "wipEout" */ = {
+		99C4C07B1796A8230032DE85 /* Build configuration list for PBXProject "F3600" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				99C4C08C1796A8230032DE85 /* Debug */,
@@ -467,7 +467,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		99C4C0B41796AAD00032DE85 /* Build configuration list for PBXNativeTarget "wipEout" */ = {
+		99C4C0B41796AAD00032DE85 /* Build configuration list for PBXNativeTarget "F3600" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				99C4C0B51796AAD00032DE85 /* Debug */,

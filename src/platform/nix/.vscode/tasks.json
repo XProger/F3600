@@ -31,7 +31,7 @@
                 "-lpulse-simple",
                 "-lpulse",
                 "-o",
-                "../../../bin/wipeout"
+                "../../../bin/F3600"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

@@ -1,7 +1,7 @@
 SDK        = C:/Projects/3do-devkit
 FILESYSTEM = CD
 EXENAME	   = $(FILESYSTEM)/LaunchMe
-ISONAME    = wipeout.iso
+ISONAME    = F3600.iso
 STACKSIZE  = 4096
 BANNER	   = banner.bmp
 
@@ -61,10 +61,10 @@ iso:
 	$(3DOENCRYPT) genromtags $(ISONAME)
 
 run:
-	/c/RetroArch/retroarch.exe -L C:\RetroArch\cores\opera_libretro.dll C:\Projects\wipeout-xport\src\platform\3do\wipeout.iso
+	/c/RetroArch/retroarch.exe -L C:\RetroArch\cores\opera_libretro.dll C:\Projects\F3600\src\platform\3do\F3600.iso
 
 copy_usb:
-	cp ./wipeout.iso /k/wipeout.iso
+	cp ./F3600.iso /k/F3600.iso
 	
 builddir:
 	mkdir -p build/

@@ -68,6 +68,6 @@
     <ClInclude Include="..\..\game.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="wipeout-xport.rc" />
+    <ResourceCompile Include="F3600.rc" />
   </ItemGroup>
 </Project>

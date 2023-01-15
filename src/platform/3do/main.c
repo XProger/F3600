@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     int32 fpsFrame = 0;
     int32 fps = 0;
 
-    printf("wipEout 3DO\n");
+    printf("F3600 3DO\n");
 
     OpenMathFolio();
     OpenGraphicsFolio();

@@ -12,7 +12,7 @@
 #include <pspgu.h>
 #include <pspgum.h>
 
-PSP_MODULE_INFO("wipEout", 0, 1, 1);
+PSP_MODULE_INFO("F3600", 0, 1, 1);
 PSP_HEAP_SIZE_KB(20 * 1024);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER | PSP_THREAD_ATTR_VFPU | PSP_THREAD_ATTR_NO_FILLSTACK);
 
@@ -187,7 +187,7 @@ int32 osLoadFile(const char* name, void* buffer)
 
 int main(void)
 {
-    LOG("wipEout PSP\n");
+    LOG("F3600 PSP\n");
 
     scePowerSetClockFrequency(333, 333, 166);
     setupCallbacks();

@@ -1,4 +1,4 @@
-TARGET = wipEout
+TARGET = F3600
 
 SRC_C   = $(wildcard *.c)
 SRC_C  += $(wildcard ../../*.c)
@@ -17,9 +17,9 @@ LIBDIR  =
 LDFLAGS =
 LIBS    = -lpspgum -lpspgu -lpspaudiolib -lpspaudio -lpsprtc -lpsppower -lpspmath -lm
 
-COPY_DIR        = C:/Projects/wipeout-xport/bin
+COPY_DIR        = C:/Projects/F3600/bin
 EXTRA_TARGETS   = EBOOT.PBP
-PSP_EBOOT_TITLE = wipEout
+PSP_EBOOT_TITLE = F3600
 PSP_EBOOT_ICON  = ICON0.PNG
 PSP_EBOOT_PIC1  = PIC1.PNG
 

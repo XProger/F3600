@@ -630,12 +630,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     wcex.hIcon          = LoadIcon(wcex.hInstance, "MAINICON");
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)GetStockObject(BLACK_BRUSH);
-    wcex.lpszClassName  = "wipeoutWnd";
+    wcex.lpszClassName  = "F3600Wnd";
     wcex.hIconSm        = wcex.hIcon;
     wcex.lpfnWndProc    = &WndProc;
     RegisterClassEx(&wcex);
 
-    hWnd = CreateWindow(wcex.lpszClassName, "wipEout xport", WS_OVERLAPPEDWINDOW | WS_VISIBLE, wx + r.left, wy + r.top, r.right - r.left, r.bottom - r.top, 0, 0, hInstance, 0);
+    hWnd = CreateWindow(wcex.lpszClassName, "F3600", WS_OVERLAPPEDWINDOW | WS_VISIBLE, wx + r.left, wy + r.top, r.right - r.left, r.bottom - r.top, 0, 0, hInstance, 0);
 
     timerInit();
     inputInit();

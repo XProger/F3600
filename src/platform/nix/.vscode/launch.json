@@ -4,7 +4,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/../../../bin/wipeout",
+            "program": "${workspaceFolder}/../../../bin/F3600",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/../../../bin/",

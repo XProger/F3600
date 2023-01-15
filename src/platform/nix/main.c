@@ -41,7 +41,7 @@ void osQuit()
     isQuit = 1;
 }
 
-#define WND_TITLE   "wipEout xport"
+#define WND_TITLE   "F3600"
 #define WND_WIDTH   854
 #define WND_HEIGHT  480
 
