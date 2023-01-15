@@ -95,7 +95,7 @@ void UpdateEffects(void)
 
 void DrawEffects(void)
 {
-    matrixTranslate(0, 0, 0);
+    matrixTranslate(gCameraViewPos.x, gCameraViewPos.y, gCameraViewPos.z);
     renderEffects(gEffectsActive);
 }
 

@@ -400,6 +400,8 @@ void FillNotes(int16* samples, int32 count)
     int32 i;
     int32* samples32 = gFrames;
 
+    ASSERT(count == SND_SAMPLES);
+
     memset(gFrames, 0, sizeof(gFrames));
 
     // music

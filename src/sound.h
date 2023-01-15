@@ -6,8 +6,13 @@
 
 
 #define SND_CHANNELS    2
-#define SND_SAMPLES     (2352 * 2)
 #define SND_OUTPUT_FREQ 44100
+
+#ifdef __PSP__
+#define SND_SAMPLES     1024
+#else
+#define SND_SAMPLES     (2352 * 2)
+#endif
 
 #define SND_MAX_VOLUME  0x8000
 #define SND_DEF_PITCH   0x1000

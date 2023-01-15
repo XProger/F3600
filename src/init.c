@@ -723,7 +723,8 @@ void InitViewList(char* file)
 #define SET_FACE_TEX_Z(f)           f->flags = NO_TEXTURE; memset(f->uv, 0, sizeof(f->uv))
 #define SET_FACE_TEX_T(f, p)        f->flags = p->texture; f->uv[0][0] = p->u0; f->uv[0][1] = p->v0; f->uv[1][0] = p->u1; f->uv[1][1] = p->v1; f->uv[2][0] = p->u2; f->uv[2][1] = p->v2; f->uv[3][0] = f->uv[3][1] = 0
 #define SET_FACE_TEX_Q(f, p)        f->flags = p->texture; f->uv[0][0] = p->u0; f->uv[0][1] = p->v0; f->uv[1][0] = p->u1; f->uv[1][1] = p->v1; f->uv[2][0] = p->u3; f->uv[2][1] = p->v3; f->uv[3][0] = p->u2; f->uv[3][1] = p->v2
-#define SET_FACE_COLOR_FLAT(f, p)   f->color[0] = f->color[1] = f->color[2] = f->color[3] = CONV_COLOR(p->colour)
+#define SET_FACE_COLOR_SET(f, c)    f->color[0] = f->color[1] = f->color[2] = f->color[3] = c
+#define SET_FACE_COLOR_FLAT(f, p)   SET_FACE_COLOR_SET(f, CONV_COLOR(p->colour))
 #define SET_FACE_COLOR_T(f, p)      f->color[0] = CONV_COLOR(p->colour[0]); f->color[1] = CONV_COLOR(p->colour[1]); f->color[2] = CONV_COLOR(p->colour[2]); f->color[3] = 0
 #define SET_FACE_COLOR_Q(f, p)      f->color[0] = CONV_COLOR(p->colour[0]); f->color[1] = CONV_COLOR(p->colour[1]); f->color[2] = CONV_COLOR(p->colour[3]); f->color[3] = CONV_COLOR(p->colour[2])
 
@@ -1029,6 +1030,7 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
 
                     if (prm.ft3->flag & ShipEngine)
                     {
+                        SET_FACE_COLOR_SET(f, 0xFFFFFFFF);
                         f->flags |= FACE_FLAG_ENGINE;
                     }
 
@@ -1069,6 +1071,7 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
 
                     if (prm.gt3->flag & ShipEngine)
                     {
+                        SET_FACE_COLOR_SET(f, 0xFFFFFFFF);
                         f->flags |= FACE_FLAG_ENGINE;
                     }
 

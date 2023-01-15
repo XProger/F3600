@@ -180,8 +180,6 @@ int gRenderMode;
 int32 xOffset;
 int32 yOffset;
 
-int gWidth, gHeight, gBorder;
-
 int32 gCylX, gCylZ;
 
 GLuint VAO;
@@ -300,8 +298,8 @@ const char* sh_ship =
 
         "void main() {\n"
             "vTexCoord = aTexCoord;\n"
-            "vec4 ambient = min(vec4(1.0), uColor * 2.0 + 0.1);\n"
-            "vColor = aColor * ambient * vec4(2.0, 2.0, 2.0, 1.0);\n"
+            "vec3 ambient = uColor.xyz + 0.125;\n"
+            "vColor = vec4(aColor.xyz * 4.0 * ambient, 1.0);\n"
             "gl_Position = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
         "}\n"
 
@@ -333,7 +331,7 @@ const char* sh_shield =
             "pos.x += sign(pos.x) * a * 8.0;\n"
             "pos.y += sign(pos.y) * b * 8.0;\n"
             "b *= 0.25;\n"
-            "vColor = vec4(a * 0.5 + b, 0.25 + b, 0.5 + b, 1.0) * 0.75;\n"
+            "vColor = vec4(a * 0.5 + b, 0.25 + b, 0.5 + b, 1.0) * 0.5;\n"
             "gl_Position = uProjMatrix * (uViewMatrix * vec4(pos, 1.0));\n"
         "}\n"
 
@@ -444,7 +442,7 @@ const char* sh_gui =
 
         "void main() {\n"
             "vTexCoord = aTexCoord;\n"
-            "vColor = vec4(aColor.xyz + aColor.xyz, 1.0);\n"
+            "vColor = vec4(aColor.xyz, 1.0);\n"
             "gl_Position = uProjMatrix * vec4(aCoord, 0.0, 1.0);\n"
         "}\n"
 
@@ -454,13 +452,14 @@ const char* sh_gui =
 
         "void main() {\n"
             "fragColor = texture2D(sDiffuse, vTexCoord) * vColor;\n"
+            "if (fragColor.a <= 0.0) discard;\n"
         "}\n"
 
     "#endif\n";
 
 void matrixIdentity(mat4* m)
 {
-    memset(m, 0, sizeof(Matrix));
+    memset(m, 0, sizeof(mat4));
     m->e[0][0] = m->e[1][1] = m->e[2][2] = m->e[3][3] = 1.0f;
 }
 
@@ -1017,7 +1016,7 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
 
 void renderImage(const Texture* t, int32 x, int32 y)
 {
-    const uint32 color = 0xFF808080;
+    const uint32 color = 0xFFFFFFFF;
 
     float u0 = 0;
     float v0 = 0;
@@ -1073,6 +1072,7 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
 
 void renderColorQuad(const ColorQuad* q)
 {
+    renderSetShader(&shaderGUI);
     renderSetTexture(NULL);
     stateCheck();
 
@@ -1123,12 +1123,12 @@ void renderBackFill(int x, int y, int w, int h)
     q.color[0] =
     q.color[1] =
     q.color[2] =
-    q.color[3] = 0xFF404040;
+    q.color[3] = 0xFF808080;
 
     renderNextLayer();
     renderSetBlend(BLEND_MUL);
     renderColorQuad(&q);
-    renderSetBlend(BLEND_ALPHA);
+    renderSetBlend(BLEND_NONE);
 }
 
 void prepareTrack(void)
@@ -1214,10 +1214,10 @@ void renderFrameBegin(void)
     // get fixed right vector for sprites
     rsincos(gCamera.hdg, gCylZ, gCylX);
 
-    gBorder = ((gWidth * 240) / gHeight - 320) >> 1;
+    gBorderX = ((gWidth * 240) / gHeight - 320) >> 1;
+    gBorderY = 0;
 
     gCurState.texture = NULL;
-    gCurState.blend = BLEND_NONE;
     gCurState.projMatrix = 1;
     gCurState.viewMatrix = 0;
     gCurState.layer = 0;
@@ -1236,7 +1236,7 @@ void renderFrameBegin(void)
 
     // otho projection matrix
     m = gMatrices + 1;
-    matrixOrtho(m, -gBorder, 320 + gBorder, 240, 0, 0, 1);
+    matrixOrtho(m, -gBorderX, 320 + gBorderX, 240, 0, 0, 1);
 
     gMatricesCount = 2;
 
@@ -1266,7 +1266,6 @@ void renderFrameEnd(void)
     GLfloat colorValue[4] = {
         1.0f, 1.0f, 1.0f, 1.0f
     };
-
 
     count = 0;
     for (i = 0; i < gStatesCount; i++)
@@ -1396,9 +1395,6 @@ void renderFrameEnd(void)
             {
                 case BLEND_NONE:
                     glDisable(GL_BLEND);
-                    break;
-                case BLEND_ALPHA:
-                    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                     break;
                 case BLEND_ADD:
                     glBlendFunc(GL_ONE, GL_ONE);
@@ -1557,9 +1553,9 @@ void renderEffects(const Effect* fx)
 
     while (fx)
     {
-        b.x = fx->pos.x;
-        b.y = fx->pos.y;
-        b.z = fx->pos.z;
+        b.x = fx->pos.x - gCameraViewPos.x;
+        b.y = fx->pos.y - gCameraViewPos.y;
+        b.z = fx->pos.z - gCameraViewPos.z;
         b.size = fx->size;
         b.texture = gEffectTextures + fx->type;
         renderBillboard(&b);
@@ -1614,7 +1610,7 @@ void renderMesh(const Object* obj)
             {
                 uint32 color = gCurState.color;
 
-                renderSetColor(colorWhite);
+                renderSetColor(0xFF202020);
                 renderSetBlend(BLEND_ADD);
                 stateCheck();
 
@@ -1729,7 +1725,7 @@ void renderTargetIcon(Texture* tex)
     addVertex(0, 0, 0, 0.0f, 0.0f, 0);
 
     renderDepthTest(1);
-    renderSetBlend(BLEND_ALPHA);
+    renderSetBlend(BLEND_NONE);
 }
 
 void renderSetMode(int renderMode)
@@ -1741,7 +1737,6 @@ void renderSetMode(int renderMode)
     if (renderMode == RENDER_MODE_2D)
     {
         renderDepthTest(0);
-        renderSetBlend(BLEND_ALPHA);
 
         gCurState.viewMatrix = 0;
         gCurState.projMatrix = 1;
@@ -1751,7 +1746,6 @@ void renderSetMode(int renderMode)
     else
     {
         renderDepthTest(1);
-        renderSetBlend(BLEND_NONE);
 
         matrixSetViewMenu();
 
@@ -1938,6 +1932,7 @@ Texture* renderCreateTexture(uint8* ptr)
     {
         ASSERT(w == 32);
         ASSERT(h == 32);
+
         FillTrackTex(tempData);
 
         tex->id = 0;

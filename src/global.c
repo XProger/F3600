@@ -22,8 +22,9 @@ int tempLapTimes[5];
 int serialLapTimes[5];
 int attractDelay;
 
-int gCameraFOV = CAMERA_FOV;
-int gTargetFOV = CAMERA_FOV;
+int32 gWidth, gHeight, gBorderX, gBorderY;
+int32 gCameraFOV;
+int32 gTargetFOV;
 
 Texture gTextures[MAX_TEXTURES];
 Texture* gTexturePtr = gTextures;

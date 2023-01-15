@@ -15,7 +15,7 @@ void ShipCalcAmbient(ShipData* playerShip)
         facePtr++;
     }
 
-    playerShip->color = facePtr->red | (facePtr->green << 8) | (facePtr->blue << 16);
+    playerShip->color = facePtr->red | (facePtr->green << 8) | (facePtr->blue << 16) | 0xFF000000;
 }
 #endif
 

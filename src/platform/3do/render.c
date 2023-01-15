@@ -21,7 +21,6 @@ int32 screenPage;
 int32 xOffset;
 int32 yOffset;
 
-int gWidth, gHeight, gBorder;
 int gCylX, gCylZ;
 
 #define MAX_CEL_FACES       2048

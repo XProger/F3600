@@ -181,9 +181,14 @@ typedef struct Texture
 {
     uint16 width;
     uint16 height;
-#ifdef __3DO__
+#if defined(__3DO__)
     uint16* plut;
     uint8* data;
+#elif defined(__PSP__)
+    uint32 type;
+    int32 widthPOT;
+    int32 heightPOT;
+    uint8* addr;
 #else
     uint32 id;
     float iw;
@@ -239,7 +244,6 @@ typedef struct
 typedef enum
 {
     BLEND_NONE,
-    BLEND_ALPHA,
     BLEND_ADD,
     BLEND_SUB,
     BLEND_MUL
@@ -267,7 +271,6 @@ void renderImage(const Texture* t, int32 x, int32 y);
 void renderBackground(const Texture* t);
 void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int32 dx, int32 dy, int32 dz, int32 rx, int32 ry, int32 rz);
 void renderColorQuad(const ColorQuad* q);
-void renderBillboard(const Billboard* b);
 void renderBackFill(int x, int y, int w, int h);
 
 void renderPrepare(void);

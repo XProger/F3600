@@ -43,9 +43,6 @@ uint32 swap32(uint32 x);
 void swap16p(void* ptr);
 void swap32p(void* ptr);
 
-int32 SwapLE32(int32 x);
-int16 SwapLE16(int16 x);
-
 typedef struct Matrix
 {
 #if defined(__3DO__)
@@ -64,6 +61,8 @@ typedef struct Matrix
     int32 e20, e21, e22, e23;
 #endif
 } Matrix;
+
+extern vec3i gCameraViewPos;
 
 #define MAX_MATRICES 2
 

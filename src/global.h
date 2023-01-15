@@ -11,8 +11,8 @@
 #define DRTEXT_8    2
 #define DRTEXT_RED  4
 
-#define TEXT_COLOR_WHITE        0xFF808080
-#define TEXT_COLOR_HIGHLIGHT    0xFF19668C
+#define TEXT_COLOR_WHITE        0xFFFFFFFF
+#define TEXT_COLOR_HIGHLIGHT    0xFF32CCFF
 
 #ifdef __3DO__
 #define BLINK_TEXT (((gFrameIndex & 3) <= 1) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT) // ok for 15 fps :)
@@ -25,11 +25,9 @@
 #define CAMERA_FOV          (75 << 12)
 #define CAMERA_FOV_EXTRA    (100 << 12)
 
-extern int gWidth;
-extern int gHeight;
-extern int gBorder;
-extern int gCameraFOV;
-extern int gTargetFOV;
+extern int32 gWidth, gHeight, gBorderX, gBorderY;
+extern int32 gCameraFOV;
+extern int32 gTargetFOV;
 
 extern int HACK_LOAD_TRACK;
 extern int HACK_LOAD_SHADOW;

@@ -13,7 +13,7 @@
 
 #define USE_FRAME_LERP
 
-#ifdef __3DO__
+#if defined(__3DO__)
     #include <displayutils.h>
     #include <debug.h>
     #include <nodes.h>
@@ -45,6 +45,11 @@
     #define MENU_HAS_QUIT
 #endif
 
+#ifdef __PSP__
+    #define USE_OLD_SHIELD
+    #undef MENU_HAS_QUIT
+#endif
+
 #ifndef __3DO__
 typedef signed char         int8;
 typedef unsigned char       uint8;
@@ -63,7 +68,7 @@ typedef unsigned int        uint32;
     #define LOG(...)        printf(__VA_ARGS__)
     #define ASSERT(expr)    if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); __debugbreak(); }
 #else
-    #define LOG(...)        printf(__VA_ARGS__)
+    #define LOG(...)        printf(__VA_ARGS__); fflush(stdout)
     #define ASSERT(expr)    if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); }
 #endif
 

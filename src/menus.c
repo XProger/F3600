@@ -217,6 +217,8 @@ void menuInit(void)
 
     gCurrMenu = 0;
     gCurrOption = 0;
+
+    gCameraFOV = gTargetFOV = CAMERA_FOV;
 }
 
 void menuLoop(void)
@@ -258,6 +260,8 @@ void menuLoop(void)
     if (gCurrMenu == CLASS_MENU && gCurrOption == 1 && (!gConfig.rapierClass))
         CentreText("NOT AVAILABLE", text_data(20, 190, 12), TEXT_COLOR_HIGHLIGHT);
 
+    renderFrameEnd();
+
     if (gCurrMenu == -1)
     {
         ctrlmode = INTERACTIVE;
@@ -269,8 +273,6 @@ void menuLoop(void)
     {
         selectData.select = 0;
     }
-
-    renderFrameEnd();
 }
 
 void GoMenu(int menu)
@@ -559,7 +561,7 @@ void CallMenuSelector(Object** shipShapes, SelectionData* selectData)
     }
 
     //DrawButtons();
-    CentreText(menu->title, text_data(0, 21, 8), TEXT_COLOR_HIGHLIGHT);
+    CentreText(menu->title, text_data(0, 21 - gBorderY, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < numOptions; i++)
     {
@@ -626,7 +628,7 @@ void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
     matrixPush();
     matrixTranslate(x, y, size);
     matrixRotateYXZ(0, -heading, 0);
-    renderShip(shipModel, 0xFFFFFFFF);
+    renderShip(shipModel, 0xFF808080);
     matrixPop();
 }
 

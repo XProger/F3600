@@ -1036,7 +1036,7 @@ void raceLoop(void)
         DrawHud(ctrlshipIndex, ctrlchoice);
 
     if (ctrlNeedDeSelectScreen)
-        renderBackFill(-gBorder, 0, 320 + gBorder * 2, 240);
+        renderBackFill(-gBorderX, -gBorderY, 320 + gBorderX * 2, 240 + gBorderY * 2);
 
     if (ctrlNeedBackPoly)
         renderBackFill(180, 50, 128, 140);

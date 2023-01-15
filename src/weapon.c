@@ -1,7 +1,5 @@
 #include "game.h"
 
-//#define OLD_SHIELD
-
 WeaponData gWeapons[MAX_WEAPONS];
 WeaponData* gWeaponsFree;
 WeaponData* gWeaponsActive;
@@ -1195,79 +1193,51 @@ void InitRevCon(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
 #ifdef USE_OLD_SHIELD
 void UpdateShieldColors(Object* object, int32 counter)
 {
-    int i;
-    PrmPSX poly;
-    short primitiveCount;
-    short* coords;
-    short col0, col1, col2, col3;
+    ObjFace* f = object->faces;
+    ObjFace* last = f + object->fCount;
+    int32 col0, col1, col2, col3;
 
-    poly.primitive = object->primitives;
-    primitiveCount = object->primitiveCount;
-
-    for (i = 0; i < primitiveCount; i++)
+    while (f < last)
     {
-        switch (poly.primitive->type)
+        if (FACE_QUAD(f))
         {
-            case TypeG3:
-                coords = poly.g3->coords;
+            col0 = (rsin(counter * f->index[0]) >> 5) + 128;
+            col1 = (rsin(counter * f->index[1]) >> 5) + 128;
+            col2 = (rsin(counter * f->index[2]) >> 5) + 128;
+            col3 = (rsin(counter * f->index[3]) >> 5) + 128;
 
-                col0 = (rsin(counter * coords[0]) >> 5) + 128;
-                col1 = (rsin(counter * coords[1]) >> 5) + 128;
-                col2 = (rsin(counter * coords[2]) >> 5) + 128;
+            if (col0 > 255)
+                col0 = 255;
+            if (col1 > 255)
+                col1 = 255;
+            if (col2 > 255)
+                col2 = 255;
+            if (col3 > 255)
+                col2 = 255;
 
-                if (col0 > 255)
-                    col0 = 255;
-                if (col1 > 255)
-                    col1 = 255;
-                if (col2 > 255)
-                    col2 = 255;
-
-                poly.g3->colour[0].r = (uint8)(col0 >> 1);
-                poly.g3->colour[1].r = (uint8)(col1 >> 1);
-                poly.g3->colour[2].r = (uint8)(col2 >> 1);
-                poly.g3->colour[0].g = 64;
-                poly.g3->colour[1].g = 64;
-                poly.g3->colour[2].g = 64;
-                poly.g3->colour[0].b = 128;
-                poly.g3->colour[1].b = 128;
-                poly.g3->colour[2].b = 128;
-
-                poly.g3 += 1;
-                break;
-
-            case TypeG4:
-                coords = poly.g4->coords;
-
-                col0 = (rsin(counter * coords[0]) >> 5) + 128;
-                col1 = (rsin(counter * coords[1]) >> 5) + 128;
-                col2 = (rsin(counter * coords[2]) >> 5) + 128;
-                col3 = (rsin(counter * coords[3]) >> 5) + 128;
-
-                if (col0 > 255)
-                    col0 = 255;
-                if (col1 > 255)
-                    col1 = 255;
-                if (col2 > 255)
-                    col2 = 255;
-                if (col3 > 255)
-                    col2 = 255;
-
-                poly.g4->colour[0].r = (uint8)(col0 >> 1);
-                poly.g4->colour[1].r = (uint8)(col1 >> 1);
-                poly.g4->colour[2].r = (uint8)(col2 >> 1);
-                poly.g4->colour[3].r = (uint8)(col3 >> 1);
-                poly.g4->colour[0].g = 64;
-                poly.g4->colour[1].g = 64;
-                poly.g4->colour[2].g = 64;
-                poly.g4->colour[3].g = 64;
-                poly.g4->colour[0].b = 128;
-                poly.g4->colour[1].b = 128;
-                poly.g4->colour[2].b = 128;
-                poly.g4->colour[3].b = 128;
-
-                poly.g4 += 1;
-                break;
+            f->color[0] = (uint8)(col0 >> 1) | (64 << 8) | (128 << 16);
+            f->color[1] = (uint8)(col1 >> 1) | (64 << 8) | (128 << 16);
+            f->color[2] = (uint8)(col2 >> 1) | (64 << 8) | (128 << 16);
+            f->color[3] = (uint8)(col3 >> 1) | (64 << 8) | (128 << 16);
         }
+        else
+        {
+            col0 = (rsin(counter * f->index[0]) >> 5) + 128;
+            col1 = (rsin(counter * f->index[1]) >> 5) + 128;
+            col2 = (rsin(counter * f->index[2]) >> 5) + 128;
+
+            if (col0 > 255)
+                col0 = 255;
+            if (col1 > 255)
+                col1 = 255;
+            if (col2 > 255)
+                col2 = 255;
+
+            f->color[0] = (uint8)(col0 >> 1) | (64 << 8) | (128 << 16);
+            f->color[1] = (uint8)(col1 >> 1) | (64 << 8) | (128 << 16);
+            f->color[2] = (uint8)(col2 >> 1) | (64 << 8) | (128 << 16);
+        }
+        f++;
     }
 }
 #endif
@@ -1308,7 +1278,7 @@ void UpdateShield(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
     }
 
 #ifdef USE_OLD_SHIELD
-    UpdateShieldColors(weaponShapes[weapon->currentWeapon].shapePtr, weapon->count);
+    UpdateShieldColors(ctrlweaponShapes[weapon->currentWeapon], weapon->count);
 #endif
 }
 

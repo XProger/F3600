@@ -40,7 +40,9 @@ void showLoading(int32 track)
     }
 
     renderFrameBegin();
+    renderClear();
     renderSetMode(RENDER_MODE_2D);
+
     renderBackground(loadingScreen);
     if (track != -1)
     {
@@ -95,7 +97,7 @@ void titleLoop(void)
 void gameInit(void)
 {
     int32 time;
-#
+
     renderInit();
 
     renderOffset(0, 0);
