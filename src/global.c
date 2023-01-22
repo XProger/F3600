@@ -77,27 +77,31 @@ uint8* gVRAM;
 uint8* pDRAM;
 uint8* pVRAM;
 
+#ifndef DRAM_ALIGN
+    #define DRAM_ALIGN  4
+#endif
+
+#ifndef VRAM_ALIGN
+    #define VRAM_ALIGN  4
+#endif
+
 uint8* allocDRAM(int32 size)
 {
     uint8* ret = pDRAM;
-    size = (size + 3) & ~3;
+    size = (size + (DRAM_ALIGN - 1)) & ~(DRAM_ALIGN - 1);
     pDRAM += size;
     ASSERT(pDRAM - gDRAM <= DRAM_SIZE);
-#ifdef __3DO__
-    printf("D alloc %d (%d kb left)\n", size, (DRAM_SIZE - (pDRAM - gDRAM)) / 1024);
-#endif
+//    printf("D alloc %d (%d kb left)\n", size, (DRAM_SIZE - (pDRAM - gDRAM)) / 1024);
     return ret;
 }
 
 uint8* allocVRAM(int32 size)
 {
     uint8* ret = pVRAM;
-    size = (size + 3) & ~3;
+    size = (size + (VRAM_ALIGN - 1)) & ~(VRAM_ALIGN - 1);
     pVRAM += size;
     ASSERT(pVRAM - gVRAM <= VRAM_SIZE);
-#ifdef __3DO__
-    printf("V alloc %d (%d kb left)\n", size, (VRAM_SIZE - (pVRAM - gVRAM)) / 1024);
-#endif
+//    printf("V alloc %d (%d kb left)\n", size, (VRAM_SIZE - (pVRAM - gVRAM)) / 1024);
     return ret;
 }
 

@@ -1,6 +1,5 @@
 #include "pad.h"
 
-#define SHIP_VIS_DIST 16000
 #define SHIP_LOD_DIST 8000
 
 #define INTERACTIVE 0
@@ -30,7 +29,6 @@ extern int32 gCameraFOV;
 extern int32 gTargetFOV;
 
 extern int HACK_LOAD_TRACK;
-extern int HACK_LOAD_SHADOW;
 extern int HACK_TEX_FILTER;
 
 #define SCREEN_Z 160
@@ -164,6 +162,5 @@ void getPath(char* trackPath, char trackNo, char* name);
 extern int32 dbg_update;
 extern int32 dbg_render;
 extern int32 dbg_frameTime;
-extern int32 dbg_update;
 extern int32 dbg_v;
 extern int32 dbg_f;

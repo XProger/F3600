@@ -1,9 +1,10 @@
 #include "game.h"
 #include "../../libs/stb_vorbis/stb_vorbis.c"
 
-#define MAX_CHANNELS 16
-#define PITCH_SHIFT  12
-#define BLOCK_END    (28 << PITCH_SHIFT)
+#define MAX_CHANNELS    16
+#define PITCH_SHIFT     12
+#define VAG_BLOCK_END   (28 << PITCH_SHIFT)
+#define OGG_BLOCK_END   (1024 << PITCH_SHIFT)
 
 typedef struct
 {
@@ -13,7 +14,7 @@ typedef struct
     int32 size;
     int32 s1, s2;
     int32 blockPos;
-    int16 block[28];
+    int16 block[VAG_BLOCK_END >> PITCH_SHIFT];
 } Channel;
 
 int32 gFrames[SND_SAMPLES * 2];
@@ -34,6 +35,10 @@ typedef struct
     int32 track;
     int32 playing;
     uint8 temp[256 * 1024];
+    int32 pitch;
+    int32 blockPos;
+    int32 blockSize;
+    int16 block[2 * (OGG_BLOCK_END >> PITCH_SHIFT)];
 } Music;
 
 Music music;
@@ -213,7 +218,7 @@ int PlayNote(enum SfxType id)
         channel->size = vagSize[id] * 8;
         channel->s1 = 0;
         channel->s2 = 0;
-        channel->blockPos = BLOCK_END;
+        channel->blockPos = VAG_BLOCK_END;
 
         return i;
     }
@@ -240,6 +245,10 @@ void SetPitch(enum SfxType id, int32 pitch)
         pitch = 0x0400;
     if (pitch > 0x3FFF)
         pitch = 0x3FFF;
+
+#if SND_OUTPUT_FREQ != 44100
+    pitch = pitch * 44100 / SND_OUTPUT_FREQ;
+#endif
 
     gSfxParams[id].pitch = pitch;
 }
@@ -299,6 +308,8 @@ void MusicPlay(int track)
     if (size == 0)
         return;
 
+    music.blockPos = music.blockSize = OGG_BLOCK_END;
+    music.pitch = (1 << PITCH_SHIFT) * 44100 / SND_OUTPUT_FREQ;
     music.data = (uint8*)malloc(size);
 
     osLoadFile(path, music.data);
@@ -318,22 +329,21 @@ void MusicReset(void)
     //MusicStop(); // music isn't CD based so we don't need to stop streaming during loading time
 }
 
-void RenderVAG(Channel* channel, int32 count, int32 volume)
+void decodeVAG(int32* dst, Channel* channel, int32 count, int32 volume)
 {
     int32 i, value;
 
-    int32* samples32 = gFrames;
     int32 volL = gSfxParams[channel->id].volL * volume >> 8;
     int32 volR = gSfxParams[channel->id].volR * volume >> 8;
     int32 blockPos = channel->blockPos;
-    int32 posInc = gSfxParams[channel->id].pitch;
+    int32 pitch = gSfxParams[channel->id].pitch;
 
     for (i = 0; i < count; i++)
     {
-        if (blockPos >= BLOCK_END)
+        if (blockPos >= VAG_BLOCK_END)
         {
-            blockPos -= BLOCK_END;
-            ASSERT(blockPos < BLOCK_END);
+            blockPos -= VAG_BLOCK_END;
+            ASSERT(blockPos < VAG_BLOCK_END);
 
             if (channel->pos == channel->size)
             {
@@ -357,39 +367,50 @@ void RenderVAG(Channel* channel, int32 count, int32 volume)
 
         value = channel->block[blockPos >> PITCH_SHIFT];
 
-        *samples32++ += value * volL >> 15;
-        *samples32++ += value * volR >> 15;
+        *dst++ += value * volL >> 15;
+        *dst++ += value * volR >> 15;
 
-        blockPos += posInc;
+        blockPos += pitch;
     }
 
     channel->blockPos = blockPos;
 }
 
-void RenderWAV(Channel* channel, int32 count, int32 volume)
+void decodeWAV(Channel* channel, int32 count, int32 volume)
 {
     // TODO
 }
 
-int32 RenderOGG(int16* temp, int32 count, int32 volume)
+int32 decodeOGG(int32* dst, int32 count, int32 volume)
 {
-    int i, j;
-    int32* samples32 = gFrames;
+    int32 blockPos = music.blockPos;
+    int32 blockSize = music.blockSize;
+    int32 pitch = music.pitch;
 
-    i = 0;
-    while (i < count)
+    while (count--)
     {
-        int32 res = stb_vorbis_get_samples_short_interleaved(music.ogg, 2, temp, (count - i) * 2);
-        if (!res)
-            return 0;
-        i += res;
-
-        for (j = 0; j < res * 2; j += 2)
+        if (blockPos >= blockSize)
         {
-            *samples32++ = temp[j + 0] * volume >> 8;
-            *samples32++ = temp[j + 1] * volume >> 8;
+            if (blockSize != OGG_BLOCK_END)
+            {
+                music.blockPos = 0;
+                music.blockSize = 0;
+                return 0;
+            }
+
+            blockPos -= OGG_BLOCK_END;
+            blockSize = stb_vorbis_get_samples_short_interleaved(music.ogg, 2, music.block, 2 * (OGG_BLOCK_END >> PITCH_SHIFT)) << PITCH_SHIFT;
         }
+
+        // TODO resample (lerp)
+        *dst++ = music.block[((blockPos >> PITCH_SHIFT) << 1) + 0] * volume >> 8;
+        *dst++ = music.block[((blockPos >> PITCH_SHIFT) << 1) + 1] * volume >> 8;
+
+        blockPos += pitch;
     }
+
+    music.blockPos = blockPos;
+    music.blockSize = blockSize;
 
     return 1;
 }
@@ -409,7 +430,7 @@ void FillNotes(int16* samples, int32 count)
     {
         if (music.playing)
         {
-            music.playing = RenderOGG(samples, count, gMasterBalance);
+            music.playing = decodeOGG(samples32, count, gMasterBalance);
         }
     }
 
@@ -432,11 +453,11 @@ void FillNotes(int16* samples, int32 count)
                 continue;
             }
 
-            RenderVAG(channel, count, 256 - gMasterBalance);
+            // TODO resample (lerp)
+            decodeVAG(samples32, channel, count, 256 - gMasterBalance);
         }
     }
 
-    samples32 = gFrames;
     for (i = 0; i < count; i++)
     {
         *samples++ = clamp(*samples32++);

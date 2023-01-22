@@ -130,6 +130,7 @@ void DrawView(void)
     DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
     DrawEffects();
 
+    renderSetMode(RENDER_MODE_2D);
     if (ctrlNeedTargetIcon == 1)
         DrawTargetIcon(ctrlshipIndex);
 }

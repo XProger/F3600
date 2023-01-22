@@ -357,8 +357,6 @@ void DrawShadows(ShipData* shipIndex)
     const vec3i* facePoint;
     ShipData* playerShip;
 
-    renderSetBlend(BLEND_SUB);
-
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
         playerShip = shipIndex + i;
@@ -423,8 +421,6 @@ void DrawShadows(ShipData* shipIndex)
 
         renderShadow(0, intensity, px, py, pz, dx, dy, dz, rx, ry, rz);
     }
-
-    renderSetBlend(BLEND_NONE);
 }
 
 int shakeCount = 0;

@@ -9,7 +9,7 @@ const char GameD[]      = "GAME DESIGNER";
 
 const char PSX[]        = "PLAYSTATION VERSION";
 const char w95[]        = "ATI 3D RAGE VERSION";
-const char XPORT[]      = "XPORT VERSION";
+const char F3600[]      = "F3600 VERSION";
 const char bsd[]        = "BROADSWORD INTERACTIVE LTD";
 const char pro[]        = "PRODUCER";
 const char atidev[]     = "DEVELOPED BY";
@@ -147,7 +147,7 @@ const Title credits[] = {
 
     { Thanks,      9,    Hack, Soft, SGI, Glen, Jo, All, blank, blank, blank },
 
-    { XPORT,       0 },
+    { F3600,       0 },
     { Prog,        1,    XProger },
 };
 

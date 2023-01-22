@@ -1,0 +1,22 @@
+void main
+(
+	float3 aCoord : POSITION,
+
+	uniform float4x4 uProjMatrix,
+	uniform float4x4 uViewMatrix,
+	uniform float4 uColor,
+
+	out float4 oPosition : POSITION,
+	out float3 vColor : COLOR
+)
+{
+	float v = aCoord.x + aCoord.y + aCoord.z;
+	float a = sin(v + uColor.r * 64.0) * 0.5 + 0.5;
+	float b = sin(aCoord.z + uColor.r * 128.0) * 0.5 + 0.5;
+	float3 pos = aCoord;
+	pos.x += sign(pos.x) * a * 8.0;
+	pos.y += sign(pos.y) * b * 8.0;
+	b *= 0.25;
+	vColor = float3(a * 0.5 + b, 0.25 + b, 0.5 + b) * 0.5;
+	oPosition = mul(mul(float4(pos, 1.0), uViewMatrix), uProjMatrix);
+}

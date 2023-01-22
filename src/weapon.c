@@ -1540,15 +1540,11 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
             if (b > 255)
                 b = 255;
 
-            weaponGrid[i].colour.r = r;
-            weaponGrid[i].colour.g = g;
-            weaponGrid[i].colour.b = b;
+            weaponGrid[i].color = r | (g << 8) | (b << 16) | 0xFF000000;
         }
         else
         {
-            weaponGrid[i].colour.r = 128;
-            weaponGrid[i].colour.g = 128;
-            weaponGrid[i].colour.b = 128;
+            weaponGrid[i].color = 0xFF808080;
         }
 
         if (weaponGrid[i].count < 0)
@@ -1560,18 +1556,14 @@ void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponG
         if (weaponGrid[i].attr & WEAPON_GRID_LEFT)
         {
         #ifndef __3DO__ // TODO track attribs
-            facePtr->red = weaponGrid[i].colour.r;
-            facePtr->green = weaponGrid[i].colour.g;
-            facePtr->blue = weaponGrid[i].colour.b;
+            facePtr->color = weaponGrid[i].color;
         #endif
         }
         if (weaponGrid[i].attr & WEAPON_GRID_RIGHT)
         {
             facePtr++;
         #ifndef __3DO__ // TODO track attribs
-            facePtr->red = weaponGrid[i].colour.r;
-            facePtr->green = weaponGrid[i].colour.g;
-            facePtr->blue = weaponGrid[i].colour.b;
+            facePtr->color = weaponGrid[i].color;
         #endif
         }
     }

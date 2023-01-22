@@ -1,0 +1,17 @@
+void main
+(
+	float2 vTexCoord : TEXCOORD0,
+	float3 vColor : COLOR,
+
+	uniform sampler2D sDiffuse : TEXUNIT0,
+
+	out float4 fragColor : COLOR
+)
+{
+	fragColor = tex2D(sDiffuse, vTexCoord);
+	fragColor.xyz *= vColor;
+	if (fragColor.a <= 0.0)
+	{
+		discard;
+	}
+}

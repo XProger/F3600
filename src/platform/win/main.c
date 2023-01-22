@@ -640,7 +640,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     timerInit();
     inputInit();
 
-    srand((int)gTimerStart.QuadPart);
+    srand((int32)gTimerStart.QuadPart);
 
     gameInit();
 

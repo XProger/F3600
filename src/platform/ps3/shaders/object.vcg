@@ -1,0 +1,18 @@
+void main
+(
+	float3 aCoord : POSITION,
+	float2 aTexCoord : TEXCOORD0,
+	float4 aColor : COLOR,
+
+	uniform float4x4 uProjMatrix,
+	uniform float4x4 uViewMatrix,
+
+	out float4 oPosition : POSITION,
+	out float2 vTexCoord : TEXCOORD0,
+	out float3 vColor : COLOR
+)
+{
+	oPosition = mul(mul(float4(aCoord.xyz, 1.0), uViewMatrix), uProjMatrix);
+	vTexCoord = aTexCoord;
+	vColor = aColor.wzy;
+}

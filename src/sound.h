@@ -6,10 +6,17 @@
 
 
 #define SND_CHANNELS    2
-#define SND_OUTPUT_FREQ 44100
 
-#ifdef __PSP__
+#if defined(__PS3__) || defined(__WEB__)
+#define SND_OUTPUT_FREQ 48000
+#else
+#define SND_OUTPUT_FREQ 44100
+#endif
+
+#if defined(__PSP__)
 #define SND_SAMPLES     1024
+#elif defined(__PS3__)
+#define SND_SAMPLES     256
 #else
 #define SND_SAMPLES     (2352 * 2)
 #endif

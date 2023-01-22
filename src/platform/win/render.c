@@ -28,9 +28,8 @@
 #define i255    (1.0f / 255.0f)
 #define i4096   (1.0f / 4096.0f)
 
-#define PI      3.14159265358979323846f
-#define DEG2RAD (PI / 180.0f)
-#define RAD2DEG (180.0f / PI)
+#define Z_NEAR  64
+#define Z_FAR   65535
 
 #if defined(__WIN32__) || defined(__LINUX__)
     // Textures
@@ -89,9 +88,9 @@
 
 typedef struct
 {
-    int32 x;
-    int32 y;
-    int32 z;
+    float x;
+    float y;
+    float z;
     float s, t;
     uint32 color;
 } VertexGL;
@@ -123,7 +122,6 @@ typedef enum
     uProjMatrix,
     uViewMatrix,
     uColor,
-    uResolution,
     uMAX
 } UniformType;
 
@@ -163,6 +161,8 @@ RenderState gCurState;
 RenderState gStates[MAX_RENDER_STATES];
 RenderState* gStatePtr;
 
+mat4 mProj3D;
+
 int32 gVerticesCount;
 int32 gIndicesCount;
 int32 gMatricesCount;
@@ -190,7 +190,6 @@ Shader shaderShip;
 Shader shaderShield;
 Shader shaderSky;
 Shader shaderBlob;
-Shader shaderTarget;
 Shader shaderGUI;
 
 #define MAX_TRACK_TEX   22
@@ -331,14 +330,14 @@ const char* sh_shield =
             "pos.x += sign(pos.x) * a * 8.0;\n"
             "pos.y += sign(pos.y) * b * 8.0;\n"
             "b *= 0.25;\n"
-            "vColor = vec4(a * 0.5 + b, 0.25 + b, 0.5 + b, 1.0) * 0.5;\n"
+            "vColor = vec4(a * 0.5 + b, 0.25 + b, 0.5 + b, 2.0) * 0.5;\n"
             "gl_Position = uProjMatrix * (uViewMatrix * vec4(pos, 1.0));\n"
         "}\n"
 
     "#else\n"
 
         "void main() {\n"
-            "fragColor = vec4(vColor.xyz, 1.0);\n"
+            "fragColor = vColor;\n"
         "}\n"
 
     "#endif\n";
@@ -386,7 +385,7 @@ const char* sh_blob =
 
         "void main() {\n"
             "vTexCoord = aTexCoord;\n"
-            "vIntensity = aColor.a * 4.0;\n"
+            "vIntensity = aColor.w * 2.0;\n"
             "gl_Position = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
         "}\n"
 
@@ -395,36 +394,8 @@ const char* sh_blob =
         "uniform sampler2D sDiffuse;\n"
 
         "void main() {\n"
-            "fragColor = vec4(0.0, 0.0, 0.0, texture2D(sDiffuse, vTexCoord).r * vIntensity);\n"
-        "}\n"
-
-    "#endif\n";
-
-const char* sh_target =
-    "varying vec2 vTexCoord;\n"
-
-    "#ifdef VERTEX\n"
-        "uniform mat4 uProjMatrix;\n"
-        "uniform mat4 uViewMatrix;\n"
-        "uniform vec4 uResolution;\n"
-
-        "attribute vec3 aCoord;\n"
-        "attribute vec2 aTexCoord;\n"
-
-        "void main() {\n"
-            "vTexCoord = aTexCoord;\n"
-            "vec4 p = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
-            "vec2 d = (aTexCoord.xy * 2.0 - 1.0) * (16.0 * p.w);\n"
-            "p.xy += d * uResolution.xy;\n"
-            "gl_Position = p;\n"
-        "}\n"
-
-    "#else\n"
-
-        "uniform sampler2D sDiffuse;\n"
-
-        "void main() {\n"
-            "fragColor = texture2D(sDiffuse, vTexCoord) * 0.5;\n"
+            "float s = 1.0 - clamp(texture2D(sDiffuse, vTexCoord).x * vIntensity, 0.0, 1.0);\n"
+            "fragColor = vec4(s, s, s, 1.0);\n"
         "}\n"
 
     "#endif\n";
@@ -632,7 +603,6 @@ void compileShader(Shader* shader, const char* text)
     shader->uid[uProjMatrix] = glGetUniformLocation(shader->id, "uProjMatrix");
     shader->uid[uViewMatrix] = glGetUniformLocation(shader->id, "uViewMatrix");
     shader->uid[uColor] = glGetUniformLocation(shader->id, "uColor");
-    shader->uid[uResolution] = glGetUniformLocation(shader->id, "uResolution");
 }
 
 void* GetProc(const char *name)
@@ -788,7 +758,6 @@ void renderInit()
     compileShader(&shaderShield, sh_shield);
     compileShader(&shaderSky, sh_sky);
     compileShader(&shaderBlob, sh_blob);
-    compileShader(&shaderTarget, sh_target);
     compileShader(&shaderGUI, sh_gui);
 
     glGenVertexArrays(1, &VAO);
@@ -805,7 +774,7 @@ void renderInit()
     glEnableVertexAttribArray(aTexCoord);
     glEnableVertexAttribArray(aColor);
 
-    glVertexAttribPointer(aCoord, 3, GL_INT, GL_FALSE, sizeof(*v), &v->x);
+    glVertexAttribPointer(aCoord, 3, GL_FLOAT, GL_FALSE, sizeof(*v), &v->x);
     glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(*v), &v->s);
     glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(*v), &v->color);
 
@@ -921,7 +890,6 @@ void renderSetShader(const Shader* shader)
     }
 }
 
-
 void renderClear(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -953,7 +921,7 @@ void addQuad()
     gStatePtr->mesh->iCount += 6;
 }
 
-void addVertex(int32 x, int32 y, int32 z, float s, float t, uint32 color)
+void addVertex(float x, float y, float z, float s, float t, uint32 color)
 {
     ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
 
@@ -971,9 +939,9 @@ void addVertexI(const vec3i* pos, float s, float t, uint32 color)
     ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
 
     VertexGL* v = gVertices + gVerticesCount++;
-    v->x = pos->x;
-    v->y = pos->y;
-    v->z = pos->z;
+    v->x = (float)pos->x;
+    v->y = (float)pos->y;
+    v->z = (float)pos->z;
     v->s = s;
     v->t = t;
     v->color = color;
@@ -984,25 +952,28 @@ void addVertexS(const vec3s* pos, float s, float t, uint32 color)
     ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
 
     VertexGL* v = gVertices + gVerticesCount++;
-    v->x = pos->x;
-    v->y = pos->y;
-    v->z = pos->z;
+    v->x = (float)pos->x;
+    v->y = (float)pos->y;
+    v->z = (float)pos->z;
     v->s = s;
     v->t = t;
     v->color = color;
 }
 
-void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
+int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
 {
+#ifndef USE_FONT_SCALE
+    size = 16;
+#endif
     const Texture* t = g->texture;
     float u0 = g->x * t->iw;
     float v0 = g->y * t->ih;
     float u1 = (g->x + g->w) * t->iw;
     float v1 = (g->y + g->h) * t->ih;
-    int x0 = x;
-    int y0 = y;
-    int x1 = x + g->w;
-    int y1 = y + g->h;
+    int32 x0 = x;
+    int32 y0 = y;
+    int32 x1 = x + g->w * size / 16;
+    int32 y1 = y + g->h * size / 16;
 
     renderSetTexture(t);
     stateCheck();
@@ -1012,6 +983,8 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
     addVertex(x1, y0, 0, u1, v0, color);
     addVertex(x1, y1, 0, u1, v1, color);
     addVertex(x0, y1, 0, u0, v1, color);
+
+    return g->w * size / 16;
 }
 
 void renderImage(const Texture* t, int32 x, int32 y)
@@ -1022,10 +995,10 @@ void renderImage(const Texture* t, int32 x, int32 y)
     float v0 = 0;
     float u1 = 1.0f;
     float v1 = 1.0f;
-    int x0 = x;
-    int y0 = y;
-    int x1 = x + t->width;
-    int y1 = y + t->height;
+    int32 x0 = x;
+    int32 y0 = y;
+    int32 x1 = x + t->width;
+    int32 y1 = y + t->height;
 
     renderSetTexture(t);
     stateCheck();
@@ -1059,6 +1032,7 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
     ry >>= SHADOW_SHIFT_W;
     rz >>= SHADOW_SHIFT_W;
 
+    renderSetBlend(BLEND_MUL);
     renderSetShader(&shaderBlob);
     renderSetTexture(gShadowTex);
     stateCheck();
@@ -1068,6 +1042,8 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
     addVertex(px + dx + rx, py + dy + ry, pz + dz + rz, 1.0f, 0.0f, color);
     addVertex(px - dx + rx, py - dy + ry, pz - dz + rz, 1.0f, 1.0f, color);
     addVertex(px - dx - rx, py - dy - ry, pz - dz - rz, 0.0f, 1.0f, color);
+
+    renderSetBlend(BLEND_NONE);
 }
 
 void renderColorQuad(const ColorQuad* q)
@@ -1133,7 +1109,7 @@ void renderBackFill(int x, int y, int w, int h)
 
 void prepareTrack(void)
 {
-    int i;
+    int32 i;
 
     ASSERT(ctrlnumLib <= MAX_TRACK_TEX);
     for (i = 0; i < ctrlnumLib; i++)
@@ -1150,9 +1126,9 @@ void prepareTrack(void)
     }
 }
 
-void FillTrackTex(uint16* data)
+void fillTrackTex(uint16* data)
 {
-    int id, i, j, k, x, y;
+    int32 id, i, j, k, x, y;
 
     id = (gTexturePtr - gTextures) - ctrllibraryTextures;
 
@@ -1257,11 +1233,6 @@ void renderFrameEnd(void)
     int32 depthWrite = 1;
     int32 blend = BLEND_NONE;
     uint32 color = 0xBAAAAAAD;
-    int32 resolution = 0;
-
-    const GLfloat resolutionValue[4] = {
-        1.f / (240.0f * gWidth / gHeight), 1.0f / 240.0f, 1.0 / gWidth, 1.0 / gHeight
-    };
 
     GLfloat colorValue[4] = {
         1.0f, 1.0f, 1.0f, 1.0f
@@ -1308,7 +1279,6 @@ void renderFrameEnd(void)
             projMatrix = -1;
             viewMatrix = -1;
             color = 0xBAAAAAAD;
-            resolution = 0;
             glUseProgram(shader->id);
         }
 
@@ -1355,16 +1325,6 @@ void renderFrameEnd(void)
             }
         }
 
-        // set screen resolution (for target icon only)
-        if (!resolution)
-        {
-            resolution = 1;
-            if (shader->uid[uResolution] > -1)
-            {
-                glUniform4fv(shader->uid[uResolution], 1, resolutionValue);
-            }
-        }
-
         // set depth test
         if (depthTest != state->depthTest)
         {
@@ -1398,9 +1358,6 @@ void renderFrameEnd(void)
                     break;
                 case BLEND_ADD:
                     glBlendFunc(GL_ONE, GL_ONE);
-                    break;
-                case BLEND_SUB:
-                    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
                     break;
                 case BLEND_MUL:
                     glBlendFunc(GL_DST_COLOR, GL_ZERO);
@@ -1441,13 +1398,12 @@ void renderFrameEnd(void)
 
 void renderSection(const TrackSection* section)
 {
-    const Face* face = gTrack.faces + section->faceStart;
     const vec3i* vertices = gTrack.vertices;
-    int i;
+    const Face* face = gTrack.faces + section->faceStart;
+    const Face* last = face + section->faceCount;
     float u0, u1;
-    uint32 color;
 
-    for (i = 0; i < section->faceCount; i++, face++)
+    while (face < last)
     {
         ASSERT(face->texture < ctrlnumLib);
 
@@ -1457,8 +1413,6 @@ void renderSection(const TrackSection* section)
 
         renderSetTexture(gTrackTex + face->texture);
         stateCheck();
-
-        color = face->red | (face->green << 8) | (face->blue << 16) | 0xFF000000;
 
         if (face->flags & FLIP_TEXTURE)
         {
@@ -1472,19 +1426,21 @@ void renderSection(const TrackSection* section)
         }
 
         addQuad();
-        addVertexI(vertices + face->vertex[3], u0, 1.0f, color);
-        addVertexI(vertices + face->vertex[2], u1, 1.0f, color);
-        addVertexI(vertices + face->vertex[1], u1, 0.0f, color);
-        addVertexI(vertices + face->vertex[0], u0, 0.0f, color);
+        addVertexI(vertices + face->vertex[3], u0, 1.0f, face->color);
+        addVertexI(vertices + face->vertex[2], u1, 1.0f, face->color);
+        addVertexI(vertices + face->vertex[1], u1, 0.0f, face->color);
+        addVertexI(vertices + face->vertex[0], u0, 0.0f, face->color);
+
+        face++;
     }
 }
 
 void renderTrack(void)
 {
-    int i, j, s;
-    int dir;
-    short* counts;
-    short** sections;
+    int32 i, j, s;
+    int32 dir;
+    int16* counts;
+    int16** sections;
     TrackSection* section;
 
 //    #define CHECK_UNUSED_TEX
@@ -1710,21 +1666,32 @@ void renderSky(const Object* object)
 
 void renderTargetIcon(Texture* tex)
 {
-    renderSetBlend(BLEND_ADD);
-    renderDepthTest(0);
+    float px, py, pz, size;
+    Matrix* m = gMatrixPtr;
 
-    renderSetMatrix(gMatrixPtr);
-    renderSetShader(&shaderTarget);
+    pz = mProj3D.e[0][2] * m->e03 + mProj3D.e[1][2] * m->e13 + mProj3D.e[2][2] * m->e23 + mProj3D.e[3][2];
+
+    if (pz <= Z_NEAR)
+        return;
+
+    px = mProj3D.e[0][0] * m->e03 + mProj3D.e[1][0] * m->e13 + mProj3D.e[2][0] * m->e23 + mProj3D.e[3][0];
+    py = mProj3D.e[0][1] * m->e03 + mProj3D.e[1][1] * m->e13 + mProj3D.e[2][1] * m->e23 + mProj3D.e[3][1];
+
+    px = (px / pz * 0.5f + 0.5f) * (320 + gBorderX * 2) - gBorderX;
+    py = (0.5f - py / pz * 0.5f) * (240 + gBorderY * 2) - gBorderY;
+
+    size = tex->width >> 1;
+
+    renderSetBlend(BLEND_ADD);
     renderSetTexture(tex);
     stateCheck();
 
     addQuad();
-    addVertex(0, 0, 0, 0.0f, 1.0f, 0);
-    addVertex(0, 0, 0, 1.0f, 1.0f, 0);
-    addVertex(0, 0, 0, 1.0f, 0.0f, 0);
-    addVertex(0, 0, 0, 0.0f, 0.0f, 0);
+    addVertex(px - size, py - size, 0, 0.0f, 1.0f, 0xFF808080);
+    addVertex(px + size, py - size, 0, 1.0f, 1.0f, 0xFF808080);
+    addVertex(px + size, py + size, 0, 1.0f, 0.0f, 0xFF808080);
+    addVertex(px - size, py + size, 0, 0.0f, 0.0f, 0xFF808080);
 
-    renderDepthTest(1);
     renderSetBlend(BLEND_NONE);
 }
 
@@ -1748,8 +1715,8 @@ void renderSetMode(int renderMode)
         renderDepthTest(1);
 
         matrixSetViewMenu();
-
-        matrixPerspective(gMatrices + gMatricesCount, gCameraFOV / 4096.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, (float)64, (float)(64 * 1024));
+        matrixPerspective(gMatrices + gMatricesCount, gCameraFOV / 4096.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, Z_NEAR, Z_FAR);
+        mProj3D = gMatrices[gMatricesCount];
 
         gCurState.viewMatrix = 0;
         gCurState.projMatrix = gMatricesCount++;
@@ -1933,35 +1900,17 @@ Texture* renderCreateTexture(uint8* ptr)
         ASSERT(w == 32);
         ASSERT(h == 32);
 
-        FillTrackTex(tempData);
+        fillTrackTex(tempData);
 
         tex->id = 0;
     }
     else
     {
-        ASSERT(w < 511);
-        ASSERT(h < 511);
-
         glGenTextures(1, &tex->id);
         glBindTexture(GL_TEXTURE_2D, tex->id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
 
-        if (HACK_LOAD_SHADOW)
-        {
-            uint16* src = tempData;
-            uint8* dst = (uint8*)tempData;
-            for (i = 0; i < w * h; i++)
-            {
-                *dst++ = ((*src++ >> 1) & 31) << 3;
-            }
-            // create alpha only texture for the shadow
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, tempData);
-        }
-        else
-        {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
-        }
-
-        setTexFilter(HACK_LOAD_SHADOW || HACK_TEX_FILTER, 0);
+        setTexFilter(HACK_TEX_FILTER, 0);
     }
 
     gTexturePtr++;

@@ -236,10 +236,8 @@ void InitShadow(void)
     else
         name = "wipeout/textures/shad4.tim";
 
-    HACK_LOAD_SHADOW = 1;
     gShadowTex = gTexturePtr;
     LoadTexture(name);
-    HACK_LOAD_SHADOW = 0;
 }
 #endif
 
@@ -566,27 +564,39 @@ void InitVertices(const char* fileName)
 
 void InitFaces(const char* fileName)
 {
+    int32 i, r, g, b, a;
+    Face* face;
+    Face* last;
+
     int32 size = osLoadFile(fileName, pDRAM);
     gTrack.faces = (Face*)allocDRAM(size);
     gTrack.faceCount = size / sizeof(Face);
 
-#ifndef CPU_BIG_ENDIAN
-    {
-        int32 i;
-        Face* face = gTrack.faces;
-        for (i = 0; i < gTrack.faceCount; i++, face++)
-        {
-            swap16p(&face->vertex[0]);
-            swap16p(&face->vertex[1]);
-            swap16p(&face->vertex[2]);
-            swap16p(&face->vertex[3]);
+    face = gTrack.faces;
+    last = face + gTrack.faceCount;
 
-            swap16p(&face->normal.x);
-            swap16p(&face->normal.y);
-            swap16p(&face->normal.z);
-        }
+    while (face < last)
+    {
+    #ifndef CPU_BIG_ENDIAN
+        swap16p(&face->vertex[0]);
+        swap16p(&face->vertex[1]);
+        swap16p(&face->vertex[2]);
+        swap16p(&face->vertex[3]);
+
+        swap16p(&face->normal.x);
+        swap16p(&face->normal.y);
+        swap16p(&face->normal.z);
+
+        swap32p(&face->color);
+    #endif
+
+        b = 0xFF & (face->color >> 8);
+        g = 0xFF & (face->color >> 16);
+        r = 0xFF & (face->color >> 24);
+        face->color = r | (g << 8) | (b << 16) | 0xFF000000;
+
+        face++;
     }
-#endif
 }
 
 void InitSections(const char* fileName)

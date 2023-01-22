@@ -39,6 +39,8 @@
 #else
     #include <stdio.h>
 
+    #define SHIP_VIS_DIST       (32 << 10)
+    #define USE_FONT_SCALE
     #define USE_VERTEX_COLOR
     #define USE_COMPRESSION
     #define USE_SHIP_AMBIENT
@@ -47,7 +49,19 @@
 
 #ifdef __PSP__
     #define USE_OLD_SHIELD
+    #undef USE_FONT_SCALE
     #undef MENU_HAS_QUIT
+#endif
+
+#ifdef __PS3__
+    #define CPU_BIG_ENDIAN
+    #undef MENU_HAS_QUIT
+
+    #define VRAM_ALIGN  128
+#endif
+
+#ifndef SHIP_VIS_DIST
+    #define SHIP_VIS_DIST (16 << 10)
 #endif
 
 #ifndef __3DO__
@@ -115,6 +129,10 @@ typedef struct vec4i
 #endif
 
 #define randy() (rand() & 0x7FFF)
+
+#define PI      3.14159265358979323846f
+#define DEG2RAD (PI / 180.0f)
+#define RAD2DEG (180.0f / PI)
 
 unsigned short GetKeyNoBlock(void);
 

@@ -41,6 +41,17 @@ int32 SfxLoadBankVAB(const char* vh, const char* vb)
 
     osLoadFile(vh, ptr);
     header = (VabHdr*)ptr;
+
+#ifdef CPU_BIG_ENDIAN
+    swap32p(&header->form);
+    swap32p(&header->ver);
+    swap32p(&header->id);
+    swap32p(&header->fsize);
+    swap16p(&header->ps);
+    swap16p(&header->ts);
+    swap16p(&header->vs);
+#endif
+
     ASSERT(SFX_MAX == header->vs);
     ptr += sizeof(VabHdr);
     ptr += 128 * 16 + (32 * 16 * header->ps) + 2;
@@ -49,6 +60,9 @@ int32 SfxLoadBankVAB(const char* vh, const char* vb)
     offset = 0;
     for (i = 0; i < header->vs; i++)
     {
+    #ifdef CPU_BIG_ENDIAN
+        swap16p(vagSize + i);
+    #endif
         vagOffset[i] = offset;
         offset += vagSize[i];
         ASSERT((vagSize[i] * 8) % 16 == 0);

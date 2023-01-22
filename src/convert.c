@@ -326,6 +326,7 @@ void collectTrackGeometry(void)
 
 void collectTrackCLUT(void)
 {
+    /*
     int32 i;
     float r, g, b;
     Face* face = trackFaces;
@@ -345,6 +346,7 @@ void collectTrackCLUT(void)
         //    faceCLUT[i][j + 1] = clutAdd(ctrltexTemplate[face->texture].tex4[j], r, g, b);
         //}
     }
+    */
 }
 
 void getFaceRanges(const TrackSection* section, TrackRange* ranges, int32 from, int32 to)

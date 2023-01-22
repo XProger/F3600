@@ -9,13 +9,6 @@
 #define SCR_WIDTH   480
 #define SCR_HEIGHT  272
 
-#define MAX_RENDER_VERTICES     (1024 * 16)
-#define MAX_RENDER_INDICES      (1024 * 16)
-
-#define PI      3.14159265358979323846f
-#define DEG2RAD (PI / 180.0f)
-#define RAD2DEG (180.0f / PI)
-
 #define i255    (1.0f / 255.0f)
 #define i4096   (1.0f / 4096.0f)
 
@@ -121,7 +114,8 @@ void matrixPerspective(mat4* m, float fov, float aspect, float xoff, float yoff,
     //m->e[2][3] = -m->e[2][3]; // already inverted
 }
 
-uint32 nextPow2(uint32 x) {
+uint32 nextPow2(uint32 x)
+{
     x--;
     x |= x >> 1;
     x |= x >> 2;
@@ -544,7 +538,7 @@ void renderSection1(const TrackSection* section)
     for (i = 0; i < section->faceCount; i++, face++)
     {
         flip = (face->flags & FLIP_TEXTURE);
-        color = face->red | (face->green << 8) | (face->blue << 16) | 0xFF000000;
+        color = face->color;
 
         v0 = vertices + face->vertex[0];
         v1 = vertices + face->vertex[1];
@@ -571,7 +565,7 @@ void renderSection4(const TrackSection* section)
     for (i = 0; i < section->faceCount; i++, face++)
     {
         flip = (face->flags & FLIP_TEXTURE);
-        color = face->red | (face->green << 8) | (face->blue << 16) | 0xFF000000;
+        color = face->color;
 
         v0 = vertices + face->vertex[0];
         v1 = vertices + face->vertex[1];
@@ -617,7 +611,7 @@ void renderSection16(const TrackSection* section)
     for (i = 0; i < section->faceCount; i++, face++)
     {
         flip = (face->flags & FLIP_TEXTURE);
-        color = face->red | (face->green << 8) | (face->blue << 16) | 0xFF000000;
+        color = face->color;
 
         v0 = vertices + face->vertex[0];
         v1 = vertices + face->vertex[1];
@@ -1053,7 +1047,7 @@ void renderTargetIcon(Texture* tex)
 
     ix = (int16)px;
     iy = (int16)py;
-    size = tex->width; // x2
+    size = tex->width >> 1;
 
     v = GU_ALLOC(VT2D, 2);
     VT2D_SET(v[0], 0, 0, ix - size, iy - size);

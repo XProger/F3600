@@ -189,6 +189,11 @@ typedef struct Texture
     int32 widthPOT;
     int32 heightPOT;
     uint8* addr;
+#elif defined(__PS3__)
+    uint8* addr;
+    uint32 offset;
+    float iw;
+    float ih;
 #else
     uint32 id;
     float iw;
@@ -245,7 +250,6 @@ typedef enum
 {
     BLEND_NONE,
     BLEND_ADD,
-    BLEND_SUB,
     BLEND_MUL
 } BlendMode;
 
@@ -266,7 +270,7 @@ void renderSwap(void);
 void renderResize(int width, int height);
 void renderOffset(int x, int y);
 void renderClear(void);
-void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color);
+int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color);
 void renderImage(const Texture* t, int32 x, int32 y);
 void renderBackground(const Texture* t);
 void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int32 dx, int32 dy, int32 dz, int32 rx, int32 ry, int32 rz);
@@ -285,7 +289,6 @@ void renderSky(const Object* object);
 void renderTargetIcon(Texture* tex);
 void renderSetMode(int renderMode);
 void renderSetBlend(int blend);
-void renderDepthWrite(int enable);
 void renderNextLayer(void);
 Texture* renderCreateTexture(uint8* ptr);
 void renderDeleteTexture(Texture* texture);

@@ -164,7 +164,11 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
     size = pos_data->size;
     small_num_size = size >> 1;
 
+#ifdef USE_FONT_SCALE
+    charSet = glyphs[2];
+#else
     charSet = glyphs[(size - 8) >> 2];
+#endif
 
     tenths = (time / FR6) % 10;
     time = time / FR60;
@@ -185,12 +189,10 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
     for (j = 1; j >= 0; j--)
     {
         charNum = digit[j] + 26;
-        renderGlyph(charSet + charNum, x, y, colour);
-        x += charSet[charNum].w;
+        x += renderGlyph(charSet + charNum, x, y, pos_data->size, colour);
     }
 
-    renderGlyph(charSet + 36, x, y, colour);
-    x += charSet[36].w;
+    x += renderGlyph(charSet + 36, x, y, pos_data->size, colour);
 
     digit[0] = secs % 10;
     if (secs > 9)
@@ -204,14 +206,14 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
     for (j = 1; j >= 0; j--)
     {
         charNum = digit[j] + 26;
-        renderGlyph(charSet + charNum, x, y, colour);
-        x += charSet[charNum].w;
+        x += renderGlyph(charSet + charNum, x, y, pos_data->size, colour);
     }
 
-    renderGlyph(charSet + 37, x, y, colour);
-    x += charSet[37].w;
+    x += renderGlyph(charSet + 37, x, y, pos_data->size, colour);
 
+#ifndef USE_FONT_SCALE
     charSet = glyphs[0]; // 8
+#endif
 
     if (size != 8)
     {
@@ -219,7 +221,7 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
         y += 8;
     }
 
-    renderGlyph(charSet + tenths + 26, x, y, TEXT_COLOR_WHITE);
+    renderGlyph(charSet + tenths + 26, x, y, 8, TEXT_COLOR_WHITE);
 }
 
 void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
@@ -235,7 +237,11 @@ void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
 
     size = pos_data->size;
 
+#ifdef USE_FONT_SCALE
+    charSet = glyphs[2];
+#else
     charSet = glyphs[(size - 8) >> 2];
+#endif
 
     while (1)
     {
@@ -252,8 +258,7 @@ void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
             else
                 j = letter - 'A';
 
-            renderGlyph(charSet + j, x, y, colour);
-            x += charSet[j].w;
+            x += renderGlyph(charSet + j, x, y, pos_data->size, colour);
         }
         else
         {
@@ -274,7 +279,11 @@ void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
     y = pos_data->start_pos_y;
     size = pos_data->size;
 
+#ifdef USE_FONT_SCALE
+    charSet = glyphs[2];
+#else
     charSet = glyphs[(size - 8) >> 2];
+#endif
 
     for (i = 0; i < 12; i++)
     {
@@ -287,14 +296,13 @@ void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
     for (j = i; j >= 0; j--)
     {
         charNum = (digit[j] + 26);
-        renderGlyph(charSet + charNum, x, y, colour);
-        x += charSet[charNum].w;
+        x += renderGlyph(charSet + charNum, x, y, pos_data->size, colour);
     }
 }
 
 void AddDelEnd(char dispChar, int32 x, int32 y, uint32 colour)
 {
-    renderGlyph(dispChar ? &glyphEnd : &glyphDel, x, y, colour);
+    renderGlyph(dispChar ? &glyphEnd : &glyphDel, x, y, 16, colour);
 }
 
 void SetCharTextures(int32 size)
@@ -739,14 +747,41 @@ int CalcPosition(ShipData* shipIndex)
     return winTable[ownShip].racePosition;
 }
 
+int32 GetTextWidth(Glyph* charSet, const char* text, int32 size)
+{
+    int32 index, width = 0;
+    char c;
+
+    while ((c = *text++) != 0)
+    {
+        if (c != 32)
+        {
+            if (c >= '0' && c <= '9')
+                index = c - '0' + 26;
+            else
+                index = c - 'A';
+
+        #ifdef USE_FONT_SCALE
+            width += glyphs[2][index].w * size / 16;
+        #else
+            width += charSet[index].w;
+        #endif
+        }
+        else
+        {
+            width += 8;
+        }
+    }
+
+    return width;
+}
+
 void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
 {
     uint8 letter = 0;
     const char* tmpPtr;
-    int x, y;
-    short j = 0;
+    int32 x, y, j, width;
     Glyph* charSet;
-    short totSize = 0;
 
     y = pos_data->start_pos_y;
 
@@ -754,25 +789,13 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
 
     tmpPtr = the_text_ptr;
 
-    letter = *tmpPtr;
+    width = GetTextWidth(charSet, the_text_ptr, pos_data->size);
 
-    while (letter != 0)
-    {
-        if (letter >= '0' && letter <= '9')
-            j = letter - '0' + 26;
-        else
-            j = letter - 'A';
+#ifdef USE_FONT_SCALE
+    charSet = glyphs[2];
+#endif
 
-        if (letter != 32)
-            totSize += charSet[j].w;
-        else
-            totSize += 8;
-
-        tmpPtr++;
-        letter = *tmpPtr;
-    }
-
-    x = 160 - (totSize >> 1);
+    x = 160 - (width >> 1);
 
     tmpPtr = the_text_ptr;
     while (1)
@@ -789,8 +812,7 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
             else
                 j = letter - 'A';
 
-            renderGlyph(charSet + j, x, y, colour);
-            x += charSet[j].w;
+            x += renderGlyph(charSet + j, x, y, pos_data->size, colour);
         }
         else
         {
@@ -1064,7 +1086,12 @@ void DrawHud(ShipData* shipIndex, int choice)
 
         if (gConfig.raceType != TIME_TRIAL)
         {
-            AddText("POSITION", text_data(230 + gBorderX, 8 - gBorderY, 8), TEXT_COLOR_HIGHLIGHT);
+        #ifdef USE_FONT_SCALE
+            #define POS_TEXT_OFFSET 235
+        #else
+            #define POS_TEXT_OFFSET 230
+        #endif
+            AddText("POSITION", text_data(POS_TEXT_OFFSET + gBorderX, 8 - gBorderY, 8), TEXT_COLOR_HIGHLIGHT);
             AddNumber(winTable[ownShip].racePosition, text_data(260 + gBorderX, 19 - gBorderY, 16), TEXT_COLOR_WHITE);
         }
 

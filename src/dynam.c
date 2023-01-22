@@ -15,7 +15,7 @@ void ShipCalcAmbient(ShipData* playerShip)
         facePtr++;
     }
 
-    playerShip->color = facePtr->red | (facePtr->green << 8) | (facePtr->blue << 16) | 0xFF000000;
+    playerShip->color = facePtr->color;
 }
 #endif
 
@@ -448,9 +448,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
         if (gConfig.raceType != TIME_TRIAL)
         {
         #ifdef USE_VERTEX_COLOR
-            facePtr->red = 0xff;
-            facePtr->green = 0x23;
-            facePtr->blue = 0x75;
+            facePtr->color = 0xFF7523FF;
         #endif
         }
         weaponGrid[noWeaponGrids].section = section;
@@ -463,9 +461,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     else if (facePtr->flags & SPEED_UP)
     {
     #ifdef USE_VERTEX_COLOR
-        facePtr->red = 0;
-        facePtr->green = 0;
-        facePtr->blue = 255;
+        facePtr->color = 0xFFFF0000;
     #endif
     }
 
@@ -476,9 +472,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
         if (gConfig.raceType != TIME_TRIAL)
         {
         #ifdef USE_VERTEX_COLOR
-            facePtr->red = 0x54;
-            facePtr->green = 0xee;
-            facePtr->blue = 0x75;
+            facePtr->color = 0xFF75EE54;
         #endif
         }
         weaponGrid[noWeaponGrids].section = section;
@@ -490,9 +484,7 @@ int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, i
     else if (facePtr->flags & SPEED_UP)
     {
     #ifdef USE_VERTEX_COLOR
-        facePtr->red = 0;
-        facePtr->green = 0;
-        facePtr->blue = 255;
+        facePtr->color = 0xFFFF0000;
     #endif
     }
 

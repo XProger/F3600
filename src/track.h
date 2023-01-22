@@ -22,10 +22,7 @@ typedef struct Face
     vec3s normal;
     uint8 texture;
     uint8 flags;
-    uint8 red;
-    uint8 green;
-    uint8 blue;
-    uint8 padding_unused;
+    uint32 color;
 } Face;
 #endif
 
@@ -105,10 +102,10 @@ typedef struct TrackSection
 typedef struct WeaponGrid
 {
     TrackSection* section;
-    short attr;
-    short cycleCount;
-    int count;
-    CVECTOR colour;
+    int16 attr;
+    int16 cycleCount;
+    int32 count;
+    uint32 color;
 } WeaponGrid;
 
 typedef struct TrackData

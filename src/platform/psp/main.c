@@ -42,23 +42,23 @@ int setupCallbacks(void)
 }
 
 // timing
-u64 osTimerStart;
-uint32 osTimerFreq;
+u64 gTimerStart;
+uint32 gTimerFreq;
 
 void timerInit(void)
 {
-    osTimerFreq = sceRtcGetTickResolution();
-    sceRtcGetCurrentTick(&osTimerStart);
+    gTimerFreq = sceRtcGetTickResolution();
+    sceRtcGetCurrentTick(&gTimerStart);
 }
 
 int32 osGetSystemTimeMS(void)
 {
     u64 time;
     sceRtcGetCurrentTick(&time);
-    return (int32)((time - osTimerStart) * 1000 / osTimerFreq);
+    return (int32)((time - gTimerStart) * 1000 / gTimerFreq);
 }
 
-void osQuit()
+void osQuit(void)
 {
     isQuit = 1;
 }
@@ -216,7 +216,7 @@ int main(void)
         renderSwap();
     }
 
-    //gameFree();
+    gameFree();
 
 
     sceKernelExitGame();

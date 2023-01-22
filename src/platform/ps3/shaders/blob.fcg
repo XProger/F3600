@@ -1,0 +1,13 @@
+void main
+(
+	float2 vTexCoord : TEXCOORD0,
+	float vIntensity : COLOR,
+
+	uniform sampler2D sDiffuse : TEXUNIT0,
+
+	out float4 fragColor : COLOR
+)
+{
+	float s = 1.0 - saturate(tex2D(sDiffuse, vTexCoord).x * 2.0 * vIntensity);
+	fragColor = float4(s, s, s, 1.0);
+}
