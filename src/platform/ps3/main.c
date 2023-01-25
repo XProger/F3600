@@ -408,6 +408,11 @@ int main(void)
 
     while (!isQuit)
     {
+        int32 time = osGetSystemTimeMS();
+        gLastFrameIndex = gFrameIndex;
+        gFrameIndex = time * 30 / 1000;
+        gFrameDelta = (time - gFrameIndex * 1000 / 30) * 256 * 30 / 1000;
+
         sysUtilCheckCallback();
 
         inputUpdate();
@@ -416,10 +421,6 @@ int main(void)
         if (gPad & IN_SELECT) isQuit = 1;
     #endif
 
-        gLastFrameIndex = gFrameIndex;
-        gFrameIndex = (int32)gcmGetVBlankCount();
-        gFrameDelta = (gFrameIndex & 1) ? 128 : 0;
-        gFrameIndex >>= 1; // to 30 Hz
         gameCtrl();
 
         renderSwap();

@@ -1065,13 +1065,6 @@ void DrawHud(ShipData* shipIndex, int choice)
         }
     }
 
-    AddNumber(1000 + guiL, text_data(guiL + 32, guiT + 160, 8), TEXT_COLOR_WHITE);
-    AddNumber(1000 + guiT, text_data(guiL + 32, guiT + 160 + 8, 8), TEXT_COLOR_WHITE);
-    AddNumber(1000 + guiR, text_data(guiL + 32, guiT + 160 + 16, 8), TEXT_COLOR_WHITE);
-    AddNumber(1000 + guiB, text_data(guiL + 32, guiT + 160 + 24, 8), TEXT_COLOR_WHITE);
-    AddNumber(gWidth, text_data(guiL + 32, guiT + 160 + 40, 8), TEXT_COLOR_WHITE);
-    AddNumber(gHeight, text_data(guiL + 32, guiT + 160 + 48, 8), TEXT_COLOR_WHITE);
-
     if (playerShip->attr & RACING)
     {
         AddText("LAP", text_data(guiL + 15, guiT + 8, 8), TEXT_COLOR_HIGHLIGHT);

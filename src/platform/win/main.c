@@ -515,6 +515,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             renderResize(LOWORD(lParam), HIWORD(lParam));
             break;
 
+        case WM_GETMINMAXINFO:
+        {
+            MINMAXINFO* mmInfo = (MINMAXINFO*)lParam;
+            mmInfo->ptMinTrackSize.x = 320;
+            mmInfo->ptMinTrackSize.y = 240;
+            mmInfo->ptMaxTrackSize.x = 32 * 1024;
+            mmInfo->ptMaxTrackSize.y = 32 * 1024;
+            break;
+        }
+
         case WM_KEYDOWN:
         case WM_KEYUP:
         case WM_SYSKEYDOWN:
