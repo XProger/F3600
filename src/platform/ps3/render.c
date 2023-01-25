@@ -349,17 +349,6 @@ void renderInit()
     renderSetVSync(1);
 
     rsxSetSurface(gContext, gSurface + gSurfaceIndex);
-
-    if (gHeight == 1080) // use 960p (x4)
-    {
-        gBorderX = ((gWidth * 240) / 920 - 320) >> 1;
-        gBorderY = (gHeight - 960) / 4 >> 1;
-    }
-    else
-    { // integer scale for 480p and 720p
-        gBorderX = ((gWidth * 240) / gHeight - 320) >> 1;
-        gBorderY = 0;
-    }
 }
 
 void renderFree(void)
@@ -484,12 +473,11 @@ void renderImage(const Texture* t, int32 x, int32 y)
 
 void renderBackground(const Texture* t)
 {
-    int32 w = (320 * (240 + gBorderY * 2) / 240 - 320) >> 1;
-
-    int32 x0 = -w;
-    int32 y0 = -gBorderY;
-    int32 x1 = 320 + w;
-    int32 y1 = 240 + gBorderY;
+    float f = (guiB - guiT) / (t->height * 2.0f);
+    float x0 = 160 - t->width * f;
+    float y0 = guiT;
+    float x1 = 160 + t->width * f;
+    float y1 = guiB;
 
     Vertex* v = VERTEX_ALLOC(4);
     VERTEX_SET(v[0], x0, y0, 0, 0.0f, 0.0f, 0xFFFFFFFF);
@@ -1089,8 +1077,8 @@ void renderTargetIcon(Texture* tex)
     px = mProj3D.e[0][0] * m->e03 + mProj3D.e[1][0] * m->e13 + mProj3D.e[2][0] * m->e23 + mProj3D.e[3][0];
     py = mProj3D.e[0][1] * m->e03 + mProj3D.e[1][1] * m->e13 + mProj3D.e[2][1] * m->e23 + mProj3D.e[3][1];
 
-    px = (px / pz * 0.5f + 0.5f) * (320 + gBorderX * 2) - gBorderX;
-    py = (0.5f - py / pz * 0.5f) * (240 + gBorderY * 2) - gBorderY;
+    px = guiL + (px / pz * 0.5f + 0.5f) * (guiR - guiL);
+    py = guiT + (0.5f - py / pz * 0.5f) * (guiB - guiT);
 
     size = tex->width >> 1;
 
@@ -1116,7 +1104,7 @@ void renderSetMode(int renderMode)
     {
         setFilter(0);
 
-        matrixOrtho(&mProj, -gBorderX, 320 + gBorderX, 240 + gBorderY, -gBorderY, 0, 1);
+        matrixOrtho(&mProj, guiL, guiR, guiB, guiT, 0, 1);
         mProj2D = mProj;
 
         setDepthTest(0);

@@ -2,8 +2,8 @@
 
 #define END_LAP 3
 
-#define speedo_x    (179 + gBorderX)
-#define speedo_y    (195 + gBorderY)
+#define speedo_x    (guiR - (320 - 179))
+#define speedo_y    (guiB - (240 - 195))
 
 const uint16 glyphPos[3][40] = { // 8, 12, 16
     { 13, 13, 10, 13, 13, 9, 13, 10, 4, 9, 10, 10, 16, 10, 13, 13, 14, 113, 110, 109, 109, 109, 116, 114, 109, 110, 113, 106, 111, 110, 110, 111, 110, 110, 112, 114, 104, 104 },
@@ -55,7 +55,7 @@ const BarPoint gBarPoint[NUM_BARS + 1] = {
 #define BAR_SPEED       2000
 #define LERP_16(a,b,t)  a + ((b - a) * t >> 16)
 
-void fill_speedo(int speed, int thrust)
+void DisplaySpeedo(int32 speed, int32 thrust)
 {
     ColorQuad q;
     const BarPoint* p;
@@ -154,7 +154,6 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
     int digit[20];
     int x, y;
     int mins = 0, secs = 0, tenths = 0;
-    int small_num_size;
     int size, charNum;
     Glyph* charSet;
 
@@ -162,7 +161,6 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
     y = pos_data->start_pos_y;
 
     size = pos_data->size;
-    small_num_size = size >> 1;
 
 #ifdef USE_FONT_SCALE
     charSet = glyphs[2];
@@ -227,15 +225,12 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
 void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
 {
     uint8 letter;
-    int size;
     int x, y;
     short j;
     Glyph* charSet;
 
     x = pos_data->start_pos_x;
     y = pos_data->start_pos_y;
-
-    size = pos_data->size;
 
 #ifdef USE_FONT_SCALE
     charSet = glyphs[2];
@@ -272,12 +267,11 @@ void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
     int i, j;
     int digit[12];
     int x, y;
-    int size, charNum;
+    int charNum;
     Glyph* charSet;
 
     x = pos_data->start_pos_x;
     y = pos_data->start_pos_y;
-    size = pos_data->size;
 
 #ifdef USE_FONT_SCALE
     charSet = glyphs[2];
@@ -893,7 +887,7 @@ void DrawWeaponSprtIcons(ShipData* playerShip)
     if (icon != WPN_NONE)
     {
         icon -= 1;
-        renderImage(gWeaponIcon + icon, 144, 20 - gBorderY);
+        renderImage(gWeaponIcon + icon, 144, guiT + 20);
     }
 }
 
@@ -1052,9 +1046,9 @@ void DrawHud(ShipData* shipIndex, int choice)
         if (playerShip->attr & RACING) // in race mode
         {
             if (playerShip->lapNo < END_LAP + 1) // not the last lap
-                AddTime(playerShip->lapTimes[playerShip->lapNo - 1], text_data(16 - gBorderX, 210 + gBorderY, 16), TEXT_COLOR_WHITE);
+                AddTime(playerShip->lapTimes[playerShip->lapNo - 1], text_data(guiL + 16, guiR - (320 - 210), 16), TEXT_COLOR_WHITE);
             else
-                AddTime(playerShip->lapTimes[2], text_data(16 - gBorderX, 210 + gBorderY, 16), TEXT_COLOR_WHITE);
+                AddTime(playerShip->lapTimes[2], text_data(guiL + 16, guiR - (320 - 210), 16), TEXT_COLOR_WHITE);
         }
     }
     if (playerShip->attr & RACING)
@@ -1065,24 +1059,31 @@ void DrawHud(ShipData* shipIndex, int choice)
             {
                 if (i < END_LAP)
                 {
-                    AddTime(playerShip->lapTimes[i - 1], text_data(16 - gBorderX, 205 + gBorderY - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
+                    AddTime(playerShip->lapTimes[i - 1], text_data(guiL + 16, guiR - (320 - 205) - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
                 }
             }
         }
     }
 
+    AddNumber(1000 + guiL, text_data(guiL + 32, guiT + 160, 8), TEXT_COLOR_WHITE);
+    AddNumber(1000 + guiT, text_data(guiL + 32, guiT + 160 + 8, 8), TEXT_COLOR_WHITE);
+    AddNumber(1000 + guiR, text_data(guiL + 32, guiT + 160 + 16, 8), TEXT_COLOR_WHITE);
+    AddNumber(1000 + guiB, text_data(guiL + 32, guiT + 160 + 24, 8), TEXT_COLOR_WHITE);
+    AddNumber(gWidth, text_data(guiL + 32, guiT + 160 + 40, 8), TEXT_COLOR_WHITE);
+    AddNumber(gHeight, text_data(guiL + 32, guiT + 160 + 48, 8), TEXT_COLOR_WHITE);
+
     if (playerShip->attr & RACING)
     {
-        AddText("LAP", text_data(15 - gBorderX, 8 - gBorderY, 8), TEXT_COLOR_HIGHLIGHT);
-        AddNumber(playerShip->lapNo, text_data(10 - gBorderX, 19 - gBorderY, 16), TEXT_COLOR_WHITE);
+        AddText("LAP", text_data(guiL + 15, guiT + 8, 8), TEXT_COLOR_HIGHLIGHT);
+        AddNumber(playerShip->lapNo, text_data(guiL + 10, guiT + 19, 16), TEXT_COLOR_WHITE);
 
         width = glyphPos[2][(playerShip->lapNo + 26)] % 100; // 16
 
-        AddText("OF", text_data((10 + width) - gBorderX, 27 - gBorderY, 8), TEXT_COLOR_HIGHLIGHT);
+        AddText("OF", text_data(guiL + (10 + width), guiT + 27, 8), TEXT_COLOR_HIGHLIGHT);
 
         width += 22;
 
-        AddNumber(END_LAP, text_data((10 + width) - gBorderX, 19 - gBorderY, 16), TEXT_COLOR_WHITE);
+        AddNumber(END_LAP, text_data(guiL + (10 + width), guiT + 19, 16), TEXT_COLOR_WHITE);
 
         if (gConfig.raceType != TIME_TRIAL)
         {
@@ -1091,15 +1092,15 @@ void DrawHud(ShipData* shipIndex, int choice)
         #else
             #define POS_TEXT_OFFSET 230
         #endif
-            AddText("POSITION", text_data(POS_TEXT_OFFSET + gBorderX, 8 - gBorderY, 8), TEXT_COLOR_HIGHLIGHT);
-            AddNumber(winTable[ownShip].racePosition, text_data(260 + gBorderX, 19 - gBorderY, 16), TEXT_COLOR_WHITE);
+            AddText("POSITION", text_data(guiR - (320 - POS_TEXT_OFFSET), guiT + 8, 8), TEXT_COLOR_HIGHLIGHT);
+            AddNumber(winTable[ownShip].racePosition, text_data(guiR - (320 - 260), guiT + 19, 16), TEXT_COLOR_WHITE);
         }
 
-        AddText("LAP RECORD", text_data(15 - gBorderX, 43 - gBorderY, 8), TEXT_COLOR_HIGHLIGHT);
+        AddText("LAP RECORD", text_data(guiL + 15, guiT + 43, 8), TEXT_COLOR_HIGHLIGHT);
         if (gConfig.raceType == TIME_TRIAL)
-            AddTime(scoreTable[((gConfig.trackNum - 1) + HiScoreTracks)].lapRecord, text_data(15 - gBorderX, 55 - gBorderY, 8), TEXT_COLOR_WHITE);
+            AddTime(scoreTable[((gConfig.trackNum - 1) + HiScoreTracks)].lapRecord, text_data(guiL + 15, guiT + 55, 8), TEXT_COLOR_WHITE);
         else
-            AddTime(scoreTable[(gConfig.trackNum - 1)].lapRecord, text_data(15 - gBorderX, 55 - gBorderY, 8), TEXT_COLOR_WHITE);
+            AddTime(scoreTable[(gConfig.trackNum - 1)].lapRecord, text_data(guiL + 15, guiT + 55, 8), TEXT_COLOR_WHITE);
         if ((playerShip->attr & DIRECTION) == 0)
         {
             CentreText("WRONG WAY", text_data(0, 110, 16), TEXT_COLOR_HIGHLIGHT);
@@ -1108,7 +1109,44 @@ void DrawHud(ShipData* shipIndex, int choice)
 
     if (playerShip->attr & RACING)
     {
-        fill_speedo(playerShip->speed, playerShip->thrust_mag);
+        DisplaySpeedo(playerShip->speed, playerShip->thrust_mag);
         renderImage(gSpeedoTex, speedo_x, speedo_y);
     }
+}
+
+void UpdateGameDisplay(int32 width, int32 height)
+{
+    int32 scale, dx, dy;
+
+    if (3 * width > 4 * height)
+    {
+        scale = height / 240;
+    }
+    else
+    {
+        scale = width / 320;
+    }
+
+    if (scale < 1)
+    {
+        scale = 1;
+    }
+
+    dx = ((gWidth - scale * 320) + scale - 1) / scale;
+    dy = ((gHeight - scale * 240) + scale - 1) / scale;
+
+    guiL = -(dx >> 1);
+    guiT = -(dy >> 1);
+    guiR = guiL + 320 + dx;
+    guiB = guiT + 240 + dy;
+
+#ifdef USE_WIDE_STRETCH
+    {
+        extern float gAspect;
+        float f = gAspect * gHeight / gWidth;
+        int32 w = (int32)((guiR - guiL) * (f - 1.0f) * 0.5f);
+        guiL -= w;
+        guiR += w;
+    }
+#endif
 }

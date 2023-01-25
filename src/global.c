@@ -18,11 +18,11 @@ TrackCamera gCamera;
 int trackNo;
 char NumTracks = 6;
 char totalTracks = 13;
-int tempLapTimes[5];
-int serialLapTimes[5];
+int tempLapTimes[5]; // TODO END_LAP
 int attractDelay;
 
-int32 gWidth, gHeight, gBorderX, gBorderY;
+int32 gWidth, gHeight;
+int32 guiL, guiT, guiR, guiB;
 int32 gCameraFOV;
 int32 gTargetFOV;
 

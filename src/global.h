@@ -24,7 +24,8 @@
 #define CAMERA_FOV          (75 << 12)
 #define CAMERA_FOV_EXTRA    (100 << 12)
 
-extern int32 gWidth, gHeight, gBorderX, gBorderY;
+extern int32 gWidth, gHeight;
+extern int32 guiL, guiT, guiR, guiB;
 extern int32 gCameraFOV;
 extern int32 gTargetFOV;
 

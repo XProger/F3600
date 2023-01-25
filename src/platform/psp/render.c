@@ -57,6 +57,7 @@ int32 xOffset;
 int32 yOffset;
 
 int32 gCylX, gCylZ;
+int32 gBorderX, gBorderY;
 
 uint16* gHightlightTextCLUT;
 

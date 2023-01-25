@@ -163,6 +163,8 @@ void gameCtrl(void)
 {
     int32 time;
 
+    UpdateGameDisplay(gWidth, gHeight);
+
     switch (ctrlGameLoop)
     {
         case GAME_LOOP_TITLE_INIT:

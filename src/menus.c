@@ -561,7 +561,7 @@ void CallMenuSelector(Object** shipShapes, SelectionData* selectData)
     }
 
     //DrawButtons();
-    CentreText(menu->title, text_data(0, 21 - gBorderY, 8), TEXT_COLOR_HIGHLIGHT);
+    CentreText(menu->title, text_data(0, guiT + 21, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < numOptions; i++)
     {

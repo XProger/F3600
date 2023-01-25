@@ -58,6 +58,7 @@
     #undef MENU_HAS_QUIT
 
     #define VRAM_ALIGN  128
+    #define USE_WIDE_STRETCH
 #endif
 
 #ifndef SHIP_VIS_DIST

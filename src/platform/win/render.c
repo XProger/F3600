@@ -1012,7 +1012,26 @@ void renderImage(const Texture* t, int32 x, int32 y)
 
 void renderBackground(const Texture* t)
 {
-    renderImage(t, 0, 0);
+    const uint32 color = 0xFFFFFFFF;
+
+    float u0 = 0;
+    float v0 = 0;
+    float u1 = 1.0f;
+    float v1 = 1.0f;
+    float f = (guiB - guiT) / (t->height * 2.0f);
+    float x0 = 160 - t->width * f;
+    float y0 = guiT;
+    float x1 = 160 + t->width * f;
+    float y1 = guiB;
+
+    renderSetTexture(t);
+    stateCheck();
+
+    addQuad();
+    addVertex(x0, y0, 0, u0, v0, color);
+    addVertex(x1, y0, 0, u1, v0, color);
+    addVertex(x1, y1, 0, u1, v1, color);
+    addVertex(x0, y1, 0, u0, v1, color);
 }
 
 #define SHADOW_SHIFT_N  3
@@ -1190,9 +1209,6 @@ void renderFrameBegin(void)
     // get fixed right vector for sprites
     rsincos(gCamera.hdg, gCylZ, gCylX);
 
-    gBorderX = ((gWidth * 240) / gHeight - 320) >> 1;
-    gBorderY = 0;
-
     gCurState.texture = NULL;
     gCurState.projMatrix = 1;
     gCurState.viewMatrix = 0;
@@ -1212,7 +1228,7 @@ void renderFrameBegin(void)
 
     // otho projection matrix
     m = gMatrices + 1;
-    matrixOrtho(m, -gBorderX, 320 + gBorderX, 240, 0, 0, 1);
+    matrixOrtho(m, guiL, guiR, guiB, guiT, 0, 1);
 
     gMatricesCount = 2;
 
@@ -1677,8 +1693,8 @@ void renderTargetIcon(Texture* tex)
     px = mProj3D.e[0][0] * m->e03 + mProj3D.e[1][0] * m->e13 + mProj3D.e[2][0] * m->e23 + mProj3D.e[3][0];
     py = mProj3D.e[0][1] * m->e03 + mProj3D.e[1][1] * m->e13 + mProj3D.e[2][1] * m->e23 + mProj3D.e[3][1];
 
-    px = (px / pz * 0.5f + 0.5f) * (320 + gBorderX * 2) - gBorderX;
-    py = (0.5f - py / pz * 0.5f) * (240 + gBorderY * 2) - gBorderY;
+    px = guiL + (px / pz * 0.5f + 0.5f) * (guiR - guiL);
+    py = guiT + (0.5f - py / pz * 0.5f) * (guiB - guiT);
 
     size = tex->width >> 1;
 
