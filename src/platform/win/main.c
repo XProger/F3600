@@ -90,6 +90,7 @@ void osJoyVibrate(int index, int L, int R)
 
 void joyRumble(int index)
 {
+    XINPUT_VIBRATION vibration;
     JoyDevice* joy = joyDevice + index;
 
     if (!joy->ready)
@@ -101,7 +102,6 @@ void joyRumble(int index)
     if (osGetSystemTimeMS() < joy->time)
         return;
 
-    XINPUT_VIBRATION vibration;
     vibration.wLeftMotorSpeed = (WORD)(joy->vL << 8);
     vibration.wRightMotorSpeed = (WORD)(joy->vR << 8);
     _XInputSetState(index, &vibration);
@@ -119,9 +119,11 @@ void joyRumble(int index)
 
 void inputInit()
 {
+    HMODULE h;
+    int32 i;
     memset(joyDevice, 0, sizeof(joyDevice));
 
-    HMODULE h = LoadLibrary("xinput1_3.dll");
+    h = LoadLibrary("xinput1_3.dll");
     if (h == NULL)
     {
         h = LoadLibrary("xinput9_1_0.dll");
@@ -133,7 +135,7 @@ void inputInit()
     GetProcAddr(h, _XInputGetState);
     GetProcAddr(h, _XInputSetState);
 
-    for (int i = 0; i < INPUT_JOY_COUNT; i++)
+    for (i = 0; i < INPUT_JOY_COUNT; i++)
     {
         JOYINFOEX info;
         info.dwSize  = sizeof(info);
@@ -155,12 +157,13 @@ void inputFree()
 
 void inputReset()
 {
+    XINPUT_VIBRATION vibration;
     int index;
+
     for (index = 0; index < INPUT_JOY_COUNT; index++)
     {
         if (!joyDevice[index].ready)
             break;
-        XINPUT_VIBRATION vibration;
         vibration.wLeftMotorSpeed = 0;
         vibration.wRightMotorSpeed = 0;
         _XInputSetState(index, &vibration);
@@ -181,13 +184,17 @@ int32 joyIndex = 0;
 
 void inputUpdate()
 {
+    static const int buttons[] = { IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_SELECT, IN_L, IN_R, IN_LB, IN_RB, 0, 0, IN_A, IN_B, IN_X, IN_Y, IN_LT, IN_RT };
+
+    int32 i, btn;
+
     if (!isActive)
         return;
 
     gPadStickX = gPadStickY = 256;
 
-    //for (int i = 0; i < INPUT_JOY_COUNT; i++)
-    int i = joyIndex;
+    i = joyIndex;
+    //for (i = 0; i < INPUT_JOY_COUNT; i++)
     {
         int32 curMask = 0;
         int32 oldMask = joyDevice[i].mask;
@@ -282,12 +289,11 @@ void inputUpdate()
                 return;
             }
 
-            static const int buttons[] = { IN_UP, IN_DOWN, IN_LEFT, IN_RIGHT, IN_START, IN_SELECT, IN_L, IN_R, IN_LB, IN_RB, 0, 0, IN_A, IN_B, IN_X, IN_Y, IN_LT, IN_RT };
-            for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++)
+            for (btn = 0; btn < sizeof(buttons) / sizeof(buttons[0]); btn++)
             {
-                if (state.Gamepad.wButtons & (1 << i))
+                if (state.Gamepad.wButtons & (1 << btn))
                 {
-                    curMask |= buttons[i];
+                    curMask |= buttons[btn];
                 }
             }
 
@@ -327,21 +333,21 @@ void inputUpdate()
         if (gPadStickY > 256)
             gPadStickY = 256;
 
-        for (int i = 0; i < 18; i++)
+        for (btn = 0; btn < 18; btn++)
         {
-            int wasDown = (oldMask & (1 << i)) != 0;
-            int isDown = (curMask & (1 << i)) != 0;
+            int32 wasDown = (oldMask & (1 << btn)) != 0;
+            int32 isDown = (curMask & (1 << btn)) != 0;
 
             if (isDown == wasDown)
                 continue;
 
             if (isDown && !wasDown)
             {
-                gPad |= (1 << i);
+                gPad |= (1 << btn);
             }
             else
             {
-                gPad &= ~(1 << i);
+                gPad &= ~(1 << btn);
             }
         }
 
@@ -404,11 +410,6 @@ void setKey(uint8 code, uint8 KeyDown)
     {
         gPad &= ~p;
     }
-}
-
-unsigned short GetKeyNoBlock(void)
-{
-    return gLastKey;
 }
 
 // sound

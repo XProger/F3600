@@ -839,7 +839,7 @@ void renderSetBlend(int blend)
     }
 }
 
-void renderDepthWrite(int enable)
+void setDepthWrite(int enable)
 {
     if (gCurState.depthWrite != enable)
     {
@@ -848,7 +848,7 @@ void renderDepthWrite(int enable)
     }
 }
 
-void renderDepthTest(int enable)
+void setDepthTest(int enable)
 {
     if (gCurState.depthTest != enable)
     {
@@ -857,7 +857,7 @@ void renderDepthTest(int enable)
     }
 }
 
-void renderSetColor(uint32 color)
+void setColor(uint32 color)
 {
     if (gCurState.color != color)
     {
@@ -872,7 +872,7 @@ void renderNextLayer()
     gStatePtr = NULL;
 }
 
-void renderSetTexture(const Texture* texture)
+void setTexture(const Texture* texture)
 {
     if (gCurState.texture != texture)
     {
@@ -881,7 +881,7 @@ void renderSetTexture(const Texture* texture)
     }
 }
 
-void renderSetShader(const Shader* shader)
+void setShader(const Shader* shader)
 {
     if (gCurState.shader != shader)
     {
@@ -975,7 +975,7 @@ int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
     int32 x1 = x + g->w * size / 16;
     int32 y1 = y + g->h * size / 16;
 
-    renderSetTexture(t);
+    setTexture(t);
     stateCheck();
 
     addQuad();
@@ -1000,7 +1000,7 @@ void renderImage(const Texture* t, int32 x, int32 y)
     int32 x1 = x + t->width;
     int32 y1 = y + t->height;
 
-    renderSetTexture(t);
+    setTexture(t);
     stateCheck();
 
     addQuad();
@@ -1024,7 +1024,7 @@ void renderBackground(const Texture* t)
     float x1 = 160 + t->width * f;
     float y1 = guiB;
 
-    renderSetTexture(t);
+    setTexture(t);
     stateCheck();
 
     addQuad();
@@ -1052,8 +1052,8 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
     rz >>= SHADOW_SHIFT_W;
 
     renderSetBlend(BLEND_MUL);
-    renderSetShader(&shaderBlob);
-    renderSetTexture(gShadowTex);
+    setShader(&shaderBlob);
+    setTexture(gShadowTex);
     stateCheck();
 
     addQuad();
@@ -1067,8 +1067,8 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
 
 void renderColorQuad(const ColorQuad* q)
 {
-    renderSetShader(&shaderGUI);
-    renderSetTexture(NULL);
+    setShader(&shaderGUI);
+    setTexture(NULL);
     stateCheck();
 
     addQuad();
@@ -1076,32 +1076,6 @@ void renderColorQuad(const ColorQuad* q)
     addVertex(q->x1, q->y1, 0, 0.0f, 0.0f, q->color[1]);
     addVertex(q->x2, q->y2, 0, 0.0f, 0.0f, q->color[2]);
     addVertex(q->x3, q->y3, 0, 0.0f, 0.0f, q->color[3]);
-}
-
-void renderBillboard(const Billboard* b)
-{
-    int rx, ry, rz, ux, uy, uz, size;
-    const Texture* t = b->texture;
-
-    size = b->size * 8;
-
-    rx = gMatrixPtr->e00 * size >> FIXED_SHIFT;
-    ry = gMatrixPtr->e01 * size >> FIXED_SHIFT;
-    rz = gMatrixPtr->e02 * size >> FIXED_SHIFT;
-
-    ux = gMatrixPtr->e10 * size >> FIXED_SHIFT;
-    uy = gMatrixPtr->e11 * size >> FIXED_SHIFT;
-    uz = gMatrixPtr->e12 * size >> FIXED_SHIFT;
-
-    renderSetTexture(t);
-    renderSetShader(&shaderObject);
-    stateCheck();
-
-    addQuad();
-    addVertex(b->x - rx - ux, b->y - ry - uy, b->z - rz - uz, 0.0f, 0.0f, colorGrey);
-    addVertex(b->x + rx - ux, b->y - ry - uy, b->z + rz - uz, 1.0f, 0.0f, colorGrey);
-    addVertex(b->x + rx + ux, b->y + ry + uy, b->z + rz + uz, 1.0f, 1.0f, colorGrey);
-    addVertex(b->x - rx + ux, b->y + ry + uy, b->z - rz + uz, 0.0f, 1.0f, colorGrey);
 }
 
 void renderBackFill(int x, int y, int w, int h)
@@ -1174,7 +1148,7 @@ void renderPrepare(void)
     prepareTrack();
 }
 
-void renderSetMatrix(const Matrix* matrix)
+void setMatrix(const Matrix* matrix)
 {
     mat4* m = gMatrices + gMatricesCount;
 
@@ -1220,7 +1194,7 @@ void renderFrameBegin(void)
 
     gRenderMode = RENDER_MODE_3D;
     renderSetMode(RENDER_MODE_2D);
-    renderSetColor(colorWhite);
+    setColor(colorWhite);
 
     // identity matrix
     m = gMatrices + 0;
@@ -1412,7 +1386,7 @@ void renderFrameEnd(void)
     gStatesCount = 0;
 }
 
-void renderSection(const TrackSection* section)
+void drawSection(const TrackSection* section)
 {
     const vec3i* vertices = gTrack.vertices;
     const Face* face = gTrack.faces + section->faceStart;
@@ -1427,7 +1401,7 @@ void renderSection(const TrackSection* section)
         texUsed[face->texture] = 1;
     #endif
 
-        renderSetTexture(gTrackTex + face->texture);
+        setTexture(gTrackTex + face->texture);
         stateCheck();
 
         if (face->flags & FLIP_TEXTURE)
@@ -1468,8 +1442,8 @@ void renderTrack(void)
 
     dir = TrackDirection(&gCamera);
 
-    renderSetMatrix(gMatrixPtr);
-    renderSetShader(&shaderTrack);
+    setMatrix(gMatrixPtr);
+    setShader(&shaderTrack);
 
     switch (dir)
     {
@@ -1491,7 +1465,7 @@ void renderTrack(void)
     }
 
     section = gTrack.sections + sections[0][0];
-    renderSection(section->prevSection);
+    drawSection(section->prevSection);
 
     for (i = 0; i < 3; i++)
     {
@@ -1501,7 +1475,7 @@ void renderTrack(void)
 
             for (s = 0; s < sections[i][j + 1]; s++)
             {
-                renderSection(section);
+                drawSection(section);
                 section = section->nextSection;
             }
         }
@@ -1517,167 +1491,260 @@ void renderTrack(void)
 
 void renderEffects(const Effect* fx)
 {
-    Billboard b;
+    int32 x, y, z, rx, ry, rz, ux, uy, uz, size;
 
-    renderSetMatrix(gMatrixPtr);
-    renderDepthWrite(0);
     renderSetBlend(BLEND_ADD);
+    setDepthWrite(0);
+    setMatrix(gMatrixPtr);
+    setShader(&shaderObject);
 
     while (fx)
     {
-        b.x = fx->pos.x - gCameraViewPos.x;
-        b.y = fx->pos.y - gCameraViewPos.y;
-        b.z = fx->pos.z - gCameraViewPos.z;
-        b.size = fx->size;
-        b.texture = gEffectTextures + fx->type;
-        renderBillboard(&b);
+        x = fx->pos.x - gCameraViewPos.x;
+        y = fx->pos.y - gCameraViewPos.y;
+        z = fx->pos.z - gCameraViewPos.z;
+        size = fx->size * 8;
+
+        rx = gMatrixPtr->e00 * size >> FIXED_SHIFT;
+        ry = gMatrixPtr->e01 * size >> FIXED_SHIFT;
+        rz = gMatrixPtr->e02 * size >> FIXED_SHIFT;
+
+        ux = gMatrixPtr->e10 * size >> FIXED_SHIFT;
+        uy = gMatrixPtr->e11 * size >> FIXED_SHIFT;
+        uz = gMatrixPtr->e12 * size >> FIXED_SHIFT;
+
+        setTexture(gEffectTextures + fx->type);
+        setShader(&shaderObject);
+        stateCheck();
+
+        addQuad();
+        addVertex(x - rx - ux, y - ry - uy, z - rz - uz, 0.0f, 0.0f, 0xFF808080);
+        addVertex(x + rx - ux, y - ry - uy, z + rz - uz, 1.0f, 0.0f, 0xFF808080);
+        addVertex(x + rx + ux, y + ry + uy, z + rz + uz, 1.0f, 1.0f, 0xFF808080);
+        addVertex(x - rx + ux, y + ry + uy, z - rz + uz, 0.0f, 1.0f, 0xFF808080);
 
         fx = fx->next;
     }
 
-    renderDepthWrite(1);
+    setDepthWrite(1);
     renderSetBlend(BLEND_NONE);
 }
 
-void renderMesh(const Object* obj)
+void drawMesh(const Object* obj)
 {
-    int32 i;
     float iw, ih;
-    const vec3s* v = obj->vertices;
-    const ObjFace* f = obj->faces;
-    const ObjSprite* s = obj->sprites;
+    const vec3s* vertices = obj->vertices;
+    const ObjFace* face = obj->faces;
+    const ObjFace* fLast = face + obj->fCount;
+    const ObjSprite* sprite = obj->sprites;
+    const ObjSprite* sLast = sprite + obj->sCount;
 
-    for (i = 0; i < obj->fCount; i++, f++)
+    while (face < fLast)
     {
-        uint32 texIndex = FACE_TEXTURE(f);
+        uint32 texIndex = FACE_TEXTURE(face);
 
         // TODO precalc float uv's
         if (texIndex != NO_TEXTURE)
         {
-            Texture* t = gTextures + FACE_TEXTURE(f);
-            renderSetTexture(t);
+            Texture* t = gTextures + FACE_TEXTURE(face);
+            setTexture(t);
             iw = t->iw;
             ih = t->ih;
         }
         else
         {
-            renderSetTexture(NULL);
+            setTexture(NULL);
             iw = 0.0f;
             ih = 0.0f;
         }
 
-        if (FACE_QUAD(f))
-        {
-            stateCheck();
+        stateCheck();
 
+        if (FACE_QUAD(face))
+        {
             addQuad();
-            addVertexS(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, f->color[0]);
-            addVertexS(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, f->color[1]);
-            addVertexS(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, f->color[2]);
-            addVertexS(v + f->index[3], f->uv[3][0] * iw, f->uv[3][1] * ih, f->color[3]);
+            addVertexS(vertices + face->index[0], face->uv[0][0] * iw, face->uv[0][1] * ih, face->color[0]);
+            addVertexS(vertices + face->index[1], face->uv[1][0] * iw, face->uv[1][1] * ih, face->color[1]);
+            addVertexS(vertices + face->index[2], face->uv[2][0] * iw, face->uv[2][1] * ih, face->color[2]);
+            addVertexS(vertices + face->index[3], face->uv[3][0] * iw, face->uv[3][1] * ih, face->color[3]);
         }
         else
         {
-            if (f->flags & FACE_FLAG_ENGINE) // triangles only
-            {
-                uint32 color = gCurState.color;
-
-                renderSetColor(0xFF202020);
-                renderSetBlend(BLEND_ADD);
-                stateCheck();
-
-                addTriangle();
-                addVertexS(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, colorWhite);
-                addVertexS(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, colorWhite);
-                addVertexS(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, colorWhite);
-
-                renderSetBlend(BLEND_NONE);
-                renderSetColor(color);
-            }
-            else
-            {
-                stateCheck();
-
-                addTriangle();
-                addVertexS(v + f->index[0], f->uv[0][0] * iw, f->uv[0][1] * ih, f->color[0]);
-                addVertexS(v + f->index[1], f->uv[1][0] * iw, f->uv[1][1] * ih, f->color[1]);
-                addVertexS(v + f->index[2], f->uv[2][0] * iw, f->uv[2][1] * ih, f->color[2]);
-            }
+            addTriangle();
+            addVertexS(vertices + face->index[0], face->uv[0][0] * iw, face->uv[0][1] * ih, face->color[0]);
+            addVertexS(vertices + face->index[1], face->uv[1][0] * iw, face->uv[1][1] * ih, face->color[1]);
+            addVertexS(vertices + face->index[2], face->uv[2][0] * iw, face->uv[2][1] * ih, face->color[2]);
         }
+
+        face++;
     }
 
-    for (i = 0; i < obj->sCount; i++, s++)
+    while (sprite < sLast)
     {
-        Texture* t = gTextures + SPRITE_TEXTURE(s);
-        const vec3s* p = v + s->index;
-
-        int32 w = s->width >> 1;
+        const vec3s* p = vertices + sprite->index;
+        const Texture* t = gTextures + SPRITE_TEXTURE(sprite);
+        int32 w = sprite->width >> 1;
         int32 wx = gCylX * w >> FIXED_SHIFT;
         int32 wz = gCylZ * w >> FIXED_SHIFT;
         int32 h0, h1;
 
-        if (SPRITE_FLIP(s))
+        if (SPRITE_FLIP(sprite))
         {
-            h0 = s->height;
+            h0 = sprite->height;
             h1 = 0;
         }
         else
         {
             h0 = 0;
-            h1 = s->height;
+            h1 = sprite->height;
         }
 
-        renderSetTexture(t);
+        setTexture(t);
         stateCheck();
 
         addQuad();
-        addVertex(p->x - wx, p->y - h0, p->z - wz, 0.0f, 0.0f, s->color);
-        addVertex(p->x + wx, p->y - h0, p->z + wz, 1.0f, 0.0f, s->color);
-        addVertex(p->x + wx, p->y + h1, p->z + wz, 1.0f, 1.0f, s->color);
-        addVertex(p->x - wx, p->y + h1, p->z - wz, 0.0f, 1.0f, s->color);
+        addVertex(p->x - wx, p->y - h0, p->z - wz, 0.0f, 0.0f, sprite->color);
+        addVertex(p->x + wx, p->y - h0, p->z + wz, 1.0f, 0.0f, sprite->color);
+        addVertex(p->x + wx, p->y + h1, p->z + wz, 1.0f, 1.0f, sprite->color);
+        addVertex(p->x - wx, p->y + h1, p->z - wz, 0.0f, 1.0f, sprite->color);
+
+        sprite++;
     }
+}
+
+void drawMeshShip(const Object* obj, uint32 color)
+{
+    float iw, ih;
+    const vec3s* vertices = obj->vertices;
+    const ObjFace* face = obj->faces;
+    const ObjFace* fLast = face + obj->fCount;
+    float colorParam[4];
+
+// opaque
+    setColor(color);
+
+    while (face < fLast)
+    {
+        if ((face->flags & FACE_FLAG_ENGINE) == 0)
+        {
+            uint32 texIndex = FACE_TEXTURE(face);
+
+            // TODO precalc float uv's
+            if (texIndex != NO_TEXTURE)
+            {
+                Texture* t = gTextures + FACE_TEXTURE(face);
+                setTexture(t);
+                iw = t->iw;
+                ih = t->ih;
+            }
+            else
+            {
+                setTexture(NULL);
+                iw = 0.0f;
+                ih = 0.0f;
+            }
+
+            stateCheck();
+
+            if (FACE_QUAD(face))
+            {
+                addQuad();
+                addVertexS(vertices + face->index[0], face->uv[0][0] * iw, face->uv[0][1] * ih, face->color[0]);
+                addVertexS(vertices + face->index[1], face->uv[1][0] * iw, face->uv[1][1] * ih, face->color[1]);
+                addVertexS(vertices + face->index[2], face->uv[2][0] * iw, face->uv[2][1] * ih, face->color[2]);
+                addVertexS(vertices + face->index[3], face->uv[3][0] * iw, face->uv[3][1] * ih, face->color[3]);
+            }
+            else
+            {
+                addTriangle();
+                addVertexS(vertices + face->index[0], face->uv[0][0] * iw, face->uv[0][1] * ih, face->color[0]);
+                addVertexS(vertices + face->index[1], face->uv[1][0] * iw, face->uv[1][1] * ih, face->color[1]);
+                addVertexS(vertices + face->index[2], face->uv[2][0] * iw, face->uv[2][1] * ih, face->color[2]);
+            }
+        }
+
+        face++;
+    }
+
+// semi-transparent
+    setColor(0xFF202020);
+    renderSetBlend(BLEND_ADD);
+
+    face = obj->faces;
+    while (face < fLast)
+    {
+        if ((face->flags & FACE_FLAG_ENGINE) != 0)
+        {
+            uint32 texIndex = FACE_TEXTURE(face);
+
+            // TODO precalc float uv's
+            if (texIndex != NO_TEXTURE)
+            {
+                Texture* t = gTextures + FACE_TEXTURE(face);
+                setTexture(t);
+                iw = t->iw;
+                ih = t->ih;
+            }
+            else
+            {
+                setTexture(NULL);
+                iw = 0.0f;
+                ih = 0.0f;
+            }
+
+            stateCheck();
+
+            ASSERT(FACE_QUAD(face) == 0); // triangles only
+
+            addTriangle();
+            addVertexS(vertices + face->index[0], face->uv[0][0] * iw, face->uv[0][1] * ih, face->color[0]);
+            addVertexS(vertices + face->index[1], face->uv[1][0] * iw, face->uv[1][1] * ih, face->color[1]);
+            addVertexS(vertices + face->index[2], face->uv[2][0] * iw, face->uv[2][1] * ih, face->color[2]);
+        }
+
+        face++;
+    }
+
+    renderSetBlend(BLEND_NONE);
 }
 
 void renderObject(const Object* object)
 {
-    renderSetMatrix(gMatrixPtr);
-    renderSetShader(&shaderObject);
+    setMatrix(gMatrixPtr);
+    setShader(&shaderObject);
 
-    renderMesh(object);
+    drawMesh(object);
 }
 
 void renderShip(const Object* object, uint32 color)
 {
-    renderSetMatrix(gMatrixPtr);
-    renderSetShader(&shaderShip);
-    renderSetColor(color);
+    setMatrix(gMatrixPtr);
+    setShader(&shaderShip);
 
-    renderMesh(object);
-
-    renderSetColor(0xFFFFFFFF);
+    drawMeshShip(object, color);
 }
 
 void renderShield(const Object* object, int32 counter)
 {
-    renderSetMatrix(gMatrixPtr);
-    renderSetShader(&shaderShield);
+    setMatrix(gMatrixPtr);
+    setShader(&shaderShield);
     renderSetBlend(BLEND_ADD);
-    renderSetColor(counter);
+    setColor(counter);
 
-    renderMesh(object);
+    drawMesh(object);
 
     renderSetBlend(BLEND_NONE);
 }
 
 void renderSky(const Object* object)
 {
-    renderSetMatrix(gMatrixPtr);
-    renderSetShader(&shaderSky);
-    renderDepthTest(0);
+    setMatrix(gMatrixPtr);
+    setShader(&shaderSky);
+    setDepthTest(0);
 
-    renderMesh(object);
+    drawMesh(object);
 
-    renderDepthTest(1);
+    setDepthTest(1);
 }
 
 void renderTargetIcon(Texture* tex)
@@ -1699,7 +1766,7 @@ void renderTargetIcon(Texture* tex)
     size = tex->width >> 1;
 
     renderSetBlend(BLEND_ADD);
-    renderSetTexture(tex);
+    setTexture(tex);
     stateCheck();
 
     addQuad();
@@ -1719,7 +1786,7 @@ void renderSetMode(int renderMode)
 
     if (renderMode == RENDER_MODE_2D)
     {
-        renderDepthTest(0);
+        setDepthTest(0);
 
         gCurState.viewMatrix = 0;
         gCurState.projMatrix = 1;
@@ -1728,7 +1795,7 @@ void renderSetMode(int renderMode)
     }
     else
     {
-        renderDepthTest(1);
+        setDepthTest(1);
 
         matrixSetViewMenu();
         matrixPerspective(gMatrices + gMatricesCount, gCameraFOV / 4096.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, Z_NEAR, Z_FAR);

@@ -571,7 +571,7 @@ void renderFrameEnd(void)
 
 volatile Vertex* gTrackVertices;
 
-void renderSection(const TrackSection* section)
+void drawSection(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const Face* last = face + section->faceCount;
@@ -669,7 +669,7 @@ void renderTrack(void)
     DRAW_BEGIN(gTrackVertices, D3DPT_QUADLIST, fCount * 4);
 
     section = gTrack.sections + sections[0][0];
-    renderSection(section->prevSection);
+    drawSection(section->prevSection);
 
     for (i = 0; i < 3; i++)
     {
@@ -679,7 +679,7 @@ void renderTrack(void)
 
             for (s = 0; s < sections[i][j + 1]; s++)
             {
-                renderSection(section);
+                drawSection(section);
                 section = section->nextSection;
             }
         }

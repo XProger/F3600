@@ -525,7 +525,7 @@ void addTrackFace(V3D_TRACK* v, const vec3i* v0, const vec3i* v1, const vec3i* v
     sceGumDrawArray(GU_TRIANGLE_FAN, V3D_TRACK_FMT, 4, NULL, v);
 }
 
-void renderSection1(const TrackSection* section)
+void drawSection1(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const vec3i* vertices = gTrack.vertices;
@@ -551,7 +551,7 @@ void renderSection1(const TrackSection* section)
     }
 }
 
-void renderSection4(const TrackSection* section)
+void drawSection4(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const vec3i* vertices = gTrack.vertices;
@@ -596,7 +596,7 @@ void renderSection4(const TrackSection* section)
     }
 }
 
-void renderSection16(const TrackSection* section)
+void drawSection16(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const vec3i* vertices = gTrack.vertices;
@@ -725,7 +725,7 @@ void renderTrack(void)
     }
 
     section = gTrack.sections + sections[0][0];
-    renderSection16(section->prevSection);
+    drawSection16(section->prevSection);
 
     i = 2;
     for (j = 0; j < counts[i]; j += 2)
@@ -734,7 +734,7 @@ void renderTrack(void)
 
         for (s = 0; s < sections[i][j + 1]; s++)
         {
-            renderSection1(section);
+            drawSection1(section);
             section = section->nextSection;
         }
     }
@@ -746,7 +746,7 @@ void renderTrack(void)
 
         for (s = 0; s < sections[i][j + 1]; s++)
         {
-            renderSection4(section);
+            drawSection4(section);
             section = section->nextSection;
         }
     }
@@ -758,7 +758,7 @@ void renderTrack(void)
 
         for (s = 0; s < sections[i][j + 1]; s++)
         {
-            renderSection16(section);
+            drawSection16(section);
             section = section->nextSection;
         }
     }

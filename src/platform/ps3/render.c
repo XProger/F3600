@@ -701,7 +701,7 @@ void renderFrameEnd(void)
 {
 }
 
-void renderSection(const TrackSection* section)
+void drawSection(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const Face* last = face + section->faceCount;
@@ -773,7 +773,7 @@ void renderTrack(void)
     }
 
     section = gTrack.sections + sections[0][0];
-    renderSection(section->prevSection);
+    drawSection(section->prevSection);
 
     for (i = 0; i < 3; i++)
     {
@@ -783,7 +783,7 @@ void renderTrack(void)
 
             for (s = 0; s < sections[i][j + 1]; s++)
             {
-                renderSection(section);
+                drawSection(section);
                 section = section->nextSection;
             }
         }
@@ -1127,10 +1127,11 @@ void renderSetMode(int renderMode)
 
 uint16 RGB5551(uint16 c)
 {
+    char r, g, b;
     c = swap16(c);
-    char r = (c) & 0x1F;
-    char g = (c >> 5) & 0x1F;
-    char b = (c >> 10) & 0x1F;
+    r = (c) & 0x1F;
+    g = (c >> 5) & 0x1F;
+    b = (c >> 10) & 0x1F;
     c = (r << 10) | (g << 5) | (b);
 
     if (c != 0)
@@ -1143,10 +1144,11 @@ uint16 RGB5551(uint16 c)
 
 uint16 RGB555(uint16 c)
 {
+    char r, g, b;
     c = swap16(c);
-    char r = (c) & 0x1F;
-    char g = (c >> 5) & 0x1F;
-    char b = (c >> 10) & 0x1F;
+    r = (c) & 0x1F;
+    g = (c >> 5) & 0x1F;
+    b = (c >> 10) & 0x1F;
     c = (r << 10) | (g << 5) | (b) | (1 << 15);
     return c;
 }
