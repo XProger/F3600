@@ -17,6 +17,8 @@
 #define SND_SAMPLES     1024
 #elif defined(__PS3__)
 #define SND_SAMPLES     256
+#elif defined(__X360__)
+#define SND_SAMPLES     1024
 #else
 #define SND_SAMPLES     (2352 * 2)
 #endif

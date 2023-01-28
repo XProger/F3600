@@ -73,8 +73,8 @@ void vagProcessBlock(Channel* channel, int16* dst)
     int32 s2 = channel->s2;
 
     uint8 pred = *src++;
-    src++; // skip flags
     uint8 shift = pred & 0x0F;
+    src++; // skip flags
     pred >>= 4;
 
     for (i = 0; i < 14; i++)

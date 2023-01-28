@@ -194,6 +194,10 @@ typedef struct Texture
     uint32 offset;
     float iw;
     float ih;
+#elif defined(__X360__)
+    void* obj;
+    float iw;
+    float ih;
 #else
     uint32 id;
     float iw;

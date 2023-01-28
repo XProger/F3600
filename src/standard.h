@@ -7,10 +7,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#ifdef __WIN32__
-    #include <windows.h>
-#endif
-
 #define USE_FRAME_LERP
 
 #if defined(__3DO__)
@@ -54,10 +50,16 @@
 #endif
 
 #ifdef __PS3__
-    #define CPU_BIG_ENDIAN
     #undef MENU_HAS_QUIT
+    #define CPU_BIG_ENDIAN
+    #define USE_WIDE_STRETCH
 
     #define VRAM_ALIGN  128
+#endif
+
+#ifdef __X360__
+    #undef MENU_HAS_QUIT
+    #define CPU_BIG_ENDIAN
     #define USE_WIDE_STRETCH
 #endif
 
@@ -74,7 +76,7 @@ typedef int                 int32;
 typedef unsigned int        uint32;
 #endif
 
-#if 0
+#ifdef _DEBUG
     #if defined(__LINUX__) || defined(__MAC__)
         #include <signal.h>
         #define __debugbreak() raise(SIGTRAP)
@@ -134,8 +136,6 @@ typedef struct vec4i
 #define PI      3.14159265358979323846f
 #define DEG2RAD (PI / 180.0f)
 #define RAD2DEG (180.0f / PI)
-
-unsigned short GetKeyNoBlock(void);
 
 #ifdef __cplusplus
 extern "C" {

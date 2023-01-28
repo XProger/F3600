@@ -30,16 +30,16 @@ void DrawWeapons(ShipData* shipIndex, Object** weaponShapes)
 
     while (weapon)
     {
-        obj = weaponShapes[weapon->currentWeapon];
-
-        matrixPush();
-
         int32 px = weapon->pos.x;
         int32 py = weapon->pos.y;
         int32 pz = weapon->pos.z;
         int32 rx = weapon->pitch;
         int32 ry = weapon->hdg;
         int32 rz = weapon->roll;
+
+        obj = weaponShapes[weapon->currentWeapon];
+
+        matrixPush();
 
         FRAME_LERP(weapon);
 
