@@ -1391,6 +1391,10 @@ void drawSection(const TrackSection* section)
     const vec3i* vertices = gTrack.vertices;
     const Face* face = gTrack.faces + section->faceStart;
     const Face* last = face + section->faceCount;
+    const vec3i* v;
+    int32 cx = gCameraViewPos.x;
+    int32 cy = gCameraViewPos.y;
+    int32 cz = gCameraViewPos.z;
     float u0, u1;
 
     while (face < last)
@@ -1416,10 +1420,18 @@ void drawSection(const TrackSection* section)
         }
 
         addQuad();
-        addVertexI(vertices + face->vertex[3], u0, 1.0f, face->color);
-        addVertexI(vertices + face->vertex[2], u1, 1.0f, face->color);
-        addVertexI(vertices + face->vertex[1], u1, 0.0f, face->color);
-        addVertexI(vertices + face->vertex[0], u0, 0.0f, face->color);
+
+        v = vertices + face->vertex[3];
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 1.0f, face->color);
+
+        v = vertices + face->vertex[2];
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 1.0f, face->color);
+
+        v = vertices + face->vertex[1];
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 0.0f, face->color);
+
+        v = vertices + face->vertex[0];
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 0.0f, face->color);
 
         face++;
     }

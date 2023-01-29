@@ -235,7 +235,7 @@ void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
 #ifdef USE_FONT_SCALE
     charSet = glyphs[2];
 #else
-    charSet = glyphs[(size - 8) >> 2];
+    charSet = glyphs[(pos_data->size - 8) >> 2];
 #endif
 
     while (1)
@@ -276,7 +276,7 @@ void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
 #ifdef USE_FONT_SCALE
     charSet = glyphs[2];
 #else
-    charSet = glyphs[(size - 8) >> 2];
+    charSet = glyphs[(pos_data->size - 8) >> 2];
 #endif
 
     for (i = 0; i < 12; i++)

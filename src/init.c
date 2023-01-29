@@ -1220,6 +1220,21 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
     return retObj;
 }
 
+void fixSky(int32 trackNum)
+{
+    static const int32 gSkyPos[15] = { -820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0 };
+
+    vec3s* v = gTrack.sky->vertices;
+    vec3s* last = v + gTrack.sky->vCount;
+    int32 y = gSkyPos[trackNum - 1];
+
+    while (v < last)
+    {
+        v->y += y;
+        v++;
+    }
+}
+
 void LoadSceneOld(int32 trackNum)
 {
 #ifdef CONV_FMT
@@ -1273,6 +1288,8 @@ void LoadSceneOld(int32 trackNum)
     LoadCompressedTextureSequence(trackPath, 1);
     getPath(trackPath, trackNum, "/sky.prm");
     gTrack.sky = LoadPrm(trackPath, skyTextures, NULL, NULL);
+
+    fixSky(trackNum);
 
     SceneRadiusCheck(gTrack.objects, gTrack.objCount);
 

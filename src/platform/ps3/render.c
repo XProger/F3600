@@ -708,6 +708,9 @@ void drawSection(const TrackSection* section)
     const vec3i* vertices = gTrack.vertices;
     float u0, u1;
     Vertex* v;
+    int32 cx = gCameraViewPos.x;
+    int32 cy = gCameraViewPos.y;
+    int32 cz = gCameraViewPos.z;
 
     while (face < last)
     {
@@ -732,10 +735,10 @@ void drawSection(const TrackSection* section)
         setTexture(gTrackTex + face->texture, 1);
 
         v = VERTEX_ALLOC(4);
-        VERTEX_SET(v[0], v3->x, v3->y, v3->z, u0, 1.0f, face->color);
-        VERTEX_SET(v[1], v2->x, v2->y, v2->z, u1, 1.0f, face->color);
-        VERTEX_SET(v[2], v1->x, v1->y, v1->z, u1, 0.0f, face->color);
-        VERTEX_SET(v[3], v0->x, v0->y, v0->z, u0, 0.0f, face->color);
+        VERTEX_SET(v[0], v3->x - cx, v3->y - cy, v3->z - cz, u0, 1.0f, face->color);
+        VERTEX_SET(v[1], v2->x - cx, v2->y - cy, v2->z - cz, u1, 1.0f, face->color);
+        VERTEX_SET(v[2], v1->x - cx, v1->y - cy, v1->z - cz, u1, 0.0f, face->color);
+        VERTEX_SET(v[3], v0->x - cx, v0->y - cy, v0->z - cz, u0, 0.0f, face->color);
 
         drawPrim(GCM_TYPE_QUADS, v);
         face++;

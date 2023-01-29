@@ -239,11 +239,8 @@ void renderSetBlend(int blend)
         case BLEND_ADD:
             sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, 0xFF808080, 0xFFFFFFFF);
             break;
-        case BLEND_SUB:
-            sceGuBlendFunc(GU_REVERSE_SUBTRACT, GU_FIX, GU_FIX, 0xFF808080, 0xFFFFFFFF); // TODO shadow intensity
-            break; 
         case BLEND_MUL:
-            sceGuBlendFunc(GU_ADD, GU_DST_COLOR, GU_FIX, 0, 0);
+            sceGuBlendFunc(GU_ADD, GU_FIX, GU_ONE_MINUS_SRC_COLOR, 0, 0);
             break;
         default:
             sceGuDisable(GU_BLEND);
@@ -311,7 +308,7 @@ void renderClear(void)
     sceGuClear(GU_COLOR_BUFFER_BIT | GU_STENCIL_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 }
 
-void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
+int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
 {
     const Texture* t = g->texture;
 
@@ -336,6 +333,8 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
     }
 
     sceGumDrawArray(GU_SPRITES, VT2D_FMT, 2, NULL, v);
+
+    return g->w;
 }
 
 void renderImage(const Texture* t, int32 x, int32 y)
@@ -439,8 +438,10 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
     sceGumLoadMatrix((ScePspFMatrix4*)&mIdentity);
     sceGumMatrixMode(GU_VIEW);
 
+    renderSetBlend(BLEND_MUL);
     renderSetTexture(gShadowTex);
     sceGumDrawArray(GU_TRIANGLE_FAN, V3D_TRACK_FMT, 4, NULL, v);
+    renderSetBlend(BLEND_NONE);
 
     sceGumMatrixMode(GU_MODEL);
     sceGumLoadMatrix((ScePspFMatrix4*)&mScale);
@@ -529,10 +530,13 @@ void drawSection1(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const vec3i* vertices = gTrack.vertices;
-    const vec3i *v0, *v1, *v2, *v3;
+    vec3i v0, v1, v2, v3;
     int32 i;
     int32 flip;
     uint32 color;
+    int32 cx = gCameraViewPos.x;
+    int32 cy = gCameraViewPos.y;
+    int32 cz = gCameraViewPos.z;
 
     V3D_TRACK* v = GU_ALLOC(V3D_TRACK, section->faceCount * 4);
 
@@ -541,12 +545,24 @@ void drawSection1(const TrackSection* section)
         flip = (face->flags & FLIP_TEXTURE);
         color = face->color;
 
-        v0 = vertices + face->vertex[0];
-        v1 = vertices + face->vertex[1];
-        v2 = vertices + face->vertex[2];
-        v3 = vertices + face->vertex[3];
+        v0 = vertices[face->vertex[0]];
+        v1 = vertices[face->vertex[1]];
+        v2 = vertices[face->vertex[2]];
+        v3 = vertices[face->vertex[3]];
+        v0.x -= cx;
+        v0.y -= cy;
+        v0.z -= cz;
+        v1.x -= cx;
+        v1.y -= cy;
+        v1.z -= cz;
+        v2.x -= cx;
+        v2.y -= cy;
+        v2.z -= cz;
+        v3.x -= cx;
+        v3.y -= cy;
+        v3.z -= cz;
 
-        addTrackFace(v, v0, v1, v2, v3, ctrltexTemplate[face->texture].tex1[0], color, flip);
+        addTrackFace(v, &v0, &v1, &v2, &v3, ctrltexTemplate[face->texture].tex1[0], color, flip);
         v += 4;
     }
 }
@@ -555,11 +571,14 @@ void drawSection4(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const vec3i* vertices = gTrack.vertices;
-    const vec3i *v0, *v1, *v2, *v3;
+    vec3i v0, v1, v2, v3;
     vec3i v01, v12, v23, v30, vM;
     int32 i;
     int32 flip;
     uint32 color;
+    int32 cx = gCameraViewPos.x;
+    int32 cy = gCameraViewPos.y;
+    int32 cz = gCameraViewPos.z;
 
     V3D_TRACK* v = GU_ALLOC(V3D_TRACK, section->faceCount * 4 * 4);
 
@@ -568,30 +587,42 @@ void drawSection4(const TrackSection* section)
         flip = (face->flags & FLIP_TEXTURE);
         color = face->color;
 
-        v0 = vertices + face->vertex[0];
-        v1 = vertices + face->vertex[1];
-        v2 = vertices + face->vertex[2];
-        v3 = vertices + face->vertex[3];
+        v0 = vertices[face->vertex[0]];
+        v1 = vertices[face->vertex[1]];
+        v2 = vertices[face->vertex[2]];
+        v3 = vertices[face->vertex[3]];
+        v0.x -= cx;
+        v0.y -= cy;
+        v0.z -= cz;
+        v1.x -= cx;
+        v1.y -= cy;
+        v1.z -= cz;
+        v2.x -= cx;
+        v2.y -= cy;
+        v2.z -= cz;
+        v3.x -= cx;
+        v3.y -= cy;
+        v3.z -= cz;
 
-        AVG(v01, v0, v1);
-        AVG(v12, v1, v2);
-        AVG(v23, v2, v3);
-        AVG(v30, v3, v0);
+        AVG(v01, &v0, &v1);
+        AVG(v12, &v1, &v2);
+        AVG(v23, &v2, &v3);
+        AVG(v30, &v3, &v0);
         AVG(vM, &v01, &v23);
 
         if (flip)
         {
-            addTrackFace(v, v0, &v01, &vM, &v30, ctrltexTemplate[face->texture].tex4[0], color, flip); v += 4;
-            addTrackFace(v, &v01, v1, &v12, &vM, ctrltexTemplate[face->texture].tex4[1], color, flip); v += 4;
-            addTrackFace(v, &v30, &vM, &v23, v3, ctrltexTemplate[face->texture].tex4[2], color, flip); v += 4;
-            addTrackFace(v, &vM, &v12, v2, &v23, ctrltexTemplate[face->texture].tex4[3], color, flip); v += 4;
+            addTrackFace(v, &v0, &v01, &vM, &v30, ctrltexTemplate[face->texture].tex4[0], color, flip); v += 4;
+            addTrackFace(v, &v01, &v1, &v12, &vM, ctrltexTemplate[face->texture].tex4[1], color, flip); v += 4;
+            addTrackFace(v, &v30, &vM, &v23, &v3, ctrltexTemplate[face->texture].tex4[2], color, flip); v += 4;
+            addTrackFace(v, &vM, &v12, &v2, &v23, ctrltexTemplate[face->texture].tex4[3], color, flip); v += 4;
         }
         else
         {
-            addTrackFace(v, v0, &v01, &vM, &v30, ctrltexTemplate[face->texture].tex4[1], color, flip); v += 4;
-            addTrackFace(v, &v01, v1, &v12, &vM, ctrltexTemplate[face->texture].tex4[0], color, flip); v += 4;
-            addTrackFace(v, &v30, &vM, &v23, v3, ctrltexTemplate[face->texture].tex4[3], color, flip); v += 4;
-            addTrackFace(v, &vM, &v12, v2, &v23, ctrltexTemplate[face->texture].tex4[2], color, flip); v += 4;
+            addTrackFace(v, &v0, &v01, &vM, &v30, ctrltexTemplate[face->texture].tex4[1], color, flip); v += 4;
+            addTrackFace(v, &v01, &v1, &v12, &vM, ctrltexTemplate[face->texture].tex4[0], color, flip); v += 4;
+            addTrackFace(v, &v30, &vM, &v23, &v3, ctrltexTemplate[face->texture].tex4[3], color, flip); v += 4;
+            addTrackFace(v, &vM, &v12, &v2, &v23, ctrltexTemplate[face->texture].tex4[2], color, flip); v += 4;
         }
     }
 }
@@ -600,12 +631,15 @@ void drawSection16(const TrackSection* section)
 {
     const Face* face = gTrack.faces + section->faceStart;
     const vec3i* vertices = gTrack.vertices;
-    const vec3i *v0, *v1, *v2, *v3;
+    vec3i v0, v1, v2, v3;
     vec3i v01, v12, v23, v30, vM;
     vec3i v001, v011, v112, v122, v223, v233, v330, v300, vM01, vM12, vM23, vM30, vM0, vM1, vM2, vM3;
     int32 i;
     int32 flip;
     uint32 color;
+    int32 cx = gCameraViewPos.x;
+    int32 cy = gCameraViewPos.y;
+    int32 cz = gCameraViewPos.z;
 
     V3D_TRACK* v = GU_ALLOC(V3D_TRACK, section->faceCount * 4 * 16);
 
@@ -614,25 +648,37 @@ void drawSection16(const TrackSection* section)
         flip = (face->flags & FLIP_TEXTURE);
         color = face->color;
 
-        v0 = vertices + face->vertex[0];
-        v1 = vertices + face->vertex[1];
-        v2 = vertices + face->vertex[2];
-        v3 = vertices + face->vertex[3];
+        v0 = vertices[face->vertex[0]];
+        v1 = vertices[face->vertex[1]];
+        v2 = vertices[face->vertex[2]];
+        v3 = vertices[face->vertex[3]];
+        v0.x -= cx;
+        v0.y -= cy;
+        v0.z -= cz;
+        v1.x -= cx;
+        v1.y -= cy;
+        v1.z -= cz;
+        v2.x -= cx;
+        v2.y -= cy;
+        v2.z -= cz;
+        v3.x -= cx;
+        v3.y -= cy;
+        v3.z -= cz;
 
-        AVG(v01, v0, v1);
-        AVG(v12, v1, v2);
-        AVG(v23, v2, v3);
-        AVG(v30, v3, v0);
+        AVG(v01, &v0, &v1);
+        AVG(v12, &v1, &v2);
+        AVG(v23, &v2, &v3);
+        AVG(v30, &v3, &v0);
         AVG(vM, &v01, &v23);
 
-        AVG(v001, v0, &v01);
-        AVG(v011, &v01, v1);
-        AVG(v112, v1, &v12);
-        AVG(v122, &v12, v2);
-        AVG(v223, v2, &v23);
-        AVG(v233, &v23, v3);
-        AVG(v330, v3, &v30);
-        AVG(v300, &v30, v0);
+        AVG(v001, &v0, &v01);
+        AVG(v011, &v01, &v1);
+        AVG(v112, &v1, &v12);
+        AVG(v122, &v12, &v2);
+        AVG(v223, &v2, &v23);
+        AVG(v233, &v23, &v3);
+        AVG(v330, &v3, &v30);
+        AVG(v300, &v30, &v0);
         AVG(vM01, &vM, &v01);
         AVG(vM12, &vM, &v12);
         AVG(vM23, &vM, &v23);
@@ -644,10 +690,10 @@ void drawSection16(const TrackSection* section)
 
         if (flip)
         {
-            addTrackFace(v, v0, &v001, &vM0, &v300,   ctrltexTemplate[face->texture].tex16[0], color, flip); v += 4;
+            addTrackFace(v, &v0, &v001, &vM0, &v300,  ctrltexTemplate[face->texture].tex16[0], color, flip); v += 4;
             addTrackFace(v, &v001, &v01, &vM01, &vM0, ctrltexTemplate[face->texture].tex16[1], color, flip); v += 4;
             addTrackFace(v, &v01, &v011, &vM1, &vM01, ctrltexTemplate[face->texture].tex16[2], color, flip); v += 4;
-            addTrackFace(v, &v011, v1, &v112, &vM1,   ctrltexTemplate[face->texture].tex16[3], color, flip); v += 4;
+            addTrackFace(v, &v011, &v1, &v112, &vM1,  ctrltexTemplate[face->texture].tex16[3], color, flip); v += 4;
 
             addTrackFace(v, &v300, &vM0, &vM30, &v30, ctrltexTemplate[face->texture].tex16[4], color, flip); v += 4;
             addTrackFace(v, &vM0, &vM01, &vM, &vM30,  ctrltexTemplate[face->texture].tex16[5], color, flip); v += 4;
@@ -659,17 +705,17 @@ void drawSection16(const TrackSection* section)
             addTrackFace(v, &vM, &vM12, &vM3, &vM23,  ctrltexTemplate[face->texture].tex16[10], color, flip); v += 4;
             addTrackFace(v, &vM12, &v12, &v122, &vM3, ctrltexTemplate[face->texture].tex16[11], color, flip); v += 4;
 
-            addTrackFace(v, &v330, &vM2, &v233, v3,   ctrltexTemplate[face->texture].tex16[12], color, flip); v += 4;
+            addTrackFace(v, &v330, &vM2, &v233, &v3,  ctrltexTemplate[face->texture].tex16[12], color, flip); v += 4;
             addTrackFace(v, &vM2, &vM23, &v23, &v233, ctrltexTemplate[face->texture].tex16[13], color, flip); v += 4;
             addTrackFace(v, &vM23, &vM3, &v223, &v23, ctrltexTemplate[face->texture].tex16[14], color, flip); v += 4;
-            addTrackFace(v, &vM3, &v122, v2, &v223,   ctrltexTemplate[face->texture].tex16[15], color, flip); v += 4;
+            addTrackFace(v, &vM3, &v122, &v2, &v223,  ctrltexTemplate[face->texture].tex16[15], color, flip); v += 4;
         }
         else
         {
-            addTrackFace(v, v0, &v001, &vM0, &v300,   ctrltexTemplate[face->texture].tex16[3], color, flip); v += 4;
+            addTrackFace(v, &v0, &v001, &vM0, &v300,  ctrltexTemplate[face->texture].tex16[3], color, flip); v += 4;
             addTrackFace(v, &v001, &v01, &vM01, &vM0, ctrltexTemplate[face->texture].tex16[2], color, flip); v += 4;
             addTrackFace(v, &v01, &v011, &vM1, &vM01, ctrltexTemplate[face->texture].tex16[1], color, flip); v += 4;
-            addTrackFace(v, &v011, v1, &v112, &vM1,   ctrltexTemplate[face->texture].tex16[0], color, flip); v += 4;
+            addTrackFace(v, &v011, &v1, &v112, &vM1,  ctrltexTemplate[face->texture].tex16[0], color, flip); v += 4;
 
             addTrackFace(v, &v300, &vM0, &vM30, &v30, ctrltexTemplate[face->texture].tex16[7], color, flip); v += 4;
             addTrackFace(v, &vM0, &vM01, &vM, &vM30,  ctrltexTemplate[face->texture].tex16[6], color, flip); v += 4;
@@ -681,10 +727,10 @@ void drawSection16(const TrackSection* section)
             addTrackFace(v, &vM, &vM12, &vM3, &vM23,  ctrltexTemplate[face->texture].tex16[9], color, flip); v += 4;
             addTrackFace(v, &vM12, &v12, &v122, &vM3, ctrltexTemplate[face->texture].tex16[8], color, flip); v += 4;
 
-            addTrackFace(v, &v330, &vM2, &v233, v3,   ctrltexTemplate[face->texture].tex16[15], color, flip); v += 4;
+            addTrackFace(v, &v330, &vM2, &v233, &v3,  ctrltexTemplate[face->texture].tex16[15], color, flip); v += 4;
             addTrackFace(v, &vM2, &vM23, &v23, &v233, ctrltexTemplate[face->texture].tex16[14], color, flip); v += 4;
             addTrackFace(v, &vM23, &vM3, &v223, &v23, ctrltexTemplate[face->texture].tex16[13], color, flip); v += 4;
-            addTrackFace(v, &vM3, &v122, v2, &v223,   ctrltexTemplate[face->texture].tex16[12], color, flip); v += 4;
+            addTrackFace(v, &vM3, &v122, &v2, &v223,  ctrltexTemplate[face->texture].tex16[12], color, flip); v += 4;
         }
     }
 }

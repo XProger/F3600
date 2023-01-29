@@ -2007,6 +2007,15 @@ void matrixSetViewExternal(int32 px, int32 py, int32 pz, int32 rx, int32 ry)
     gCameraViewPos.z = pz;
 }
 
+void matrixSetCameraSpace(void) // matrixTranslate(gCameraViewPos.x, gCameraViewPos.y, gCameraViewPos.z)
+{
+    Matrix* m = gMatrixPtr;
+
+    m->e03 = 0;
+    m->e13 = 0;
+    m->e23 = 0;
+}
+
 void matrixTranslate(int32 x, int32 y, int32 z)
 {
     Matrix* m = gMatrixPtr;

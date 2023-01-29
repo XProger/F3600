@@ -73,6 +73,7 @@ void matrixPush(void);
 void matrixSetViewMenu(void);
 void matrixSetViewInternal(int32 px, int32 py, int32 pz, int32 rx, int32 ry, int32 rz);
 void matrixSetViewExternal(int32 px, int32 py, int32 pz, int32 rx, int32 ry);
+void matrixSetCameraSpace(void);
 void matrixTranslate(int32 x, int32 y, int32 z);
 void matrixRotateYXZ(int32 angleX, int32 angleY, int32 angleZ);
 

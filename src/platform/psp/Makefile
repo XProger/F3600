@@ -17,7 +17,6 @@ LIBDIR  =
 LDFLAGS =
 LIBS    = -lpspgum -lpspgu -lpspaudiolib -lpspaudio -lpsprtc -lpsppower -lpspmath -lm
 
-COPY_DIR        = C:/Projects/F3600/bin
 EXTRA_TARGETS   = EBOOT.PBP
 PSP_EBOOT_TITLE = F3600
 PSP_EBOOT_ICON  = ICON0.PNG

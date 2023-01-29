@@ -95,7 +95,7 @@ void UpdateEffects(void)
 
 void DrawEffects(void)
 {
-    matrixTranslate(gCameraViewPos.x, gCameraViewPos.y, gCameraViewPos.z);
+    matrixSetCameraSpace();
     renderEffects(gEffectsActive);
 }
 
@@ -357,6 +357,8 @@ void DrawShadows(ShipData* shipIndex)
     const vec3i* facePoint;
     ShipData* playerShip;
 
+    matrixSetCameraSpace();
+
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
         playerShip = shipIndex + i;
@@ -418,6 +420,10 @@ void DrawShadows(ShipData* shipIndex)
         px -= (nx * alpha) >> FIXED_SHIFT;
         py -= (ny * alpha) >> FIXED_SHIFT;
         pz -= (nz * alpha) >> FIXED_SHIFT;
+
+        px -= gCameraViewPos.x;
+        py -= gCameraViewPos.y;
+        pz -= gCameraViewPos.z;
 
         renderShadow(0, intensity, px, py, pz, dx, dy, dz, rx, ry, rz);
     }

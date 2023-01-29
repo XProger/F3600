@@ -151,7 +151,7 @@ int32 osLoadFile(const char* name, void* buffer)
 
 #if 0
     char path[256];
-    strcpy(path, "ms0:/PSP/GAME/wipEout/");
+    strcpy(path, "ms0:/PSP/GAME/F3600/");
     strcat(path, name);
     f = sceIoOpen(path, PSP_O_RDONLY, 0777);
 #else

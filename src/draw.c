@@ -1,7 +1,5 @@
 #include "game.h"
 
-const int32 gSkyPos[15] = { -820, -2520, -1930, -5000, -5000, 0, -2260, -40, -2700, 0, -240, -2120, -2700, 0, 0 };
-
 char TrackDirection(const TrackCamera* camera)
 {
     int32 dx, dz;
@@ -34,18 +32,13 @@ char TrackDirection(const TrackCamera* camera)
     }
 }
 
-void DrawSky(Object* sky)
+void DrawSky(void)
 {
-    TrackCamera* cam = &gCamera;
-    int32 px = FRAME_LERP_POS(cam->_pos.x, cam->pos.x);
-    int32 py = FRAME_LERP_POS(cam->_pos.y, cam->pos.y);
-    int32 pz = FRAME_LERP_POS(cam->_pos.z, cam->pos.z);
-
-    matrixTranslate(px, py + gSkyPos[trackNo - 1], pz);
-    renderSky(sky);
+    matrixSetCameraSpace();
+    renderSky(gTrack.sky);
 }
 
-void DrawLandscape(TrackCamera* camera)
+void DrawLandscape(void)
 {
     int32 i;
     int32 x, y, z, px, py;
@@ -53,7 +46,7 @@ void DrawLandscape(TrackCamera* camera)
     int32 extent;
     Object* obj;
 
-    section = camera->section;
+    section = gCamera.section;
 
     for (i = 0; i < section->objectsCount; i++)
     {
@@ -82,7 +75,7 @@ void DrawLandscape(TrackCamera* camera)
 
 void DrawTrack(void)
 {
-    matrixTranslate(0, 0, 0);
+    matrixSetCameraSpace();
     renderTrack();
 }
 
@@ -121,8 +114,8 @@ void DrawView(void)
         }
     }
 
-    DrawSky(gTrack.sky);
-    DrawLandscape(&gCamera);
+    DrawSky();
+    DrawLandscape();
     DrawTrack();
     DrawShadows(ctrlshipIndex);
     DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip);

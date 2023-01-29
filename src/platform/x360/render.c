@@ -579,6 +579,9 @@ void drawSection(const TrackSection* section)
     float u0, u1;
     uint32 color;
     volatile Vertex* v = gTrackVertices;
+    int32 cx = gCameraViewPos.x;
+    int32 cy = gCameraViewPos.y;
+    int32 cz = gCameraViewPos.z;
 
     while (face < last)
     {
@@ -603,10 +606,10 @@ void drawSection(const TrackSection* section)
         color = face->color;
 
         color = (color & 0x00FFFFFF) | (face->texture << 24); // pack texture indect into color.a
-        VERTEX_SET(v[0], v3->x, v3->y, v3->z, u0, 1.0f, color);
-        VERTEX_SET(v[1], v2->x, v2->y, v2->z, u1, 1.0f, color);
-        VERTEX_SET(v[2], v1->x, v1->y, v1->z, u1, 0.0f, color);
-        VERTEX_SET(v[3], v0->x, v0->y, v0->z, u0, 0.0f, color);
+        VERTEX_SET(v[0], v3->x - cx, v3->y - cy, v3->z - cz, u0, 1.0f, color);
+        VERTEX_SET(v[1], v2->x - cx, v2->y - cy, v2->z - cz, u1, 1.0f, color);
+        VERTEX_SET(v[2], v1->x - cx, v1->y - cy, v1->z - cz, u1, 0.0f, color);
+        VERTEX_SET(v[3], v0->x - cx, v0->y - cy, v0->z - cz, u0, 0.0f, color);
         v += 4;
 
         face++;
