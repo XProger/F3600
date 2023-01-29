@@ -23,8 +23,6 @@
 
 #include "game.h"
 
-//#define DEBUG_RENDER
-
 #define i255    (1.0f / 255.0f)
 #define i4096   (1.0f / 4096.0f)
 
@@ -86,96 +84,38 @@
     #define glBindVertexArray    glBindVertexArrayAPPLE
 #endif
 
+typedef uint16 Index;
+
 typedef struct
 {
-    float x;
-    float y;
-    float z;
+    float x, y, z;
     float s, t;
     uint32 color;
-} VertexGL;
-
-typedef uint16 IndexGL;
+} Vertex;
 
 typedef struct
 {
     float e[4][4];
 } mat4;
 
-typedef struct Mesh
-{
-    int32 iStart;
-    int32 iCount;
-    struct Mesh* next;
-} Mesh;
+#define MAX_RENDER_VERTICES     (256)
+#define MAX_RENDER_INDICES      (256)
 
-typedef enum
-{
-    aCoord,
-    aTexCoord,
-    aColor,
-    aMAX
-} AttribType;
-
-typedef enum
-{
-    uProjMatrix,
-    uViewMatrix,
-    uColor,
-    uMAX
-} UniformType;
-
-typedef struct
-{
-    GLuint id;
-    GLint uid[uMAX];
-} Shader;
-
-typedef struct
-{
-    Mesh* mesh;
-    const Shader* shader;
-    const Texture* texture;
-    int32 projMatrix;
-    int32 viewMatrix;
-    uint32 color;
-    int32 layer;
-    int32 blend;
-    uint8 depthWrite;
-    uint8 depthTest;
-    int32 param;
-} RenderState;
-
-#define MAX_RENDER_VERTICES     (1024 * 16)
-#define MAX_RENDER_INDICES      (1024 * 16)
-#define MAX_RENDER_MATRICES     (128)
-#define MAX_RENDER_MESHES       (1024)
-#define MAX_RENDER_STATES       (512)
-
-VertexGL gVertices[MAX_RENDER_VERTICES];
-IndexGL gIndices[MAX_RENDER_INDICES];
-IndexGL gIndicesMerged[MAX_RENDER_INDICES];
-mat4 gMatrices[MAX_RENDER_MATRICES];
-Mesh gMeshes[MAX_RENDER_MESHES];
-RenderState gCurState;
-RenderState gStates[MAX_RENDER_STATES];
-RenderState* gStatePtr;
-
-mat4 mProj3D;
-
-int32 gVerticesCount;
 int32 gIndicesCount;
-int32 gMatricesCount;
-int32 gMeshesCount;
-int32 gStatesCount;
+int32 gVerticesCount;
+Index gIndices[MAX_RENDER_VERTICES];
+Vertex gVertices[MAX_RENDER_INDICES];
+
+mat4 mView, mProj, mProj3D;
 
 int32 gMaxAniso;
 
 uint16 tempData[320 * 240];
 
 GLuint whiteTex;
+const Texture* gCurTexture;
 
-int gRenderMode;
+int32 gRenderMode;
 
 int32 xOffset;
 int32 yOffset;
@@ -184,13 +124,6 @@ int32 gCylX, gCylZ;
 
 GLuint VAO;
 GLuint VBO[2];
-Shader shaderTrack;
-Shader shaderObject;
-Shader shaderShip;
-Shader shaderShield;
-Shader shaderSky;
-Shader shaderBlob;
-Shader shaderGUI;
 
 #define MAX_TRACK_TEX   22
 Texture gTrackTex[MAX_TRACK_TEX];
@@ -200,6 +133,41 @@ extern Texture* gEffectTextures;
 
 const uint32 colorGrey = 0xFF808080;
 const uint32 colorWhite = 0xFFFFFFFF;
+
+// Shaders
+#define DECL_ENUM(v) v,
+#define DECL_STR(v)  #v,
+
+#define SHADER_UNIFORMS(E) \
+    E( uProjMatrix      ) \
+    E( uViewMatrix      ) \
+    E( uColor           )
+
+#define SHADER_ATTRIBS(E) \
+    E( aCoord           ) \
+    E( aTexCoord        ) \
+    E( aColor           )
+
+typedef enum
+{
+    SHADER_UNIFORMS(DECL_ENUM)
+    uMAX
+} UniformType;
+
+typedef enum
+{
+    SHADER_ATTRIBS(DECL_ENUM)
+    aMAX
+} UniformType;
+
+const char* const SHADER_UNIFORM_NAMES[uMAX] = { SHADER_UNIFORMS(DECL_STR) };
+const char* const SHADER_ATTRIB_NAMES[aMAX] = { SHADER_ATTRIBS(DECL_STR) };
+
+typedef struct
+{
+    GLuint id;
+    GLint uid[uMAX];
+} Shader;
 
 const char* GLSL_HEADER_VERT_GL3 =
     "#version 140\n"
@@ -428,6 +396,24 @@ const char* sh_gui =
 
     "#endif\n";
 
+#define SHADER_IMPORT(name) Shader shader_ ## name;
+#define SHADER_INIT(name)   initShader(&shader_ ## name, sh_ ## name)
+
+SHADER_IMPORT(gui);
+SHADER_IMPORT(sky);
+SHADER_IMPORT(track);
+SHADER_IMPORT(object);
+SHADER_IMPORT(ship);
+SHADER_IMPORT(shield);
+SHADER_IMPORT(blob);
+
+// render state
+const Texture* gCurTexture;
+const Shader* gCurShader;
+int32 gCurBlend;
+int32 gCurDepthTest;
+int32 gCurDepthWrite;
+
 void matrixIdentity(mat4* m)
 {
     memset(m, 0, sizeof(mat4));
@@ -475,53 +461,7 @@ void matrixPerspective(mat4* m, float fov, float aspect, float xoff, float yoff,
     m->e[2][3] = -m->e[2][3];
 }
 
-int32 stateCmp(const RenderState* a, const RenderState* b)
-{
-    return (a->shader == b->shader) &&
-           (a->texture == b->texture) &&
-           (a->projMatrix == b->projMatrix) &&
-           (a->viewMatrix == b->viewMatrix) &&
-           (a->color == b->color) &&
-           (a->layer == b->layer) &&
-           (a->blend == b->blend) &&
-           (a->depthWrite == b->depthWrite) &&
-           (a->depthTest == b->depthTest);
-}
-
-void stateCheck()
-{
-    int32 i;
-    Mesh* mesh;
-
-    if (gStatePtr)
-        return;
-
-    for (i = 0; i < gStatesCount; i++)
-    {
-        if (stateCmp(&gCurState, gStates + i))
-        {
-            gStatePtr = gStates + i;
-            break;
-        }
-    }
-
-    if (!gStatePtr)
-    {
-        gStatePtr = gStates + gStatesCount++;
-        *gStatePtr = gCurState;
-        ASSERT(gStatePtr->mesh == NULL);
-    }
-
-    mesh = gMeshes + gMeshesCount++;
-
-    mesh->iStart = gIndicesCount;
-    mesh->iCount = 0;
-    mesh->next = gStatePtr->mesh;
-
-    gStatePtr->mesh = mesh;
-}
-
-void setTexFilter(int bilinear, int mipmap)
+void setTexFilter(int32 bilinear, int32 mipmap)
 {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmap ? (bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST) : (bilinear ? GL_LINEAR : GL_NEAREST));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
@@ -544,7 +484,7 @@ GLuint genTex(uint32 color)
     return id;
 }
 
-void compileShader(Shader* shader, const char* text)
+void initShader(Shader* shader, const char* text)
 {
     int32 i;
     GLchar info[1024];
@@ -582,12 +522,13 @@ void compileShader(Shader* shader, const char* text)
         glDeleteShader(obj);
     }
 
-    glBindAttribLocation(shader->id, aCoord, "aCoord");
-    glBindAttribLocation(shader->id, aTexCoord, "aTexCoord");
-    glBindAttribLocation(shader->id, aColor, "aColor");
-
+    // init attribs
+    for (i = 0; i < aMAX; i++)
+    {
+        glBindAttribLocation(shader->id, i, SHADER_ATTRIB_NAMES[i]);
+    }
+    
     glLinkProgram(shader->id);
-
     glGetProgramInfoLog(shader->id, sizeof(info), NULL, info);
     if (info[0] && strlen(info) > 8)
     {
@@ -595,14 +536,16 @@ void compileShader(Shader* shader, const char* text)
         ASSERT(0);
     }
 
+    // init uniforms
+    for (i = 0; i < uMAX; i++)
+    {
+        shader->uid[i] = glGetUniformLocation(shader->id, SHADER_UNIFORM_NAMES[i]);
+    }
 
+    // set samplers
     i = 0;
     glUseProgram(shader->id);
     glUniform1iv(glGetUniformLocation(shader->id, "sDiffuse"), 1, &i);
-
-    shader->uid[uProjMatrix] = glGetUniformLocation(shader->id, "uProjMatrix");
-    shader->uid[uViewMatrix] = glGetUniformLocation(shader->id, "uViewMatrix");
-    shader->uid[uColor] = glGetUniformLocation(shader->id, "uColor");
 }
 
 void* GetProc(const char *name)
@@ -615,13 +558,18 @@ void* GetProc(const char *name)
     return NULL;
 }
 
+#define DRAW_BEGIN(v,t,c)   gVertexPtr; gVertexPtr += c
+#define DRAW_END()          
+#define VERTEX_SET(v, _x, _y, _z, _s, _t, _color) v.x = (float)_x; v.y = (float)_y; v.z = (float)_z; v.s = (float)_s; v.t = (float)_t; v.color = _color
+#define VERTEX_SET_FACE(i, face, vertices, v) VERTEX_SET(v[i], vertices[face->index[i]].x, vertices[face->index[i]].y, vertices[face->index[i]].z, face->uv[i][0] * iw, face->uv[i][1] * ih, face->color[i])
+
 #define GetProcOGL(x) x=GetProc(#x)
 
 void renderInit()
 {
-    VertexGL* v = NULL;
+    Vertex* v = NULL;
 #if defined(__WIN32__)
-    int format;
+    int32 format;
     PFNWGLCHOOSEPIXELFORMATARBPROC    wglChoosePixelFormatARB    = NULL;
     PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
     PIXELFORMATDESCRIPTOR pfd;
@@ -660,7 +608,7 @@ void renderInit()
 
     if (wglChoosePixelFormatARB && wglCreateContextAttribsARB)
     {
-        const int pixelAttribs[] = {
+        const int32 pixelAttribs[] = {
             WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
             WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
             WGL_DOUBLE_BUFFER_ARB,  GL_TRUE,
@@ -672,7 +620,7 @@ void renderInit()
             0
         };
 
-        const int contextAttribs[] = {
+        const int32 contextAttribs[] = {
             WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
             WGL_CONTEXT_MINOR_VERSION_ARB, 2,
             WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
@@ -680,7 +628,7 @@ void renderInit()
         };
 
         UINT numFormats;
-        int status = wglChoosePixelFormatARB(hDC, pixelAttribs, NULL, 1, &format, &numFormats);
+        int32 status = wglChoosePixelFormatARB(hDC, pixelAttribs, NULL, 1, &format, &numFormats);
         ASSERT(status && numFormats > 0);
 
         DescribePixelFormat(hDC, format, sizeof(pfd), &pfd);
@@ -752,13 +700,14 @@ void renderInit()
     GetProcOGL(glXSwapIntervalSGI);
 #endif
 
-    compileShader(&shaderTrack, sh_track);
-    compileShader(&shaderObject, sh_object);
-    compileShader(&shaderShip, sh_ship);
-    compileShader(&shaderShield, sh_shield);
-    compileShader(&shaderSky, sh_sky);
-    compileShader(&shaderBlob, sh_blob);
-    compileShader(&shaderGUI, sh_gui);
+    // init shaders
+    SHADER_INIT(gui);
+    SHADER_INIT(track);
+    SHADER_INIT(sky);
+    SHADER_INIT(object);
+    SHADER_INIT(ship);
+    SHADER_INIT(shield);
+    SHADER_INIT(blob);
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(2, VBO);
@@ -767,8 +716,8 @@ void renderInit()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[0]);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_RENDER_INDICES * sizeof(IndexGL), NULL, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ARRAY_BUFFER, MAX_RENDER_VERTICES * sizeof(VertexGL), NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_RENDER_INDICES * sizeof(Index), NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, MAX_RENDER_VERTICES * sizeof(Vertex), NULL, GL_DYNAMIC_DRAW);
 
     glEnableVertexAttribArray(aCoord);
     glEnableVertexAttribArray(aTexCoord);
@@ -814,7 +763,7 @@ void renderSwap(void)
 #endif
 }
 
-void renderResize(int width, int height)
+void renderResize(int32 width, int32 height)
 {
     if (width < 1)
         width = 1;
@@ -824,91 +773,39 @@ void renderResize(int width, int height)
     gHeight = height;
 }
 
-void renderOffset(int x, int y)
+void renderOffset(int32 x, int32 y)
 {
     xOffset = x;
     yOffset = y;
 }
 
-void renderSetBlend(int blend)
+void flush()
 {
-    if (gCurState.blend != blend)
-    {
-        gCurState.blend = blend;
-        gStatePtr = NULL;
-    }
-}
+    if (gIndicesCount == 0)
+        return;
 
-void setDepthWrite(int enable)
-{
-    if (gCurState.depthWrite != enable)
-    {
-        gCurState.depthWrite = enable;
-        gStatePtr = NULL;
-    }
-}
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, gIndicesCount * sizeof(Index), gIndices);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, gVerticesCount * sizeof(Vertex), gVertices);
+    glDrawElements(GL_TRIANGLES, gIndicesCount, GL_UNSIGNED_SHORT, NULL);
 
-void setDepthTest(int enable)
-{
-    if (gCurState.depthTest != enable)
-    {
-        gCurState.depthTest = enable;
-        gStatePtr = NULL;
-    }
-}
-
-void setColor(uint32 color)
-{
-    if (gCurState.color != color)
-    {
-        gCurState.color = color;
-        gStatePtr = NULL;
-    }
-}
-
-void renderNextLayer()
-{
-    gCurState.layer++;
-    gStatePtr = NULL;
-}
-
-void setTexture(const Texture* texture)
-{
-    if (gCurState.texture != texture)
-    {
-        gCurState.texture = texture;
-        gStatePtr = NULL;
-    }
-}
-
-void setShader(const Shader* shader)
-{
-    if (gCurState.shader != shader)
-    {
-        gCurState.shader = shader;
-        gStatePtr = NULL;
-    }
-}
-
-void renderClear(void)
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    gIndicesCount = 0;
+    gVerticesCount = 0;
 }
 
 void addTriangle()
 {
-    ASSERT(gIndicesCount + 3 <= MAX_RENDER_INDICES);
+    if (gIndicesCount + 3 > MAX_RENDER_INDICES)
+        flush();
 
     gIndices[gIndicesCount++] = gVerticesCount;
     gIndices[gIndicesCount++] = gVerticesCount + 1;
     gIndices[gIndicesCount++] = gVerticesCount + 2;
-
-    gStatePtr->mesh->iCount += 3;
 }
 
 void addQuad()
 {
-    ASSERT(gIndicesCount + 6 <= MAX_RENDER_INDICES);
+    if (gIndicesCount + 6 > MAX_RENDER_INDICES)
+        flush();
 
     gIndices[gIndicesCount++] = gVerticesCount;
     gIndices[gIndicesCount++] = gVerticesCount + 1;
@@ -917,15 +814,14 @@ void addQuad()
     gIndices[gIndicesCount++] = gVerticesCount;
     gIndices[gIndicesCount++] = gVerticesCount + 2;
     gIndices[gIndicesCount++] = gVerticesCount + 3;
-
-    gStatePtr->mesh->iCount += 6;
 }
 
 void addVertex(float x, float y, float z, float s, float t, uint32 color)
 {
-    ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
+    if (gVerticesCount >= MAX_RENDER_VERTICES)
+        flush();
 
-    VertexGL* v = gVertices + gVerticesCount++;
+    Vertex* v = gVertices + gVerticesCount++;
     v->x = x;
     v->y = y;
     v->z = z;
@@ -934,30 +830,109 @@ void addVertex(float x, float y, float z, float s, float t, uint32 color)
     v->color = color;
 }
 
-void addVertexI(const vec3i* pos, float s, float t, uint32 color)
-{
-    ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
-
-    VertexGL* v = gVertices + gVerticesCount++;
-    v->x = (float)pos->x;
-    v->y = (float)pos->y;
-    v->z = (float)pos->z;
-    v->s = s;
-    v->t = t;
-    v->color = color;
-}
-
 void addVertexS(const vec3s* pos, float s, float t, uint32 color)
 {
-    ASSERT(gVerticesCount < MAX_RENDER_VERTICES);
+    addVertex((float)pos->x, (float)pos->y, (float)pos->z, s, t, color);
+}
 
-    VertexGL* v = gVertices + gVerticesCount++;
-    v->x = (float)pos->x;
-    v->y = (float)pos->y;
-    v->z = (float)pos->z;
-    v->s = s;
-    v->t = t;
-    v->color = color;
+void renderSetBlend(int32 blend)
+{
+    if (gCurBlend == blend)
+        return;
+    flush();
+
+    if (gCurBlend == BLEND_NONE)
+    {
+        glEnable(GL_BLEND);
+    }
+
+    gCurBlend = blend;
+
+    switch (blend)
+    {
+        case BLEND_NONE:
+            glDisable(GL_BLEND);
+            break;
+        case BLEND_ADD:
+            glBlendFunc(GL_ONE, GL_ONE);
+            break;
+        case BLEND_MUL:
+            glBlendFunc(GL_DST_COLOR, GL_ZERO);
+            break;
+    }
+}
+
+void setDepthWrite(int32 enable)
+{
+    if (gCurDepthWrite == enable)
+        return;
+    flush();
+    gCurDepthWrite = enable;
+
+    glDepthMask(enable ? GL_TRUE : GL_FALSE);
+}
+
+void setDepthTest(int32 enable)
+{
+    if (gCurDepthTest == enable)
+        return;
+    flush();
+    gCurDepthTest = enable;
+
+    if (enable)
+        glEnable(GL_DEPTH_TEST);
+    else
+        glDisable(GL_DEPTH_TEST);
+}
+
+void setTexture(const Texture* texture)
+{
+    if (gCurTexture == texture)
+        return;
+    flush();
+    gCurTexture = texture;
+
+    glBindTexture(GL_TEXTURE_2D, texture ? texture->id : whiteTex);
+}
+
+void setShader(const Shader* shader)
+{
+    flush();
+
+    if (gCurShader != shader)
+    {
+        glUseProgram(shader->id);
+    }
+
+    gCurShader = shader;
+
+    if (shader->uid[uProjMatrix] > -1)
+    {
+        glUniformMatrix4fv(shader->uid[uProjMatrix], 1, GL_FALSE, (GLfloat*)&mProj);
+    }
+
+    if (shader->uid[uViewMatrix] > -1)
+    {
+        glUniformMatrix4fv(shader->uid[uViewMatrix], 1, GL_FALSE, (GLfloat*)&mView);
+    }
+}
+
+void setColor(uint32 color)
+{
+    if (gCurShader->uid[uColor] > -1)
+    {
+        GLfloat colorParam[4];
+        colorParam[0] = i255 * (0xFF & (color));
+        colorParam[1] = i255 * (0xFF & (color >> 8));
+        colorParam[2] = i255 * (0xFF & (color >> 16));
+        colorParam[3] = 1.0f;
+        glUniform4fv(gCurShader->uid[uColor], 1, colorParam);
+    }
+}
+
+void renderClear(void)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
 int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
@@ -976,7 +951,6 @@ int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
     int32 y1 = y + g->h * size / 16;
 
     setTexture(t);
-    stateCheck();
 
     addQuad();
     addVertex(x0, y0, 0, u0, v0, color);
@@ -1001,7 +975,6 @@ void renderImage(const Texture* t, int32 x, int32 y)
     int32 y1 = y + t->height;
 
     setTexture(t);
-    stateCheck();
 
     addQuad();
     addVertex(x0, y0, 0, u0, v0, color);
@@ -1025,7 +998,6 @@ void renderBackground(const Texture* t)
     float y1 = guiB;
 
     setTexture(t);
-    stateCheck();
 
     addQuad();
     addVertex(x0, y0, 0, u0, v0, color);
@@ -1052,9 +1024,8 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
     rz >>= SHADOW_SHIFT_W;
 
     renderSetBlend(BLEND_MUL);
-    setShader(&shaderBlob);
+    setShader(&shader_blob);
     setTexture(gShadowTex);
-    stateCheck();
 
     addQuad();
     addVertex(px + dx - rx, py + dy - ry, pz + dz - rz, 0.0f, 0.0f, color);
@@ -1067,9 +1038,7 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
 
 void renderColorQuad(const ColorQuad* q)
 {
-    setShader(&shaderGUI);
     setTexture(NULL);
-    stateCheck();
 
     addQuad();
     addVertex(q->x0, q->y0, 0, 0.0f, 0.0f, q->color[0]);
@@ -1078,7 +1047,7 @@ void renderColorQuad(const ColorQuad* q)
     addVertex(q->x3, q->y3, 0, 0.0f, 0.0f, q->color[3]);
 }
 
-void renderBackFill(int x, int y, int w, int h)
+void renderBackFill(int32 x, int32 y, int32 w, int32 h)
 {
     ColorQuad q;
     q.x0 = x;
@@ -1094,7 +1063,6 @@ void renderBackFill(int x, int y, int w, int h)
     q.color[2] =
     q.color[3] = 0xFF808080;
 
-    renderNextLayer();
     renderSetBlend(BLEND_MUL);
     renderColorQuad(&q);
     renderSetBlend(BLEND_NONE);
@@ -1150,240 +1118,43 @@ void renderPrepare(void)
 
 void setMatrix(const Matrix* matrix)
 {
-    mat4* m = gMatrices + gMatricesCount;
+    flush();
 
-    gCurState.viewMatrix = gMatricesCount++;
-    gStatePtr = NULL;
+    mView.e[0][0] = matrix->e00 * i4096;
+    mView.e[0][1] = matrix->e10 * i4096;
+    mView.e[0][2] = matrix->e20 * i4096;
+    mView.e[0][3] = 0.0f;
 
-    m->e[0][0] = matrix->e00 * i4096;
-    m->e[0][1] = matrix->e10 * i4096;
-    m->e[0][2] = matrix->e20 * i4096;
-    m->e[0][3] = 0.0f;
+    mView.e[1][0] = matrix->e01 * i4096;
+    mView.e[1][1] = matrix->e11 * i4096;
+    mView.e[1][2] = matrix->e21 * i4096;
+    mView.e[1][3] = 0.0f;
 
-    m->e[1][0] = matrix->e01 * i4096;
-    m->e[1][1] = matrix->e11 * i4096;
-    m->e[1][2] = matrix->e21 * i4096;
-    m->e[1][3] = 0.0f;
+    mView.e[2][0] = matrix->e02 * i4096;
+    mView.e[2][1] = matrix->e12 * i4096;
+    mView.e[2][2] = matrix->e22 * i4096;
+    mView.e[2][3] = 0.0f;
 
-    m->e[2][0] = matrix->e02 * i4096;
-    m->e[2][1] = matrix->e12 * i4096;
-    m->e[2][2] = matrix->e22 * i4096;
-    m->e[2][3] = 0.0f;
-
-    m->e[3][0] = matrix->e03;
-    m->e[3][1] = matrix->e13;
-    m->e[3][2] = matrix->e23;
-    m->e[3][3] = 1.0f;
+    mView.e[3][0] = matrix->e03;
+    mView.e[3][1] = matrix->e13;
+    mView.e[3][2] = matrix->e23;
+    mView.e[3][3] = 1.0f;
 }
 
 void renderFrameBegin(void)
 {
-    mat4* m;
-
     // get fixed right vector for sprites
     rsincos(gCamera.hdg, gCylZ, gCylX);
 
-    gCurState.texture = NULL;
-    gCurState.projMatrix = 1;
-    gCurState.viewMatrix = 0;
-    gCurState.layer = 0;
-    gCurState.blend = BLEND_NONE;
-    gCurState.depthWrite = 1;
-    gCurState.depthTest = 0;
-    gStatePtr = NULL;
-
     gRenderMode = RENDER_MODE_3D;
     renderSetMode(RENDER_MODE_2D);
-    setColor(colorWhite);
-
-    // identity matrix
-    m = gMatrices + 0;
-    matrixIdentity(m);
-
-    // otho projection matrix
-    m = gMatrices + 1;
-    matrixOrtho(m, guiL, guiR, guiB, guiT, 0, 1);
-
-    gMatricesCount = 2;
 
     glViewport(0, 0, gWidth, gHeight);
 }
 
 void renderFrameEnd(void)
 {
-    int32 i, start, count;
-    const RenderState* state;
-    const Mesh* mesh;
-
-    const Shader* shader = NULL;
-    const Texture* texture = NULL;
-    int32 projMatrix = -1;
-    int32 viewMatrix = -1;
-    int32 depthTest = 0;
-    int32 depthWrite = 1;
-    int32 blend = BLEND_NONE;
-    uint32 color = 0xBAAAAAAD;
-
-    GLfloat colorValue[4] = {
-        1.0f, 1.0f, 1.0f, 1.0f
-    };
-
-    count = 0;
-    for (i = 0; i < gStatesCount; i++)
-    {
-        state = gStates + i;
-
-        start = count;
-
-        mesh = state->mesh;
-        ASSERT(mesh);
-        while (mesh)
-        {
-            memcpy(gIndicesMerged + count, gIndices + mesh->iStart, mesh->iCount * sizeof(IndexGL));
-            count += mesh->iCount;
-            mesh = mesh->next;
-        }
-
-        state->mesh->next = NULL;
-        state->mesh->iStart = start;
-        state->mesh->iCount = count - start;
-    }
-
-    glBindTexture(GL_TEXTURE_2D, whiteTex);
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, gIndicesCount * sizeof(IndexGL), gIndicesMerged);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, gVerticesCount * sizeof(VertexGL), gVertices);
-
-    for (i = 0; i < gStatesCount; i++)
-    {
-        state = gStates + i;
-
-        // set shader
-        if (shader != state->shader)
-        {
-            shader = state->shader;
-            // need to reset all uniforms for the shader
-            projMatrix = -1;
-            viewMatrix = -1;
-            color = 0xBAAAAAAD;
-            glUseProgram(shader->id);
-        }
-
-        // set texture
-        if (texture != state->texture)
-        {
-            texture = state->texture;
-            glBindTexture(GL_TEXTURE_2D, texture ? texture->id : whiteTex);
-        }
-
-        // set geomProj matrix
-        if (projMatrix != state->projMatrix)
-        {
-            projMatrix = state->projMatrix;
-            ASSERT(shader);
-            if (shader->uid[uProjMatrix] > -1)
-            {
-                glUniformMatrix4fv(shader->uid[uProjMatrix], 1, GL_FALSE, (GLfloat*)(gMatrices + projMatrix));
-            }
-        }
-
-        // set view matrix
-        if (viewMatrix != state->viewMatrix)
-        {
-            viewMatrix = state->viewMatrix;
-            ASSERT(shader);
-            if (shader->uid[uViewMatrix] > -1)
-            {
-                glUniformMatrix4fv(shader->uid[uViewMatrix], 1, GL_FALSE, (GLfloat*)(gMatrices + viewMatrix));
-            }
-        }
-
-        // set color (ships only)
-        if (color != state->color)
-        {
-            color = state->color;
-
-            if (shader->uid[uColor] > -1)
-            {
-                colorValue[0] = i255 * (0xFF & (color));
-                colorValue[1] = i255 * (0xFF & (color >> 8));
-                colorValue[2] = i255 * (0xFF & (color >> 16));
-                glUniform4fv(shader->uid[uColor], 1, colorValue);
-            }
-        }
-
-        // set depth test
-        if (depthTest != state->depthTest)
-        {
-            depthTest = state->depthTest;
-            if (depthTest)
-                glEnable(GL_DEPTH_TEST);
-            else
-                glDisable(GL_DEPTH_TEST);
-        }
-
-        // set depth write
-        if (depthWrite != state->depthWrite)
-        {
-            depthWrite = state->depthWrite;
-            glDepthMask(depthWrite ? GL_TRUE : GL_FALSE);
-        }
-
-        // set blending
-        if (blend != state->blend)
-        {
-            if (blend == BLEND_NONE)
-            {
-                glEnable(GL_BLEND);
-            }
-            blend = state->blend;
-
-            switch (blend)
-            {
-                case BLEND_NONE:
-                    glDisable(GL_BLEND);
-                    break;
-                case BLEND_ADD:
-                    glBlendFunc(GL_ONE, GL_ONE);
-                    break;
-                case BLEND_MUL:
-                    glBlendFunc(GL_DST_COLOR, GL_ZERO);
-                    break;
-            }
-        }
-
-        mesh = state->mesh;
-        ASSERT(mesh);
-        ASSERT(mesh->next == NULL);
-        glDrawElements(GL_TRIANGLES, mesh->iCount, GL_UNSIGNED_SHORT, (GLvoid*)(mesh->iStart * sizeof(IndexGL)));
-    }
-
-#ifdef DEBUG_RENDER
-    {
-        static int32 dbg_v, dbg_i, dbg_x, dbg_m, dbg_s;
-        if (dbg_v < gVerticesCount)
-            dbg_v = gVerticesCount;
-        if (dbg_i < gIndicesCount)
-            dbg_i = gIndicesCount;
-        if (dbg_x < gMatricesCount)
-            dbg_x = gMatricesCount;
-        if (dbg_m < gMeshesCount)
-            dbg_m = gMeshesCount;
-        if (dbg_s < gStatesCount)
-            dbg_s = gStatesCount;
-
-        LOG("v:%d i:%d x:%d m:%d s:%d\n", dbg_v, dbg_i, dbg_x, dbg_m, dbg_s);
-    }
-#endif
-
-    gVerticesCount = 0;
-    gIndicesCount = 0;
-    gMatricesCount = 0;
-    gMeshesCount = 0;
-    gStatesCount = 0;
+    flush();
 }
 
 void drawSection(const TrackSection* section)
@@ -1406,7 +1177,6 @@ void drawSection(const TrackSection* section)
     #endif
 
         setTexture(gTrackTex + face->texture);
-        stateCheck();
 
         if (face->flags & FLIP_TEXTURE)
         {
@@ -1455,7 +1225,7 @@ void renderTrack(void)
     dir = TrackDirection(&gCamera);
 
     setMatrix(gMatrixPtr);
-    setShader(&shaderTrack);
+    setShader(&shader_track);
 
     switch (dir)
     {
@@ -1508,7 +1278,7 @@ void renderEffects(const Effect* fx)
     renderSetBlend(BLEND_ADD);
     setDepthWrite(0);
     setMatrix(gMatrixPtr);
-    setShader(&shaderObject);
+    setShader(&shader_object);
 
     while (fx)
     {
@@ -1526,8 +1296,7 @@ void renderEffects(const Effect* fx)
         uz = gMatrixPtr->e12 * size >> FIXED_SHIFT;
 
         setTexture(gEffectTextures + fx->type);
-        setShader(&shaderObject);
-        stateCheck();
+        setShader(&shader_object);
 
         addQuad();
         addVertex(x - rx - ux, y - ry - uy, z - rz - uz, 0.0f, 0.0f, 0xFF808080);
@@ -1570,8 +1339,6 @@ void drawMesh(const Object* obj)
             ih = 0.0f;
         }
 
-        stateCheck();
-
         if (FACE_QUAD(face))
         {
             addQuad();
@@ -1612,7 +1379,6 @@ void drawMesh(const Object* obj)
         }
 
         setTexture(t);
-        stateCheck();
 
         addQuad();
         addVertex(p->x - wx, p->y - h0, p->z - wz, 0.0f, 0.0f, sprite->color);
@@ -1630,7 +1396,6 @@ void drawMeshShip(const Object* obj, uint32 color)
     const vec3s* vertices = obj->vertices;
     const ObjFace* face = obj->faces;
     const ObjFace* fLast = face + obj->fCount;
-    float colorParam[4];
 
 // opaque
     setColor(color);
@@ -1656,8 +1421,6 @@ void drawMeshShip(const Object* obj, uint32 color)
                 ih = 0.0f;
             }
 
-            stateCheck();
-
             if (FACE_QUAD(face))
             {
                 addQuad();
@@ -1679,8 +1442,8 @@ void drawMeshShip(const Object* obj, uint32 color)
     }
 
 // semi-transparent
-    setColor(0xFF202020);
     renderSetBlend(BLEND_ADD);
+    setColor(0xFF202020);
 
     face = obj->faces;
     while (face < fLast)
@@ -1703,9 +1466,7 @@ void drawMeshShip(const Object* obj, uint32 color)
                 iw = 0.0f;
                 ih = 0.0f;
             }
-
-            stateCheck();
-
+    
             ASSERT(FACE_QUAD(face) == 0); // triangles only
 
             addTriangle();
@@ -1723,7 +1484,7 @@ void drawMeshShip(const Object* obj, uint32 color)
 void renderObject(const Object* object)
 {
     setMatrix(gMatrixPtr);
-    setShader(&shaderObject);
+    setShader(&shader_object);
 
     drawMesh(object);
 }
@@ -1731,18 +1492,18 @@ void renderObject(const Object* object)
 void renderShip(const Object* object, uint32 color)
 {
     setMatrix(gMatrixPtr);
-    setShader(&shaderShip);
+    setShader(&shader_ship);
 
     drawMeshShip(object, color);
 }
 
 void renderShield(const Object* object, int32 counter)
 {
-    setMatrix(gMatrixPtr);
-    setShader(&shaderShield);
     renderSetBlend(BLEND_ADD);
-    setColor(counter);
 
+    setMatrix(gMatrixPtr);
+    setShader(&shader_shield);
+    setColor(counter);
     drawMesh(object);
 
     renderSetBlend(BLEND_NONE);
@@ -1750,9 +1511,10 @@ void renderShield(const Object* object, int32 counter)
 
 void renderSky(const Object* object)
 {
-    setMatrix(gMatrixPtr);
-    setShader(&shaderSky);
     setDepthTest(0);
+
+    setMatrix(gMatrixPtr);
+    setShader(&shader_sky);
 
     drawMesh(object);
 
@@ -1779,7 +1541,6 @@ void renderTargetIcon(Texture* tex)
 
     renderSetBlend(BLEND_ADD);
     setTexture(tex);
-    stateCheck();
 
     addQuad();
     addVertex(px - size, py - size, 0, 0.0f, 1.0f, 0xFF808080);
@@ -1790,33 +1551,31 @@ void renderTargetIcon(Texture* tex)
     renderSetBlend(BLEND_NONE);
 }
 
-void renderSetMode(int renderMode)
+void renderSetMode(int32 renderMode)
 {
-    if (gRenderMode == renderMode)
-        return;
-    gRenderMode = renderMode;
+    flush();
 
     if (renderMode == RENDER_MODE_2D)
     {
-        setDepthTest(0);
+        //setFilter(0);
 
-        gCurState.viewMatrix = 0;
-        gCurState.projMatrix = 1;
-        gCurState.shader = &shaderGUI;
-        gStatePtr = NULL;
+        matrixOrtho(&mProj, guiL, guiR, guiB, guiT, 0, 1);
+
+        setDepthTest(0);
+        renderSetBlend(BLEND_NONE);
+
+        setShader(&shader_gui);
     }
     else
     {
-        setDepthTest(1);
+        //setFilter(1);
 
         matrixSetViewMenu();
-        matrixPerspective(gMatrices + gMatricesCount, gCameraFOV / 4096.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, Z_NEAR, Z_FAR);
-        mProj3D = gMatrices[gMatricesCount];
+        matrixPerspective(&mProj, gCameraFOV / 4096.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, Z_NEAR, Z_FAR);
+        mProj3D = mProj;
 
-        gCurState.viewMatrix = 0;
-        gCurState.projMatrix = gMatricesCount++;
-        gCurState.shader = NULL;
-        gStatePtr = NULL;
+        setDepthTest(1);
+        renderSetBlend(BLEND_NONE);
     }
 }
 
@@ -1843,7 +1602,7 @@ uint16 RGB555(uint16 c)
     c = (r << 11) | (g << 6) | (b << 1) | 1;
     return c;
 }
-
+/*
 void dumpBitmap(const char* fileName, int32 width, int32 height, uint8* data32)
 {
     struct BITMAPFILEHEADER {
@@ -1897,7 +1656,7 @@ void dumpBitmap(const char* fileName, int32 width, int32 height, uint8* data32)
 
     fclose(f);
 }
-
+*/
 Texture* renderCreateTexture(uint8* ptr)
 {
     Tim* tim = (Tim*)ptr;

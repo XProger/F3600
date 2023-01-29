@@ -31,7 +31,7 @@ typedef struct
     float e[4][4];
 } mat4;
 
-mat4 mView, mProj, mProj2D, mProj3D;
+mat4 mView, mProj, mProj3D;
 
 typedef struct
 {
@@ -136,11 +136,6 @@ void setShader(const Shader* shader, float* color)
     }
 }
 
-#define DRAW_BEGIN(v,t,c)   IDirect3DDevice9_BeginVertices(gDevice, t, c, sizeof(*v), (void**)&v)
-#define DRAW_END()          IDirect3DDevice9_EndVertices(gDevice)
-#define VERTEX_SET(v, _x, _y, _z, _s, _t, _color) v.x = (float)_x; v.y = (float)_y; v.z = (float)_z; v.s = (float)_s; v.t = (float)_t; v.color = _color
-#define VERTEX_SET_FACE(i, face, vertices, v) VERTEX_SET(v[i], vertices[face->index[i]].x, vertices[face->index[i]].y, vertices[face->index[i]].z, face->uv[i][0] * iw, face->uv[i][1] * ih, face->color[i])
-
 void setFilter(int32 enable)
 {
     IDirect3DDevice9_SetSamplerState(gDevice, 0, D3DSAMP_MINFILTER, enable ? D3DTEXF_LINEAR : D3DTEXF_POINT);
@@ -169,6 +164,11 @@ void setTexture(const Texture* texture)
         IDirect3DDevice9_SetTexture(gDevice, 0, (D3DBaseTexture*)whiteTex);
     }
 }
+
+#define DRAW_BEGIN(v,t,c)   IDirect3DDevice9_BeginVertices(gDevice, t, c, sizeof(*v), (void**)&v)
+#define DRAW_END()          IDirect3DDevice9_EndVertices(gDevice)
+#define VERTEX_SET(v, _x, _y, _z, _s, _t, _color) v.x = (float)_x; v.y = (float)_y; v.z = (float)_z; v.s = (float)_s; v.t = (float)_t; v.color = _color
+#define VERTEX_SET_FACE(i, face, vertices, v) VERTEX_SET(v[i], vertices[face->index[i]].x, vertices[face->index[i]].y, vertices[face->index[i]].z, face->uv[i][0] * iw, face->uv[i][1] * ih, face->color[i])
 
 void renderInit()
 {
@@ -265,7 +265,7 @@ void renderSwap(void)
     IDirect3DDevice9_Present(gDevice, NULL, NULL, NULL, NULL);
 }
 
-void renderResize(int width, int height)
+void renderResize(int32 width, int32 height)
 {
 #ifdef __WIN32__
     if (width < 1)
@@ -283,13 +283,13 @@ void renderResize(int width, int height)
 #endif
 }
 
-void renderOffset(int x, int y)
+void renderOffset(int32 x, int32 y)
 {
     xOffset = x;
     yOffset = y;
 }
 
-void renderSetBlend(int blend)
+void renderSetBlend(int32 blend)
 {
     switch (blend)
     {
@@ -308,18 +308,14 @@ void renderSetBlend(int blend)
     IDirect3DDevice9_SetRenderState(gDevice, D3DRS_ALPHABLENDENABLE, TRUE);
 }
 
-void setDepthWrite(int enable)
+void setDepthWrite(int32 enable)
 {
     IDirect3DDevice9_SetRenderState(gDevice, D3DRS_ZWRITEENABLE, enable);
 }
 
-void setDepthTest(int enable)
+void setDepthTest(int32 enable)
 {
     IDirect3DDevice9_SetRenderState(gDevice, D3DRS_ZENABLE, enable);
-}
-
-void renderNextLayer()
-{
 }
 
 void renderClear(void)
@@ -410,7 +406,7 @@ void renderColorQuad(const ColorQuad* q)
     DRAW_END();
 }
 
-void renderBackFill(int x, int y, int w, int h)
+void renderBackFill(int32 x, int32 y, int32 w, int32 h)
 {
     ColorQuad q;
     q.x0 = x;
@@ -426,7 +422,6 @@ void renderBackFill(int x, int y, int w, int h)
     q.color[2] =
     q.color[3] = 0xFF808080;
 
-    renderNextLayer();
     renderSetBlend(BLEND_MUL);
     renderColorQuad(&q);
     renderSetBlend(BLEND_NONE);
@@ -991,14 +986,13 @@ void renderTargetIcon(Texture* tex)
     renderSetBlend(BLEND_NONE);
 }
 
-void renderSetMode(int renderMode)
+void renderSetMode(int32 renderMode)
 {
     if (renderMode == RENDER_MODE_2D)
     {
         setFilter(0);
 
         matrixOrtho(&mProj, (float)guiL, (float)guiR, (float)guiB, (float)guiT, 0, 1);
-        mProj2D = mProj;
 
         setDepthTest(0);
         renderSetBlend(BLEND_NONE);

@@ -6,16 +6,16 @@
 // optimized Object & Primitive
 #define NO_TEXTURE 0xFFFF
 
-#define FACE_TEXTURE(face) (face->flags & 0xFFFF)
+#define FACE_TEXTURE(face) ((face)->flags & 0xFFFF)
 #ifdef __3DO__
-#define FACE_QUAD(face) ((face->index >> 24) != ((face->index >> 16) & 0xFF))
+#define FACE_QUAD(face) (((face)->index >> 24) != (((face)->index >> 16) & 0xFF))
 #else
-#define FACE_QUAD(face) (face->index[2] != face->index[3])
+#define FACE_QUAD(face) ((face)->index[2] != (face)->index[3])
 #endif
 #define FACE_FLAG_ENGINE (1 << 31)
 
-#define SPRITE_TEXTURE(sprite) (sprite->flags & 0xFFFF)
-#define SPRITE_FLIP(face) (face->flags & (1 << 31))
+#define SPRITE_TEXTURE(sprite) ((sprite)->flags & 0xFFFF)
+#define SPRITE_FLIP(sprite) ((sprite)->flags & (1 << 31))
 
 enum ObjType
 {
@@ -271,15 +271,15 @@ void renderInit(void);
 void renderFree(void);
 void renderSetVSync(int32 enable);
 void renderSwap(void);
-void renderResize(int width, int height);
-void renderOffset(int x, int y);
+void renderResize(int32 width, int32 height);
+void renderOffset(int32 x, int32 y);
 void renderClear(void);
 int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color);
 void renderImage(const Texture* t, int32 x, int32 y);
 void renderBackground(const Texture* t);
 void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int32 dx, int32 dy, int32 dz, int32 rx, int32 ry, int32 rz);
 void renderColorQuad(const ColorQuad* q);
-void renderBackFill(int x, int y, int w, int h);
+void renderBackFill(int32 x, int32 y, int32 w, int32 h);
 
 void renderPrepare(void);
 void renderFrameBegin(void);
@@ -291,9 +291,8 @@ void renderShip(const Object* object, uint32 color);
 void renderShield(const Object* object, int32 counter);
 void renderSky(const Object* object);
 void renderTargetIcon(Texture* tex);
-void renderSetMode(int renderMode);
-void renderSetBlend(int blend);
-void renderNextLayer(void);
+void renderSetMode(int32 renderMode);
+void renderSetBlend(int32 blend);
 Texture* renderCreateTexture(uint8* ptr);
 void renderDeleteTexture(Texture* texture);
 

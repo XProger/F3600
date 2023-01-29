@@ -912,6 +912,54 @@ void IntelPrim(PrmPSX prm)
     }
 }
 
+void sortFaces(ObjFace* v, int32 L, int32 R)
+{
+    int32 i = L;
+    int32 j = R;
+    uint32 idx = FACE_TEXTURE(v + (L + R) / 2);
+
+    while (i <= j) {
+        while (FACE_TEXTURE(v + i) < idx) i++;
+        while (FACE_TEXTURE(v + j) > idx) j--;
+
+        if (i <= j)
+        {
+            ObjFace t = v[i];
+            v[i] = v[j];
+            v[j] = t;
+            i++;
+            j--;
+        }
+    }
+
+    if (L < j) sortFaces(v, L, j);
+    if (i < R) sortFaces(v, i, R);
+}
+
+void sortSprites(ObjSprite* v, int32 L, int32 R)
+{
+    int32 i = L;
+    int32 j = R;
+    uint32 idx = SPRITE_TEXTURE(v + (L + R) / 2);
+
+    while (i <= j) {
+        while (SPRITE_TEXTURE(v + i) < idx) i++;
+        while (SPRITE_TEXTURE(v + j) > idx) j--;
+
+        if (i <= j)
+        {
+            ObjSprite t = v[i];
+            v[i] = v[j];
+            v[j] = t;
+            i++;
+            j--;
+        }
+    }
+
+    if (L < j) sortSprites(v, L, j);
+    if (i < R) sortSprites(v, i, R);
+}
+
 Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* types)
 {
     int32 textureStart = texturePtr - gTextures;
@@ -925,6 +973,8 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
     Object* retObj;
 
     ObjSprite* sprites = (ObjSprite*)malloc(sizeof(ObjSprite) * MAX_SPRITES_PER_OBJECT);
+
+    int32 isDroid = (strstr(name, "rescu") != NULL);
 
     // copy PSX data to the temporary buffer
     memcpy(start, pDRAM, size);
@@ -1184,6 +1234,18 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
         {
             obj->faces = NULL;
         }
+        else
+        {
+            // droid uses first 11 faces as hardcoded for lighting
+            if (isDroid)
+            {
+                sortFaces(obj->faces, 11, obj->fCount - 1);
+            }
+            else
+            {
+                sortFaces(obj->faces, 0, obj->fCount - 1);
+            }
+        }
         data += sizeof(ObjFace) * obj->fCount;
 
         obj->sCount = s - sprites;
@@ -1191,6 +1253,7 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
         {
             obj->sprites = (ObjSprite*)data;
             memcpy(obj->sprites, sprites, sizeof(ObjSprite) * obj->sCount);
+            sortSprites(obj->sprites, 0, obj->sCount - 1);
         }
         else
         {

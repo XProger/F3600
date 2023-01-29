@@ -26,7 +26,7 @@ typedef enum
     uMAX
 } UniformType;
 
-const char* const SHADER_UNIFORM_NAME[uMAX] = { SHADER_UNIFORMS(DECL_STR) };
+const char* const SHADER_UNIFORM_NAMES[uMAX] = { SHADER_UNIFORMS(DECL_STR) };
 
 typedef struct
 {
@@ -100,7 +100,7 @@ typedef struct
     float e[4][4];
 } mat4;
 
-mat4 mView, mProj, mProj2D, mProj3D;
+mat4 mView, mProj, mProj3D;
 
 void matrixOrtho(mat4* m, float l, float r, float b, float t, float znear, float zfar)
 {
@@ -168,7 +168,7 @@ void initShader(Shader *shader, void* vp, void* fp)
 
     for (i = 0; i < uMAX; i++)
     {
-        shader->uIndex[i] = rsxVertexProgramGetConst(shader->vp, SHADER_UNIFORM_NAME[i]);
+        shader->uIndex[i] = rsxVertexProgramGetConst(shader->vp, SHADER_UNIFORM_NAMES[i]);
     }
 
     rsxFragmentProgramGetUCode(shader->fp, &ucode, &size);
@@ -377,18 +377,18 @@ void renderSwap(void)
     rsxSetSurface(gContext, gSurface + gSurfaceIndex);
 }
 
-void renderResize(int width, int height)
+void renderResize(int32 width, int32 height)
 {
     //
 }
 
-void renderOffset(int x, int y)
+void renderOffset(int32 x, int32 y)
 {
     xOffset = x;
     yOffset = y;
 }
 
-void renderSetBlend(int blend)
+void renderSetBlend(int32 blend)
 {
     switch (blend)
     {
@@ -405,19 +405,14 @@ void renderSetBlend(int blend)
     rsxSetBlendEnable(gContext, GCM_TRUE);
 }
 
-void setDepthWrite(int enable)
+void setDepthWrite(int32 enable)
 {
     rsxSetDepthWriteEnable(gContext, enable ? GCM_TRUE : GCM_FALSE);
 }
 
-void setDepthTest(int enable)
+void setDepthTest(int32 enable)
 {
     rsxSetDepthTestEnable(gContext, enable ? GCM_TRUE : GCM_FALSE);
-}
-
-void renderNextLayer()
-{
-    //
 }
 
 void renderClear(void)
@@ -501,7 +496,7 @@ void renderColorQuad(const ColorQuad* q)
     drawPrim(GCM_TYPE_QUADS, v);
 }
 
-void renderBackFill(int x, int y, int w, int h)
+void renderBackFill(int32 x, int32 y, int32 w, int32 h)
 {
     ColorQuad q;
     q.x0 = x;
@@ -517,7 +512,6 @@ void renderBackFill(int x, int y, int w, int h)
     q.color[2] =
     q.color[3] = 0xFF808080;
 
-    renderNextLayer();
     renderSetBlend(BLEND_MUL);
     renderColorQuad(&q);
     renderSetBlend(BLEND_NONE);
@@ -1101,14 +1095,13 @@ void renderTargetIcon(Texture* tex)
     renderSetBlend(BLEND_NONE);
 }
 
-void renderSetMode(int renderMode)
+void renderSetMode(int32 renderMode)
 {
     if (renderMode == RENDER_MODE_2D)
     {
         setFilter(0);
 
         matrixOrtho(&mProj, guiL, guiR, guiB, guiT, 0, 1);
-        mProj2D = mProj;
 
         setDepthTest(0);
         renderSetBlend(BLEND_NONE);

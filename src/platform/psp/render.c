@@ -221,18 +221,18 @@ void renderSwap(void)
     sceGuSwapBuffers();
 }
 
-void renderResize(int width, int height)
+void renderResize(int32 width, int32 height)
 {
     //
 }
 
-void renderOffset(int x, int y)
+void renderOffset(int32 x, int32 y)
 {
     xOffset = x;
     yOffset = y;
 }
 
-void renderSetBlend(int blend)
+void renderSetBlend(int32 blend)
 {
     switch (blend)
     {
@@ -249,12 +249,12 @@ void renderSetBlend(int blend)
     sceGuEnable(GU_BLEND);
 }
 
-void renderDepthWrite(int enable)
+void setDepthWrite(int32 enable)
 {
     sceGuDepthMask(enable ? 0 : 1);
 }
 
-void renderDepthTest(int enable)
+void setDepthTest(int32 enable)
 {
     if (enable)
         sceGuEnable(GU_DEPTH_TEST);
@@ -262,12 +262,7 @@ void renderDepthTest(int enable)
         sceGuDisable(GU_DEPTH_TEST);
 }
 
-void renderNextLayer()
-{
-    //
-}
-
-void renderSetTexture(const Texture* texture)
+void setTexture(const Texture* texture)
 {
     uint8* data;
 
@@ -326,7 +321,7 @@ int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
     VT2D_SET(v[0], u0, v0, x0, y0);
     VT2D_SET(v[1], u1, v1, x1, y1);
 
-    renderSetTexture(t);
+    setTexture(t);
     if (color == TEXT_COLOR_HIGHLIGHT)
     {
         sceGuClutLoad(1, gHightlightTextCLUT);
@@ -352,7 +347,7 @@ void renderImage(const Texture* t, int32 x, int32 y)
     VT2D_SET(v[0], u0, v0, x0, y0);
     VT2D_SET(v[1], u1, v1, x1, y1);
 
-    renderSetTexture(t);
+    setTexture(t);
     sceGumDrawArray(GU_SPRITES, VT2D_FMT, 2, NULL, v);
 }
 
@@ -372,7 +367,7 @@ void renderBackground(const Texture* t)
     VT2D_SET(v[0], u0, v0, x0, y0);
     VT2D_SET(v[1], u1, v1, x1, y1);
 
-    renderSetTexture(t);
+    setTexture(t);
     sceGumDrawArray(GU_SPRITES, VT2D_FMT, 2, NULL, v);
 }
 
@@ -384,11 +379,11 @@ void renderColorQuad(const ColorQuad* q)
     VC2D_SET(v[2], q->color[2], q->x2 + gBorderX, q->y2 + gBorderY);
     VC2D_SET(v[3], q->color[3], q->x3 + gBorderX, q->y3 + gBorderY);
 
-    renderSetTexture(NULL);
+    setTexture(NULL);
     sceGumDrawArray(GU_TRIANGLE_FAN, VC2D_FMT, 4, NULL, v);
 }
 
-void renderBackFill(int x, int y, int w, int h)
+void renderBackFill(int32 x, int32 y, int32 w, int32 h)
 {
     ColorQuad q;
     q.x0 = x;
@@ -404,7 +399,6 @@ void renderBackFill(int x, int y, int w, int h)
     q.color[2] =
     q.color[3] = 0xFF808080;
 
-    renderNextLayer();
     renderSetBlend(BLEND_MUL);
     renderColorQuad(&q);
     renderSetBlend(BLEND_NONE);
@@ -439,7 +433,7 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
     sceGumMatrixMode(GU_VIEW);
 
     renderSetBlend(BLEND_MUL);
-    renderSetTexture(gShadowTex);
+    setTexture(gShadowTex);
     sceGumDrawArray(GU_TRIANGLE_FAN, V3D_TRACK_FMT, 4, NULL, v);
     renderSetBlend(BLEND_NONE);
 
@@ -453,7 +447,7 @@ void renderPrepare(void)
     //
 }
 
-void renderSetMatrix(const Matrix* matrix)
+void setMatrix(const Matrix* matrix)
 {
     mat4 m;
 
@@ -522,7 +516,7 @@ void addTrackFace(V3D_TRACK* v, const vec3i* v0, const vec3i* v1, const vec3i* v
     V3D_SET(v[2], u1, 0.0f, color, v1->x, v1->y, v1->z);
     V3D_SET(v[3], u0, 0.0f, color, v0->x, v0->y, v0->z);
 
-    renderSetTexture(gTextures + ctrllibraryTextures + texIndex);
+    setTexture(gTextures + ctrllibraryTextures + texIndex);
     sceGumDrawArray(GU_TRIANGLE_FAN, V3D_TRACK_FMT, 4, NULL, v);
 }
 
@@ -749,7 +743,7 @@ void renderTrack(void)
     sceGumLoadMatrix((ScePspFMatrix4*)&mIdentity);
     sceGumMatrixMode(GU_VIEW);
 
-    renderSetMatrix(gMatrixPtr);
+    setMatrix(gMatrixPtr);
 
     switch (dir)
     {
@@ -831,8 +825,8 @@ void renderEffects(const Effect* fx)
     V3D_OBJ* v = GU_ALLOC(V3D_OBJ, getEffectsCount(fx) * 2);
 
     sceGuDisable(GU_ALPHA_TEST);
-    renderSetMatrix(gMatrixPtr);
-    renderDepthWrite(0);
+    setMatrix(gMatrixPtr);
+    setDepthWrite(0);
     renderSetBlend(BLEND_ADD);
 
     while (fx)
@@ -853,19 +847,19 @@ void renderEffects(const Effect* fx)
         V3D_SET(v[0], 0.0f, 0.0f, 0xFFFFFFFF, x - rx - ux, y - ry - uy, z - rz - uz);
         V3D_SET(v[1], 1.0f, 1.0f, 0xFFFFFFFF, x + rx + ux, y + ry + uy, z + rz + uz);
 
-        renderSetTexture(gEffectTextures + fx->type);
+        setTexture(gEffectTextures + fx->type);
         sceGumDrawArray(GU_SPRITES, V3D_OBJ_FMT, 2, NULL, v); // TODO batch by texture
         v += 2;
 
         fx = fx->next;
     }
 
-    renderDepthWrite(1);
+    setDepthWrite(1);
     renderSetBlend(BLEND_NONE);
     sceGuEnable(GU_ALPHA_TEST);
 }
 
-void renderMesh(const Object* obj)
+void drawMesh(const Object* obj)
 {
     V3D_OBJ* v;
     int32 i;
@@ -893,13 +887,13 @@ void renderMesh(const Object* obj)
         if (texIndex != NO_TEXTURE)
         {
             Texture* t = gTextures + FACE_TEXTURE(face);
-            renderSetTexture(t);
+            setTexture(t);
             iw = 1.0f / t->widthPOT;
             ih = 1.0f / t->heightPOT;
         }
         else
         {
-            renderSetTexture(NULL);
+            setTexture(NULL);
             iw = 0.0f;
             ih = 0.0f;
         }
@@ -947,13 +941,13 @@ void renderMesh(const Object* obj)
         V3D_SET(v[0], 0.0f, 0.0f, sprite->color, p->x - wx, p->y - h0, p->z - wz);
         V3D_SET(v[1], iw, ih, sprite->color, p->x + wx, p->y + h1, p->z + wz);
 
-        renderSetTexture(t);
+        setTexture(t);
         sceGumDrawArray(GU_SPRITES, V3D_OBJ_FMT, 2, NULL, v);
         v += 2;
     }
 }
 
-void renderMeshShip(const Object* obj, uint32 color)
+void drawMeshShip(const Object* obj, uint32 color)
 {
     V3D_OBJ* v;
     int32 i;
@@ -985,13 +979,13 @@ void renderMeshShip(const Object* obj, uint32 color)
         if (texIndex != NO_TEXTURE)
         {
             Texture* t = gTextures + FACE_TEXTURE(face);
-            renderSetTexture(t);
+            setTexture(t);
             iw = 1.0f / t->widthPOT;
             ih = 1.0f / t->heightPOT;
         }
         else
         {
-            renderSetTexture(NULL);
+            setTexture(NULL);
             iw = 0.0f;
             ih = 0.0f;
         }
@@ -1042,24 +1036,24 @@ void renderMeshShip(const Object* obj, uint32 color)
 
 void renderObject(const Object* object)
 {
-    renderSetMatrix(gMatrixPtr);
-    renderMesh(object);
+    setMatrix(gMatrixPtr);
+    drawMesh(object);
 }
 
 void renderShip(const Object* object, uint32 color)
 {
     sceGuDisable(GU_ALPHA_TEST);
-    renderSetMatrix(gMatrixPtr);
-    renderMeshShip(object, color);
+    setMatrix(gMatrixPtr);
+    drawMeshShip(object, color);
     sceGuEnable(GU_ALPHA_TEST);
 }
 
 void renderShield(const Object* object, int32 counter)
 {
     sceGuDisable(GU_ALPHA_TEST);
-    renderSetMatrix(gMatrixPtr);
+    setMatrix(gMatrixPtr);
     renderSetBlend(BLEND_ADD);
-    renderMesh(object);
+    drawMesh(object);
     renderSetBlend(BLEND_NONE);
     sceGuEnable(GU_ALPHA_TEST);
 }
@@ -1067,10 +1061,10 @@ void renderShield(const Object* object, int32 counter)
 void renderSky(const Object* object)
 {
     sceGuDisable(GU_ALPHA_TEST);
-    renderSetMatrix(gMatrixPtr);
-    renderDepthTest(0);
-    renderMesh(object);
-    renderDepthTest(1);
+    setMatrix(gMatrixPtr);
+    setDepthTest(0);
+    drawMesh(object);
+    setDepthTest(1);
     sceGuEnable(GU_ALPHA_TEST);
 }
 
@@ -1102,15 +1096,15 @@ void renderTargetIcon(Texture* tex)
 
     sceGuDisable(GU_ALPHA_TEST);
     renderSetBlend(BLEND_ADD);
-    renderDepthTest(0);
-    renderSetTexture(tex);
+    setDepthTest(0);
+    setTexture(tex);
     sceGumDrawArray(GU_SPRITES, VT2D_FMT, 2, NULL, v);
-    renderDepthTest(1);
+    setDepthTest(1);
     renderSetBlend(BLEND_NONE);
     sceGuEnable(GU_ALPHA_TEST);
 }
 
-void renderSetMode(int renderMode)
+void renderSetMode(int32 renderMode)
 {
     //mModel.e[0][0] = mModel.e[1][1] = mModel.e[2][2] = 32767.0f; // TODO GU_VERTEX_16BIT
 
@@ -1119,7 +1113,7 @@ void renderSetMode(int renderMode)
         sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
         sceGuTexFilter(GU_NEAREST, GU_NEAREST);
 
-        renderDepthTest(0);
+        setDepthTest(0);
         renderSetBlend(BLEND_NONE);
     }
     else
@@ -1127,7 +1121,7 @@ void renderSetMode(int renderMode)
         sceGuTexFunc(GU_TFX_MODULATE2X, GU_TCC_RGBA);
         sceGuTexFilter(GU_LINEAR, GU_LINEAR);
 
-        renderDepthTest(1);
+        setDepthTest(1);
         renderSetBlend(BLEND_NONE);
 
         matrixSetViewMenu();
