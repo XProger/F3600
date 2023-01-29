@@ -30,8 +30,11 @@
 #define Z_FAR   65535
 
 #if defined(__WIN32__) || defined(__LINUX__)
+    PFNGLGETSTRINGIPROC                 glGetStringi;
+
     // Textures
     PFNGLGENERATEMIPMAPPROC             glGenerateMipmap;
+    PFNGLTEXIMAGE3DPROC                 glTexImage3D;
 
     // Shader
     PFNGLCREATEPROGRAMPROC              glCreateProgram;
@@ -84,6 +87,21 @@
     #define glBindVertexArray    glBindVertexArrayAPPLE
 #endif
 
+#define EXT_DECL(v) uint8 v;
+#define EXT_CHECK(v) if (ext && strstr(ext, "_"#v)) support.##v = 1;
+
+#define EXT_LIST(E) \
+    E( texture_array    )
+
+#define CHECK_EXT(name) 
+
+typedef struct
+{
+    EXT_LIST(EXT_DECL)
+} Support;
+
+Support support;
+
 typedef uint16 Index;
 
 typedef struct
@@ -126,6 +144,7 @@ GLuint VAO;
 GLuint VBO[2];
 
 #define MAX_TRACK_TEX   22
+Texture gTrackTexArray;
 Texture gTrackTex[MAX_TRACK_TEX];
 uint16 gTrackTexData[MAX_TRACK_TEX][128 * 128];
 
@@ -193,8 +212,8 @@ const char* GLSL_HEADER_FRAG_GL2 =
     "#define fragColor gl_FragColor\n";
 
 const char* sh_track =
-    "varying vec2 vTexCoord;\n"
-    "varying vec4 vColor;\n"
+    "varying vec3 vTexCoord;\n"
+    "varying vec3 vColor;\n"
 
     "#ifdef VERTEX\n"
         "uniform mat4 uProjMatrix;\n"
@@ -205,17 +224,30 @@ const char* sh_track =
         "attribute vec4 aColor;\n"
 
         "void main() {\n"
-            "vTexCoord = aTexCoord;\n"
-            "vColor = aColor * vec4(2.0, 2.0, 2.0, 1.0);\n"
+            "vTexCoord.xy = aTexCoord;\n"
+        "#ifdef USE_TEXTURE_ARRAY\n"
+            "vTexCoord.z = floor(aColor.w * 255.0);\n"
+        "#else\n"
+            "vTexCoord.z = 0.0;\n"
+        "#endif\n"
+            "vColor = aColor.xyz * 2.0;\n"
             "gl_Position = uProjMatrix * (uViewMatrix * vec4(aCoord, 1.0));\n"
         "}\n"
 
     "#else\n"
-
-        "uniform sampler2D sDiffuse;\n"
+        "#ifdef USE_TEXTURE_ARRAY\n"
+            "uniform sampler2DArray sDiffuse;\n"
+        "#else\n"
+            "uniform sampler2D sDiffuse;\n"
+        "#endif\n"
 
         "void main() {\n"
-            "fragColor = texture2D(sDiffuse, vTexCoord) * vColor;\n"
+        "#ifdef USE_TEXTURE_ARRAY\n"
+            "fragColor = texture(sDiffuse, vTexCoord);\n"
+        "#else\n"
+            "fragColor = texture2D(sDiffuse, vTexCoord.xy);\n"
+        "#endif\n"
+            "fragColor.xyz *= vColor;\n"
             "if (fragColor.a <= 0.0) discard;\n"
         "}\n"
 
@@ -461,16 +493,17 @@ void matrixPerspective(mat4* m, float fov, float aspect, float xoff, float yoff,
     m->e[2][3] = -m->e[2][3];
 }
 
-void setTexFilter(int32 bilinear, int32 mipmap)
+void setFilter(GLenum target, int32 bilinear, int32 mipmap)
 {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmap ? (bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST) : (bilinear ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipmap ? (bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST) : (bilinear ? GL_LINEAR : GL_NEAREST));
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     if (mipmap && gMaxAniso)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gMaxAniso);
+        glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, gMaxAniso);
     }
 }
 
@@ -480,7 +513,7 @@ GLuint genTex(uint32 color)
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color);
-    setTexFilter(0, 0);
+    setFilter(GL_TEXTURE_2D, 0, 0);
     return id;
 }
 
@@ -492,23 +525,29 @@ void initShader(Shader* shader, const char* text)
     const GLenum type[2] = { GL_VERTEX_SHADER, GL_FRAGMENT_SHADER };
 
 #if defined(__MAC__)
-    const GLchar *code[2][3] = {
-        { GLSL_HEADER_VERT_GL2, "#line 0\n", text },
-        { GLSL_HEADER_FRAG_GL2, "#line 0\n", text }
+    const GLchar *code[2][4] = {
+        { GLSL_HEADER_VERT_GL2, "", "#line 0\n", text },
+        { GLSL_HEADER_FRAG_GL2, "", "#line 0\n", text }
     };
 #else
-    const GLchar *code[2][3] = {
-        { GLSL_HEADER_VERT_GL3, "#line 0\n", text },
-        { GLSL_HEADER_FRAG_GL3, "#line 0\n", text }
+    const GLchar *code[2][4] = {
+        { GLSL_HEADER_VERT_GL3, "", "#line 0\n", text },
+        { GLSL_HEADER_FRAG_GL3, "", "#line 0\n", text }
     };
 #endif
-    
+
+    if (support.texture_array)
+    {
+        code[0][1] =
+        code[1][1] = "#define USE_TEXTURE_ARRAY\n";
+    }
+
     shader->id = glCreateProgram();
 
     for (i = 0; i < 2; i++)
     {
         obj = glCreateShader(type[i]);
-        glShaderSource(obj, 3, code[i], NULL);
+        glShaderSource(obj, 4, code[i], NULL);
         glCompileShader(obj);
 
         glGetShaderInfoLog(obj, sizeof(info), NULL, info);
@@ -657,7 +696,10 @@ void renderInit()
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 #if defined(__WIN32__) || defined(__LINUX__)
+    GetProcOGL(glGetStringi);
+
     GetProcOGL(glGenerateMipmap);
+    GetProcOGL(glTexImage3D);
 
     GetProcOGL(glCreateProgram);
     GetProcOGL(glDeleteProgram);
@@ -700,6 +742,25 @@ void renderInit()
     GetProcOGL(glXSwapIntervalSGI);
 #endif
 
+    if (glGetStringi)
+    {
+        int32 i;
+        GLint extCount = 0;
+        glGetIntegerv(GL_NUM_EXTENSIONS, &extCount);
+        for (i = 0; i < extCount; i++)
+        {
+            const char *ext = (const char*)glGetStringi(GL_EXTENSIONS, i);
+            EXT_LIST(EXT_CHECK)
+        }
+    }
+    else
+    {
+        const char *ext = (const char*)glGetString(GL_EXTENSIONS);
+        EXT_LIST(EXT_CHECK)
+    }
+
+    //support.texture_array = 0;
+
     // init shaders
     SHADER_INIT(gui);
     SHADER_INIT(track);
@@ -709,6 +770,7 @@ void renderInit()
     SHADER_INIT(shield);
     SHADER_INIT(blob);
 
+    // init vertex buffer
     glGenVertexArrays(1, &VAO);
     glGenBuffers(2, VBO);
 
@@ -719,6 +781,7 @@ void renderInit()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_RENDER_INDICES * sizeof(Index), NULL, GL_DYNAMIC_DRAW);
     glBufferData(GL_ARRAY_BUFFER, MAX_RENDER_VERTICES * sizeof(Vertex), NULL, GL_DYNAMIC_DRAW);
 
+    // set vertex layout
     glEnableVertexAttribArray(aCoord);
     glEnableVertexAttribArray(aTexCoord);
     glEnableVertexAttribArray(aColor);
@@ -731,6 +794,24 @@ void renderInit()
 
     glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gMaxAniso);
 
+    // pre-allocate track textures
+    if (support.texture_array)
+    {
+        ASSERT(glTexImage3D);
+        glGenTextures(1, &gTrackTexArray.id);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, gTrackTexArray.id);
+        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, 128, 128, MAX_TRACK_TEX, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, NULL);
+    }
+    else
+    {
+        int32 i;
+        for (i = 0; i < MAX_TRACK_TEX; i++)
+        {
+            glGenTextures(1, &gTrackTex[i].id);
+            glBindTexture(GL_TEXTURE_2D, gTrackTex[i].id);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, NULL);
+        }
+    }
     renderSetVSync(1);
 }
 
@@ -892,7 +973,7 @@ void setTexture(const Texture* texture)
     flush();
     gCurTexture = texture;
 
-    glBindTexture(GL_TEXTURE_2D, texture ? texture->id : whiteTex);
+    glBindTexture((texture == &gTrackTexArray) ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D, texture ? texture->id : whiteTex);
 }
 
 void setShader(const Shader* shader)
@@ -1070,19 +1151,31 @@ void renderBackFill(int32 x, int32 y, int32 w, int32 h)
 
 void prepareTrack(void)
 {
-    int32 i;
-
     ASSERT(ctrlnumLib <= MAX_TRACK_TEX);
-    for (i = 0; i < ctrlnumLib; i++)
-    {
-        glGenTextures(1, &gTrackTex[i].id);
-        glBindTexture(GL_TEXTURE_2D, gTrackTex[i].id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, gTrackTexData[i]);
 
-        setTexFilter(1, glGenerateMipmap != 0);
+    if (support.texture_array)
+    {
+        glBindTexture(GL_TEXTURE_2D_ARRAY, gTrackTexArray.id);
+        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, 128, 128, ctrlnumLib, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, gTrackTexData);
+        setFilter(GL_TEXTURE_2D_ARRAY, 1, glGenerateMipmap != 0);
         if (glGenerateMipmap)
         {
-            glGenerateMipmap(GL_TEXTURE_2D);
+            glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+        }
+    }
+    else
+    {
+        int32 i;
+        for (i = 0; i < ctrlnumLib; i++)
+        {
+            glBindTexture(GL_TEXTURE_2D, gTrackTex[i].id);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, gTrackTexData[i]);
+
+            setFilter(GL_TEXTURE_2D, 1, glGenerateMipmap != 0);
+            if (glGenerateMipmap)
+            {
+                glGenerateMipmap(GL_TEXTURE_2D);
+            }
         }
     }
 }
@@ -1167,6 +1260,7 @@ void drawSection(const TrackSection* section)
     int32 cy = gCameraViewPos.y;
     int32 cz = gCameraViewPos.z;
     float u0, u1;
+    uint32 color;
 
     while (face < last)
     {
@@ -1175,8 +1269,6 @@ void drawSection(const TrackSection* section)
     #ifdef CHECK_UNUSED_TEX
         texUsed[face->texture] = 1;
     #endif
-
-        setTexture(gTrackTex + face->texture);
 
         if (face->flags & FLIP_TEXTURE)
         {
@@ -1189,19 +1281,29 @@ void drawSection(const TrackSection* section)
             u1 = 0.0f;
         }
 
+        color = face->color;
+        if (support.texture_array)
+        {
+            color = (color & 0x00FFFFFF) | (face->texture << 24);
+        }
+        else
+        {
+            setTexture(gTrackTex + face->texture);
+        }
+
         addQuad();
 
         v = vertices + face->vertex[3];
-        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 1.0f, face->color);
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 1.0f, color);
 
         v = vertices + face->vertex[2];
-        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 1.0f, face->color);
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 1.0f, color);
 
         v = vertices + face->vertex[1];
-        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 0.0f, face->color);
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 0.0f, color);
 
         v = vertices + face->vertex[0];
-        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 0.0f, face->color);
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 0.0f, color);
 
         face++;
     }
@@ -1244,6 +1346,11 @@ void renderTrack(void)
         default: // VIEW_DIR_EAST
             counts = gCamera.section->eastViewCount;
             sections = gCamera.section->eastViewSection;
+    }
+
+    if (support.texture_array)
+    {
+        setTexture(&gTrackTexArray);
     }
 
     section = gTrack.sections + sections[0][0];
@@ -1764,7 +1871,7 @@ Texture* renderCreateTexture(uint8* ptr)
         glBindTexture(GL_TEXTURE_2D, tex->id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, tempData);
 
-        setTexFilter(HACK_TEX_FILTER, 0);
+        setFilter(GL_TEXTURE_2D, HACK_TEX_FILTER, 0);
     }
 
     gTexturePtr++;
