@@ -1046,9 +1046,9 @@ void DrawHud(ShipData* shipIndex, int choice)
         if (playerShip->attr & RACING) // in race mode
         {
             if (playerShip->lapNo < END_LAP + 1) // not the last lap
-                AddTime(playerShip->lapTimes[playerShip->lapNo - 1], text_data(guiL + 16, guiR - (320 - 210), 16), TEXT_COLOR_WHITE);
+                AddTime(playerShip->lapTimes[playerShip->lapNo - 1], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
             else
-                AddTime(playerShip->lapTimes[2], text_data(guiL + 16, guiR - (320 - 210), 16), TEXT_COLOR_WHITE);
+                AddTime(playerShip->lapTimes[2], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
         }
     }
     if (playerShip->attr & RACING)
@@ -1059,7 +1059,7 @@ void DrawHud(ShipData* shipIndex, int choice)
             {
                 if (i < END_LAP)
                 {
-                    AddTime(playerShip->lapTimes[i - 1], text_data(guiL + 16, guiR - (320 - 205) - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
+                    AddTime(playerShip->lapTimes[i - 1], text_data(guiL + 16, guiB - (240 - 205) - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
                 }
             }
         }
