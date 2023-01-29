@@ -139,8 +139,9 @@ void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo)
 void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
 {
     ShipData* playerShip;
-    int headingInc;
-    int vpitchInc;
+    int32 headingInc;
+    int32 vpitchInc;
+    int32 maxHeading;
     static int maxThrust;
     static short revLeft = 0;
     static short revRight = 0;
@@ -213,10 +214,29 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
         else
             playerShip->vhdg = 0;
     }
+
+#if 0 // old limiting
     if (playerShip->vhdg < -playerShip->maxHeading)
         playerShip->vhdg = -playerShip->maxHeading;
     if (playerShip->vhdg > playerShip->maxHeading)
         playerShip->vhdg = playerShip->maxHeading;
+#else
+    maxHeading = (playerShip->maxHeading * gPadStickX) >> 8;
+
+    if (playerShip->vhdg < -maxHeading)
+    {
+        playerShip->vhdg += playerShip->headingInc;
+        if (playerShip->vhdg > -maxHeading)
+            playerShip->vhdg = -maxHeading;
+    }
+
+    if (playerShip->vhdg > maxHeading)
+    {
+        playerShip->vhdg -= playerShip->headingInc;
+        if (playerShip->vhdg < maxHeading)
+            playerShip->vhdg = maxHeading;
+    }
+#endif
 
     if (playerShip->attr & ELECTROED)
     {

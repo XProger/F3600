@@ -1236,10 +1236,13 @@ Object* LoadPrm(const char* name, Texture* texturePtr, int32* count, uint8* type
         }
         else
         {
-            // droid uses first 11 faces as hardcoded for lighting
             if (isDroid)
             {
-                sortFaces(obj->faces, 11, obj->fCount - 1);
+                sortFaces(obj->faces, 11, obj->fCount - 1); // first 11 polys of droid are hardcoded for lights
+            }
+            else if (types && types[-1] == OBJ_TYPE_START)
+            {
+                sortFaces(obj->faces, 3, obj->fCount - 1); // first 3 polys of start light are hardcoded for lights
             }
             else
             {

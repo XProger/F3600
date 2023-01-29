@@ -55,8 +55,8 @@ typedef struct _XINPUT_VIBRATION
     WORD wRightMotorSpeed;
 } XINPUT_VIBRATION;
 
-#define XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE 7849
-#define XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE 8689
+#define XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE 4096
+#define XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE 4096
 #define XINPUT_GAMEPAD_TRIGGER_THRESHOLD 30
 
 DWORD(WINAPI* _XInputGetState)(DWORD dwUserIndex, XINPUT_STATE* pState);
@@ -324,7 +324,7 @@ void inputUpdate()
             if (state.Gamepad.sThumbLX > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
             {
                 curMask |= IN_RIGHT;
-                gPadStickX = state.Gamepad.sThumbLX >> 7;
+                gPadStickX = (state.Gamepad.sThumbLX + 1) >> 7;
             }
         }
 
