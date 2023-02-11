@@ -5,7 +5,7 @@
 /**************************************************************************/
 void UpdateRescueDroid(ShipData* shipIndex, int shipNo)
 {
-    ShipData* playerShip;
+    ShipData* ship;
     TrackSection* section;
     TrackSection* nextSection;
     static vec3i target;
@@ -13,12 +13,12 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo)
     vec3i distance;
     int i;
 
-    playerShip = &(shipIndex[shipNo]);
-    playerShip->attr |= FLYING;
+    ship = shipIndex + shipNo;
+    ship->attr |= FLYING;
 
-    if (playerShip->updateCount == 500)
+    if (ship->updateCount == 500)
     {
-        section = playerShip->nearTrkSect->prevSection;
+        section = ship->nearTrkSect->prevSection;
         section = section->prevSection;
         section = section->prevSection;
         section = section->prevSection;
@@ -30,66 +30,66 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo)
                 break;
             }
         }
-        playerShip->nearTrkSect = section;
+        ship->nearTrkSect = section;
         nextSection = section->nextSection;
 
         target.x = (section->centre.x + nextSection->centre.x) >> 1;
         target.y = ((section->centre.y + nextSection->centre.y) >> 1) - 2000;
         target.z = (section->centre.z + nextSection->centre.z) >> 1;
 
-        playerShip->vel.x = 0;
-        playerShip->vel.y = 0;
-        playerShip->vel.z = 0;
+        ship->vel.x = 0;
+        ship->vel.y = 0;
+        ship->vel.z = 0;
 
-        playerShip->updateCount--;
+        ship->updateCount--;
     }
 
-    nextSection = playerShip->nearTrkSect->nextSection;
+    nextSection = ship->nearTrkSect->nextSection;
 
-    if (playerShip->attr & IN_TOW)
+    if (ship->attr & IN_TOW)
     {
         target.x += (nextSection->centre.x - target.x) >> 7;
         target.y += (nextSection->centre.y - target.y) >> 7;
         target.z += (nextSection->centre.z - target.z) >> 7;
 
-        playerShip->vel.x = target.x - playerShip->pos.x;
-        playerShip->vel.y = target.y - playerShip->pos.y;
-        playerShip->vel.z = target.z - playerShip->pos.z;
+        ship->vel.x = target.x - ship->pos.x;
+        ship->vel.y = target.y - ship->pos.y;
+        ship->vel.z = target.z - ship->pos.z;
 
-        targetVector.x = nextSection->centre.x - playerShip->nearTrkSect->centre.x;
-        targetVector.y = nextSection->centre.y - playerShip->nearTrkSect->centre.y;
-        targetVector.z = nextSection->centre.z - playerShip->nearTrkSect->centre.z;
+        targetVector.x = nextSection->centre.x - ship->nearTrkSect->centre.x;
+        targetVector.y = nextSection->centre.y - ship->nearTrkSect->centre.y;
+        targetVector.z = nextSection->centre.z - ship->nearTrkSect->centre.z;
 
-        playerShip->vhdg = -ratan2(targetVector.x, targetVector.z) - playerShip->hdg;
-        if (playerShip->vhdg > 2048)
-            playerShip->vhdg = playerShip->vhdg - 4096;
-        else if (playerShip->vhdg < -2048)
-            playerShip->vhdg = playerShip->vhdg + 4096;
-        playerShip->hdg += playerShip->vhdg >> 6;
-        playerShip->hdg = ang(playerShip->hdg);
+        ship->vhdg = -ratan2(targetVector.x, targetVector.z) - ship->hdg;
+        if (ship->vhdg > 2048)
+            ship->vhdg = ship->vhdg - 4096;
+        else if (ship->vhdg < -2048)
+            ship->vhdg = ship->vhdg + 4096;
+        ship->hdg += ship->vhdg >> 6;
+        ship->hdg = ang(ship->hdg);
     }
 
-    playerShip->vel.x -= playerShip->vel.x >> 4;
-    playerShip->vel.y -= playerShip->vel.y >> 4;
-    playerShip->vel.z -= playerShip->vel.z >> 4;
+    ship->vel.x -= ship->vel.x >> 4;
+    ship->vel.y -= ship->vel.y >> 4;
+    ship->vel.z -= ship->vel.z >> 4;
 
-    playerShip->pos.x += playerShip->vel.x >> 5;
-    playerShip->pos.y += playerShip->vel.y >> 5;
-    playerShip->pos.z += playerShip->vel.z >> 5;
+    ship->pos.x += ship->vel.x >> 5;
+    ship->pos.y += ship->vel.y >> 5;
+    ship->pos.z += ship->vel.z >> 5;
 
-    distance.x = playerShip->pos.x - playerShip->nearTrkSect->centre.x;
-    distance.y = playerShip->pos.y - playerShip->nearTrkSect->centre.y;
-    distance.z = playerShip->pos.z - playerShip->nearTrkSect->centre.z;
+    distance.x = ship->pos.x - ship->nearTrkSect->centre.x;
+    distance.y = ship->pos.y - ship->nearTrkSect->centre.y;
+    distance.z = ship->pos.z - ship->nearTrkSect->centre.z;
 
-    playerShip->pitch -= playerShip->pitch >> 3;
-    playerShip->roll -= playerShip->roll >> 5;
+    ship->pitch -= ship->pitch >> 3;
+    ship->roll -= ship->roll >> 5;
 
     /**** Needs PAL ****/
-    if ((playerShip->attr & IN_TOW) && (GetMagnitudeSqr(&distance) < (800 * 800)))
+    if ((ship->attr & IN_TOW) && (GetMagnitudeSqr(&distance) < (800 * 800)))
     {
-        playerShip->update = UpdatePlayerShipNorm;
-        playerShip->updateCount = 0;
-        playerShip->attr &= ~RESCUE;
+        ship->update = UpdatePlayerShipNorm;
+        ship->updateCount = 0;
+        ship->attr &= ~RESCUE;
     }
 }
 
@@ -188,15 +188,19 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
 
     if (shipIndex->attr & RESCUE)
     {
+        PlayerData* player = (PlayerData*)shipIndex->player;
+        ASSERT(player);
+
+        PlayNote(SFX_TRACTOR_BEAM);
         rescueDroid->droidUpdate = UpdateDroidRescue;
         rescueDroid->updateCount = 800;
-        PlayNote(SFX_TRACTOR_BEAM);
-        CameraUpdate = UpdateCameraDroidView;
+
         shipIndex->attr |= REMOTE_VIEW;
+        player->camera.update = UpdateCameraDroidView;
         if (shipIndex->nearTrkSect->flags & Jump)
-            gCamera.section = shipIndex->nearTrkSect->nextSection;
+            player->camera.section = shipIndex->nearTrkSect->nextSection;
         else
-            gCamera.section = shipIndex->nearTrkSect;
+            player->camera.section = shipIndex->nearTrkSect;
     }
 
     SetDroidVectors(rescueDroid, shipShapes);
@@ -302,15 +306,18 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
 
     if ((shipIndex->attr & RESCUE) == 0)
     {
+        PlayerData* player = (PlayerData*)shipIndex->player;
+        ASSERT(player);
+
         KillNote(SFX_TRACTOR_BEAM);
         rescueDroid->droidUpdate = UpdateDroidCircle;
         rescueDroid->updateCount = 800;
         shipIndex->attr &= ~REMOTE_VIEW;
 
         if (shipIndex->attr & VIEW_IN)
-            CameraUpdate = UpdateCameraRaceInternal;
+            player->camera.update = UpdateCameraRaceInternal;
         else
-            CameraUpdate = UpdateCameraRaceExternal;
+            player->camera.update = UpdateCameraRaceExternal;
 
         while ((rescueDroid->section->flags & Jump) == 0)
         {

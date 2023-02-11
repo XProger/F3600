@@ -20,24 +20,8 @@ Texture* gButtonTex;
 Texture* slideTex;
 Texture* sliderTex;
 
-#define NONE        0
-#define LEFT        1
-#define RIGHT       2
-#define UP          3
-#define DOWN        4
-#define BRAKEL      5
-#define BRAKER      6
-#define ACCEL       7
-#define FIRE        8
-#define VIEW_KEY    9
-#define PAUSE_KEY   10
-
-char KeyToChange = NONE;
-
 int gCurrMenu;
 int gCurrOption;
-
-extern int32 ctrlfirsttime;
 
 Object* audioShapes;
 Object* pilotShapes;
@@ -47,36 +31,35 @@ Object* clsShapes;
 Object* gameShapes;
 Object* optShapes;
 Object* padShapes;
-SelectionData selectData;
+SelectionData gSelectData;
 
 Texture* gTrackIcon;
 
-void DrawControllerMenu(const Menu* menu, int shapeNo);
-void DrawControllerEdit(const Menu* menu, int shapeNo);
-void DrawGraphicDetail(const Menu* menu, int shapeNo);
-void DisplayPadMenu(const Menu* menu, int shapeNo);
-void DrawPilot(const Menu* menu, int shapeNo);
-void DrawTeams(const Menu* menu, int shapeNo);
-void DrawClass(const Menu* menu, int shapeNo);
-void DrawMainMenu(const Menu* menu, int shapeNo);
-void DrawOptionMenus(const Menu* menu, int shapeNo);
-void DrawGames(const Menu* menu, int shapeNo);
-void DrawHiScoreMenu(const Menu* menu, int shapeNo);
+typedef struct Menu
+{
+    uint8 title; // StringID
+    uint8 options[MAX_OPTIONS]; // StringID
+    void (*drawProc)(int32 index, int32 id);
+} Menu;
 
-void CallMenuSelector(Object**, SelectionData*);
-void CallMenuActivator(SelectionData*);
-Object* LoadModel(const char* fileName);
-Object* LoadTexModel(const char* fileName);
-void MusicVSfx(SelectionData*);
-void ShowHiScores(SelectionData*);
-void InitSelectData(SelectionData*);
+void DrawMenuMain(int32 index, int32 id);
+void DrawMenuTrack(int32 index, int32 id);
+void DrawMenuOptions(int32 index, int32 id);
+void DrawMenuClass(int32 index, int32 id);
+void DrawMenuRace(int32 index, int32 id);
+void DrawMenuTeam(int32 index, int32 id);
+void DrawMenuPilot(int32 index, int32 id);
+void DrawMenuQuit(int32 index, int32 id);
+void DrawMenuControls(int32 index, int32 id);
+void DrawMenuGraphics(int32 index, int32 id);
+void DrawMenuAudio(int32 index, int32 id);
+void DrawMenuHighScores(int32 index, int32 id);
+void DrawMenuBestRace(int32 index, int32 id);
+void DrawMenuBestTrial(int32 index, int32 id);
+void DrawMenuMultiplayer(int32 index, int32 id);
 
-void DrawTeamShips(int, int, int, int, Object*);
-void ShowTimeTrialScores(SelectionData*);
-void QuitYesNo(SelectionData*);
-void GraphicOptions(SelectionData*);
-void ControllerOptions(SelectionData*);
-void ControllerEdit(SelectionData*);
+void CallMenuSelector(void);
+void CallMenuActivator(void);
 
 #define MAX_MENU_HISTORY 8
 
@@ -89,190 +72,183 @@ typedef struct
 int gMenuHistoryIndex;
 MenuHistory gMenuHistory[MAX_MENU_HISTORY];
 
-const Menu gMenuSystem[] = {
-// MAIN_MENU
-    { "WIPEOUT MAIN MENU", DrawMainMenu, 0, 
-    #ifdef MENU_HAS_QUIT
-        3,
-    #else
-        2,
-    #endif
-        { 
-            "START GAME",
-            "OPTIONS",
-            "QUIT"
-        }
-    },
-// TRACK_MENU
-    { "SELECT RACING CIRCUIT", 0, 0, 7,
+const Menu gMenuSystem[] =
+{
+// MENU_MAIN
+    { STR_TITLE_MAIN,
         {
-            "ALTIMA VII",
-            "KARBONIS V",
-            "TERRAMAX",
-            "KORODERA",
-            "ARRIDOS IV",
-            "SILVERSTREAM",
-            "FIRESTAR"
-        }
+            STR_MAIN_START_GAME,
+        #ifdef MENU_HAS_MULTIPLAYER
+            STR_MAIN_MULTIPLAYER,
+        #endif
+            STR_MAIN_OPTIONS,
+        #ifdef MENU_HAS_QUIT
+            STR_MAIN_QUIT,
+        #endif
+            STR_MAX
+        }, DrawMenuMain
     },
-// AUDIO_MENU
-    { "AUDIO", 0, MusicVSfx, 0 },
-// OPTION_MENU
-    { "OPTIONS", DrawOptionMenus, 0, 4,
-        { 
-            "CONTROLS",
-            "GRAPHICS",
-            "AUDIO",
-            "BEST TIMES"
-        }
+// MENU_TRACK
+    { STR_TITLE_TRACK,
+        {
+            STR_TRACK_ALTIMA,
+            STR_TRACK_KARBONIS,
+            STR_TRACK_TERRAMAX,
+            STR_TRACK_KORODERA,
+            STR_TRACK_ARRIDOS,
+            STR_TRACK_SILVERSTREAM,
+            STR_TRACK_FIRESTAR,
+            STR_MAX
+        }, DrawMenuTrack
     },
-// CLASS_MENU
-    { "SELECT RACING CLASS", DrawClass, 0, 2,
-        { 
-            "VENOM CLASS",
-            "RAPIER CLASS"
-        }
+// MENU_OPTIONS
+    { STR_TITLE_OPTIONS,
+        {
+            STR_OPTION_CONTROLS,
+            STR_OPTION_GRAPHICS,
+            STR_OPTION_AUDIO,
+            STR_OPTION_BEST_TIMES,
+            STR_MAX
+        }, DrawMenuOptions
     },
-// TEAM_MENU
-    { "SELECT YOUR TEAM", DrawTeams, 0, 4,
-        { 
-            "AG SYSTEMS",
-            "AURICOM",
-            "QIREX",
-            "FEISAR"
-        }
+// MENU_CLASS
+    { STR_TITLE_CLASS,
+        {
+            STR_CLASS_VENOM,
+            STR_CLASS_RAPIER,
+            STR_MAX
+        }, DrawMenuClass
     },
-// PILOT_MENU_1 - AG_SYSTEMS
-    { "CHOOSE YOUR PILOT", DrawPilot, 0, 2,
-        { 
-            "JOHN DEKKA",
-            "DANIEL CHANG"
-        }
+// MENU_RACE
+    { STR_TITLE_RACE_TYPE,
+        {
+            STR_RACE_CHAMPIONSHIP,
+            STR_RACE_SINGLE,
+            STR_RACE_TIME_TRIAL,
+            STR_MAX
+        }, DrawMenuRace
     },
-// PILOT_MENU_2 - AURICOM
-    { "CHOOSE YOUR PILOT", DrawPilot, 0, 2,
-        { 
-            "ARIAL TETSUO",
-            "ANASTASIA CHEROVOSKI"
-        }
+// MENU_TEAM
+    { STR_TITLE_TEAM,
+        {
+            STR_TEAM_AG_SYSTEMS,
+            STR_TEAM_AURICOM,
+            STR_TEAM_QIREX,
+            STR_TEAM_FEISAR,
+            STR_MAX
+        }, DrawMenuTeam
     },
-// PILOT_MENU_3 - QIREX
-    { "CHOOSE YOUR PILOT", DrawPilot, 0, 2,
-        { 
-            "KEL SOLAAR",
-            "ARIAN TETSUO"
-        }
+// MENU_PILOT_1 - AG_SYSTEMS
+    { STR_TITLE_PILOT,
+        {
+            STR_PILOT_JOHN,
+            STR_PILOT_DANIEL,
+            STR_MAX
+        }, DrawMenuPilot
     },
-// PILOT_MENU_4 - FEISAR
-    { "CHOOSE YOUR PILOT", DrawPilot, 0, 2,
-        { 
-            "SOFIA DE LA RENTE",
-            "PAUL JACKSON"
-        }
+// MENU_PILOT_2 - AURICOM
+    { STR_TITLE_PILOT,
+        {
+            STR_PILOT_ARIAL,
+            STR_PILOT_ANASTASIA,
+            STR_MAX
+        }, DrawMenuPilot
     },
-// RACE_TYPE_MENU
-    { "SELECT RACE TYPE", DrawGames, 0, 3,
-        { 
-            "CHAMPIONSHIP RACE",
-            "SINGLE RACE",
-            "TIME TRIAL"
-        }
+// MENU_PILOT_3 - QIREX
+    { STR_TITLE_PILOT,
+        {
+            STR_PILOT_KEL,
+            STR_PILOT_ARIAN,
+            STR_MAX
+        }, DrawMenuPilot
     },
-// HIGH_SCORES_MENU
-    { "BEST RACE TIMES", 0, ShowHiScores, 0 },
-// BEST_TIMES_MENU
-    { "BEST TIMES", DrawHiScoreMenu, 0, 2,
-        { 
-            "BEST RACE TIMES",
-            "BEST TIME TRIAL TIMES"
-        }
+// MENU_PILOT_4 - FEISAR
+    { STR_TITLE_PILOT,
+        {
+            STR_PILOT_SOFIA,
+            STR_PILOT_PAUL,
+            STR_MAX
+        }, DrawMenuPilot
     },
-// TIME_TRIAL_MENU
-    { "BEST TIME TRIAL TIMES", 0, ShowTimeTrialScores, 0 },
-// QUIT_MENU
-    { "", 0, QuitYesNo, 0 },
-// DETAILS_MENU
-    { "GRAPHICS", DrawGraphicDetail, GraphicOptions, 0 },
-// CONTROLLER_MENU
-    { "CONTROLS", DrawControllerMenu, ControllerOptions, 0 },
-// CONTROL_EDIT_MENU
-    { "CONFIGURE KEYBOARD", DrawControllerEdit, ControllerEdit, 0 }
+// MENU_QUIT
+    { STR_TITLE_QUIT,
+        {
+            STR_MAX
+        }, DrawMenuQuit
+    },
+// MENU_CONTROLS
+    { STR_TITLE_CONTROLS,
+        {
+            STR_MAX
+        }, DrawMenuControls
+    },
+// MENU_GRAPHICS
+    { STR_TITLE_GRAPHICS,
+        {
+            STR_MAX
+        }, DrawMenuGraphics
+    },
+// MENU_AUDIO
+    { STR_TITLE_AUDIO,
+        {
+            STR_MAX
+        }, DrawMenuAudio
+    },
+// MENU_HIGH_SCORES
+    { STR_TITLE_HIGH_SCORES,
+        {
+            STR_BEST_RACE,
+            STR_BEST_TRIAL,
+            STR_MAX
+        }, DrawMenuHighScores
+    },
+// MENU_BEST_RACE
+    { STR_BEST_RACE,
+        {
+            STR_MAX
+        }, DrawMenuBestRace
+    },
+// MENU_BEST_TRIAL
+    { STR_BEST_TRIAL,
+        {
+            STR_MAX
+        }, DrawMenuBestTrial
+    },
+    { STR_TITLE_MULTIPLAYER,
+        {
+            STR_MAX
+        }, DrawMenuMultiplayer
+    },
 };
 
-
-//#define VER_PSX
-
-void menuInit(void)
+void InitGameData(void)
 {
-    LoadMainMenu();
-
-    gMenuHistoryIndex = 0;
-
-    renderOffset(0, -30);
-
-    if (ctrlfirsttime)
-        InitSelectData(&selectData);
-
-    selectData.select = 0;
-
-    gCurrMenu = 0;
-    gCurrOption = 0;
-
-    gCameraFOV = gTargetFOV = CAMERA_FOV;
-}
-
-void menuLoop(void)
-{
-    UpdatePad();
-
-    renderFrameBegin();
-    renderClear();
-    renderSetMode(RENDER_MODE_2D);
-
-    renderBackground(menuScreen);
-
-    if (gCurrMenu >= 0)
-        CallMenuSelector(ctrlshipShapes, &selectData);
-
-    if (selectData.select)
+    int32 i;
+    for (i = 0; i < MAX_PLAYERS; i++)
     {
-        if (gCurrMenu == MAIN_MENU && gCurrOption == 0)
-        {
-            // CHEAT ACTIVATION BITS - need to be changed for PCwipeout
-            /*TODO cheats*/
-
-            if ((pad & IN_LEFT) && (pad & IN_A))
-            {
-                gConfig.rapierClass = 1;
-            }
-
-            if ((pad & IN_RIGHT) && (pad & IN_Y))
-            {
-                totalTracks = 14;
-                NumTracks = 7;
-                gConfig.showBonusTrack = 1;
-            }
-        }
-
-        CallMenuActivator(&selectData);
+        strcpy(gPlayers[i].name, STR[STR_DEF_NAME_1 + i]);
+        gPlayers[i].joyIndex = i;
     }
 
-    if (gCurrMenu == CLASS_MENU && gCurrOption == 1 && (!gConfig.rapierClass))
-        CentreText("NOT AVAILABLE", text_data(20, 190, 12), TEXT_COLOR_HIGHLIGHT);
-
-    renderFrameEnd();
-
-    if (gCurrMenu == -1)
-    {
-        ctrlmode = INTERACTIVE;
-        ctrlGameLoop = GAME_LOOP_RACE_INIT;
-        return;
-    }
-
-    if (selectData.select == 1)
-    {
-        selectData.select = 0;
-    }
+    gConfig.trackNum = 0;
+    gConfig.actTrackNum = 0;
+    gConfig.raceClass = 0;
+    gConfig.team = 0;
+    gConfig.raceType = CHAMPIONSHIP;
+    gConfig.lives = 3;
+    gConfig.Position = NO_OF_SHIPS;
+    gConfig.rapierClass = 0;
+    gConfig.gameComplete = 0;
+    gConfig.showPilotCount = 0;
+    gConfig.gameOverCount = 0;
+    gConfig.venomComplete = 0;
+    gConfig.newLapRecord = 0;
+    gConfig.gotoMenu = 0;
+    gConfig.normpadPreset = 0;
+    gConfig.showBonusTrack = 0;
+    gConfig.trackInc = 1;
+    gConfig.lostGame = 0;
+    gConfig.showGameOver = 0;
 }
 
 void GoMenu(int menu)
@@ -324,637 +300,20 @@ void GoNextMusic(void)
     MusicStop();
 }
 
-void DisplayButtons(int x, int y, int buttType)
+void DrawContinueGameConfirm(int32 lConfirm)
 {
-    renderImage(gButtonTex + buttType, x, y);
+    CentreText(STR_ACK_CONTINUE, text_data(0, 95, 8), TEXT_COLOR_WHITE);
+
+    AddText(STR_QUIT, text_data(215, 120, 16), lConfirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText(STR_QUALIFY, text_data(45, 120, 16), lConfirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
-void DrawButtons(void)
+void DrawRestartGameConfirm(int32 lConfirm)
 {
-    if (gMenuSystem[gCurrMenu].numOptions > 0)
-        DisplayButtons(30, 210, PSELECT);
+    CentreText(STR_ACK_RESTART, text_data(0, 95, 16), TEXT_COLOR_WHITE);
 
-    if (gCurrMenu != MAIN_MENU)
-        DisplayButtons(240, 210, PBACK);
-}
-
-void CallMenuActivator(SelectionData* selectData)
-{
-    switch (gCurrMenu)
-    {
-        case MAIN_MENU:
-        {
-            switch (gCurrOption)
-            {
-                case SINGLE_GAME:
-                    GoMenu(CLASS_MENU);
-                    break;
-                case GAME_OPTIONS:
-                    GoMenu(OPTION_MENU);
-                    break;
-                case QUIT_GAME:
-                    selectData->confirm = 0;
-                    GoMenu(QUIT_MENU);
-                    break;
-            }
-            break;
-        }
-
-        case TRACK_MENU:
-        {
-            gConfig.trackNum = (gCurrOption + 1) + gConfig.raceClass * 7;
-            gConfig.actTrackNum = gTrackList[(gConfig.trackNum - 1)];
-            GoMenu(-1);
-            break;
-        }
-
-        case OPTION_MENU:
-        {
-            switch (gCurrOption)
-            {
-                case CONTROLS:
-                    GoMenu(CONTROLLER_MENU);
-                    break;
-                case DETAILS:
-                    GoMenu(DETAILS_MENU);
-                    break;
-                case AUDIO_CONFIG:
-                    GoMenu(AUDIO_MENU);
-                    renderOffset(0, 60);
-                    break;
-                case HIGH_SCORES:
-                    GoMenu(BEST_TIMES_MENU);
-                    selectData->hiscoreTrack = 0;
-                    break;
-            }
-            break;
-        }
-
-        case CLASS_MENU:
-        {
-            gConfig.raceClass = gCurrOption;
-            if (gConfig.rapierClass == 0 && gCurrOption == RAPIER_CLASS)
-                return;
-
-            if (gCurrOption == CHAMPIONSHIP)
-            {
-                gConfig.trackNum = 1;
-            }
-
-            if (gCurrOption == SINGLE_RACE)
-            {
-                if (gConfig.showBonusTrack == 0)
-                    gConfig.trackNum = NumTracks + 2;
-                else
-                    gConfig.trackNum = NumTracks + 1;
-            }
-
-            GoMenu(RACE_TYPE_MENU);
-            break;
-        }
-
-        case TEAM_MENU:
-        {
-            gConfig.team = gCurrOption;
-            GoMenu(PILOT_MENU_1 + gCurrOption);
-            break;
-        }
-
-        case PILOT_MENU_1:
-        case PILOT_MENU_2:
-        case PILOT_MENU_3:
-        case PILOT_MENU_4:
-        {
-            gConfig.newLapRecord = 0;
-            gConfig.shipNum = (gConfig.team * 2) + gCurrOption;
-            ownShip = gConfig.shipNum;
-
-            if (gConfig.raceType == CHAMPIONSHIP)
-            {
-                GoMenu(-1);
-            }
-            else
-            {
-                GoMenu(TRACK_MENU);
-            }
-            break;
-        }
-
-        case RACE_TYPE_MENU:
-        {
-            switch (gCurrOption)
-            {
-                case CHAMPIONSHIP:
-                    gConfig.raceType = CHAMPIONSHIP;
-                    gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
-                    InitChampTable();
-                    break;
-                case SINGLE_RACE:
-                    gConfig.raceType = SINGLE_RACE;
-                    break;
-                case TIME_TRIAL:
-                    gConfig.raceType = TIME_TRIAL;
-                    break;
-            }
-
-            GoMenu(TEAM_MENU);
-            break;
-        }
-
-        case BEST_TIMES_MENU:
-        {
-            switch (gCurrOption)
-            {
-                case 0:
-                    selectData->hiscoreTrack = 0;
-                    GoMenu(HIGH_SCORES_MENU);
-                    break;
-                case 1:
-                    selectData->hiscoreTrack = 14;
-                    GoMenu(TIME_TRIAL_MENU);
-                    break;
-            }
-            break;
-        }
-
-        case QUIT_MENU:
-        {
-            if (selectData->confirm)
-            {
-                osQuit();
-            }
-            else
-            {
-                GoBack();
-            }
-            break;
-        }
-
-        case DETAILS_MENU:
-        {
-            GoMenu(OPTION_MENU);
-            break;
-        }
-
-        case CONTROL_EDIT_MENU:
-        {
-            GoMenu(CONTROLLER_MENU);
-            break;
-        }
-
-        case CONTROLLER_MENU:
-        {
-            GoMenu(OPTION_MENU);
-            break;
-        }
-    }
-}
-
-void CallMenuSelector(Object** shipShapes, SelectionData* selectData)
-{
-    int32 i;
-    const char* title;
-    const Menu* menu = gMenuSystem + gCurrMenu;
-    int32 numOptions = menu->numOptions;
-
-    if (gCurrMenu == TRACK_MENU)
-    {
-        renderImage(gTrackIcon + gCurrOption, 96, 50);
-
-        if (gConfig.raceClass == 0)
-            title = "VENOM CLASS";
-        else
-            title = "RAPIER CLASS";
-
-        CentreText(title, text_data(20, 40, 8), TEXT_COLOR_HIGHLIGHT);
-        numOptions = NumTracks;
-    }
-
-    if (GetMenuKey(M_UP))
-    {
-        PlayNote(SFX_MENU_MOVE);
-        gCurrOption--;
-        if (gCurrOption < 0)
-        {
-            gCurrOption = (numOptions - 1);
-        }
-    }
-
-    if (GetMenuKey(M_DOWN))
-    {
-        PlayNote(SFX_MENU_MOVE);
-        gCurrOption++;
-        if (gCurrOption > (numOptions - 1))
-            gCurrOption = 0;
-    }
-
-    if (menu->displayObject != 0)
-    {
-        renderSetMode(RENDER_MODE_3D);
-
-        if (gCurrMenu >= PILOT_MENU_1 && gCurrMenu <= PILOT_MENU_4)
-            (menu->displayObject)(gMenuSystem + gCurrMenu, (gConfig.team * 2) + gCurrOption);
-        else
-            (menu->displayObject)(gMenuSystem + gCurrMenu, gCurrOption);
-
-        renderSetMode(RENDER_MODE_2D);
-    }
-
-    //DrawButtons();
-    CentreText(menu->title, text_data(0, guiT + 21, 8), TEXT_COLOR_HIGHLIGHT);
-
-    for (i = 0; i < numOptions; i++)
-    {
-        CentreText(menu->options[i], text_data(0, 127 + 12 * i, 8), (i == gCurrOption) ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    }
-    
-    if (menu->displayMenu != 0)
-    {
-        (menu->displayMenu)(selectData);
-    }
-
-    if (GetMenuKey(M_SELECT))
-    {
-        selectData->select = 1;
-    }
-
-    if (GetMenuKey(M_BACK) && (gMenuHistoryIndex > 0))
-    {
-        /* TODO input mapping
-        if (gCurrMenu == CONTROL_EDIT_MENU)
-        {
-            ResetKeys();
-        }
-        */
-        GoBack();
-
-        KeyToChange = NONE;
-    }
-}
-
-void DrawMainMenu(const Menu* menu, int shapeNo)
-{
-    int32 hdg = FRAME_LERP_STEP(40);
-    int32 heading = FRAME_LERP_STEP(10);
-
-    if (shapeNo == 0)
-        DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
-
-    // if (shapeNo == 1)
-    // {
-    //    DrawTeamShips (-450, 0, 1100, heading, menu->menuModel[shipShapeOrder[3]]) ;
-    //    DrawTeamShips (450, 0, 1100, heading, menu->menuModel[shipShapeOrder[1]]) ;
-    // }
-
-    if (shapeNo == 1)
-    {
-        DrawObject(gameShapes + 3, 0, 0, MODELSIZE, hdg, 0, 0);
-    }
-}
-
-void DrawTeams(const Menu* menu, int shapeNo)
-{
-    int32 hdg = FRAME_LERP_STEP(40);
-    int32 heading = FRAME_LERP_STEP(20);
-
-    DrawObject(teamShapes + teamShapeOrder[shapeNo], 0, 0, 9000, hdg, 0, 0);
-
-    DrawTeamShips(-900, 800, 1500, heading, ctrlshipShapes[shipShapeOrder[shapeNo * 2]]);
-    DrawTeamShips(900, 800, 1500, heading, ctrlshipShapes[shipShapeOrder[shapeNo * 2 + 1]]);
-}
-
-void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
-{
-    matrixPush();
-    matrixTranslate(x, y, size);
-    matrixRotateYXZ(0, -heading, 0);
-    renderShip(shipModel, 0xFF808080);
-    matrixPop();
-}
-
-void DrawPilot(const Menu* menu, int shapeNo)
-{
-    int32 hdg = FRAME_LERP_STEP(40);
-    int32 heading = FRAME_LERP_STEP(10);
-
-    DrawObject(pilotShapes + pilotShapeOrder[shapeNo], 0, -400, 11000, hdg, 0, 0);
-    DrawTeamShips(0, 700, 1300, heading, ctrlshipShapes[shipShapeOrder[shapeNo]]);
-}
-
-void DrawClass(const Menu* menu, int shipNo)
-{
-    int32 hdg = FRAME_LERP_STEP(40);
-
-    if (shipNo == 0)
-    {
-        DrawObject(clsShapes + 0, 0, 0, 500, hdg, 0, 0);
-    }
-
-    if (shipNo == 1)
-    {
-        DrawObject(clsShapes + 1, 0, -25, 500, hdg, 0, 0);
-    }
-}
-
-void InitSelectData(SelectionData* selectData)
-{
-    selectData->optionNo = 0;
-    selectData->select = 0;
-    selectData->hiscoreTrack = 0;
-}
-
-void MusicVSfx(SelectionData* selectData)
-{
-    if (xpad & IN_UP)
-    {
-        PlayNote(SFX_MENU_MOVE);
-        selectData->optionNo--;
-        if (selectData->optionNo < 0)
-            selectData->optionNo = 1;
-    }
-
-    if (xpad & IN_DOWN)
-    {
-        PlayNote(SFX_MENU_MOVE);
-        selectData->optionNo++;
-        if (selectData->optionNo > 1)
-            selectData->optionNo = 0;
-    }
-
-    renderImage(sliderTex, 39 + (gMasterBalance * 218 >> 8), 61);
-    renderImage(slideTex, 48, 85);
-
-    AddText("SFX", text_data(33, 51, 8), (selectData->optionNo == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    AddText("MUSIC", text_data(250, 139, 8), (selectData->optionNo == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    AddText("TRACK", text_data(33, 175, 8), (selectData->optionNo == 1) ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    AddText(GetMusicTrackName(gMusicTrack), text_data(130, 175, 8), TEXT_COLOR_HIGHLIGHT);
-
-    if (selectData->optionNo == 0)
-    {
-        if (pad & IN_LEFT)
-        {
-            if (WhatChannel(SFX_SHIELD) == -1)
-            {
-                PlayNote(SFX_SHIELD);
-                SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
-                SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
-            }
-            SetMasterBalance(gMasterBalance - (gFrameIndex - gLastFrameIndex) * 2);
-        }
-        else if (pad & IN_RIGHT)
-        {
-            if (WhatChannel(SFX_SHIELD) == -1)
-            {
-                PlayNote(SFX_SHIELD);
-                SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
-                SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
-            }
-            SetMasterBalance(gMasterBalance + (gFrameIndex - gLastFrameIndex) * 2);
-        }
-        else
-        {
-            KillNote(SFX_SHIELD);
-        }
-    }
-
-    if (selectData->optionNo == 1)
-    {
-        KillNote(SFX_SHIELD);
-
-        if (xpad & IN_LEFT)
-        {
-            GoPrevMusic();
-        }
-        else if (xpad & IN_RIGHT)
-        {
-            GoNextMusic();
-        }
-    }
-}
-
-void ShowHiScores(SelectionData* selectData)
-{
-    int32 actualTrack = 0;
-
-    if (GetMenuKey(M_RIGHT))
-    {
-        PlayNote(SFX_MENU_MOVE);
-        selectData->hiscoreTrack++;
-        if (gConfig.rapierClass == 0)
-        {
-            if (selectData->hiscoreTrack == NumTracks)
-                selectData->hiscoreTrack = (NumTracks - 1);
-        }
-        else
-        {
-            if (gConfig.showBonusTrack == 0)
-            {
-                if (selectData->hiscoreTrack == NumTracks)
-                    selectData->hiscoreTrack = (NumTracks + 1);
-            }
-
-            if (selectData->hiscoreTrack == totalTracks)
-                selectData->hiscoreTrack = (totalTracks - 1);
-        }
-    }
-
-    if (GetMenuKey(M_LEFT))
-    {
-        PlayNote(SFX_MENU_MOVE);
-        selectData->hiscoreTrack--;
-        if (gConfig.rapierClass == 0)
-        {
-            if (selectData->hiscoreTrack < 0)
-                selectData->hiscoreTrack = 0;
-        }
-        else
-        {
-            if (gConfig.showBonusTrack == 0)
-            {
-                if (selectData->hiscoreTrack == NumTracks)
-                    selectData->hiscoreTrack = (NumTracks - 1);
-            }
-
-            if (selectData->hiscoreTrack < 0)
-                selectData->hiscoreTrack = 0;
-        }
-    }
-
-    actualTrack = selectData->hiscoreTrack;
-
-    if (selectData->hiscoreTrack >= NumTracks)
-    {
-        if (gConfig.showBonusTrack == 0)
-            actualTrack -= (NumTracks + 1);
-        else
-            actualTrack -= NumTracks;
-        CentreText("RAPIER", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
-    }
-    else
-    {
-        CentreText("VENOM", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
-    }
-
-    if (((gConfig.rapierClass == 0) && (selectData->hiscoreTrack == (NumTracks - 1))) || ((gConfig.rapierClass == 1) && (selectData->hiscoreTrack == (totalTracks - 1))))
-    {
-    //    DisplayButtons(290, 116, ARROWR);
-    }
-    else if (BLINK_SLOW)
-    {
-        DisplayButtons(290, 116, ARROWR);
-    }
-
-    if (selectData->hiscoreTrack == 0)
-    {
-    //    DisplayButtons(20, 116, ARROWL);
-    }
-    else if (BLINK_SLOW)
-    {
-        DisplayButtons(20, 116, ARROWL);
-    }
-
-    CentreText(gMenuSystem[TRACK_MENU].options[actualTrack], text_data(0, 127 - 70, 12), TEXT_COLOR_HIGHLIGHT);
-
-    if (BLINK_SLOW)
-    {
-        AddText("LAP RECORD", text_data(40, 195, 8), TEXT_COLOR_WHITE);
-        AddTime(scoreTable[selectData->hiscoreTrack].lapRecord, text_data(165, 188, 16), TEXT_COLOR_HIGHLIGHT);
-    }
-
-    DisplayHiScore(selectData->hiscoreTrack);
-}
-
-void ShowTimeTrialScores(SelectionData* selectData)
-{
-    int32 actualTrack = 0;
-
-    if (GetMenuKey(M_RIGHT))
-    {
-        PlayNote(SFX_MENU_MOVE);
-        selectData->hiscoreTrack++;
-        if (gConfig.rapierClass == 0)
-        {
-            if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
-                selectData->hiscoreTrack = ((NumTracks - 1) + HiScoreTracks);
-        }
-        else
-        {
-            if (gConfig.showBonusTrack == 0)
-            {
-                if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
-                    selectData->hiscoreTrack = ((NumTracks + 1) + HiScoreTracks);
-            }
-
-            if (selectData->hiscoreTrack == (totalTracks + HiScoreTracks))
-                selectData->hiscoreTrack = ((totalTracks - 1) + HiScoreTracks);
-        }
-    }
-
-    if (GetMenuKey(M_LEFT))
-    {
-        PlayNote(SFX_MENU_MOVE);
-        selectData->hiscoreTrack--;
-        if (gConfig.rapierClass == 0)
-        {
-            if (selectData->hiscoreTrack < 14)
-                selectData->hiscoreTrack = 14;
-        }
-        else
-        {
-            if (gConfig.showBonusTrack == 0)
-            {
-                if (selectData->hiscoreTrack == (NumTracks + HiScoreTracks))
-                    selectData->hiscoreTrack = ((NumTracks - 1) + HiScoreTracks);
-            }
-
-            if (selectData->hiscoreTrack < 14)
-                selectData->hiscoreTrack = 14;
-        }
-    }
-
-    actualTrack = (selectData->hiscoreTrack - HiScoreTracks);
-
-    if ((selectData->hiscoreTrack - HiScoreTracks) >= (NumTracks))
-    {
-        if (gConfig.showBonusTrack == 0)
-            actualTrack -= ((NumTracks + 1));
-        else
-            actualTrack -= (NumTracks);
-        CentreText("RAPIER", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
-    }
-    else
-    {
-        CentreText("VENOM", text_data(1, 40, 8), TEXT_COLOR_HIGHLIGHT);
-    }
-
-    if (((gConfig.rapierClass == 0) && ((selectData->hiscoreTrack - HiScoreTracks) == (NumTracks - 1))) || ((gConfig.rapierClass == 1) && ((selectData->hiscoreTrack - HiScoreTracks) == (totalTracks - 1))))
-    {
-    //    DisplayButtons(290, 116, ARROWR);
-    }
-    else if (BLINK_SLOW)
-    {
-        DisplayButtons(290, 116, ARROWR);
-    }
-
-    if ((selectData->hiscoreTrack - HiScoreTracks) == 0)
-    {
-    //    DisplayButtons(20, 116, ARROWL);
-    }
-    else if (BLINK_SLOW)
-    {
-        DisplayButtons(20, 116, ARROWL);
-    }
-
-    CentreText(gMenuSystem[TRACK_MENU].options[actualTrack], text_data(0, 127 - 70, 12), TEXT_COLOR_HIGHLIGHT);
-
-    if (BLINK_SLOW)
-    {
-        AddText("LAP RECORD", text_data(40, 195, 8), TEXT_COLOR_WHITE);
-        AddTime(scoreTable[selectData->hiscoreTrack].lapRecord, text_data(165, 188, 16), TEXT_COLOR_HIGHLIGHT);
-    }
-
-    DisplayHiScore(selectData->hiscoreTrack);
-}
-
-void InitGameData(void)
-{
-    gConfig.shipNum = randy() % 8;
-    gConfig.trackNum = 0;
-    gConfig.actTrackNum = 0;
-    gConfig.raceClass = 0;
-    gConfig.team = 0;
-    gConfig.raceType = 0;
-    gConfig.lives = 3;
-    gConfig.EndOfGame = 0;
-    gConfig.Position = NO_OF_SHIPS;
-    gConfig.rapierClass = 0;
-    gConfig.gameComplete = 0;
-    gConfig.showPilotCount = 0;
-    gConfig.gameOverCount = 0;
-    gConfig.venomComplete = 0;
-    gConfig.newLapRecord = 0;
-    gConfig.gotoMenu = 0;
-    gConfig.normpadPreset = 0;
-    gConfig.showBonusTrack = 0;
-    gConfig.trackInc = 1;
-    gConfig.lostGame = 0;
-    gConfig.showGameOver = 0;
-}
-
-void ContinueGameConfirm(int32 lConfirm)
-{
-    CentreText("CONTINUE QUALIFYING OR QUIT", text_data(77, 95, 8), TEXT_COLOR_WHITE);
-
-    AddText("QUIT", text_data(215, 120, 16), lConfirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    AddText("QUALIFY", text_data(45, 120, 16), lConfirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
-}
-
-void RestartGameConfirm(int32 lConfirm)
-{
-    CentreText("RESTART RACE", text_data(77, 95, 16), TEXT_COLOR_WHITE);
-
-    AddText("NO", text_data(215, 120, 16), lConfirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    AddText("YES", text_data(68, 120, 16), lConfirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
+    AddText(STR_NO, text_data(215, 120, 16), lConfirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText(STR_YES, text_data(68, 120, 16), lConfirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
 void SetNormPadPresets(void)
@@ -1027,114 +386,993 @@ void SetNormPadPresets(void)
     }
 }
 
-void DrawGames(const Menu* menu, int shipNo)
-{
-    int32 hdg = FRAME_LERP_STEP(40);
-
-    renderOffset(0, -30);
-
-    if (shipNo == 0)
-    {
-        DrawObject(gameShapes + 0, 0, -50, 600, hdg, 0, 0);
-    }
-
-    if (shipNo == 1)
-    {
-        DrawObject(gameShapes + 2, 0, -50, 600, hdg, 0, 0);
-    }
-
-    if (shipNo == 2)
-    {
-        DrawObject(optShapes + 2, 0, -50, 600, hdg, 0, 0);
-    }
-}
-
-void DrawOptionMenus(const Menu* menu, int shipNo)
-{
-    int32 hdg = FRAME_LERP_STEP(40);
-    int32 heading = FRAME_LERP_STEP(10);
-
-    renderOffset(0, -30);
-
-    switch (shipNo)
-    {
-        case CONTROLS:
-            DisplayPadMenu(menu, shipNo);
-            break;
-        case DETAILS:
-            DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
-            break;
-        case AUDIO_CONFIG:
-            DrawObject(optShapes + 3, 0, 0, 600, hdg, 0, 0);
-            break;
-        case HIGH_SCORES:
-            DrawObject(optShapes + 2, 0, 0, 600, hdg, 0, 0);
-            break;
-    }
-}
-
-void DrawHiScoreMenu(const Menu* menu, int shipNo)
-{
-    int32 hdg = FRAME_LERP_STEP(40);
-
-    renderOffset(0, -30);
-    DrawObject(optShapes + 2, 0, 0, 600, hdg, 0, 0);
-}
-
-void DisplayPadMenu(const Menu* menu, int shapeNo)
-{
-    int32 hdg = FRAME_LERP_STEP(40);
-
-    DrawObject(padShapes + 0, 0, 0, 6500, hdg, 0, 0);
-}
-
 void InitChampionship(void)
 {
     memset(winTable, 0, sizeof(winTable));
 }
 
-void QuitYesNo(SelectionData* selectData)
+void CallMenuSelector(void)
 {
-    CentreText("ARE YOU SURE YOU", text_data(77, 95, 8), TEXT_COLOR_HIGHLIGHT);
-    CentreText("WANT TO QUIT", text_data(105, 105, 8), TEXT_COLOR_HIGHLIGHT);
+    int32 i;
+    const Menu* menu = gMenuSystem + gCurrMenu;
+    int32 numOptions = 0;
+
+    for (i = 0; i < MAX_OPTIONS; i++)
+    {
+        if (menu->options[i] == STR_MAX)
+            break;
+        numOptions++;
+    }
+
+    if (gCurrMenu == MENU_TRACK)
+    {
+        numOptions = NumTracks;
+    }
+
+    if (GetMenuKey(M_UP))
+    {
+        PlayNote(SFX_MENU_MOVE);
+        gCurrOption--;
+        if (gCurrOption < 0)
+        {
+            gCurrOption = (numOptions - 1);
+        }
+    }
+
+    if (GetMenuKey(M_DOWN))
+    {
+        PlayNote(SFX_MENU_MOVE);
+        gCurrOption++;
+        if (gCurrOption > (numOptions - 1))
+            gCurrOption = 0;
+    }
+
+    if (menu->drawProc != 0)
+    {
+        (menu->drawProc)(gCurrOption, menu->options[gCurrOption]);
+    }
+
+    //DrawButtons();
+    CentreText(menu->title, text_data(0, guiT + 21, 8), TEXT_COLOR_HIGHLIGHT);
+
+    for (i = 0; i < MAX_OPTIONS; i++)
+    {
+        if (menu->options[i] == STR_MAX)
+            break;
+
+        CentreText(menu->options[i], text_data(0, 127 + 12 * i, 8), (i == gCurrOption) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    }
+
+    if (GetMenuKey(M_SELECT))
+    {
+        gSelectData.select = 1;
+    }
+
+    if (GetMenuKey(M_BACK) && (gMenuHistoryIndex > 0))
+    {
+        GoBack();
+    }
+}
+
+void CallMenuActivator(void)
+{
+    int32 i;
+    int32 id = gMenuSystem[gCurrMenu].options[gCurrOption];
+
+    switch (gCurrMenu)
+    {
+        case MENU_MAIN:
+        {
+            switch (id)
+            {
+                case STR_MAIN_START_GAME:
+                    gNumPlayers = 1;
+                    GoMenu(MENU_CLASS);
+                    break;
+                case STR_MAIN_MULTIPLAYER:
+                    gSelectData.optionNo = 0;
+                    gConfig.trackNum = 0;
+                    gConfig.gameMode = 0; // local
+                    gConfig.raceType = SINGLE_RACE;
+                    GoMenu(MENU_MULTIPLAYER);
+                    break;
+                case STR_MAIN_OPTIONS:
+                    GoMenu(MENU_OPTIONS);
+                    break;
+                case STR_MAIN_QUIT:
+                    gSelectData.confirm = 0;
+                    GoMenu(MENU_QUIT);
+                    break;
+            }
+            break;
+        }
+
+        case MENU_TRACK:
+        {
+            gConfig.trackNum = (gCurrOption + 1) + gConfig.raceClass * 7;
+            gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
+            GoMenu(-1);
+            break;
+        }
+
+        case MENU_OPTIONS:
+        {
+            switch (id)
+            {
+                case STR_OPTION_CONTROLS:
+                    GoMenu(MENU_CONTROLS);
+                    break;
+                case STR_OPTION_GRAPHICS:
+                    GoMenu(MENU_GRAPHICS);
+                    break;
+                case STR_OPTION_AUDIO:
+                    GoMenu(MENU_AUDIO);
+                    renderOffset(0, 60);
+                    break;
+                case STR_OPTION_BEST_TIMES:
+                    GoMenu(MENU_HIGH_SCORES);
+                    gSelectData.hiscoreTrack = 0;
+                    break;
+            }
+            break;
+        }
+
+        case MENU_CLASS:
+        {
+            gConfig.raceClass = gCurrOption;
+            if (gConfig.rapierClass == 0 && id == STR_CLASS_RAPIER)
+                return;
+            GoMenu(MENU_RACE);
+            break;
+        }
+
+        case MENU_RACE:
+        {
+            switch (id)
+            {
+                case STR_RACE_CHAMPIONSHIP:
+                    gConfig.raceType = CHAMPIONSHIP;
+                    gConfig.trackNum = 1;
+                    gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
+                    InitChampTable();
+                    break;
+                case STR_RACE_SINGLE:
+                    gConfig.raceType = SINGLE_RACE;
+                    if (gConfig.showBonusTrack == 0)
+                    {
+                        gConfig.trackNum = NumTracks + 2;
+                    }
+                    else
+                    {
+                        gConfig.trackNum = NumTracks + 1;
+                    }
+                    break;
+                case STR_RACE_TIME_TRIAL:
+                    gConfig.raceType = TIME_TRIAL;
+                    break;
+            }
+
+            GoMenu(MENU_TEAM);
+            break;
+        }
+
+        case MENU_TEAM:
+        {
+            gConfig.team = gCurrOption;
+            GoMenu(MENU_PILOT_1 + gCurrOption);
+            break;
+        }
+
+        case MENU_PILOT_1:
+        case MENU_PILOT_2:
+        case MENU_PILOT_3:
+        case MENU_PILOT_4:
+        {
+            gConfig.newLapRecord = 0;
+            gPlayers[0].ready = 1;
+            gPlayers[0].shipNum = (gConfig.team * 2) + gCurrOption;
+            ownShip = gPlayers[0].shipNum;
+
+            if (gConfig.raceType == CHAMPIONSHIP)
+            {
+                GoMenu(-1);
+            }
+            else
+            {
+                GoMenu(MENU_TRACK);
+            }
+            break;
+        }
+
+        case MENU_HIGH_SCORES:
+        {
+            switch (id)
+            {
+                case STR_BEST_RACE:
+                    gSelectData.hiscoreTrack = 0;
+                    GoMenu(MENU_BEST_RACE);
+                    break;
+                case STR_BEST_TRIAL:
+                    gSelectData.hiscoreTrack = 14;
+                    GoMenu(MENU_BEST_TRIAL);
+                    break;
+            }
+            break;
+        }
+
+        case MENU_QUIT:
+        {
+            if (gSelectData.confirm)
+            {
+                osQuit();
+            }
+            else
+            {
+                GoBack();
+            }
+            break;
+        }
+    }
+}
+
+void menuInit(void)
+{
+    int32 i;
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        gPlayers[i].shipNum = -1;
+        gPlayers[i].ready = 0;
+    }
+
+    LoadMainMenu();
+
+    gSelectData.optionNo = 0;
+    gSelectData.select = 0;
+    gSelectData.hiscoreTrack = 0;
+
+    gMenuHistoryIndex = 0;
+    gCurrMenu = 0;
+    gCurrOption = 0;
+
+    gCameraFOV = CAMERA_FOV;
+    gCameraRotY = 0;
+}
+
+void menuLoop(void)
+{
+    UpdatePad();
+
+    renderFrameBegin();
+    renderClear();
+    renderSetMode(RENDER_MODE_2D);
+
+    renderBackground(menuScreen);
+
+    if (gCurrMenu >= 0)
+        CallMenuSelector();
+
+    if (gSelectData.select)
+    {
+        if (gCurrMenu == MENU_MAIN && gCurrOption == 0)
+        {
+            int32 pad = gPlayers[0].pad;
+            // CHEAT ACTIVATION BITS - need to be changed for PCwipeout
+            /*TODO cheats*/
+
+            if ((pad & IN_LEFT) && (pad & IN_A))
+            {
+                gConfig.rapierClass = 1;
+            }
+
+            if ((pad & IN_RIGHT) && (pad & IN_Y))
+            {
+                totalTracks = 14;
+                NumTracks = 7;
+                gConfig.showBonusTrack = 1;
+            }
+        }
+
+        CallMenuActivator();
+    }
+
+    if (gCurrMenu == MENU_CLASS && gCurrOption == 1 && (!gConfig.rapierClass))
+        CentreText(STR_NOT_AVAILABLE, text_data(0, 190, 12), TEXT_COLOR_HIGHLIGHT);
+
+    renderFrameEnd();
+
+    if (gCurrMenu == -1)
+    {
+        ctrlmode = INTERACTIVE;
+        ctrlGameLoop = GAME_LOOP_RACE_INIT;
+        return;
+    }
+
+    if (gSelectData.select == 1)
+    {
+        gSelectData.select = 0;
+    }
+}
+
+void DisplayButtons(int x, int y, int buttType)
+{
+    renderImage(gButtonTex + buttType, x, y);
+}
+
+void DrawButtons(void)
+{
+    if (gMenuSystem[gCurrMenu].options[0] != STR_MAX)
+        DisplayButtons(30, 210, PSELECT);
+
+    if (gCurrMenu != MENU_MAIN)
+        DisplayButtons(240, 210, PBACK);
+}
+
+void DrawTeamShips(int x, int y, int size, int heading, Object* shipModel)
+{
+    matrixPush();
+    matrixTranslate(x, y, size);
+    matrixRotateYXZ(0, -heading, 0);
+    renderShip(shipModel, 0xFF808080);
+    matrixPop();
+}
+
+void DrawMenuMain(int32 index, int32 id)
+{
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 heading = FRAME_LERP_STEP(10);
+
+    renderOffset(0, -30);
+    renderSetMode(RENDER_MODE_3D);
+
+    if (id == STR_MAIN_START_GAME)
+    {
+        DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
+    }
+
+    if (id == STR_MAIN_MULTIPLAYER)
+    {
+        DrawTeamShips(-450, 0, 1100, heading, ctrlshipShapes[shipShapeOrder[3]]);
+        DrawTeamShips(450, 0, 1100, -heading, ctrlshipShapes[shipShapeOrder[1]]);
+    }
+
+    if (id == STR_MAIN_OPTIONS)
+    {
+        DrawObject(gameShapes + 3, 0, 0, MODELSIZE, hdg, 0, 0);
+    }
+
+    renderSetMode(RENDER_MODE_2D);
+}
+
+void DrawMenuTrack(int32 index, int32 id)
+{
+    renderImage(gTrackIcon + gCurrOption, 96, 50);
+    CentreText((gConfig.raceClass == 0) ? STR_CLASS_VENOM : STR_CLASS_RAPIER, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
+}
+
+void DrawMenuOptions(int32 index, int32 id)
+{
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 heading = FRAME_LERP_STEP(10);
+
+    renderOffset(0, -30);
+
+    renderSetMode(RENDER_MODE_3D);
+
+    switch (id)
+    {
+        case STR_OPTION_CONTROLS:
+            DrawObject(padShapes + 0, 0, 0, 6500, hdg, 0, 0);
+            break;
+        case STR_OPTION_GRAPHICS:
+            DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
+            break;
+        case STR_OPTION_AUDIO:
+            DrawObject(optShapes + 3, 0, 0, 600, hdg, 0, 0);
+            break;
+        case STR_OPTION_BEST_TIMES:
+            DrawObject(optShapes + 2, 0, 0, 600, hdg, 0, 0);
+            break;
+    }
+
+    renderSetMode(RENDER_MODE_2D);
+}
+
+void DrawMenuClass(int32 index, int32 id)
+{
+    int32 hdg = FRAME_LERP_STEP(40);
+
+    renderSetMode(RENDER_MODE_3D);
+
+    if (id == STR_CLASS_VENOM)
+    {
+        DrawObject(clsShapes + 0, 0, 0, 500, hdg, 0, 0);
+    }
+
+    if (id == STR_CLASS_RAPIER)
+    {
+        DrawObject(clsShapes + 1, 0, -25, 500, hdg, 0, 0);
+    }
+
+    renderSetMode(RENDER_MODE_2D);
+}
+
+void DrawMenuRace(int32 index, int32 id)
+{
+    int32 hdg = FRAME_LERP_STEP(40);
+
+    renderOffset(0, -30);
+
+    renderSetMode(RENDER_MODE_3D);
+
+    if (id == STR_RACE_CHAMPIONSHIP)
+    {
+        DrawObject(gameShapes + 0, 0, -50, 600, hdg, 0, 0);
+    }
+
+    if (id == STR_RACE_SINGLE)
+    {
+        DrawObject(gameShapes + 2, 0, -50, 600, hdg, 0, 0);
+    }
+
+    if (id == STR_RACE_TIME_TRIAL)
+    {
+        DrawObject(optShapes + 2, 0, -50, 600, hdg, 0, 0);
+    }
+
+    renderSetMode(RENDER_MODE_2D);
+}
+
+void DrawMenuTeam(int32 index, int32 id)
+{
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 heading = FRAME_LERP_STEP(20);
+
+    renderSetMode(RENDER_MODE_3D);
+
+    DrawObject(teamShapes + teamShapeOrder[index], 0, 0, 9000, hdg, 0, 0);
+
+    DrawTeamShips(-900, 800, 1500, heading, ctrlshipShapes[shipShapeOrder[index * 2]]);
+    DrawTeamShips(900, 800, 1500, heading, ctrlshipShapes[shipShapeOrder[index * 2 + 1]]);
+
+    renderSetMode(RENDER_MODE_2D);
+}
+
+void DrawMenuPilot(int32 index, int32 id)
+{
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 heading = FRAME_LERP_STEP(10);
+
+    int32 pilotIndex = id - STR_PILOT_JOHN;
+
+    renderSetMode(RENDER_MODE_3D);
+
+    DrawObject(pilotShapes + pilotShapeOrder[pilotIndex], 0, -400, 11000, hdg, 0, 0);
+    DrawTeamShips(0, 700, 1300, heading, ctrlshipShapes[shipShapeOrder[pilotIndex]]);
+
+    renderSetMode(RENDER_MODE_2D);
+}
+
+void DrawMenuQuit(int32 index, int32 id)
+{
+    CentreText(STR_ACK_SURE, text_data(0, 95, 8), TEXT_COLOR_HIGHLIGHT);
+    CentreText(STR_ACK_WANT_QUIT, text_data(0, 105, 8), TEXT_COLOR_HIGHLIGHT);
 
     if ((GetMenuKey(M_LEFT)) || (GetMenuKey(M_RIGHT)))
     {
-        selectData->confirm ^= 1;
+        gSelectData.confirm ^= 1;
     }
 
-    AddText("YES", text_data(80, 120, 16), selectData->confirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
-    AddText("NO", text_data(210, 120, 16), selectData->confirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
+    AddText(STR_YES, text_data(80, 120, 16), gSelectData.confirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText(STR_NO, text_data(210, 120, 16), gSelectData.confirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
 }
 
-void GraphicOptions(SelectionData* selectData)
-{
-    // TODO menu graphics
-}
-
-void ControllerOptions(SelectionData* selectData)
+void DrawMenuControls(int32 index, int32 id)
 {
     // TODO menu controls
 }
 
-void ControllerEdit(SelectionData* selectData)
-{
-    // TODO menu controls
-}
-
-void DrawControllerMenu(const Menu* menu, int shapeNo)
-{
-    // TODO menu controls
-}
-
-void DrawControllerEdit(const Menu* menu, int shapeNo)
-{
-    // TODO menu controls
-}
-
-void DrawGraphicDetail(const Menu* menu, int shapeNo)
+void DrawMenuGraphics(int32 index, int32 id)
 {
     int32 heading = FRAME_LERP_STEP(10);
 
+    renderSetMode(RENDER_MODE_3D);
     DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
+    renderSetMode(RENDER_MODE_2D);
+}
+
+void DrawMenuAudio(int32 index, int32 id)
+{
+    int32 opt = gSelectData.optionNo;
+
+    if (GetMenuKey(M_UP))
+    {
+        opt--;
+        if (opt < 0)
+            opt = 1;
+    }
+
+    if (GetMenuKey(M_DOWN))
+    {
+        opt++;
+        if (opt > 1)
+            opt = 0;
+    }
+
+    gSelectData.optionNo = opt;
+
+    renderImage(sliderTex, 39 + (gMasterBalance * 218 >> 8), 61);
+    renderImage(slideTex, 48, 85);
+
+    AddText(STR_AUDIO_SFX, text_data(33, 51, 8), (opt == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText(STR_AUDIO_MUSIC, text_data(250, 139, 8), (opt == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddText(STR_AUDIO_TRACK, text_data(33, 175, 8), (opt == 1) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    AddTextStr(GetMusicTrackName(gMusicTrack), text_data(130, 175, 8), TEXT_COLOR_HIGHLIGHT);
+
+    if (opt == 0)
+    {
+        int32 pad = gPlayers[0].pad;
+
+        if (pad & IN_LEFT)
+        {
+            if (WhatChannel(SFX_SHIELD) == -1)
+            {
+                PlayNote(SFX_SHIELD);
+                SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
+                SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
+            }
+            SetMasterBalance(gMasterBalance - (gFrameIndex - gLastFrameIndex) * 2);
+        }
+        else if (pad & IN_RIGHT)
+        {
+            if (WhatChannel(SFX_SHIELD) == -1)
+            {
+                PlayNote(SFX_SHIELD);
+                SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
+                SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
+            }
+            SetMasterBalance(gMasterBalance + (gFrameIndex - gLastFrameIndex) * 2);
+        }
+        else
+        {
+            KillNote(SFX_SHIELD);
+        }
+    }
+
+    if (opt == 1)
+    {
+        KillNote(SFX_SHIELD);
+
+        if (GetMenuKey(M_LEFT))
+        {
+            GoPrevMusic();
+        }
+        else if (GetMenuKey(M_RIGHT))
+        {
+            GoNextMusic();
+        }
+    }
+}
+
+void DrawMenuHighScores(int32 index, int32 id)
+{
+    int32 hdg = FRAME_LERP_STEP(40);
+
+    renderOffset(0, -30);
+
+    renderSetMode(RENDER_MODE_3D);
+    DrawObject(optShapes + 2, 0, 0, 600, hdg, 0, 0);
+    renderSetMode(RENDER_MODE_2D);
+}
+
+void DrawMenuBestRace(int32 index, int32 id)
+{
+    int32 actualTrack = 0;
+
+    if (GetMenuKey(M_RIGHT))
+    {
+        PlayNote(SFX_MENU_MOVE);
+        gSelectData.hiscoreTrack++;
+        if (gConfig.rapierClass == 0)
+        {
+            if (gSelectData.hiscoreTrack == NumTracks)
+                gSelectData.hiscoreTrack = (NumTracks - 1);
+        }
+        else
+        {
+            if (gConfig.showBonusTrack == 0)
+            {
+                if (gSelectData.hiscoreTrack == NumTracks)
+                    gSelectData.hiscoreTrack = (NumTracks + 1);
+            }
+
+            if (gSelectData.hiscoreTrack == totalTracks)
+                gSelectData.hiscoreTrack = (totalTracks - 1);
+        }
+    }
+
+    if (GetMenuKey(M_LEFT))
+    {
+        PlayNote(SFX_MENU_MOVE);
+        gSelectData.hiscoreTrack--;
+        if (gConfig.rapierClass == 0)
+        {
+            if (gSelectData.hiscoreTrack < 0)
+                gSelectData.hiscoreTrack = 0;
+        }
+        else
+        {
+            if (gConfig.showBonusTrack == 0)
+            {
+                if (gSelectData.hiscoreTrack == NumTracks)
+                    gSelectData.hiscoreTrack = (NumTracks - 1);
+            }
+
+            if (gSelectData.hiscoreTrack < 0)
+                gSelectData.hiscoreTrack = 0;
+        }
+    }
+
+    actualTrack = gSelectData.hiscoreTrack;
+
+    if (gSelectData.hiscoreTrack >= NumTracks)
+    {
+        if (gConfig.showBonusTrack == 0)
+            actualTrack -= (NumTracks + 1);
+        else
+            actualTrack -= NumTracks;
+        CentreText(STR_RAPIER, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    }
+    else
+    {
+        CentreText(STR_VENOM, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    }
+
+    if (((gConfig.rapierClass == 0) && (gSelectData.hiscoreTrack == (NumTracks - 1))) || ((gConfig.rapierClass == 1) && (gSelectData.hiscoreTrack == (totalTracks - 1))))
+    {
+    //    DisplayButtons(290, 116, ARROWR);
+    }
+    else if (BLINK_SLOW)
+    {
+        DisplayButtons(290, 116, ARROWR);
+    }
+
+    if (gSelectData.hiscoreTrack == 0)
+    {
+    //    DisplayButtons(20, 116, ARROWL);
+    }
+    else if (BLINK_SLOW)
+    {
+        DisplayButtons(20, 116, ARROWL);
+    }
+
+    CentreText(gMenuSystem[MENU_TRACK].options[actualTrack], text_data(0, 127 - 70, 12), TEXT_COLOR_HIGHLIGHT);
+
+    if (BLINK_SLOW)
+    {
+        AddText(STR_LAP_RECORD, text_data(40, 195, 8), TEXT_COLOR_WHITE);
+        AddTime(scoreTable[gSelectData.hiscoreTrack].lapRecord, text_data(165, 188, 16), TEXT_COLOR_HIGHLIGHT);
+    }
+
+    DisplayHiScore(gSelectData.hiscoreTrack);
+}
+
+void DrawMenuBestTrial(int32 index, int32 id)
+{
+    int32 actualTrack = 0;
+
+    if (GetMenuKey(M_RIGHT))
+    {
+        PlayNote(SFX_MENU_MOVE);
+        gSelectData.hiscoreTrack++;
+        if (gConfig.rapierClass == 0)
+        {
+            if (gSelectData.hiscoreTrack == (NumTracks + HiScoreTracks))
+                gSelectData.hiscoreTrack = ((NumTracks - 1) + HiScoreTracks);
+        }
+        else
+        {
+            if (gConfig.showBonusTrack == 0)
+            {
+                if (gSelectData.hiscoreTrack == (NumTracks + HiScoreTracks))
+                    gSelectData.hiscoreTrack = ((NumTracks + 1) + HiScoreTracks);
+            }
+
+            if (gSelectData.hiscoreTrack == (totalTracks + HiScoreTracks))
+                gSelectData.hiscoreTrack = ((totalTracks - 1) + HiScoreTracks);
+        }
+    }
+
+    if (GetMenuKey(M_LEFT))
+    {
+        PlayNote(SFX_MENU_MOVE);
+        gSelectData.hiscoreTrack--;
+        if (gConfig.rapierClass == 0)
+        {
+            if (gSelectData.hiscoreTrack < 14)
+                gSelectData.hiscoreTrack = 14;
+        }
+        else
+        {
+            if (gConfig.showBonusTrack == 0)
+            {
+                if (gSelectData.hiscoreTrack == (NumTracks + HiScoreTracks))
+                    gSelectData.hiscoreTrack = ((NumTracks - 1) + HiScoreTracks);
+            }
+
+            if (gSelectData.hiscoreTrack < 14)
+                gSelectData.hiscoreTrack = 14;
+        }
+    }
+
+    actualTrack = (gSelectData.hiscoreTrack - HiScoreTracks);
+
+    if ((gSelectData.hiscoreTrack - HiScoreTracks) >= (NumTracks))
+    {
+        if (gConfig.showBonusTrack == 0)
+            actualTrack -= ((NumTracks + 1));
+        else
+            actualTrack -= (NumTracks);
+        CentreText(STR_RAPIER, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    }
+    else
+    {
+        CentreText(STR_VENOM, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    }
+
+    if (((gConfig.rapierClass == 0) && ((gSelectData.hiscoreTrack - HiScoreTracks) == (NumTracks - 1))) || ((gConfig.rapierClass == 1) && ((gSelectData.hiscoreTrack - HiScoreTracks) == (totalTracks - 1))))
+    {
+    //    DisplayButtons(290, 116, ARROWR);
+    }
+    else if (BLINK_SLOW)
+    {
+        DisplayButtons(290, 116, ARROWR);
+    }
+
+    if ((gSelectData.hiscoreTrack - HiScoreTracks) == 0)
+    {
+    //    DisplayButtons(20, 116, ARROWL);
+    }
+    else if (BLINK_SLOW)
+    {
+        DisplayButtons(20, 116, ARROWL);
+    }
+
+    CentreText(gMenuSystem[MENU_TRACK].options[actualTrack], text_data(0, 127 - 70, 12), TEXT_COLOR_HIGHLIGHT);
+
+    if (BLINK_SLOW)
+    {
+        AddText(STR_LAP_RECORD, text_data(40, 195, 8), TEXT_COLOR_WHITE);
+        AddTime(scoreTable[gSelectData.hiscoreTrack].lapRecord, text_data(165, 188, 16), TEXT_COLOR_HIGHLIGHT);
+    }
+
+    DisplayHiScore(gSelectData.hiscoreTrack);
+}
+
+void DrawMenuMultiplayer(int32 index, int32 id)
+{
+    int32 i;
+    int32 x;
+    int32 y = 40;
+    int32 hdg = FRAME_LERP_STEP(40);
+    int32 opt = gSelectData.optionNo;
+    int32 gameMode = gConfig.gameMode;
+    int32 trackNum = gConfig.trackNum;
+    int32 raceClass = gConfig.raceClass;
+    int32 raceType = gConfig.raceType;
+    int32 done;
+
+    if (GetMenuKey(M_UP))
+    {
+        opt--;
+        if (opt < 0)
+            opt = 4;
+    }
+
+    if (GetMenuKey(M_DOWN))
+    {
+        opt++;
+        if (opt > 4)
+            opt = 0;
+    }
+
+    if (GetMenuKey(M_LEFT))
+    {
+        switch (opt)
+        {
+            case 0: // mode
+                //gameMode ^= 1;
+                break;
+            case 1: // track
+                trackNum--;
+                if (trackNum < 0)
+                    trackNum = 6;
+                break;
+            case 2: // class
+                raceClass ^= 1;
+                break;
+            case 3: // type
+                raceType--;
+                if (raceType < SINGLE_RACE)
+                    raceType = TIME_TRIAL;
+                break;
+        }
+        PlayNote(SFX_MENU_MOVE);
+    }
+
+    if (GetMenuKey(M_RIGHT))
+    {
+        switch (opt)
+        {
+            case 0: // mode
+                //gameMode ^= 1;
+                break;
+            case 1: // track
+                trackNum++;
+                if (trackNum > 6)
+                    trackNum = 0;
+                break;
+            case 2: // class
+                raceClass ^= 1;
+                break;
+            case 3: // type
+                raceType++;
+                if (raceType > TIME_TRIAL)
+                    raceType = SINGLE_RACE;
+                break;
+        }
+        PlayNote(SFX_MENU_MOVE);
+    }
+
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        int32 xpad = gPlayers[i].xpad;
+
+        if (gPlayers[i].shipNum == -1)
+        {
+            if (xpad)
+            {
+                gPlayers[i].shipNum = 0;
+            }
+        }
+        else
+        {
+            if ((i == 0 && opt == 4) || (i != 0))
+            {
+                if (GetMenuKeyPlayer(M_LEFT, i))
+                {
+                    gPlayers[i].shipNum--;
+                    if (gPlayers[i].shipNum < 0)
+                        gPlayers[i].shipNum = 7;
+                }
+
+                if (GetMenuKeyPlayer(M_RIGHT, i))
+                {
+                    gPlayers[i].shipNum++;
+                    if (gPlayers[i].shipNum > 7)
+                        gPlayers[i].shipNum = 0;
+                }
+
+                if (GetMenuKeyPlayer(M_SELECT, i))
+                {
+                    gPlayers[i].ready ^= 1;
+                }
+
+                if (GetMenuKeyPlayer(M_BACK, i))
+                {
+                    gPlayers[i].ready = 0;
+                }
+            }
+
+            if (i > 0)
+            {
+                if (GetMenuKeyPlayer(M_START, i))
+                {
+                    gPlayers[i].shipNum = -1;
+                }
+            }
+        }
+    }
+
+    gSelectData.optionNo = opt;
+    gConfig.gameMode = gameMode;
+    gConfig.trackNum = trackNum;
+    gConfig.raceClass = raceClass;
+    gConfig.raceType = raceType;
+
+    x = -120;
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (gPlayers[i].shipNum != -1)
+        {
+            renderOffset(x, -8 + 24);
+            renderSetMode(RENDER_MODE_3D);
+            DrawTeamShips(0, 800, 2200, hdg, ctrlshipShapes[shipShapeOrder[gPlayers[i].shipNum]]); // gPlayers[i].shipNum
+        }
+        hdg += 1024;
+        x += 80;
+    }
+
+    renderSetMode(RENDER_MODE_2D);
+
+    // track thumbnail
+    renderImage(gTrackIcon + trackNum, 320 - 128 - 20, y);
+
+    y += 4;
+
+    // mode
+    AddText(STR_MULTI_MODE, text_data(20, y, 8), TEXT_COLOR_HIGHLIGHT);
+    y += 12;
+    AddText(STR_MODE_LOCAL + gameMode, text_data(28, y, 8), (opt == 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    y += 12;
+
+    // circuit
+    AddText(STR_MULTI_CIRCUIT, text_data(20, y, 8), TEXT_COLOR_HIGHLIGHT);
+    y += 12;
+    AddText(STR_TRACK_ALTIMA + trackNum, text_data(28, y, 8), (opt == 1) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    y += 12;
+
+    // race class
+    AddText(STR_MULTI_CLASS, text_data(20, y, 8), TEXT_COLOR_HIGHLIGHT);
+    y += 12;
+    AddText((raceClass == 0) ? STR_VENOM : STR_RAPIER, text_data(28, y, 8), (opt == 2) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+    y += 12;
+
+    // race type
+    AddText(STR_MULTI_TYPE, text_data(20, y, 8), TEXT_COLOR_HIGHLIGHT);
+    y += 12;
+    AddText(STR_RACE_CHAMPIONSHIP + raceType, text_data(28, y, 8), (opt == 3) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+
+    y += 32;
+
+    x = -120;
+
+    done = gPlayers[0].ready;
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (gPlayers[i].ready)
+        {
+            CentreTextStr(gPlayers[i].name, text_data(x, y, 4), TEXT_COLOR_WHITE);
+            CentreText(STR_MULTI_READY, text_data(x, y + 24, 8), TEXT_COLOR_HIGHLIGHT);
+        }
+        else
+        {
+            if (gPlayers[i].shipNum != -1)
+            {
+                CentreTextStr(gPlayers[i].name, text_data(x, y, 4), (opt == 4) || (i > 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
+                CentreText(STR_TEAM_AG_SYSTEMS + gPlayers[i].shipNum / 2, text_data(x, y + 8, 4), TEXT_COLOR_HIGHLIGHT);
+            }
+            else
+            {
+                CentreTextStr(gPlayers[i].name, text_data(x, y, 4), TEXT_COLOR_WHITE);
+                if (BLINK_SLOW)
+                {
+                    CentreText(STR_PRESS_ANY_KEY, text_data(x, y + 24, 4), TEXT_COLOR_HIGHLIGHT);
+                }
+            }
+        }
+
+        x += 80;
+
+        if (!gPlayers[i].ready && (gPlayers[i].shipNum != -1))
+        {
+            done = 0;
+        }
+    }
+
+    if (done)
+    {
+        gNumPlayers = 0;
+        for (i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (gPlayers[i].ready)
+            {
+                gNumPlayers++;
+            }
+        }
+
+        ownShip = gPlayers[0].shipNum;
+        gConfig.trackNum = (gConfig.trackNum + 1) + gConfig.raceClass * 7;
+        gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
+        GoMenu(-1);
+    }
 }

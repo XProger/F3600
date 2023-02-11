@@ -136,9 +136,10 @@ void AdjustDirectionalNote(enum SfxType id, int32 x, int32 z)
     int32 mag;
     int32 voll, volr;
     int32 angle;
+    TrackCamera* camera = &gPlayers[0].camera; // TODO choose nearest camera
 
-    dx = (x - gCamera.pos.x) >> 3;
-    dz = (z - gCamera.pos.z) >> 3;
+    dx = (x - camera->pos.x) >> 3;
+    dz = (z - camera->pos.z) >> 3;
 
     mag = GetMagnitudeApprox(dx, dz);
     mag = mag << 2;
@@ -149,7 +150,7 @@ void AdjustDirectionalNote(enum SfxType id, int32 x, int32 z)
 
     volr = voll;
 
-    angle = -(ratan2(dx, dz) + gCamera.hdg);
+    angle = -(ratan2(dx, dz) + camera->hdg);
     angle = ang(angle);
 
     if (angle > 1024)
@@ -179,6 +180,7 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
     int32 voll, volr;
     int32 angle;
     int32 doplerMag;
+    TrackCamera* camera = &gPlayers[0].camera; // TODO choose nearest camera
 
 #ifdef __3DO__ // TODO 3DO optimize
     return;
@@ -189,18 +191,20 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (i != ownShip)
+        ShipData* ship = shipIndex + i;
+
+        if (ship->player)
+            continue;
+
+        dx = (shipIndex[i].pos.x - camera->pos.x) >> 3;
+        dz = (shipIndex[i].pos.z - camera->pos.z) >> 3;
+
+        mag = GetMagnitudeApprox(dx, dz);
+
+        if (mag < smallestMag)
         {
-            dx = (shipIndex[i].pos.x - gCamera.pos.x) >> 3;
-            dz = (shipIndex[i].pos.z - gCamera.pos.z) >> 3;
-
-            mag = GetMagnitudeApprox(dx, dz);
-
-            if (mag < smallestMag)
-            {
-                smallestMag = mag;
-                ident = i;
-            }
+            smallestMag = mag;
+            ident = i;
         }
     }
 
@@ -223,7 +227,7 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
         if (volr < 0)
             volr = 0;
 
-        angle = -(ratan2(dx, dz) + gCamera.hdg);
+        angle = -(ratan2(dx, dz) + camera->hdg);
         angle = ang(angle);
 
         if (angle > 1024)
@@ -234,8 +238,8 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
         voll += (voll * angle) >> 11;
         volr -= (volr * angle) >> 11;
 
-        dx += ((shipIndex[ident].vel.x >> VELOCITY_SHIFT) - gCamera.vel.x);
-        dz += ((shipIndex[ident].vel.z >> VELOCITY_SHIFT) - gCamera.vel.z);
+        dx += ((shipIndex[ident].vel.x >> VELOCITY_SHIFT) - camera->vel.x);
+        dz += ((shipIndex[ident].vel.z >> VELOCITY_SHIFT) - camera->vel.z);
 
         doplerMag = mag - GetMagnitudeApprox(dx, dz);
 
@@ -252,7 +256,7 @@ void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
 /**** WiPe OuT specific functions to adjust in game sound effects ****/
 /*********************************************************************/
 
-void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
+void AdjustEngineSound(ShipData* ship, TrackCamera* camera)
 {
     int32 vol;
     int32 pitch;
@@ -265,22 +269,22 @@ void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
     /****             ENGINE 2             ****/
     /******************************************/
 
-    vol = (ENG_AIR_INTAKE_VOL * playerShip->speed) >> 15;
+    vol = (ENG_AIR_INTAKE_VOL * ship->speed) >> 15;
     if (vol > ENG_AIR_INTAKE_VOL)
         vol = ENG_AIR_INTAKE_VOL;
 
     /***        Pitch Increment 0x1000           ***/
     /***  Pitch was started at 42 + 4 octaves    ***/
 
-    pitch = playerShip->speed >> 2;
+    pitch = ship->speed >> 2;
 
     SetPitch(SFX_ENG_AIR_INTAKE, (SND_DEF_PITCH >> 1) + pitch);
     SetVolume(SFX_ENG_AIR_INTAKE, vol, vol);
 
-    vol = 375 + ((ENG_THRUST_VOL * playerShip->thrust_mag) / playerShip->max_thrust);
+    vol = 375 + ((ENG_THRUST_VOL * ship->thrust_mag) / ship->max_thrust);
 
-    pitch = (0x7ff * playerShip->thrust_mag) / playerShip->max_thrust;
-    pitch += playerShip->speed >> 5;
+    pitch = (0x7ff * ship->thrust_mag) / ship->max_thrust;
+    pitch += ship->speed >> 5;
 
     /***        Pitch Increment 2048             ***/
     /***  Pitch was started at 55 + 2 octaves    ***/
@@ -296,10 +300,10 @@ void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera)
 
     /******* Needs re-balancing ********/
 
-    vol = playerShip->speed >> 1;
+    vol = ship->speed >> 1;
     SetVolume(SFX_TURBULENCE,
-        (vol >> 2) + ((vol * playerShip->r_brake_rot) >> 9),
-        (vol >> 2) + ((vol * playerShip->l_brake_rot) >> 9));
+        (vol >> 2) + ((vol * ship->r_brake_rot) >> 9),
+        (vol >> 2) + ((vol * ship->l_brake_rot) >> 9));
 }
 
 int PlayDirectionalNote(enum SfxType id, const vec3i* pos)

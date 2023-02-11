@@ -2,12 +2,17 @@
 
 short target = 0;
 
+void ResetFOV(TrackCamera* camera)
+{
+    camera->fov = camera->fovTarget = CAMERA_FOV;
+}
+
 void InitCamera(TrackCamera* camera, TrackSection* section)
 {
     camera->section = section;
-    camera->pos.x = camera->section->centre.x;
-    camera->pos.y = camera->section->centre.y;
-    camera->pos.z = camera->section->centre.z;
+    camera->pos.x = section->centre.x;
+    camera->pos.y = section->centre.y;
+    camera->pos.z = section->centre.z;
     camera->hdg = 0;
     camera->pitch = 0;
     camera->roll = 0;
@@ -15,6 +20,19 @@ void InitCamera(TrackCamera* camera, TrackSection* section)
     camera->vel.x = 0;
     camera->vel.y = 0;
     camera->vel.z = 0;
+
+    camera->update = UpdateCameraRaceStart;
+
+    ResetFOV(camera);
+}
+
+void UpdateFOV(TrackCamera* camera)
+{
+    if (camera->fovTarget > CAMERA_FOV)
+    {
+        camera->fovTarget -= (1 << 12);
+    }
+    camera->fov += (camera->fovTarget - camera->fov) >> 3;
 }
 
 void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -65,6 +83,8 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
 
     camera->pitch = camShip->pitch;
     camera->hdg = camShip->hdg;
+
+    UpdateFOV(camera);
 }
 
 void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -89,6 +109,8 @@ void UpdateCameraRaceInternal(TrackCamera* camera, ShipData* camShip, RescueData
     camera->pos.x = camShip->pos.x - (unitFinVector.x >> 5);
     camera->pos.y = camShip->pos.y - (unitFinVector.y >> 5);
     camera->pos.z = camShip->pos.z - (unitFinVector.z >> 5);
+
+    UpdateFOV(camera);
 }
 
 void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -124,8 +146,31 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
         // camShip->attr |= VIEW_IN;
         // CameraUpdate = UpdateCameraRaceInternal;
         camShip->attr &= ~VIEW_IN;
-        CameraUpdate = UpdateCameraRaceExternal;
+        camera->update = UpdateCameraRaceExternal;
     }
+
+    ResetFOV(camera);
+}
+
+void UpdateCameraDroidView(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
+{
+    int temp;
+    vec4i targetVector;
+
+    camera->pos.x = camera->section->centre.x + 300;
+    camera->pos.y = camera->section->centre.y - 1500;
+    camera->pos.z = camera->section->centre.z + 300;
+
+    targetVector.x = rescueDroid->pos.x - camera->pos.x;
+    targetVector.y = rescueDroid->pos.y - camera->pos.y;
+    targetVector.z = rescueDroid->pos.z - camera->pos.z;
+
+    temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
+
+    camera->pitch = -ratan2(targetVector.y, temp);
+    camera->hdg = -ratan2(targetVector.x, targetVector.z);
+
+    ResetFOV(camera);
 }
 
 void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -145,7 +190,7 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
     target--;
     if (target == 0)
     {
-        CameraUpdate = UpdateCameraAttractMode;
+        camera->update = UpdateCameraAttractMode;
     }
 
     rsincos(camShip->pitch, sx, cx);
@@ -177,25 +222,8 @@ void UpdateCameraAttractCircle(TrackCamera* camera, ShipData* camShip, RescueDat
 
     camera->pitch = -ratan2(targetVector.y, temp);
     camera->hdg = -ratan2(targetVector.x, targetVector.z);
-}
 
-void UpdateCameraDroidView(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
-{
-    int temp;
-    vec4i targetVector;
-
-    camera->pos.x = camera->section->centre.x + 300;
-    camera->pos.y = camera->section->centre.y - 1500;
-    camera->pos.z = camera->section->centre.z + 300;
-
-    targetVector.x = rescueDroid->pos.x - camera->pos.x;
-    targetVector.y = rescueDroid->pos.y - camera->pos.y;
-    targetVector.z = rescueDroid->pos.z - camera->pos.z;
-
-    temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
-
-    camera->pitch = -ratan2(targetVector.y, temp);
-    camera->hdg = -ratan2(targetVector.x, targetVector.z);
+    ResetFOV(camera);
 }
 
 void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -223,8 +251,9 @@ void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData
     target--;
     if (target == 0)
     {
-        CameraUpdate = UpdateCameraAttractMode;
+        camera->update = UpdateCameraAttractMode;
     }
+
     targetVector.x = camShip->pos.x - camera->pos.x;
     targetVector.y = camShip->pos.y - camera->pos.y;
     targetVector.z = camShip->pos.z - camera->pos.z;
@@ -233,6 +262,8 @@ void UpdateCameraStaticFollow(TrackCamera* camera, ShipData* camShip, RescueData
 
     camera->pitch = -ratan2(targetVector.y, temp);
     camera->hdg = -ratan2(targetVector.x, targetVector.z);
+
+    ResetFOV(camera);
 }
 
 void UpdateCameraAttractMode(TrackCamera* camera, ShipData* camShip, RescueData* rescueDroid)
@@ -240,16 +271,15 @@ void UpdateCameraAttractMode(TrackCamera* camera, ShipData* camShip, RescueData*
     switch (rand() % 2)
     {
         case 0:
-            CameraUpdate = UpdateCameraAttractCircle;
-            camShip->attr &= ~VIEW_IN;
-            target = 0;
+            camera->update = UpdateCameraAttractCircle;
             break;
-
         case 1:
-            CameraUpdate = UpdateCameraStaticFollow;
-            camShip->attr &= ~VIEW_IN;
-            target = 0;
+            camera->update = UpdateCameraStaticFollow;
             break;
     }
-    (CameraUpdate)(camera, camShip, rescueDroid);
+    target = 0;
+    camShip->attr &= ~VIEW_IN;
+    (camera->update)(camera, camShip, rescueDroid);
+
+    ResetFOV(camera);
 }

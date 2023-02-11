@@ -67,6 +67,14 @@
     #define SHIP_VIS_DIST (16 << 10)
 #endif
 
+#ifndef MAX_PLAYERS
+    #define MAX_PLAYERS 4
+#endif
+
+#if MAX_PLAYERS > 1
+    #define MENU_HAS_MULTIPLAYER
+#endif
+
 #ifndef __3DO__
 typedef signed char         int8;
 typedef unsigned char       uint8;
@@ -143,7 +151,7 @@ extern "C" {
 
 int32 osGetSystemTimeMS(void);
 void osQuit(void);
-void osJoyVibrate(int index, int L, int R);
+void osJoyVibrate(int32 index, int32 L, int32 R);
 int32 osLoadFile(const char* name, void* buffer);
 void soundInit(void);
 
@@ -169,9 +177,8 @@ enum GameLoop
     GAME_LOOP_MENU_INIT,
     GAME_LOOP_MENU,
     GAME_LOOP_RACE_INIT,
-    GAME_LOOP_RACE
+    GAME_LOOP_RACE,
+    GAME_LOOP_MAIN = GAME_LOOP_MENU_INIT
 };
-
-#define GAME_LOOP_MAIN  GAME_LOOP_MENU_INIT
 
 #endif

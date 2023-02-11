@@ -2,9 +2,9 @@
 
 extern int32 ctrlmode;
 
-void ForceFeedback(int mag)
+void ForceFeedback(int32 joyIndex, int32 mag)
 {
-    int rumble;
+    int32 rumble;
 
     if (ctrlmode == ATTRACT)
         return;
@@ -15,12 +15,120 @@ void ForceFeedback(int mag)
         rumble = 255;
     }
 
-    osJoyVibrate(0, rumble, rumble);
+    osJoyVibrate(joyIndex, rumble, rumble);
+}
+
+#define SHIP_RADIUS 50
+
+void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
+{
+    vec3i distance;
+    vec3i vc;
+    vec3i ship2ship;
+    vec3i ship1React, ship2React;
+    vec3i soundPos;
+    ShipData* ship1 = shipIndex + j;
+    ShipData* ship2 = shipIndex + i;
+
+    distance.x = (ship2->pos.x - ship1->pos.x) >> 3;
+    distance.y = (ship2->pos.y - ship1->pos.y) >> 3;
+    distance.z = (ship2->pos.z - ship1->pos.z) >> 3;
+
+    if (GetMagnitudeSqr(&distance) < SHIP_RADIUS * SHIP_RADIUS) // TODO add nose sphere
+    {
+        /**********************************************************/
+        /***        Calculate velocity of zero-momentum frame   ***/
+        /***                                                    ***/
+        /***                    vc = m1v1 + m2v2                ***/
+        /***                         -----------                ***/
+        /***                           m1 + m2                  ***/
+        /**********************************************************/
+
+        // optimization
+        // all ships in wipeout have the same mass == 150
+        // so vc = (v1 + v2) / 2
+
+        vc.x = (ship1->vel.x + ship2->vel.x) >> 1;
+        vc.y = (ship1->vel.y + ship2->vel.y) >> 1;
+        vc.z = (ship1->vel.z + ship2->vel.z) >> 1;
+
+        ship1React.x = (vc.x - ship1->vel.x) >> 1;
+        ship1React.y = (vc.y - ship1->vel.y) >> 1;
+        ship1React.z = (vc.z - ship1->vel.z) >> 1;
+
+        ship2React.x = (vc.x - ship2->vel.x) >> 1;
+        ship2React.y = (vc.y - ship2->vel.y) >> 1;
+        ship2React.z = (vc.z - ship2->vel.z) >> 1;
+
+        ship1->pos.x -= ship1->vel.x >> VELOCITY_SHIFT;
+        ship1->pos.y -= ship1->vel.y >> VELOCITY_SHIFT;
+        ship1->pos.z -= ship1->vel.z >> VELOCITY_SHIFT;
+
+        ship2->pos.x -= ship2->vel.x >> VELOCITY_SHIFT;
+        ship2->pos.y -= ship2->vel.y >> VELOCITY_SHIFT;
+        ship2->pos.z -= ship2->vel.z >> VELOCITY_SHIFT;
+
+        ship1->vel.x = vc.x + ship1React.x;
+        ship1->vel.y = vc.y + ship1React.y;
+        ship1->vel.z = vc.z + ship1React.z;
+
+        ship2->vel.x = vc.x + ship2React.x;
+        ship2->vel.y = vc.y + ship2React.y;
+        ship2->vel.z = vc.z + ship2React.z;
+
+        ship2ship.x = ship2->pos.x - ship1->pos.x;
+        ship2ship.y = ship2->pos.y - ship1->pos.y;
+        ship2ship.z = ship2->pos.z - ship1->pos.z;
+
+        ship2->vel.x += ship2ship.x << 2;
+        ship2->vel.y += ship2ship.y << 2;
+        ship2->vel.z += ship2ship.z << 2;
+
+        ship1->vel.x -= ship2ship.x << 2;
+        ship1->vel.y -= ship2ship.y << 2;
+        ship1->vel.z -= ship2ship.z << 2;
+
+        ship1->pos.x += ship1->vel.x >> VELOCITY_SHIFT;
+        ship1->pos.y += ship1->vel.y >> VELOCITY_SHIFT;
+        ship1->pos.z += ship1->vel.z >> VELOCITY_SHIFT;
+
+        ship2->pos.x += ship2->vel.x >> VELOCITY_SHIFT;
+        ship2->pos.y += ship2->vel.y >> VELOCITY_SHIFT;
+        ship2->pos.z += ship2->vel.z >> VELOCITY_SHIFT;
+
+        if (((ship1->attr | ship2->attr) & SHIP_COLL) == 0)
+        {
+            soundPos.x = (ship2->pos.x + ship1->pos.x) >> 1;
+            soundPos.y = (ship2->pos.y + ship1->pos.y) >> 1;
+            soundPos.z = (ship2->pos.z + ship1->pos.z) >> 1;
+            PlayDirectionalNote(SFX_SHIP_2_SHIP, &soundPos);
+        }
+
+        if (ship1->player)
+        {
+            PlayerData* player = (PlayerData*)ship1->player;
+            ForceFeedback(player->joyIndex, 255);
+        }
+
+        if (ship2->player)
+        {
+            PlayerData* player = (PlayerData*)ship2->player;
+            ForceFeedback(player->joyIndex, 255);
+        }
+
+        ship2->attr |= SHIP_COLL;
+        ship1->attr |= SHIP_COLL;
+    }
+    else
+    {
+        ship2->attr &= ~SHIP_COLL;
+        ship1->attr &= ~SHIP_COLL;
+    }
 }
 
 void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
 {
-    int i, j;
+    int32 i, j;
 
     for (j = 0; j < (NO_OF_SHIPS - 1); j++)
     {
@@ -28,113 +136,6 @@ void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
         {
             Ship2ShipCollision(shipIndex, shipShapes, i, j);
         }
-    }
-}
-
-void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
-{
-    vec3i distance;
-    int collide;
-    vec3i vc;
-    vec3i ship2ship;
-    vec3i ship1React, ship2React;
-    vec3i soundPos;
-
-    distance.x = (shipIndex[i].pos.x - shipIndex[j].pos.x) >> 3;
-    distance.y = (shipIndex[i].pos.y - shipIndex[j].pos.y) >> 3;
-    distance.z = (shipIndex[i].pos.z - shipIndex[j].pos.z) >> 3;
-
-    if (GetMagnitudeSqr(&distance) < (40 * 40)) 
-    {
-        collide = NOSE_COLLISION;
-
-        if (collide == NOSE_COLLISION)
-        {
-            /**********************************************************/
-            /***        Calculate velocity of zero-momentum frame   ***/
-            /***                                                    ***/
-            /***                    vc = m1v1 + m2v2                ***/
-            /***                         -----------                ***/
-            /***                           m1 + m2                  ***/
-            /**********************************************************/
-
-            // optimization
-            // all ships in wipeout have the same mass == 150
-            // so vc = (v1 + v2) / 2
-
-            vc.x = (shipIndex[j].vel.x + shipIndex[i].vel.x) >> 1;
-            vc.y = (shipIndex[j].vel.y + shipIndex[i].vel.y) >> 1;
-            vc.z = (shipIndex[j].vel.z + shipIndex[i].vel.z) >> 1;
-
-            ship1React.x = (vc.x - shipIndex[j].vel.x) >> 1;
-            ship1React.y = (vc.y - shipIndex[j].vel.y) >> 1;
-            ship1React.z = (vc.z - shipIndex[j].vel.z) >> 1;
-
-            ship2React.x = (vc.x - shipIndex[i].vel.x) >> 1;
-            ship2React.y = (vc.y - shipIndex[i].vel.y) >> 1;
-            ship2React.z = (vc.z - shipIndex[i].vel.z) >> 1;
-
-            shipIndex[j].pos.x -= shipIndex[j].vel.x >> VELOCITY_SHIFT;
-            shipIndex[j].pos.y -= shipIndex[j].vel.y >> VELOCITY_SHIFT;
-            shipIndex[j].pos.z -= shipIndex[j].vel.z >> VELOCITY_SHIFT;
-
-            shipIndex[i].pos.x -= shipIndex[i].vel.x >> VELOCITY_SHIFT;
-            shipIndex[i].pos.y -= shipIndex[i].vel.y >> VELOCITY_SHIFT;
-            shipIndex[i].pos.z -= shipIndex[i].vel.z >> VELOCITY_SHIFT;
-
-            /**************** YOUR CRAFT REACTION *********************/
-            shipIndex[j].vel.x = vc.x + ship1React.x;
-            shipIndex[j].vel.y = vc.y + ship1React.y;
-            shipIndex[j].vel.z = vc.z + ship1React.z;
-
-            /*************** REMOTE CRAFT REACTION ********************/
-            shipIndex[i].vel.x = vc.x + ship2React.x;
-            shipIndex[i].vel.y = vc.y + ship2React.y;
-            shipIndex[i].vel.z = vc.z + ship2React.z;
-
-            ship2ship.x = shipIndex[i].pos.x - shipIndex[j].pos.x;
-            ship2ship.y = shipIndex[i].pos.y - shipIndex[j].pos.y;
-            ship2ship.z = shipIndex[i].pos.z - shipIndex[j].pos.z;
-
-            shipIndex[i].vel.x += ship2ship.x << 2;
-            shipIndex[i].vel.y += ship2ship.y << 2;
-            shipIndex[i].vel.z += ship2ship.z << 2;
-
-            shipIndex[j].vel.x -= ship2ship.x << 2;
-            shipIndex[j].vel.y -= ship2ship.y << 2;
-            shipIndex[j].vel.z -= ship2ship.z << 2;
-
-            shipIndex[j].pos.x += shipIndex[j].vel.x >> VELOCITY_SHIFT;
-            shipIndex[j].pos.y += shipIndex[j].vel.y >> VELOCITY_SHIFT;
-            shipIndex[j].pos.z += shipIndex[j].vel.z >> VELOCITY_SHIFT;
-
-            shipIndex[i].pos.x += shipIndex[i].vel.x >> VELOCITY_SHIFT;
-            shipIndex[i].pos.y += shipIndex[i].vel.y >> VELOCITY_SHIFT;
-            shipIndex[i].pos.z += shipIndex[i].vel.z >> VELOCITY_SHIFT;
-
-            if ((shipIndex[i].attr & SHIP_COLL) == 0)
-            {
-                if ((shipIndex[j].attr & SHIP_COLL) == 0)
-                {
-                    soundPos.x = (shipIndex[i].pos.x + shipIndex[j].pos.x) >> 1;
-                    soundPos.y = (shipIndex[i].pos.y + shipIndex[j].pos.y) >> 1;
-                    soundPos.z = (shipIndex[i].pos.z + shipIndex[j].pos.z) >> 1;
-                    PlayDirectionalNote(SFX_SHIP_2_SHIP, &soundPos);
-
-                    if (j == ownShip)
-                    {
-                        ForceFeedback(255);
-                    }
-                }
-            }
-            shipIndex[i].attr |= SHIP_COLL;
-            shipIndex[j].attr |= SHIP_COLL;
-        }
-    }
-    else
-    {
-        shipIndex[i].attr &= ~SHIP_COLL;
-        shipIndex[j].attr &= ~SHIP_COLL;
     }
 }
 
@@ -153,7 +154,7 @@ int PlaneLineCollision(const vec3i* plane_point, const vec3i* ship_pos, const ve
 #endif
 }
 
-void Ship2Track(ShipData* playerShip, Face* facePtr)
+void Ship2Track(ShipData* ship, Face* facePtr)
 {
     vec3i nosePos, wingPos;
     int alpha;
@@ -166,34 +167,34 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
     int collide;
     Face* facePtr2;
 
-    nosePos.x = playerShip->pos.x + (playerShip->unitVecNose.x >> 3);
-    nosePos.y = playerShip->pos.y + (playerShip->unitVecNose.y >> 3);
-    nosePos.z = playerShip->pos.z + (playerShip->unitVecNose.z >> 3);
+    nosePos.x = ship->pos.x + (ship->unitVecNose.x >> 3);
+    nosePos.y = ship->pos.y + (ship->unitVecNose.y >> 3);
+    nosePos.z = ship->pos.z + (ship->unitVecNose.z >> 3);
 
-    wingPos.x = playerShip->pos.x - (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
-    wingPos.y = playerShip->pos.y - (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
-    wingPos.z = playerShip->pos.z - (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
+    wingPos.x = ship->pos.x - (ship->unitVecWing.x >> 4) - (ship->unitVecNose.x >> 4);
+    wingPos.y = ship->pos.y - (ship->unitVecWing.y >> 4) - (ship->unitVecNose.y >> 4);
+    wingPos.z = ship->pos.z - (ship->unitVecWing.z >> 4) - (ship->unitVecNose.z >> 4);
 
-    trackPtr = playerShip->nearTrkSect->nextSection;
+    trackPtr = ship->nearTrkSect->nextSection;
 
-    direction.x = trackPtr->centre.x - playerShip->nearTrkSect->centre.x;
-    direction.y = trackPtr->centre.y - playerShip->nearTrkSect->centre.y;
-    direction.z = trackPtr->centre.z - playerShip->nearTrkSect->centre.z;
+    direction.x = trackPtr->centre.x - ship->nearTrkSect->centre.x;
+    direction.y = trackPtr->centre.y - ship->nearTrkSect->centre.y;
+    direction.z = trackPtr->centre.z - ship->nearTrkSect->centre.z;
 
-    downTrack = ((direction.x * playerShip->unitVecNose.x) + (direction.y * playerShip->unitVecNose.y) + (direction.z * playerShip->unitVecNose.z));
+    downTrack = ((direction.x * ship->unitVecNose.x) + (direction.y * ship->unitVecNose.y) + (direction.z * ship->unitVecNose.z));
 
     if (downTrack < 0)
-        playerShip->attr &= ~DIRECTION;
+        ship->attr &= ~DIRECTION;
     else
-        playerShip->attr |= DIRECTION;
+        ship->attr |= DIRECTION;
 
     toFaceVector.x = gTrack.vertices[(facePtr->vertex[0])].x - gTrack.vertices[(facePtr->vertex[1])].x;
     toFaceVector.y = gTrack.vertices[(facePtr->vertex[0])].y - gTrack.vertices[(facePtr->vertex[1])].y;
     toFaceVector.z = gTrack.vertices[(facePtr->vertex[0])].z - gTrack.vertices[(facePtr->vertex[1])].z;
 
-    direction.x = playerShip->nearTrkSect->centre.x - playerShip->pos.x;
-    direction.y = playerShip->nearTrkSect->centre.y - playerShip->pos.y;
-    direction.z = playerShip->nearTrkSect->centre.z - playerShip->pos.z;
+    direction.x = ship->nearTrkSect->centre.x - ship->pos.x;
+    direction.y = ship->nearTrkSect->centre.y - ship->pos.y;
+    direction.z = ship->nearTrkSect->centre.z - ship->pos.z;
 
     toFace = ((direction.x * toFaceVector.x) + (direction.y * toFaceVector.y) + (direction.z * toFaceVector.z));
 
@@ -203,8 +204,8 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
 
     if (toFace > 0)
     {
-        playerShip->attr |= LSIDE;
-        if (1) //(facePtr == (track->faces + playerShip->nearTrkSect->faceStart)) || playerShip->nearTrkSect->junction)
+        ship->attr |= LSIDE;
+        if (1) //(facePtr == (track->faces + ship->nearTrkSect->faceStart)) || ship->nearTrkSect->junction)
         {
             facePoint = gTrack.vertices + facePtr->vertex[0];
 
@@ -212,42 +213,42 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
 
             if (alpha <= 0)
             {
-                if (playerShip->nearTrkSect->flags & JunctionStart)
+                if (ship->nearTrkSect->flags & JunctionStart)
                 {
                     collide = CheckPolygonCollision(facePtr, &nosePos, alpha);
                     if (collide == 1)
                     {
-                        NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                        NoseCollision(ship, facePtr, -downTrack, alpha);
                     }
                     else
                     {
-                        facePtr2 = gTrack.faces + playerShip->nearTrkSect->nextSection->faceStart;
+                        facePtr2 = gTrack.faces + ship->nearTrkSect->nextSection->faceStart;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
                         {
-                            NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                            NoseCollision(ship, facePtr, -downTrack, alpha);
                         }
                     }
                 }
-                else if (playerShip->nearTrkSect->flags & JunctionEnd)
+                else if (ship->nearTrkSect->flags & JunctionEnd)
                 {
                     collide = CheckPolygonCollision(facePtr, &nosePos, alpha);
                     if (collide == 1)
                     {
-                        NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                        NoseCollision(ship, facePtr, -downTrack, alpha);
                     }
                     else
                     {
-                        facePtr2 = gTrack.faces + playerShip->nearTrkSect->prevSection->faceStart;
+                        facePtr2 = gTrack.faces + ship->nearTrkSect->prevSection->faceStart;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
                         {
-                            NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                            NoseCollision(ship, facePtr, -downTrack, alpha);
                         }
                     }
                 }
                 else
-                    NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                    NoseCollision(ship, facePtr, -downTrack, alpha);
                 return;
             }
 
@@ -255,36 +256,36 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
 
             if (alpha <= 0)
             {
-                if ((playerShip->nearTrkSect->flags & JunctionStart) || (playerShip->nearTrkSect->flags & JunctionEnd))
+                if ((ship->nearTrkSect->flags & JunctionStart) || (ship->nearTrkSect->flags & JunctionEnd))
                 {
                     collide = CheckPolygonCollision(facePtr, &wingPos, alpha);
                     if (collide == 1)
                     {
-                        NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                        NoseCollision(ship, facePtr, -downTrack, alpha);
                     }
                 }
                 else
-                    WingCollision(playerShip, facePtr, -downTrack, alpha);
+                    WingCollision(ship, facePtr, -downTrack, alpha);
                 return;
             }
 
-            wingPos.x = playerShip->pos.x + (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
-            wingPos.y = playerShip->pos.y + (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
-            wingPos.z = playerShip->pos.z + (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
+            wingPos.x = ship->pos.x + (ship->unitVecWing.x >> 4) - (ship->unitVecNose.x >> 4);
+            wingPos.y = ship->pos.y + (ship->unitVecWing.y >> 4) - (ship->unitVecNose.y >> 4);
+            wingPos.z = ship->pos.z + (ship->unitVecWing.z >> 4) - (ship->unitVecNose.z >> 4);
 
             alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
-                if ((playerShip->nearTrkSect->flags & JunctionStart) || (playerShip->nearTrkSect->flags & JunctionEnd))
+                if ((ship->nearTrkSect->flags & JunctionStart) || (ship->nearTrkSect->flags & JunctionEnd))
                 {
                     collide = CheckPolygonCollision(facePtr, &wingPos, alpha);
                     if (collide == 1)
                     {
-                        NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                        NoseCollision(ship, facePtr, -downTrack, alpha);
                     }
                 }
                 else
-                    WingCollision(playerShip, facePtr, -downTrack, alpha);
+                    WingCollision(ship, facePtr, -downTrack, alpha);
                 return;
             }
         }
@@ -294,7 +295,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
     /****************************************************************************/
     else
     {
-        playerShip->attr &= ~LSIDE;
+        ship->attr &= ~LSIDE;
 
         facePtr++;
         while (facePtr->flags & TRACK_BASE)
@@ -302,7 +303,7 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
             facePtr++;
         }
 
-        if ((playerShip->nearTrkSect->faceCount > 3) || playerShip->nearTrkSect->junction)
+        if ((ship->nearTrkSect->faceCount > 3) || ship->nearTrkSect->junction)
         {
 
             facePoint = gTrack.vertices + facePtr->vertex[0];
@@ -310,78 +311,78 @@ void Ship2Track(ShipData* playerShip, Face* facePtr)
             alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
             if (alpha <= 0)
             {
-                if (playerShip->nearTrkSect->flags & JunctionStart)
+                if (ship->nearTrkSect->flags & JunctionStart)
                 {
                     collide = CheckPolygonCollision(facePtr, &nosePos, alpha);
                     if (collide == 1)
                     {
-                        NoseCollision(playerShip, facePtr, downTrack, alpha);
+                        NoseCollision(ship, facePtr, downTrack, alpha);
                     }
                     else
                     {
-                        facePtr2 = gTrack.faces + playerShip->nearTrkSect->nextSection->faceStart;
+                        facePtr2 = gTrack.faces + ship->nearTrkSect->nextSection->faceStart;
                         facePtr2 += 3;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
                         {
-                            NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                            NoseCollision(ship, facePtr, -downTrack, alpha);
                         }
                     }
                 }
-                else if (playerShip->nearTrkSect->flags & JunctionEnd)
+                else if (ship->nearTrkSect->flags & JunctionEnd)
                 {
                     collide = CheckPolygonCollision(facePtr, &nosePos, alpha);
                     if (collide == 1)
                     {
-                        NoseCollision(playerShip, facePtr, -downTrack, alpha);
+                        NoseCollision(ship, facePtr, -downTrack, alpha);
                     }
                     else
                     {
-                        facePtr2 = gTrack.faces + playerShip->nearTrkSect->prevSection->faceStart;
+                        facePtr2 = gTrack.faces + ship->nearTrkSect->prevSection->faceStart;
                         facePtr2 += 3;
                         collide = CheckPolygonCollision(facePtr2, &nosePos, alpha);
                         if (collide == 1)
                         {
-                            NoseCollision(playerShip, facePtr2, -downTrack, alpha);
+                            NoseCollision(ship, facePtr2, -downTrack, alpha);
                         }
                     }
                 }
                 else
-                    NoseCollision(playerShip, facePtr, downTrack, alpha);
+                    NoseCollision(ship, facePtr, downTrack, alpha);
                 return;
             }
             alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
-                if ((playerShip->nearTrkSect->flags & JunctionStart) || (playerShip->nearTrkSect->flags & JunctionEnd))
+                if ((ship->nearTrkSect->flags & JunctionStart) || (ship->nearTrkSect->flags & JunctionEnd))
                 {
                     collide = CheckPolygonCollision(facePtr, &wingPos, alpha);
                     if (collide == 1)
                     {
-                        NoseCollision(playerShip, facePtr, downTrack, alpha);
+                        NoseCollision(ship, facePtr, downTrack, alpha);
                     }
                 }
                 else
-                    WingCollision(playerShip, facePtr, downTrack, alpha);
+                    WingCollision(ship, facePtr, downTrack, alpha);
                 return;
             }
 
-            wingPos.x = playerShip->pos.x + (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
-            wingPos.y = playerShip->pos.y + (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
-            wingPos.z = playerShip->pos.z + (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
+            wingPos.x = ship->pos.x + (ship->unitVecWing.x >> 4) - (ship->unitVecNose.x >> 4);
+            wingPos.y = ship->pos.y + (ship->unitVecWing.y >> 4) - (ship->unitVecNose.y >> 4);
+            wingPos.z = ship->pos.z + (ship->unitVecWing.z >> 4) - (ship->unitVecNose.z >> 4);
             alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
-                if ((playerShip->nearTrkSect->flags & JunctionStart) || (playerShip->nearTrkSect->flags & JunctionEnd))
+                if ((ship->nearTrkSect->flags & JunctionStart) || (ship->nearTrkSect->flags & JunctionEnd))
                 {
                     collide = CheckPolygonCollision(facePtr, &wingPos, alpha);
                     if (collide == 1)
                     {
-                        NoseCollision(playerShip, facePtr, downTrack, alpha);
+                        NoseCollision(ship, facePtr, downTrack, alpha);
                     }
                 }
                 else
-                    WingCollision(playerShip, facePtr, downTrack, alpha);
+                    WingCollision(ship, facePtr, downTrack, alpha);
                 return;
             }
         }
@@ -428,59 +429,63 @@ int CheckPolygonCollision(const Face* facePtr, const vec3i* pos, int alpha)
     return 1;
 }
 
-void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha)
+void WingCollision(ShipData* ship, Face* facePtr, int direction, int alpha)
 {
     vec3s collisionVector;
     int angle;
     vec3i wingPos;
     int magnitude;
 
-    collisionVector.x = playerShip->nearTrkSect->centre.x - gTrack.vertices[(facePtr->vertex[2])].x;
-    collisionVector.y = playerShip->nearTrkSect->centre.y - gTrack.vertices[(facePtr->vertex[2])].y;
-    collisionVector.z = playerShip->nearTrkSect->centre.z - gTrack.vertices[(facePtr->vertex[2])].z;
+    collisionVector.x = ship->nearTrkSect->centre.x - gTrack.vertices[(facePtr->vertex[2])].x;
+    collisionVector.y = ship->nearTrkSect->centre.y - gTrack.vertices[(facePtr->vertex[2])].y;
+    collisionVector.z = ship->nearTrkSect->centre.z - gTrack.vertices[(facePtr->vertex[2])].z;
 
-    angle = AngleOfCollision(&collisionVector, &playerShip->unitVecNose);
+    angle = AngleOfCollision(&collisionVector, &ship->unitVecNose);
 
-    Reflection(&(playerShip->vel), &facePtr->normal);
+    Reflection(&(ship->vel), &facePtr->normal);
 
-    playerShip->pos.x -= playerShip->vel.x >> VELOCITY_SHIFT;
-    playerShip->pos.y -= playerShip->vel.y >> VELOCITY_SHIFT;
-    playerShip->pos.z -= playerShip->vel.z >> VELOCITY_SHIFT;
+    ship->pos.x -= ship->vel.x >> VELOCITY_SHIFT;
+    ship->pos.y -= ship->vel.y >> VELOCITY_SHIFT;
+    ship->pos.z -= ship->vel.z >> VELOCITY_SHIFT;
 
     /*TODO no slowdown by side collision*/
-    playerShip->vel.x -= playerShip->vel.x >> 1;
-    playerShip->vel.y -= playerShip->vel.y >> 1;
-    playerShip->vel.z -= playerShip->vel.z >> 1;
+    ship->vel.x -= ship->vel.x >> 1;
+    ship->vel.y -= ship->vel.y >> 1;
+    ship->vel.z -= ship->vel.z >> 1;
 
-    playerShip->vel.x += (facePtr->normal.x);
-    playerShip->vel.y += (facePtr->normal.y);
-    playerShip->vel.z += (facePtr->normal.z);
+    ship->vel.x += (facePtr->normal.x);
+    ship->vel.y += (facePtr->normal.y);
+    ship->vel.z += (facePtr->normal.z);
 
-    magnitude = (abs(angle) * playerShip->speed) >> 16;
+    magnitude = (abs(angle) * ship->speed) >> 16;
 
     if (direction > 0)
-        playerShip->vroll += magnitude;
+        ship->vroll += magnitude;
     else
-        playerShip->vroll -= magnitude;
+        ship->vroll -= magnitude;
 
     if (direction > 0)
     {
-        wingPos.x = playerShip->pos.x + (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
-        wingPos.y = playerShip->pos.y + (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
-        wingPos.z = playerShip->pos.z + (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
+        wingPos.x = ship->pos.x + (ship->unitVecWing.x >> 4) - (ship->unitVecNose.x >> 4);
+        wingPos.y = ship->pos.y + (ship->unitVecWing.y >> 4) - (ship->unitVecNose.y >> 4);
+        wingPos.z = ship->pos.z + (ship->unitVecWing.z >> 4) - (ship->unitVecNose.z >> 4);
     }
     else
     {
-        wingPos.x = playerShip->pos.x - (playerShip->unitVecWing.x >> 4) - (playerShip->unitVecNose.x >> 4);
-        wingPos.y = playerShip->pos.y - (playerShip->unitVecWing.y >> 4) - (playerShip->unitVecNose.y >> 4);
-        wingPos.z = playerShip->pos.z - (playerShip->unitVecWing.z >> 4) - (playerShip->unitVecNose.z >> 4);
+        wingPos.x = ship->pos.x - (ship->unitVecWing.x >> 4) - (ship->unitVecNose.x >> 4);
+        wingPos.y = ship->pos.y - (ship->unitVecWing.y >> 4) - (ship->unitVecNose.y >> 4);
+        wingPos.z = ship->pos.z - (ship->unitVecWing.z >> 4) - (ship->unitVecNose.z >> 4);
     }
 
     PlayDirectionalNote(SFX_SHIP_2_TRACK, &wingPos);
 
     /***** Magnitude returns approx between 0 & 1000    *****/
     /***** scale this and shift to a figure around zero *****/
-    ForceFeedback(magnitude);
+    if (ship->player)
+    {
+        PlayerData* player = (PlayerData*)ship->player;
+        ForceFeedback(player->joyIndex, magnitude);
+    }
 
 /*TODO audio coll volume
     magnitude = magnitude - 500;
@@ -492,49 +497,52 @@ void WingCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha
 */
 }
 
-void NoseCollision(ShipData* playerShip, Face* facePtr, int direction, int alpha)
+void NoseCollision(ShipData* ship, Face* facePtr, int direction, int alpha)
 {
     vec3s collisionVector;
     int angle;
     vec3i nosePos;
     int magnitude;
 
-    collisionVector.x = playerShip->nearTrkSect->centre.x - gTrack.vertices[(facePtr->vertex[2])].x;
-    collisionVector.y = playerShip->nearTrkSect->centre.y - gTrack.vertices[(facePtr->vertex[2])].y;
-    collisionVector.z = playerShip->nearTrkSect->centre.z - gTrack.vertices[(facePtr->vertex[2])].z;
+    collisionVector.x = ship->nearTrkSect->centre.x - gTrack.vertices[(facePtr->vertex[2])].x;
+    collisionVector.y = ship->nearTrkSect->centre.y - gTrack.vertices[(facePtr->vertex[2])].y;
+    collisionVector.z = ship->nearTrkSect->centre.z - gTrack.vertices[(facePtr->vertex[2])].z;
 
-    angle = abs(AngleOfCollision(&collisionVector, &playerShip->unitVecNose));
+    angle = abs(AngleOfCollision(&collisionVector, &ship->unitVecNose));
 
-    Reflection(&(playerShip->vel), &facePtr->normal);
+    Reflection(&(ship->vel), &facePtr->normal);
 
-    magnitude = (playerShip->speed >> 4) + 400;
+    magnitude = (ship->speed >> 4) + 400;
     if (direction > 0)
-        playerShip->vhdg += magnitude;
+        ship->vhdg += magnitude;
     else
-        playerShip->vhdg -= magnitude;
+        ship->vhdg -= magnitude;
 
-    playerShip->pos.x -= playerShip->vel.x >> VELOCITY_SHIFT;
-    playerShip->pos.y -= playerShip->vel.y >> VELOCITY_SHIFT;
-    playerShip->pos.z -= playerShip->vel.z >> VELOCITY_SHIFT;
+    ship->pos.x -= ship->vel.x >> VELOCITY_SHIFT;
+    ship->pos.y -= ship->vel.y >> VELOCITY_SHIFT;
+    ship->pos.z -= ship->vel.z >> VELOCITY_SHIFT;
 
-    playerShip->vel.x -= playerShip->vel.x >> 1;
-    playerShip->vel.y -= playerShip->vel.y >> 1;
-    playerShip->vel.z -= playerShip->vel.z >> 1;
+    ship->vel.x -= ship->vel.x >> 1;
+    ship->vel.y -= ship->vel.y >> 1;
+    ship->vel.z -= ship->vel.z >> 1;
 
-    playerShip->vel.x += facePtr->normal.x;
-    playerShip->vel.y += facePtr->normal.y;
-    playerShip->vel.z += facePtr->normal.z;
+    ship->vel.x += facePtr->normal.x;
+    ship->vel.y += facePtr->normal.y;
+    ship->vel.z += facePtr->normal.z;
 
-    nosePos.x = playerShip->pos.x + (playerShip->unitVecNose.x >> 3);
-    nosePos.y = playerShip->pos.y + (playerShip->unitVecNose.y >> 3);
-    nosePos.z = playerShip->pos.z + (playerShip->unitVecNose.z >> 3);
+    nosePos.x = ship->pos.x + (ship->unitVecNose.x >> 3);
+    nosePos.y = ship->pos.y + (ship->unitVecNose.y >> 3);
+    nosePos.z = ship->pos.z + (ship->unitVecNose.z >> 3);
 
     PlayDirectionalNote(SFX_SHIP_2_TRACK, &nosePos);
 
     /***** Magnitude returns approx between 0 & 1000    *****/
     /***** scale this and shift to a figure around zero *****/
-
-    ForceFeedback(magnitude); // TODO ownShip check
+    if (ship->player)
+    {
+        PlayerData* player = (PlayerData*)ship->player;
+        ForceFeedback(player->joyIndex, magnitude);
+    }
 
     magnitude = magnitude - 500;
     magnitude = magnitude << 2;

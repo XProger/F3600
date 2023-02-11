@@ -1897,6 +1897,8 @@ void swap32p(void* ptr)
 Matrix gMatrixStack[MAX_MATRICES];
 Matrix* gMatrixPtr = gMatrixStack;
 vec3i gCameraViewPos;
+int32 gCameraFOV;
+int32 gCameraRotY;
 
 #define DP33(ax,ay,az,bx,by,bz)     (ax * bx + ay * by + az * bz)
 

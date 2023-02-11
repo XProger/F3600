@@ -3,7 +3,6 @@
 extern Glyph glyphs[3][40];
 
 HiScores scoreTable[(HiScoreTracks * 2)];
-extern ChampionShip winTable[];
 extern int ajscount;
 #define AJSDELAY 60 * 30
 
@@ -381,7 +380,7 @@ void AddEntry2Table(int bestLap, char nameEntered[])
                 tablePos = i;
                 scoreTable[scoreTrack].position[i] = i;
                 scoreTable[scoreTrack].lapTimes[i] = bestLap;
-                scoreTable[scoreTrack].lapTimesPilot[i] = gConfig.shipNum;
+                scoreTable[scoreTrack].lapTimesPilot[i] = gPlayers[0].shipNum;
                 strcpy(scoreTable[scoreTrack].names[i], nameEntered);
             }
             else
@@ -407,24 +406,19 @@ void AddEntry2Table(int bestLap, char nameEntered[])
     }
 }
 
-char CheckLapRecord(ShipData* shipInfo, int shipNo)
+int32 CheckLapRecord(ShipData* ship)
 {
-    int scoreTrack = 0;
+    int32 scoreTrack = gConfig.trackNum - 1;
 
     if (gConfig.raceType == TIME_TRIAL)
-        scoreTrack = ((gConfig.trackNum - 1) + HiScoreTracks);
-    else
-        scoreTrack = (gConfig.trackNum - 1);
-
-    // printf ("track = %d \n", scoreTrack) ;
-    // printf ("score table = %d \n", scoreTable[scoreTrack].lapRecord) ;
-    // printf ("lap number = %d \n", shipInfo[ownShip].lapNo) ;
-    // printf ("lap time = %d \n",shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo)-2)]) ;
-
-    if (shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo) - 2)] < scoreTable[scoreTrack].lapRecord)
     {
-        scoreTable[scoreTrack].lapRecord = shipInfo[ownShip].lapTimes[((shipInfo[ownShip].lapNo) - 2)];
-        scoreTable[scoreTrack].lapRecordPilot = gConfig.shipNum;
+        scoreTrack += HiScoreTracks;
+    }
+
+    if (ship->lapTimes[ship->lapNo - 2] < scoreTable[scoreTrack].lapRecord)
+    {
+        scoreTable[scoreTrack].lapRecord = ship->lapTimes[ship->lapNo - 2];
+        scoreTable[scoreTrack].lapRecordPilot = gPlayers[0].shipNum;
 
         return 1;
     }
@@ -447,18 +441,18 @@ void DisplayHiScore(char trackNum)
         {
             if ((toggleDisplay % 3) == 0)
             {
-                AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_WHITE);
+                AddTextStr(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_WHITE);
                 AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), TEXT_COLOR_WHITE);
             }
             else
             {
-                AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_HIGHLIGHT);
+                AddTextStr(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_HIGHLIGHT);
                 AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), TEXT_COLOR_HIGHLIGHT);
             }
         }
         else
         {
-            AddText(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_WHITE);
+            AddTextStr(&(scoreTable[trackNum].names[i][0]), text_data(40, (80 + (spacing * i)), 16), TEXT_COLOR_WHITE);
             AddTime(scoreTable[trackNum].lapTimes[i], text_data(165, (80 + (spacing * i)), 16), TEXT_COLOR_HIGHLIGHT);
         }
         /*
@@ -476,7 +470,8 @@ void DisplayHiScore(char trackNum)
 
 void NewHighScore(HiScoreData* hiScoreData)
 {
-    short select;
+    int32 select;
+    int32 pad = gPlayers[0].pad;
 
     if (hiScoreData->numChars != (nameLetters + 1) && (hiScoreData->userEntry))
     {
@@ -617,26 +612,26 @@ void NewHighScoreDraw(HiScoreData* hiScoreData)
                 if (hiScoreData->charVal == 26 || hiScoreData->charVal == 27)
                     AddDelEnd((hiScoreData->charVal - 26), hiScoreData->charX, charY, TEXT_COLOR_WHITE);
                 else
-                    AddText(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_WHITE);
+                    AddTextStr(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_WHITE);
             }
             else
             {
                 if (hiScoreData->charVal == 26 || hiScoreData->charVal == 27)
                     AddDelEnd((hiScoreData->charVal - 26), hiScoreData->charX, charY, TEXT_COLOR_HIGHLIGHT);
                 else
-                    AddText(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
+                    AddTextStr(&(hiScoreData->dispChar[0]), text_data(hiScoreData->charX, charY, 16), TEXT_COLOR_HIGHLIGHT);
             }
         }
 
         if (hiScoreData->userEntry)
         {
-            AddText(&(hiScoreData->nameEntered[0]), text_data(40, charY, 16), TEXT_COLOR_WHITE);
+            AddTextStr(&(hiScoreData->nameEntered[0]), text_data(40, charY, 16), TEXT_COLOR_WHITE);
             AddTime(hiScoreData->bestLap, text_data(165, charY, 16), TEXT_COLOR_HIGHLIGHT);
         }
 
         hiScoreData->toggleDisplay++;
     }
-    CentreText("HALL OF FAME", text_data(107, 20, 16), TEXT_COLOR_WHITE);
+    CentreText(STR_HALL_OF_FAME, text_data(0, 20, 16), TEXT_COLOR_WHITE);
 
     if (gConfig.raceType == TIME_TRIAL)
         DisplayHiScore(((gConfig.trackNum - 1) + HiScoreTracks));

@@ -1,19 +1,17 @@
 #include "game.h"
 
 int ownShip;
-void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
 int NoOfMainSections;
 
-uint16 pad;
-uint16 opad, xpad;
 PadInfo pCon;
 
 Object* gStartBoom[4];
 short gStartBoomCount = 0;
-int crossedLine;
 
 TrackData gTrack;
-TrackCamera gCamera;
+int32 gNumPlayers;
+
+PlayerData gPlayers[MAX_PLAYERS];
 
 int trackNo;
 char NumTracks = 6;
@@ -23,8 +21,8 @@ int attractDelay;
 
 int32 gWidth, gHeight;
 int32 guiL, guiT, guiR, guiB;
-int32 gCameraFOV;
-int32 gTargetFOV;
+
+const char** STR = STR_EN;
 
 Texture gTextures[MAX_TEXTURES];
 Texture* gTexturePtr = gTextures;
@@ -41,20 +39,12 @@ ConfigData gConfig;
 
 Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 ShipData ctrlshipIndex[NO_OF_SHIPS];
-RescueData ctrlrescueDroid;
 
-int32 ctrlNeedTargetIcon;
-
-Object* ctrlweaponShapes[WEAPON_SHAPE_NAX];
+Object* gWeaponShapes[WEAPON_SHAPE_MAX];
 
 int32 gMusicTracksCount;
 int32 gMusicTrack;
 int32 gMasterBalance;
-
-int32 gPad;
-int32 gPadStickX;
-int32 gPadStickY;
-int32 gLastKey;
 
 int32 gFrameIndex;
 int32 gLastFrameIndex;

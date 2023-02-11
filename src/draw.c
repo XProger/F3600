@@ -38,15 +38,12 @@ void DrawSky(void)
     renderSky(gTrack.sky);
 }
 
-void DrawLandscape(void)
+void DrawLandscape(TrackSection* section)
 {
     int32 i;
     int32 x, y, z, px, py;
-    TrackSection* section;
     int32 extent;
     Object* obj;
-
-    section = gCamera.section;
 
     for (i = 0; i < section->objectsCount; i++)
     {
@@ -73,10 +70,10 @@ void DrawLandscape(void)
     }
 }
 
-void DrawTrack(void)
+void DrawTrack(int32 playerIndex)
 {
     matrixSetCameraSpace();
-    renderTrack();
+    renderTrack(playerIndex);
 }
 
 void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short roll)
@@ -88,42 +85,55 @@ void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short 
     matrixPop();
 }
 
-void DrawView(void)
+void DrawView(int32 playerIndex)
 {
+    PlayerData* player = gPlayers + playerIndex;
+
+    TrackCamera* cam = &player->camera;
+
+    int32 px = cam->pos.x;
+    int32 py = cam->pos.y;
+    int32 pz = cam->pos.z;
+    int32 rx = cam->pitch;
+    int32 ry = cam->hdg;
+    int32 rz = cam->roll;
+
+    FRAME_LERP(cam);
+
+    gCameraFOV = cam->fov;
+    gCameraRotY = ry;
+
+    ShakeOffset(player->ship);
+
     renderSetMode(RENDER_MODE_3D);
 
+    if (cam->update == UpdateCameraRaceInternal)
     {
-        TrackCamera* cam = &gCamera;
-
-        int32 px = cam->pos.x;
-        int32 py = cam->pos.y;
-        int32 pz = cam->pos.z;
-        int32 rx = cam->pitch;
-        int32 ry = cam->hdg;
-        int32 rz = cam->roll;
-
-        FRAME_LERP(cam);
-
-        if (CameraUpdate == UpdateCameraRaceInternal)
-        {
-            matrixSetViewInternal(px, py, pz, rx, ry, rz);
-        }
-        else
-        {
-            matrixSetViewExternal(px, py, pz, rx, ry);
-        }
+        matrixSetViewInternal(px, py, pz, rx, ry, rz);
+    }
+    else
+    {
+        matrixSetViewExternal(px, py, pz, rx, ry);
     }
 
     DrawSky();
-    DrawLandscape();
-    DrawTrack();
+    DrawLandscape(player->camera.section);
+    DrawTrack(playerIndex);
     DrawShadows(ctrlshipIndex);
-    DrawShips(ctrlshipIndex, ctrlshipShapes, ownShip);
-    DrawDroid(ctrlshipShapes[RESCUE_DROID], &ctrlrescueDroid);
-    DrawWeapons(ctrlshipIndex, ctrlweaponShapes);
+    DrawShips(ctrlshipIndex, ctrlshipShapes);
+    DrawDroid(ctrlshipShapes[RESCUE_DROID], &player->droid);
+    DrawWeapons();
     DrawEffects();
 
     renderSetMode(RENDER_MODE_2D);
-    if (ctrlNeedTargetIcon == 1)
-        DrawTargetIcon(ctrlshipIndex);
+
+    if (player->ship->targetShip)
+    { 
+        DrawTargetIcon(player->ship->targetShip); 
+    }
+
+    if (player->ship->attr & RACING)
+    {
+        DrawHud(player->ship);
+    }
 }

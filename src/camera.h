@@ -1,3 +1,4 @@
+void ResetFOV(TrackCamera* camera);
 void InitCamera(TrackCamera* camera, TrackSection* section);
 void UpdateCameraRaceExternal(TrackCamera*, ShipData* camShip, RescueData*);
 void UpdateCameraRaceInternal(TrackCamera*, ShipData* camShip, RescueData*);

@@ -7,7 +7,7 @@ enum WeaponShapeType
     WEAPON_SHAPE_MISSILE,
     WEAPON_SHAPE_SHIELD,
     WEAPON_SHAPE_EBOLT,
-    WEAPON_SHAPE_NAX
+    WEAPON_SHAPE_MAX
 };
 
 #define MINE_DURATION       (FR10 * 45)
@@ -58,11 +58,12 @@ typedef struct WeaponData
     vec3i _pos;
     int32 _pitch, _hdg, _roll;
 #endif
+    ShipData* fireShip;
 
-    int8 targetShip;
-    uint8 fireShip;
     uint8 type;
-    uint8 padding;
+
+    ShipData* targetShip;
+
     void (*updateWeapon)(ShipData*, Object**, struct WeaponData*);
     struct WeaponData* next;
     struct WeaponData* prev;
@@ -71,10 +72,10 @@ typedef struct WeaponData
 extern WeaponData* gWeaponsActive;
 
 void UpdateWeapons(ShipData* shipIndex, Object** weaponShapes);
-void FireWeapon(ShipData* playerShip, int shipNo, char decision);
-void MissileLock(ShipData* playerShip, ShipData* shipIndex, Object** shipShapes);
-void ResetWeapons(Object** weaponShapes);
+void FireWeapon(ShipData* ship, int shipNo, char decision);
+void MissileLock(ShipData* ship, ShipData* shipIndex, Object** shipShapes);
+void ResetWeapons(void);
 void InitWeaponGrids(void);
 void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids);
-void DrawWeapons(ShipData* shipIndex, Object** weaponShapes);
-void DrawTargetIcon(ShipData* shipIndex);
+void DrawWeapons(void);
+void DrawTargetIcon(ShipData* targetShip);

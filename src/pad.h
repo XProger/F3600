@@ -45,7 +45,13 @@ typedef struct PadInfo
 
 void InitPadSettings(void);
 void UpdatePad(void);
-void SetBrake(ShipData* playerShip, short padLeft, short padRight);
-void SetView(ShipData* playerShip, short padView);
-void SetFire(ShipData* playerShip, short padFire, int shipNo);
-short GetMenuKey(short key);
+void SetBrake(ShipData* ship, short padLeft, short padRight);
+void SetView(ShipData* ship, short padView);
+void SetFire(ShipData* ship, short padFire, int shipNo);
+int32 GetMenuKeyPlayer(int32 key, int32 playerIndex);
+int32 GetMenuKey(int32 key);
+
+void padReset(int32 joyIndex);
+void padSetKey(int32 joyIndex, int32 inputKey, int32 down);
+void padSetStick(int32 joyIndex, int32 inputKey, int32 x, int32 y);
+

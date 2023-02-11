@@ -42,6 +42,30 @@ const short behindSpeed[16] = {
 
 const short shipShapeOrder[8] = { 7, 3, 5, 6, 1, 4, 0, 2 };
 
+/****                                        Team Specific                                     ****/
+/**** Ship No                     0       1       2       3       4       5       6       7    ****/
+const short maxThrustBeg[8]   = { 790,    790,    850,    850,    850,    850,    790,    790     };
+const short resistanceBeg[8]  = { 140,    140,    134,    134,    140,    140,    134,    134     };
+const short headingIncBeg[8]  = { 160,    160,    140,    140,    120,    120,    180,    180     };
+const short maxHeadingBeg[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
+const short skidBeg[8]        = { 12,     12,     20,     20,     24,     24,     12,     12      };
+
+const short maxThrustPro[8]   = { 1200,   1200,   1400,   1400,   1400,   1400,   1200,   1200    };
+const short resistancePro[8]  = { 140,    140,    140,    140,    130,    130,    130,    130     };
+const short headingIncPro[8]  = { 160,    160,    120,    120,    140,    140,    180,    180     };
+const short maxHeadingPro[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
+const short skidPro[8]        = { 10,     10,     14,     14,     16,     16,     8,      8       };
+
+/****                            Remote Control Specific                               ****/
+/**** Ship No                     0       1       2       3       4       5       6    ****/
+const short RMaxThrustBeg[7]  = { 2550,   2600,   2630,   2660,   2700,   2720,   2750    };
+const short RThrustMagBeg[7]  = { 44,     45,     45,     46,     47,     48,     49      };
+const short fightBackBeg[7]   = { 1,      1,      1,      1,      1,      1,      1       };
+
+const short RMaxThrustPro[7]  = { 3750,   3780,   3800,   3850,   3900,   3950,   4000    };
+const short RThrustMagPro[7]  = { 50,     53,     55,     57,     60,     62,     65      };
+const short fightBackPro[7]   = { 1,      1,      1,      1,      1,      1,      1       };
+
 short championOrder[8];
 short raceOrder[8];
 short shipOrder[8];
@@ -104,7 +128,7 @@ void SetSpread(ShipData* ship, int position)
     ship->numtospeed = speed * position;
 }
 
-void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
+void DrawShips(ShipData* shipIndex, Object** shipShapes)
 {
     int32 i;
     int32 dist, dx, dy, dz, vz;
@@ -114,13 +138,13 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (!((i == ownShip) || (gConfig.raceType != TIME_TRIAL)))
-            continue;
-
         ship = shipIndex + i;
 
-        dx = ship->pos.x - gCamera.pos.x;
-        dz = ship->pos.z - gCamera.pos.z;
+        if (!(ship->player || (gConfig.raceType != TIME_TRIAL)))
+            continue;
+
+        dx = ship->pos.x - gCameraViewPos.x;
+        dz = ship->pos.z - gCameraViewPos.z;
 
         dist = GetMagnitudeApprox(dx, dz);
 
@@ -128,7 +152,7 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip)
 
         if (dist < SHIP_VIS_DIST)
         {
-            dy = ship->pos.y - gCamera.pos.y;
+            dy = ship->pos.y - gCameraViewPos.y;
             vz = ((dx * gMatrixPtr->e20) + (dy * gMatrixPtr->e21) + (dz * gMatrixPtr->e22)) >> FIXED_SHIFT;
 
             if (vz > 0)
@@ -186,56 +210,6 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
     short used[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     int index;
     ShipData* ship;
-
-    /***********************************************************************************/
-    /**                     Ship ATTRIBUTES                                        *****/
-    /***********************************************************************************/
-    /******   TEAM 1 -   Acc            ***                                        *****/
-    /******              Top Speed      ****                                       *****/
-    /******              Armour         *****                                      *****/
-    /******              Turn Rate      **                                         *****/
-    /***********************************************************************************/
-    /******   TEAM 2 -   Acc            *****                                      *****/
-    /******              Top Speed      **                                         *****/
-    /******              Armour         ***                                        *****/
-    /******              Turn Rate      ****                                       *****/
-    /***********************************************************************************/
-    /******   TEAM 3 -   Acc            **                                         *****/
-    /******              Top Speed      *****                                      *****/
-    /******              Armour         ****                                       *****/
-    /******              Turn Rate      ***                                        *****/
-    /***********************************************************************************/
-    /******   TEAM 4 -   Acc            ****                                       *****/
-    /******              Top Speed      ***                                        *****/
-    /******              Armour         **                                         *****/
-    /******              Turn Rate      *****                                      *****/
-    /***********************************************************************************/
-
-    /****                                  Team Specific                                     ****/
-    /**** Ship No               0       1       2       3       4       5       6       7    ****/
-    short maxThrustBeg[8]   = { 790,    790,    850,    850,    850,    850,    790,    790     };
-    short resistanceBeg[8]  = { 140,    140,    134,    134,    140,    140,    134,    134     };
-    short headingIncBeg[8]  = { 160,    160,    140,    140,    120,    120,    180,    180     };
-    short maxHeadingBeg[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
-    short skidBeg[8]        = { 12,     12,     20,     20,     24,     24,     12,     12      };
-
-    short maxThrustPro[8]   = { 1200,   1200,   1400,   1400,   1400,   1400,   1200,   1200    };
-    short resistancePro[8]  = { 140,    140,    140,    140,    130,    130,    130,    130     };
-    short headingIncPro[8]  = { 160,    160,    120,    120,    140,    140,    180,    180     };
-    short maxHeadingPro[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
-    short skidPro[8]        = { 10,     10,     14,     14,     16,     16,     8,      8       };
-
-    /****                      Remote Control Specific                               ****/
-    /**** Ship No               0       1       2       3       4       5       6    ****/
-    short RMaxThrustBeg[7]  = { 2550,   2600,   2630,   2660,   2700,   2720,   2750    };
-    short RThrustMagBeg[7]  = { 44,     45,     45,     46,     47,     48,     49      };
-    short fightBackBeg[7]   = { 1,      1,      1,      1,      1,      1,      1       };
-
-    short RMaxThrustPro[7]  = { 3750,   3780,   3800,   3850,   3900,   3950,   4000    };
-    short RThrustMagPro[7]  = { 50,     53,     55,     57,     60,     62,     65      };
-    short fightBackPro[7]   = { 1,      1,      1,      1,      1,      1,      1       };
-
-    crossedLine = 0;
 
     if (((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 1)) || ((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 8)) || (gConfig.raceType != CHAMPIONSHIP))
     {
@@ -348,6 +322,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->speed = 0;
         ship->electroCount = 0;
         ship->revConCount = 0;
+        ship->crossedLine = 0;
 
         if (gConfig.raceClass == 0)
         {
@@ -386,17 +361,12 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
             ship->lapTimes[j] = 0;
 
         ship->updateCount = START_TIME;
-        ship->targetShip = 0xFF;
+        ship->targetShip = NULL;
 
-        if (i == ownShip)
+        if (ship->player)
         {
             ship->update = UpdatePlayerShipNormStart;
-        }
-        else
-            ship->update = UpdateRemoteShipStart;
 
-        if (i == ownShip)
-        {
             position = 0;
             ship->position = position;
             ship->remoteMaxThrust = 2900;
@@ -405,6 +375,8 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         }
         else
         {
+            ship->update = UpdateRemoteShipStart;
+
             position = shipOrder[i];
             ship->position = position;
 

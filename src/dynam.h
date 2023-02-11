@@ -9,8 +9,8 @@
 #define COLLIDE 0x1
 #define frac(x, y) (((x) * (y)) >> FIXED_SHIFT) /* 9 */
 
-void ShipCalcAmbient(ShipData* playerShip);
-void ShipTrkReaction(ShipData* playerShip);
+void ShipCalcAmbient(ShipData* ship);
+void ShipTrkReaction(ShipData* ship);
 void GetTargetPos(vec3i* result, const vec3i* pos, const vec3i* cent1, const vec3i* cent2);
 void SetUnitVectors(ShipData* ship);
 int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, int noWeaponGrids);

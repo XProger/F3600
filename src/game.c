@@ -1,10 +1,7 @@
 #include "game.h"
 
 int32 ctrlmode;
-int32 ctrltimeout;
 int32 ctrlGameLoop;
-
-extern int32 ctrlfirsttime;
 
 Texture* titleScreen;
 int gTimeout;
@@ -39,15 +36,14 @@ void showLoading(int32 track)
         loadingScreen = LoadTexture(path);
     }
 
+    renderOffset(0, 0);
+
     renderFrameBegin();
     renderClear();
     renderSetMode(RENDER_MODE_2D);
 
     renderBackground(loadingScreen);
-    if (track != -1)
-    {
-        CentreText("LOADING", text_data(0, 200, 8), TEXT_COLOR_WHITE);
-    }
+
     renderFrameEnd();
     renderSwap();
 
@@ -77,9 +73,9 @@ void titleLoop(void)
 
     renderBackground(titleScreen);
 
-    CentreText("PRESS ANY KEY", text_data(0, 200, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_PRESS_ANY_KEY, text_data(0, 200, 8), TEXT_COLOR_WHITE);
 
-    if (xpad)
+    if (gPlayers[0].xpad)
     {
         PlayNote(SFX_MENU_SELECT);
         ctrlGameLoop = GAME_LOOP_MENU_INIT;
@@ -99,8 +95,6 @@ void gameInit(void)
     int32 time;
 
     renderInit();
-
-    renderOffset(0, 0);
 
     showLoading(-1); // 1s
 
@@ -123,7 +117,6 @@ void gameInit(void)
     */
 
     gConfig.lives = 3;
-    gConfig.EndOfGame = 0;
     gConfig.Position = 8;
 
     /*TODO cheats*/
@@ -137,14 +130,9 @@ void gameInit(void)
     InitPadSettings();
     InitChampionship();
 
-    ctrltimeout = FR30 * 120;
-
     ctrlGameLoop = GAME_LOOP_MAIN;
 
-    if (ctrlfirsttime)
-        gTimeout = 60 * 30;
-    else
-        gTimeout = 60 * 5;
+    gTimeout = 60 * 30;
 
     LoadCommon();
 

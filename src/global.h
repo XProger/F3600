@@ -26,8 +26,6 @@
 
 extern int32 gWidth, gHeight;
 extern int32 guiL, guiT, guiR, guiB;
-extern int32 gCameraFOV;
-extern int32 gTargetFOV;
 
 extern int HACK_LOAD_TRACK;
 extern int HACK_TEX_FILTER;
@@ -35,13 +33,11 @@ extern int HACK_TEX_FILTER;
 #define SCREEN_Z 160
 
 extern TrackData gTrack;
-extern TrackCamera gCamera;
+extern int32 gNumPlayers;
+extern PlayerData gPlayers[MAX_PLAYERS];
 
 extern int ownShip;
-extern void (*CameraUpdate)(TrackCamera*, ShipData*, RescueData*);
 extern int NoOfMainSections;
-extern uint16 pad;
-extern uint16 opad, xpad;
 extern PadInfo pCon;
 
 extern int trackNo;
@@ -53,7 +49,6 @@ extern int tempLapTimes[];
 
 extern Object* startBoom[];
 extern short startBoomCount;
-extern int crossedLine;
 
 #define MAX_TEXTURES 512
 extern Texture gTextures[];
@@ -73,18 +68,10 @@ extern ConfigData gConfig;
 
 extern Object* ctrlshipShapes[];
 extern ShipData ctrlshipIndex[];
-extern RescueData ctrlrescueDroid;
-
-extern int32 ctrlNeedTargetIcon;
 
 extern int32 gMusicTracksCount;
 extern int32 gMusicTrack;
 extern int32 gMasterBalance;
-
-extern int32 gPad;
-extern int32 gPadStickX;
-extern int32 gPadStickY;
-extern int32 gLastKey;
 
 extern int32 gFrameIndex;
 extern int32 gLastFrameIndex;

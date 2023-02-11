@@ -63,6 +63,8 @@ typedef struct Matrix
 } Matrix;
 
 extern vec3i gCameraViewPos;
+extern int32 gCameraFOV;
+extern int32 gCameraRotY;
 
 #define MAX_MATRICES 2
 

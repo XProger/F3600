@@ -8,8 +8,10 @@ void ColourStartBoom(int noToLight);
 void ResetStartBoom(void);
 void InitShadow(void);
 void DrawShadows(ShipData* shipIndex);
-void SetShake(int duration);
-void ShakeScreen(void);
+
+void ShakeUpdate(ShipData* ship);
+void ShakeOffset(ShipData* ship);
+
 void InitAuroraBorialis(Object* object);
 void AuroraBorialis(Object* object);
 void ColourRedLight(void);

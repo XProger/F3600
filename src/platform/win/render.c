@@ -445,6 +445,7 @@ const Shader* gCurShader;
 int32 gCurBlend;
 int32 gCurDepthTest;
 int32 gCurDepthWrite;
+int32 gCurView = -1;
 
 void matrixIdentity(mat4* m)
 {
@@ -899,10 +900,12 @@ void addQuad()
 
 void addVertex(float x, float y, float z, float s, float t, uint32 color)
 {
+    Vertex* v;
+
     if (gVerticesCount >= MAX_RENDER_VERTICES)
         flush();
 
-    Vertex* v = gVertices + gVerticesCount++;
+    v = gVertices + gVerticesCount++;
     v->x = x;
     v->y = y;
     v->z = z;
@@ -1026,10 +1029,10 @@ int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
     float v0 = g->y * t->ih;
     float u1 = (g->x + g->w) * t->iw;
     float v1 = (g->y + g->h) * t->ih;
-    int32 x0 = x;
-    int32 y0 = y;
-    int32 x1 = x + g->w * size / 16;
-    int32 y1 = y + g->h * size / 16;
+    float x0 = x;
+    float y0 = y;
+    float x1 = x + g->w * size / 16;
+    float y1 = y + g->h * size / 16;
 
     setTexture(t);
 
@@ -1050,10 +1053,10 @@ void renderImage(const Texture* t, int32 x, int32 y)
     float v0 = 0;
     float u1 = 1.0f;
     float v1 = 1.0f;
-    int32 x0 = x;
-    int32 y0 = y;
-    int32 x1 = x + t->width;
-    int32 y1 = y + t->height;
+    float x0 = x;
+    float y0 = y;
+    float x1 = x + t->width;
+    float y1 = y + t->height;
 
     setTexture(t);
 
@@ -1104,6 +1107,7 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
     ry >>= SHADOW_SHIFT_W;
     rz >>= SHADOW_SHIFT_W;
 
+    setDepthWrite(0);
     renderSetBlend(BLEND_MUL);
     setShader(&shader_blob);
     setTexture(gShadowTex);
@@ -1115,6 +1119,7 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
     addVertex(px - dx - rx, py - dy - ry, pz - dz - rz, 0.0f, 1.0f, color);
 
     renderSetBlend(BLEND_NONE);
+    setDepthWrite(1);
 }
 
 void renderColorQuad(const ColorQuad* q)
@@ -1236,9 +1241,6 @@ void setMatrix(const Matrix* matrix)
 
 void renderFrameBegin(void)
 {
-    // get fixed right vector for sprites
-    rsincos(gCamera.hdg, gCylZ, gCylX);
-
     gRenderMode = RENDER_MODE_3D;
     renderSetMode(RENDER_MODE_2D);
 
@@ -1309,13 +1311,14 @@ void drawSection(const TrackSection* section)
     }
 }
 
-void renderTrack(void)
+void renderTrack(int32 playerIndex)
 {
     int32 i, j, s;
     int32 dir;
     int16* counts;
     int16** sections;
     TrackSection* section;
+    TrackCamera* camera = &gPlayers[playerIndex].camera;
 
 //    #define CHECK_UNUSED_TEX
 
@@ -1324,7 +1327,7 @@ void renderTrack(void)
     memset(texUsed, 0, MAX_TRACK_TEX);
 #endif
 
-    dir = TrackDirection(&gCamera);
+    dir = TrackDirection(camera);
 
     setMatrix(gMatrixPtr);
     setShader(&shader_track);
@@ -1332,20 +1335,20 @@ void renderTrack(void)
     switch (dir)
     {
         case VIEW_DIR_NORTH:
-            counts = gCamera.section->northViewCount;
-            sections = gCamera.section->northViewSection;
+            counts = camera->section->northViewCount;
+            sections = camera->section->northViewSection;
             break;
         case VIEW_DIR_SOUTH:
-            counts = gCamera.section->southViewCount;
-            sections = gCamera.section->southViewSection;
+            counts = camera->section->southViewCount;
+            sections = camera->section->southViewSection;
             break;
         case VIEW_DIR_WEST:
-            counts = gCamera.section->westViewCount;
-            sections = gCamera.section->westViewSection;
+            counts = camera->section->westViewCount;
+            sections = camera->section->westViewSection;
             break;
         default: // VIEW_DIR_EAST
-            counts = gCamera.section->eastViewCount;
-            sections = gCamera.section->eastViewSection;
+            counts = camera->section->eastViewCount;
+            sections = camera->section->eastViewSection;
     }
 
     if (support.texture_array)
@@ -1660,7 +1663,51 @@ void renderTargetIcon(Texture* tex)
 
 void renderSetMode(int32 renderMode)
 {
+    int32 x = 0;
+    int32 y = 0;
+    int32 w = gWidth;
+    int32 h = gHeight;
+
+    if (gCurView != -1)
+    {
+        if (gNumPlayers > 2)
+        {
+            w >>= 1;
+            h >>= 1;
+
+            switch (gCurView)
+            {
+                case 0:
+                    y = h;
+                    break;
+                case 1:
+                    x = w;
+                    y = h;
+                    break;
+                case 2:
+                    if (gNumPlayers == 3)
+                    {
+                        x = w >> 1;
+                    }
+                    break;
+                case 3:
+                    x = w;
+                    break;
+            }
+        }
+        else
+        {
+            w >>= 1;
+            if (gCurView == 1)
+            {
+                x = w;
+            }
+        }
+    }
+
     flush();
+
+    glViewport(x, y, w, h);
 
     if (renderMode == RENDER_MODE_2D)
     {
@@ -1678,12 +1725,22 @@ void renderSetMode(int32 renderMode)
         //setFilter(1);
 
         matrixSetViewMenu();
-        matrixPerspective(&mProj, gCameraFOV / 4096.0f, (float)gWidth / (float)gHeight, -xOffset / 160.0f, yOffset / 120.f, Z_NEAR, Z_FAR);
+
+        matrixPerspective(&mProj, gCameraFOV / 4096.0f, (float)w / (float)h, -xOffset / ((guiR - guiL) * 0.5f), yOffset / ((guiB - guiT) * 0.5f), Z_NEAR, Z_FAR);
+
         mProj3D = mProj;
 
         setDepthTest(1);
         renderSetBlend(BLEND_NONE);
+
+        // get fixed right vector for sprites
+        rsincos(gCameraRotY, gCylZ, gCylX);
     }
+}
+
+void renderSetView(int32 index)
+{
+    gCurView = index;
 }
 
 uint16 RGB5551(uint16 c)

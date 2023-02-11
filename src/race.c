@@ -16,7 +16,6 @@ int ajscount = 0; // oh shit another global flag
 
 int ctrlchoice;
 Face* ctrlfacePtr;
-short ctrlbuttonPressed;
 int ctrldoneExtro;
 int ctrlplayCredits;
 int ctrlgameOverTime;
@@ -36,7 +35,6 @@ int ctrlchoiceData;
 char ctrlshowGameOver;
 
 extern int32 ctrlmode;
-extern int32 ctrltimeout;
 extern int32 ctrlGameLoop;
 
 /*          Andy Y's additions*/
@@ -56,7 +54,6 @@ int32 ctrlNeedWinLoseVar;
 int32 ctrlNeedInGameReset;
 int32 ctrlNeedInSingleGameConfirm;
 int32 ctrlNeedInGameConfirm;
-int32 ctrlfirsttime;
 
 int32 ctrl_says_quit;
 
@@ -79,6 +76,7 @@ void AdjustCrowdSound(Object* lost, int lostCount)
     int mag;
     int chosen;
     int smallestMag;
+    TrackCamera* camera = &gPlayers[0].camera; // TODO choose nearest camera
 
 #ifdef __3DO__ // TODO 3DO optimize
     return;
@@ -91,8 +89,8 @@ void AdjustCrowdSound(Object* lost, int lostCount)
 
     for (i = 0; i < lostCount; i++)
     {
-        dx = (lost[i].pos.x - gCamera.pos.x) >> 3;
-        dz = (lost[i].pos.z - gCamera.pos.z) >> 3;
+        dx = (lost[i].pos.x - camera->pos.x) >> 3;
+        dz = (lost[i].pos.z - camera->pos.z) >> 3;
 
         mag = GetMagnitudeApprox(dx, dz);
 
@@ -113,18 +111,28 @@ void AdjustCrowdSound(Object* lost, int lostCount)
     }
 }
 
-void Restart(ShipData* shipIndex, Object** weaponShapes, RescueData* rescueDroid, Object** shipShapes)
+void Restart(ShipData* shipIndex)
 {
+    int32 i;
     KillNotes();
     InitShipData(gTrack.sections, shipIndex);
-    InitRescueDroid(rescueDroid, shipShapes, &(shipIndex[ownShip]));
-    gCamera.section = shipIndex[ownShip].nearTrkSect;
 
-    ResetWeapons(ctrlweaponShapes);
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        PlayerData* player = gPlayers + i;
+        if (player->ship)
+        {
+            InitCamera(&player->camera, player->ship->nearTrkSect);
+            InitRescueDroid(&player->droid, ctrlshipShapes, player->ship);
+        }
+    }
+
+    ResetWeapons();
     ResetEffects();
     ResetStartBoom();
 
-    CameraUpdate = UpdateCameraRaceStart;
+    gConfig.EndOfGame = 0;
+    gConfig.newLapRecord = 0;
 }
 
 void QuitGame()
@@ -134,9 +142,9 @@ void QuitGame()
 
 void raceInit(void)
 {
-    LOG("race init\n");
+    int32 i;
 
-    renderOffset(0, 0);
+    LOG("race init\n");
 
     if (ctrlmode != ATTRACT) // not demo mode
     {
@@ -158,7 +166,6 @@ void raceInit(void)
     ctrl_says_quit = 0;
 
     ctrlchoice = -1;
-    ctrlbuttonPressed = 0;
     ctrlplayCredits = 0;
     ctrldoneExtro = START_EXTRO;
     ctrlgameOverTime = 0;
@@ -167,22 +174,32 @@ void raceInit(void)
     ctrllConfirm = 0;
     ctrlchoiceData = -1;
     ctrlshowGameOver = 0;
-    ctrlfirsttime = 1;
     finishedExtro = 0;
 
     LoadScene(gConfig.actTrackNum);
-    LoadWinLoseTex(PILOT_NAMES[gConfig.shipNum]);
+    LoadWinLoseTex(PILOT_NAMES[gPlayers[0].shipNum]);
 
-    InitCamera(&gCamera, gTrack.sections);
+    for (i = 0; i < NO_OF_SHIPS; i++)
+    {
+        ctrlshipIndex[i].player = NULL;
+    }
 
-    InitShipData(gTrack.sections, ctrlshipIndex);
-    InitRescueDroid(&ctrlrescueDroid, ctrlshipShapes, &(ctrlshipIndex[ownShip]));
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        PlayerData* player = gPlayers + i;
 
-    ResetWeapons(ctrlweaponShapes);
-    ResetEffects();
-    ResetStartBoom();
+        if (player->shipNum != -1)
+        {
+            player->ship = ctrlshipIndex + player->shipNum;
+            player->ship->player = player;
+        }
+        else
+        {
+            player->ship = NULL;
+        }
+    }
 
-    CameraUpdate = UpdateCameraRaceStart;
+    Restart(ctrlshipIndex);
 
     /* Initialize hi-score and game */
 
@@ -190,7 +207,6 @@ void raceInit(void)
 
     gConfig.lives = 3;
     gConfig.Position = NO_OF_SHIPS;
-    gConfig.EndOfGame = 0;
     gConfig.gameOverCount = 0;
 
     ctrlhiScoreData.confirm = 2;
@@ -198,14 +214,18 @@ void raceInit(void)
 
     if (ctrlmode == ATTRACT)
     {
-        ctrlshipIndex[ownShip].update = UpdatePlayerShipNormStart;
-        ctrlshipIndex[ownShip].updateCount = START_TIME;
-        ctrlshipIndex[ownShip].remoteMaxThrust = 3160;
-        ctrlshipIndex[ownShip].remoteThrustMag = 32;
-        ctrlshipIndex[ownShip].speed = 3160;
-        ctrlshipIndex[ownShip].attr &= ~VIEW_IN;
-        ctrlshipIndex[ownShip].attr &= ~RACING;
-        CameraUpdate = UpdateCameraAttractMode;
+        ShipData* ship = gPlayers[0].ship;
+        ASSERT(gNumPlayers == 1);
+
+        ship->update = UpdatePlayerShipNormStart;
+        ship->updateCount = START_TIME;
+        ship->remoteMaxThrust = 3160;
+        ship->remoteThrustMag = 32;
+        ship->speed = 3160;
+        ship->attr &= ~VIEW_IN;
+        ship->attr &= ~RACING;
+
+        gPlayers[0].camera.update = UpdateCameraAttractMode;
 
         if ((rand() % 3) == 0)
         {
@@ -217,8 +237,6 @@ void raceInit(void)
             attractDelay = 60 * FR30; // was 30*30 but this was too short I think
         }
     }
-
-    ctrlshipIndex[ownShip].haveFired = 0;
 
     SetNormPadPresets();
 
@@ -237,7 +255,9 @@ void raceInit(void)
 
 void raceCtrl(void)
 {
-    // Reset all of my little Drawing markers
+    int32 i;
+
+    // Reset all of my little Drawing markers // TODO HUD states instead of this shit
     ctrlNeedEndText = 0;
     ctrlNeedWinLose = 0;
     ctrlNeedBackPoly = 0;
@@ -252,36 +272,10 @@ void raceCtrl(void)
     ctrlNeedInGameReset = 0;
     ctrlNeedInGameConfirm = 0;
     ctrlNeedInSingleGameConfirm = 0;
-    ctrlNeedTargetIcon = 0;
 
     //ctrlshipIndex[ownShip].weaponType = WPN_ROCKET; // fx debug
 
-    if (gTargetFOV > CAMERA_FOV)
-        gTargetFOV -= (1 << 12);
-    gCameraFOV = gCameraFOV + ((gTargetFOV - gCameraFOV) >> 3);
-
     UpdatePad();
-
-    if (ctrlfirsttime)
-    {
-        ctrlfirsttime = 0;
-    }
-
-    if ((ctrlbuttonPressed == ctrltimeout) && // If no buttons have hit for timeout, and we were racing
-        (ctrlshipIndex[ownShip].attr & RACING)) // set up for attract mode.
-    {
-        ctrlshipIndex[ownShip].update = UpdateRemoteShip;
-        ctrlshipIndex[ownShip].updateCount = START_TIME;
-        ctrlshipIndex[ownShip].remoteMaxThrust = 3160;
-        ctrlshipIndex[ownShip].remoteThrustMag = 32;
-        ctrlshipIndex[ownShip].speed = 3160;
-        ctrlshipIndex[ownShip].attr &= ~VIEW_IN;
-        ctrlshipIndex[ownShip].attr &= ~RACING;
-        CameraUpdate = UpdateCameraAttractMode;
-        attractDelay = 30 * FR30;
-        ctrlmode = ATTRACT;
-        ctrlbuttonPressed = 0;
-    }
 
     if (ctrlshipIndex[ownShip].attr & RACING)
     {
@@ -291,7 +285,7 @@ void raceCtrl(void)
             {
                 PlayNote(SFX_MENU_SELECT); // go boing
                 ctrlchoice = 0; // set ctrlchoice to the first on the list
-                xpad = 0; // clear the status of the pad so that the next bit does not select
+                gPlayers[0].xpad = 0; // clear the status of the pad so that the next bit does not select
 
                 SetVolume(SFX_REMOTE_ENG, 0, 0);
                 SetVolume(SFX_ENG_RUMBLE, 0, 0);
@@ -389,18 +383,17 @@ void raceCtrl(void)
                         {
                             ctrlgameOverTime = 90; // 3 second
                             ctrlshowGameOver = 1;
-                            xpad = 0;
+                            gPlayers[0].xpad = 0;
                             break;
                         }
                     }
-                    Restart(ctrlshipIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                    Restart(ctrlshipIndex);
                     break;
 
                 case 2:
                     ctrlchoice = -1;
                     ctrlchoiceData = 2;
                     QuitGame();
-                    gConfig.raceType = NO_GAME_SET;
                     ctrl_says_quit = 1;
                     return;
             } /*end switch*/
@@ -436,7 +429,6 @@ void raceCtrl(void)
         if (ctrlshowGameOver == 0)
         {
             QuitGame();
-            gConfig.raceType = NO_GAME_SET;
             ctrl_says_quit = 1;
             return;
         }
@@ -444,47 +436,49 @@ void raceCtrl(void)
 
     if ((ctrlchoice == -1) && (ctrlshowGameOver == 0))
     {
-        if (ctrlmode != ATTRACT)
-        {
-            if (pad == 0)
-                ctrlbuttonPressed++;
-            else
-                ctrlbuttonPressed = 0;
-        }
-
         UpdateShips(ctrlshipIndex);
 
-        FRAME_LERP_INIT(&ctrlrescueDroid);
-
-        (ctrlrescueDroid.droidUpdate)(&ctrlrescueDroid, &(ctrlshipIndex[ownShip]), ctrlshipShapes);
-
+        for (i = 0; i < MAX_PLAYERS; i++)
         {
-            TrackCamera* cam = &gCamera;
-            FRAME_LERP_INIT(cam);
+            PlayerData* player = gPlayers + i;
+            if (!player->ship)
+                continue;
 
-            if (ctrldoneExtro == UPDATE_EXTRO)
-            {
-                (CameraUpdate)(cam, ctrlshipIndex, &ctrlrescueDroid);
+            { // update droid
+                FRAME_LERP_INIT(&player->droid);
+                (player->droid.droidUpdate)(&player->droid, player->ship, ctrlshipShapes);
             }
-            else
-            {
-                (CameraUpdate)(cam, &(ctrlshipIndex[ownShip]), &ctrlrescueDroid);
+
+            { // update camera
+                FRAME_LERP_INIT(&player->camera);
+
+                if (ctrldoneExtro == UPDATE_EXTRO)
+                {
+                    (player->camera.update)(&player->camera, ctrlshipIndex, &player->droid); // TODO just disable other ships at setting extro flag
+                }
+                else
+                {
+                    (player->camera.update)(&player->camera, player->ship, &player->droid);
+                }
+            }
+
+            { // update targeting and shake effects
+                ShipData* ship = player->ship;
+
+                if (ship->attr & RACING)
+                {
+                    if ((ship->weaponType == WPN_MISSILE) || (ship->weaponType == WPN_ELEC_BOLT) || (ship->weaponType == WPN_REV_CON))
+                    {
+                        MissileLock(ship, ctrlshipIndex, ctrlshipShapes);
+                    }
+                    ShakeUpdate(ship);
+                }
             }
         }
 
         UpdateCone(&ctrlcone);
 
-        if (ctrlshipIndex[ownShip].attr & RACING)
-        {
-            if (((ctrlshipIndex[ownShip].weaponType == WPN_MISSILE) || (ctrlshipIndex[ownShip].weaponType == WPN_ELEC_BOLT) || (ctrlshipIndex[ownShip].weaponType == WPN_REV_CON)) && (ctrlshipIndex[ownShip].attr & RACING))
-            {
-                MissileLock(&(ctrlshipIndex[ownShip]), ctrlshipIndex, ctrlshipShapes);
-            }
-
-            ShakeScreen();
-        }
-
-        UpdateWeapons(ctrlshipIndex, ctrlweaponShapes);
+        UpdateWeapons(ctrlshipIndex, gWeaponShapes);
 
         if (gConfig.raceType != TIME_TRIAL)
         {
@@ -495,7 +489,7 @@ void raceCtrl(void)
 
         SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
 
-        AdjustEngineSound(&(ctrlshipIndex[ownShip]), &gCamera);
+        AdjustEngineSound(&(ctrlshipIndex[ownShip]), &gPlayers[0].camera);
         AdjustCrowdSound(gTrack.lost, gTrack.lostCount);
         AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes);
 
@@ -510,7 +504,6 @@ void raceCtrl(void)
         attractDelay--;
         if ((GetMenuKey(M_START)) || (GetMenuKey(M_SELECT)) || (attractDelay == 0))
         {
-            gConfig.raceType = NO_GAME_SET;
             QuitGame();
             ctrl_says_quit = 1;
             return;
@@ -575,7 +568,6 @@ void raceCtrl(void)
                     ctrlNeedNewHighScores = 1;
                     NewHighScore(&ctrlhiScoreData);
                     ctrlNeedDeSelectScreen = 1;
-                    gConfig.EndOfGame = 0;
                 }
                 else
                 {
@@ -603,7 +595,6 @@ void raceCtrl(void)
                         ctrlhiScoreData.confirm = 2;
                         ctrlhiScoreData.lConfirm = 0;
                         attractDelay = 0;
-                        gConfig.raceType = NO_GAME_SET;
                         QuitGame();
                         ctrl_says_quit = 1;
                         return;
@@ -617,7 +608,7 @@ void raceCtrl(void)
                         ctrlNeedDeSelectScreen = 0;
                         InitHiScoreData(&ctrlhiScoreData);
 
-                        Restart(ctrlshipIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                        Restart(ctrlshipIndex);
                     }
                 }
             }
@@ -660,7 +651,6 @@ void raceCtrl(void)
                         ctrlNeedNewHighScores = 1;
                         NewHighScore(&ctrlhiScoreData);
                         ctrlNeedDeSelectScreen = 1;
-                        gConfig.EndOfGame = 0;
                     }
                     else
                     {
@@ -688,7 +678,6 @@ void raceCtrl(void)
                             ctrlhiScoreData.confirm = 2;
                             ctrlhiScoreData.lConfirm = 0;
                             attractDelay = 0;
-                            gConfig.raceType = NO_GAME_SET;
                             QuitGame();
                             ctrl_says_quit = 1;
                             return;
@@ -700,7 +689,7 @@ void raceCtrl(void)
                             ctrlhiScoreData.confirm = 2;
                             ctrlhiScoreData.lConfirm = 0;
                             InitHiScoreData(&ctrlhiScoreData);
-                            Restart(ctrlshipIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                            Restart(ctrlshipIndex);
                         }
                     }
                 }
@@ -740,7 +729,6 @@ void raceCtrl(void)
                     else if (gConfig.gotoMenu == 1)
                     {
                         gConfig.gotoMenu = 0;
-                        gConfig.raceType = NO_GAME_SET;
                         gConfig.newLapRecord = 0;
                         QuitGame();
                         ctrl_says_quit = 1;
@@ -854,8 +842,6 @@ void raceCtrl(void)
                             ctrlNeedNewHighScores = 1;
                             NewHighScore(&ctrlhiScoreData);
                             ctrlNeedDeSelectScreen = 1;
-
-                            gConfig.EndOfGame = 0;
                         }
                         else
                         {
@@ -872,13 +858,12 @@ void raceCtrl(void)
                             }
                             else
                             {
-
                                 if (gConfig.gameComplete == 1)
                                 {
                                     if (ctrldoneExtro == START_EXTRO)
                                     {
                                         int i;
-                                        CameraUpdate = UpdateCameraExtroAttract;
+                                        gPlayers[0].camera.update = UpdateCameraExtroAttract;
                                         for (i = 0; i < NO_OF_SHIPS; i++)
                                         {
                                             ctrlshipIndex[i].remoteMaxThrust = 3160;
@@ -900,7 +885,6 @@ void raceCtrl(void)
 
                                     if (finishedExtro)
                                     {
-                                        gConfig.raceType = NO_GAME_SET;
                                         gConfig.gotoMenu = 0;
                                         InitChampionship();
                                         gConfig.gameComplete = 0;
@@ -914,7 +898,6 @@ void raceCtrl(void)
 
                                     if (gConfig.gotoMenu != 0)
                                     {
-                                        gConfig.raceType = NO_GAME_SET;
                                         gConfig.gotoMenu = 0;
                                         InitChampionship();
                                         gConfig.gameComplete = 0;
@@ -923,9 +906,7 @@ void raceCtrl(void)
                                         return;
                                     }
 
-                                    gConfig.EndOfGame = 0;
                                     InitHiScoreData(&ctrlhiScoreData);
-                                    gConfig.newLapRecord = 0;
                                     if (gConfig.Position >= 1 && gConfig.Position <= 3)
                                     {
                                         QuitGame();
@@ -956,7 +937,6 @@ void raceCtrl(void)
                                             ctrlhiScoreData.confirm = 2;
                                             ctrlhiScoreData.lConfirm = 0;
                                             attractDelay = 0;
-                                            gConfig.raceType = NO_GAME_SET;
                                             QuitGame();
                                             ctrl_says_quit = 1;
                                             return;
@@ -967,7 +947,7 @@ void raceCtrl(void)
                                             attractDelay = 0;
                                             ctrlhiScoreData.confirm = 2;
                                             ctrlhiScoreData.lConfirm = 0;
-                                            Restart(ctrlshipIndex, ctrlweaponShapes, &ctrlrescueDroid, ctrlshipShapes);
+                                            Restart(ctrlshipIndex);
                                         }
                                     }
                                 }
@@ -987,7 +967,8 @@ void raceCtrl(void)
 
 void raceLoop(void)
 {
-    int i, count;
+    int32 i, viewIndex, count;
+    int32 w, h;
 
     count = gFrameIndex - gLastFrameIndex;
 
@@ -1028,12 +1009,31 @@ void raceLoop(void)
 
     ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
 
-    DrawView();
+    if (gNumPlayers == 1)
+    {
+        renderSetView(-1);
+        UpdateGameDisplay(gWidth, gHeight);
+        DrawView(0);
+    }
+    else
+    {
+        viewIndex = 0;
+        w = gWidth >> 1;
+        h = (gNumPlayers > 2) ? (gHeight >> 1) : gHeight;
+
+        for (i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (!gPlayers[i].ship)
+                continue;
+            renderSetView(viewIndex++);
+            UpdateGameDisplay(w, h);
+            DrawView(i);
+        }
+        renderSetView(-1);
+        UpdateGameDisplay(gWidth, gHeight);
+    }
 
     renderSetMode(RENDER_MODE_2D);
-
-    if (ctrlshipIndex[ownShip].attr & RACING)
-        DrawHud(ctrlshipIndex, ctrlchoice);
 
     if (ctrlNeedDeSelectScreen)
         renderBackFill(guiL, guiT, guiR - guiL, guiB - guiT);
@@ -1046,12 +1046,12 @@ void raceLoop(void)
         if (ctrlplayCredits == 1)
             ShowCredits(attractDelay);
         else
-            CentreText("DEMO MODE", text_data(60, 14, 8), TEXT_COLOR_HIGHLIGHT);
+            CentreText(STR_DEMO_MODE, text_data(0, 14, 8), TEXT_COLOR_HIGHLIGHT);
     }
 
     // All game overs
     if ((ctrlshowGameOver == 1) || (gConfig.showGameOver == 1) || (gConfig.lostGame == 1))
-        CentreText("GAME OVER", text_data(60, 112, 16), TEXT_COLOR_HIGHLIGHT);
+        CentreText(STR_GAME_OVER, text_data(0, 112, 16), TEXT_COLOR_HIGHLIGHT);
 
     // Text at end.
     if (ctrlNeedEndText)
@@ -1059,16 +1059,13 @@ void raceLoop(void)
         switch (ctrlNeedEndTextVar)
         {
             case 1:
-                CentreText("CONGRATULATIONS", text_data(15, 20, 8), TEXT_COLOR_HIGHLIGHT);
+                CentreText(STR_WIN, text_data(0, 20, 8), TEXT_COLOR_HIGHLIGHT);
                 break;
             case 2:
-                CentreText("BAD LUCK", text_data(15, 20, 8), TEXT_COLOR_HIGHLIGHT);
+                CentreText(STR_LOSE, text_data(0, 20, 8), TEXT_COLOR_HIGHLIGHT);
                 break;
             case 3:
-                CentreText("FAILED TO QUALIFY", text_data(15, 20, 8), TEXT_COLOR_HIGHLIGHT);
-                break;
-            default:
-                CentreText("LOST THE VARIABLE", text_data(15, 20, 8), TEXT_COLOR_HIGHLIGHT);
+                CentreText(STR_FAIL, text_data(0, 20, 8), TEXT_COLOR_HIGHLIGHT);
                 break;
         }
     }
@@ -1089,21 +1086,17 @@ void raceLoop(void)
     if (ctrlNeedVenomComplete)
         DisplayVenomComplete();
     if (ctrlNeedContinueGameConfirm)
-        ContinueGameConfirm(ctrlhiScoreData.lConfirm);
+        DrawContinueGameConfirm(ctrlhiScoreData.lConfirm);
     if (ctrlNeedInSingleGameConfirm)
-        RestartGameConfirm(ctrlhiScoreData.lConfirm);
+        DrawRestartGameConfirm(ctrlhiScoreData.lConfirm);
     if (ctrlNeedInGameReset)
         InGameReset(ctrlchoice);
     if (ctrlNeedInGameConfirm)
-        InGameConfirm(&ctrlconfirm, ctrlchoice, xpad, &ctrllConfirm);
+        InGameConfirm(ctrlchoice, &ctrllConfirm);
 
-    if (startIceText)
+    if (startIceText || startFireText)
     {
-        ShowIceCongratulations();
-    }
-    if (startFireText)
-    {
-        ShowFireCongratulations();
+        ShowCongratulations();
     }
 
     renderFrameEnd();
@@ -1113,7 +1106,7 @@ void raceLoop(void)
         ctrlmode = INTERACTIVE;
 
         ResetCone(&ctrlcone);
-        ctrlGameLoop = (gConfig.raceType == CHAMPIONSHIP) ? GAME_LOOP_RACE_INIT : GAME_LOOP_MAIN;
+        ctrlGameLoop = GAME_LOOP_MAIN;
         return;
     }
 }
@@ -1122,9 +1115,141 @@ void raceDemo(void)
 {
     ctrlmode = ATTRACT;
     ownShip = randy() % 8;
+    gPlayers[0].shipNum = ownShip;
 
     gConfig.raceType = SINGLE_RACE;
     gConfig.trackNum = 1 + (randy() % 6); // all venom
     gConfig.actTrackNum = trackNo = gTrackList[gConfig.trackNum - 1];
     ctrlGameLoop = GAME_LOOP_RACE_INIT;
+}
+
+void raceEnd(void)
+{
+    static const uint8 RACE_POINTS[] = { 0, 9, 7, 5, 3, 2, 1, 0, 0 };
+    SortTable sortTable[NO_OF_SHIPS];
+    int32 i, j, swapped;
+
+    if (gConfig.EndOfGame)
+        return;
+
+    gConfig.Position = winTable[ownShip].racePosition;
+    gConfig.EndOfGame = 1;
+
+    /* TODO lap times
+    tempLapTimes[0] = shipIndex[ownShip].lapTimes[0];
+    tempLapTimes[1] = shipIndex[ownShip].lapTimes[1];
+    tempLapTimes[2] = shipIndex[ownShip].lapTimes[2];
+    tempLapTimes[3] = shipIndex[ownShip].lapTimes[3];
+    tempLapTimes[4] = shipIndex[ownShip].lapTimes[4];
+    */
+    gConfig.showPilotCount = 120;
+    attractDelay = 300;
+
+    if (gConfig.raceType != CHAMPIONSHIP)
+        return;
+
+    attractDelay = 1;
+
+    if ((gConfig.Position >= 1 && gConfig.Position <= 3) && gConfig.lives > 0)
+    {
+        /* Find position during race */
+        for (i = 0; i < NO_OF_SHIPS; i++)
+        {
+            winTable[i].racePoints = RACE_POINTS[winTable[i].racePosition];
+            winTable[i].points += winTable[i].racePoints;
+
+            sortTable[i].shipNum = i;
+            sortTable[i].points = winTable[i].points;
+        }
+
+        do
+        {
+            swapped = 0;
+            for (i = 1; i < NO_OF_SHIPS; i++)
+            {
+                if (sortTable[i - 1].points < sortTable[i].points)
+                {
+                    // swap ship index
+                    j = sortTable[i].shipNum;
+                    sortTable[i].shipNum = sortTable[i - 1].shipNum;
+                    sortTable[i - 1].shipNum = j;
+                    // swap points
+                    j = sortTable[i].points;
+                    sortTable[i].points = sortTable[i - 1].points;
+                    sortTable[i - 1].points = j;
+
+                    swapped = 1;
+                }
+            }
+        } while (swapped);
+
+        for (i = 0; i < NO_OF_SHIPS; i++)
+        {
+            winTable[sortTable[i].shipNum].position = (i + 1);
+        }
+
+        gConfig.showPointCount = 120;
+        gConfig.showChampCount = 120;
+    }
+
+    gConfig.gameOverCount = 120;
+
+    if (gConfig.Position > 3)
+    {
+        gConfig.lives--;
+        gConfig.trackInc = 0;
+    }
+    else
+    {
+        if (gConfig.trackNum == NumTracks)
+        {
+            if (winTable[ownShip].position == 1)
+            {
+                gConfig.rapierClass = 1;
+                gConfig.raceClass = 1;
+                if (gConfig.showBonusTrack == 0)
+                {
+                    gConfig.trackNum += 2;
+                    gConfig.trackInc = 2;
+                }
+                else
+                {
+                    gConfig.trackNum++;
+                    gConfig.trackInc = 1;
+                }
+                gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
+                gConfig.venomComplete = 1;
+                gConfig.gotoMenu = 1;
+            }
+            else
+            {
+                gConfig.lostGame = 1;
+                gConfig.trackInc = 0;
+            }
+        }
+        else
+        {
+            if (gConfig.trackNum == totalTracks)
+            {
+                if (winTable[ownShip].position == 1)
+                {
+                    gConfig.gameComplete = 1;
+                    totalTracks = 14;
+                    NumTracks = 7;
+                    gConfig.showBonusTrack = 1;
+                }
+                else
+                {
+                    gConfig.lostGame = 1;
+                    gConfig.trackInc = 0;
+                }
+            }
+            else
+            {
+                gConfig.trackInc = 1;
+                gConfig.trackNum++;
+                gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
+            }
+        }
+    }
 }

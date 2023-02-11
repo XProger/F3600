@@ -16,7 +16,7 @@
 #define STALL -1
 
 void UpdateShips(ShipData* shipIndex);
-void GeneralStartProcs(ShipData* playerShip);
+void GeneralStartProcs(ShipData* ship);
 
 void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo);
 void UpdateRemoteShip(ShipData* shipIndex, int shipNo);

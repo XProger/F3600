@@ -1,0 +1,164 @@
+// by Scirvir
+
+const char* STR_ES[] =
+{
+    ""
+// MENU_MAIN
+    , ""
+    , "EMPEZAR JUEGO"
+    , "MULTIJUGADOR"
+    , "OPCIONES"
+    , "SALIR"
+// MENU_TRACK
+    , "SELECCIONA UN CIRCUITO"
+    , "ALTIMA VII"
+    , "KARBONIS V"
+    , "TERRAMAX"
+    , "KORODERA"
+    , "ARRIDOS IV"
+    , "SILVERSTREAM"
+    , "FIRESTAR"
+// MENU_OPTIONS
+    , "OPCIONES"
+    , "CONTROLES"
+    , "GR'AFICOS"
+    , "AUDIO"
+    , "MEJORES TIEMPOS"
+// MENU_CLASS
+    , "SELECCIONA UNA CLASE"
+    , "CLASE VENOM"
+    , "CLASE RAPIER"
+// MENU_TEAM
+    , "SELECCIONA TU EQUIPO"
+    , "AG SYSTEMS"
+    , "AURICOM"
+    , "QIREX"
+    , "FEISAR"
+// MENU_PILOT
+    , "ELIGE TU PILOTO"
+    , "JOHN DEKKA"
+    , "DANIEL CHANG"
+    , "ARIAL TETSUO"
+    , "ANASTASIA CHEROVOSKI"
+    , "KEL SOLAAR"
+    , "ARIAN TETSUO"
+    , "SOFIA DE LA RENTE"
+    , "PAUL JACKSON"
+// MENU_RACE
+    , "SELECCIONA UN TIPO DE EVENTO"
+    , "CAMPEONATO"
+    , "CARRERA"
+    , "CONTRARRELOJ"
+// MENU_QUIT
+    , ""
+// MENU_CONTROLS
+    , "CONTROLES"
+// MENU_GRAPHICS
+    , "GR'AFICOS"
+// MENU_AUDIO
+    , "AUDIO"
+    , "EFECTOS"
+    , "M'USICA"
+    , "PISTA"
+// MENU_HIGH_SCORES
+    , "MEJORES TIEMPOS"
+    , "MEJORES TIEMPOS CARRERA"
+    , "MEJORES TIEMPOS CONTRARRELOJ"
+// MENU_MULTIPLAYER
+    , "MULTIPLAYER" // TODO es
+    , "MODE" // TODO es
+    , "CIRCUIT" // TODO es
+    , "CLASS" // TODO es
+    , "TYPE" // TODO es
+    , "READY" // TODO es
+    , "LOCAL" // TODO es
+    , "NETWORK" // TODO es
+// Venom complete
+    , "BIEN HECHO"
+    , "ADQUIRIDA COMPETENCIA"
+    , "EN LA CLASE VENOM"
+    , "TE HAS CLASIFICADO"
+    , "PARA LA ULTRA R'APIDA"
+    , "CLASE RAPIER"
+    , "TE RECOMENDAMOS"
+    , "GUARDAR TU PARTIDA"
+// Venom complete all
+    , "INCRE'IBLE"
+    , "HAS COMPLETADO TODO EL"
+    , "CAMPEONATO CLASE VENOM"
+    , "BIEN HECHO"
+    , "ERES UN GRAN PILOTO"
+    , "AHORA ENFR'ENTATE AL"
+    , "CAMPEONATO RAPIER"
+    , "CONTINUA"
+// Rapier complete
+    , "ENHORABUENA"
+    , "ADQUIRIDA COMPETENCIA"
+    , "EN LA CLASE RAPIER"
+    , "AHORA TIENES ACCESO A LOS"
+    , "CAMPEONATOS VENOM Y RAPIER"
+    , "INCLUIDO EL"
+    , "NUEVO CIRCUITO"
+    , "FIRESTAR"
+    , "TE RECOMENDAMOS"
+    , "GUARDAR"
+    , "TU PARTIDA"
+    , "BUENA SUERTE"
+// Game complete
+    , "FANT'ASTICO"
+    , "HAS COMPLETADO"
+    , "WIPEOUT"
+    , "ERES UN PILOTO"
+    , "REALMENTE INCRE'IBLE"
+    , "ENHORABUENA"
+    , "MUCHAS GRACIAS"
+    , "DE PARTE DE TODO EL EQUIPO"
+    , "NO TE PIERDAS"
+    , "WIPEOUT II"
+    , "PROXIMAMENTE"
+// In-game menu
+    , "PAUSADO"
+    , "CONTINUAR"
+    , "REINICIAR"
+    , "SALIR"
+    , "PISTA"
+// Default names
+    , "PLAYER 1" // TODO es
+    , "PLAYER 2" // TODO es
+    , "PLAYER 3" // TODO es
+    , "PLAYER 4" // TODO es
+// Other
+    , "PULSA CUALQUIER BOT'ON"
+    , "NO DISPONIBLE"
+    , "DIRECCI'ON CONTRARIA"
+    , "MODO DEMO"
+    , "FIN DE PARTIDA"
+    , "SAL'ON DE LA FAMA"
+    , "TABLA DE CAMPEONATO"
+    , "NOMBRE DE PILOTO"
+    , "PUNTOS"
+    , "PUNTOS DE CARRERA"
+    , "ESTAD'ISTICAS DE CARRERA"
+    , "POSICI'ON EN CARRERA"
+    , "RECORD DE CARRERA"
+    , "TIEMPO DE CARRERA"
+    , "POSICI'ON"
+    , "VUELTA"
+    , "RECORD DE VUELTA"
+    , "DE"
+    , "VENOM"
+    , "RAPIER"
+    , "CONTINUAR CLASIFICACI'ON O SALIR"
+    , "REINICIAR CARRERA"
+    , "EST'AS SEGURO QUE"
+    , "QUIERES SALIR"
+    , "QUIERES REINICIAR"
+    , "NO"
+    , "S'I"
+    , "SALIR"
+    , "CLASIFICAR"
+    , "ALEATORIO"
+    , "ENHORABUENA"
+    , "MALA SUERTE"
+    , "NO CONSEGUISTE CLASIFICARTE"
+};

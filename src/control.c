@@ -13,10 +13,10 @@ void UpdateShips(ShipData* shipIndex)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (!((i == ownShip) || (gConfig.raceType != TIME_TRIAL)))
-            continue;
-
         ship = shipIndex + i;
+
+        if (!(ship->player || (gConfig.raceType != TIME_TRIAL)))
+            continue;
 
         SetUnitVectors(ship);
 
@@ -26,15 +26,46 @@ void UpdateShips(ShipData* shipIndex)
     }
 }
 
+ShipData* GetNearestPlayerShip(ShipData* remoteShip)
+{
+    int32 i;
+    int32 diff;
+    int32 baseDiff = remoteShip->DPASectDiff;
+    int32 minDiff = 1000;
+    ShipData* minShip = gPlayers[0].ship;
+
+    if (gNumPlayers == 1)
+    {
+        return minShip;
+    }
+
+    for (i = 1; i < MAX_PLAYERS; i++)
+    {
+        ShipData* ship = gPlayers[i].ship;
+
+        if (ship)
+        {
+            diff = ship->DPASectDiff - baseDiff;
+            if (diff < minDiff)
+            {
+                minDiff = diff;
+                minShip = ship;
+            }
+        }
+    }
+
+    return minShip;
+}
+
 /**************************************************************************/
 /****                                                                  ****/
 /****                         START ROUTINES                           ****/
 /****                                                                  ****/
 /**************************************************************************/
 
-void GeneralStartProcs(ShipData* playerShip)
+void GeneralStartProcs(ShipData* ship)
 {
-    if (playerShip->updateCount == START_TIME)
+    if (ship->updateCount == START_TIME)
     {
         PlayNote(SFX_REMOTE_ENG);
         SetVolume(SFX_REMOTE_ENG, 0, 0);
@@ -56,34 +87,34 @@ void GeneralStartProcs(ShipData* playerShip)
         SetPitch(SFX_CROWD, SND_DEF_PITCH >> 1);
     }
 
-    playerShip->updateCount--;
+    ship->updateCount--;
 
-    if (playerShip->updateCount == RACE_START)
+    if (ship->updateCount == RACE_START)
     {
         ColourStartBoom(3);
         PlayNote(SFX_SP_GO);
         SetPitch(SFX_SP_GO, SND_DEF_PITCH);
     }
-    else if (playerShip->updateCount <= AMBER_LIGHT)
+    else if (ship->updateCount <= AMBER_LIGHT)
     {
         ColourStartBoom(2);
     }
-    else if (playerShip->updateCount <= RED_LIGHT)
+    else if (ship->updateCount <= RED_LIGHT)
     {
         ColourStartBoom(1);
     }
 
-    if (playerShip->updateCount == AMBER_LIGHT)
+    if (ship->updateCount == AMBER_LIGHT)
     {
         PlayNote(SFX_SP_1);
         SetPitch(SFX_SP_1, SND_DEF_PITCH);
     }
-    else if (playerShip->updateCount == RED_LIGHT)
+    else if (ship->updateCount == RED_LIGHT)
     {
         PlayNote(SFX_SP_2);
         SetPitch(SFX_SP_2, SND_DEF_PITCH);
     }
-    else if (playerShip->updateCount == THREE)
+    else if (ship->updateCount == THREE)
     {
         PlayNote(SFX_SP_3);
         SetPitch(SFX_SP_3, SND_DEF_PITCH);
@@ -96,41 +127,47 @@ void GeneralStartProcs(ShipData* playerShip)
 
 void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo)
 {
-    ShipData* playerShip;
-    static int startPos;
+    ShipData* ship;
+    PlayerData* player;
+    static int startPos; // TODO
 
-    playerShip = &(shipIndex[shipNo]);
+    ship = shipIndex + shipNo;
+    ASSERT(ship->player);
 
-    GeneralStartProcs(playerShip);
+    player = (PlayerData*)ship->player;
 
-    if (playerShip->updateCount == START_TIME - 1)
-        startPos = playerShip->pos.y;
+    GeneralStartProcs(ship);
 
-    playerShip->pos.y = startPos + (rsin(playerShip->updateCount * 80) >> 7);
+    if (ship->updateCount == START_TIME - 1)
+        startPos = ship->pos.y;
 
-    if (playerShip->updateCount == 0)
+    ship->pos.y = startPos + (rsin(ship->updateCount * 80) >> 7);
+
+    if (ship->updateCount == 0)
     {
-        if (playerShip->attr & RACING)
+        if (ship->attr & RACING)
         {
-            playerShip->updateCount = STALL_DELAY;
-            playerShip->update = UpdatePlayerShipNorm;
+            ship->updateCount = STALL_DELAY;
+            ship->update = UpdatePlayerShipNorm;
         }
         else
-            playerShip->update = UpdateRemoteShip;
+        {
+            ship->update = UpdateRemoteShip;
+        }
     }
 
-    SetBrake(playerShip, pCon.lBrake, pCon.rBrake);
+    SetBrake(ship, pCon.lBrake, pCon.rBrake);
 
-    if (playerShip->attr & RACING)
-        SetView(playerShip, pCon.view);
+    if (ship->attr & RACING)
+        SetView(ship, pCon.view);
 
-    if (pad & pCon.thrust)
-        playerShip->thrust_mag += (FR15U + 1);
-    else if (playerShip->thrust_mag > FR15U)
-        playerShip->thrust_mag -= (FR15U + 1);
+    if (player->pad & pCon.thrust)
+        ship->thrust_mag += (FR15U + 1);
+    else if (ship->thrust_mag > FR15U)
+        ship->thrust_mag -= (FR15U + 1);
 
-    if (playerShip->thrust_mag > playerShip->max_thrust)
-        playerShip->thrust_mag = playerShip->max_thrust;
+    if (ship->thrust_mag > ship->max_thrust)
+        ship->thrust_mag = ship->max_thrust;
 }
 
 /**************************************************************************/
@@ -138,38 +175,41 @@ void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo)
 /**************************************************************************/
 void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
 {
-    ShipData* playerShip;
+    ShipData* ship;
     int32 headingInc;
     int32 vpitchInc;
-    int32 maxHeading;
     static int maxThrust;
     static short revLeft = 0;
     static short revRight = 0;
+    PlayerData* player;
 
-    playerShip = &(shipIndex[shipNo]);
+    ship = shipIndex + shipNo;
+    ASSERT(ship->player);
 
-    if (playerShip->electroCount > 0)
+    player = (PlayerData*)ship->player;
+
+    if (ship->electroCount > 0)
     {
-        playerShip->electroCount--;
-        if (playerShip->electroCount == 0)
-            playerShip->attr &= ~ELECTROED;
+        ship->electroCount--;
+        if (ship->electroCount == 0)
+            ship->attr &= ~ELECTROED;
     }
 
-    if (playerShip->revConCount > 0)
+    if (ship->revConCount > 0)
     {
-        playerShip->revConCount--;
-        if (playerShip->revConCount == 0)
-            playerShip->combatAttr &= ~REVCONNED;
+        ship->revConCount--;
+        if (ship->revConCount == 0)
+            ship->combatAttr &= ~REVCONNED;
     }
 
-    if (playerShip->specialCount > 0)
+    if (ship->specialCount > 0)
     {
-        playerShip->specialCount--;
-        if (playerShip->specialCount == 0)
-            playerShip->combatAttr &= ~SPECIALED;
+        ship->specialCount--;
+        if (ship->specialCount == 0)
+            ship->combatAttr &= ~SPECIALED;
     }
 
-    if ((playerShip->combatAttr & REVCONNED) && (revLeft == 0))
+    if ((ship->combatAttr & REVCONNED) && (revLeft == 0))
     {
         pCon.left = IN_RIGHT;
         pCon.right = IN_LEFT;
@@ -178,7 +218,7 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
         pCon.lBrake = revRight;
         pCon.rBrake = revLeft;
     }
-    else if (((playerShip->combatAttr & REVCONNED) == 0) && (revLeft != 0))
+    else if (((ship->combatAttr & REVCONNED) == 0) && (revLeft != 0))
     {
         pCon.left = IN_LEFT;
         pCon.right = IN_RIGHT;
@@ -188,109 +228,109 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
         revRight = 0;
     }
 
-    headingInc = (playerShip->headingInc * gPadStickX) >> 8;
-    vpitchInc = (gPadStickY * 30) >> 8;
+    headingInc = (ship->headingInc * player->stickX) >> 8;
+    vpitchInc = (player->stickY * 30) >> 8;
 
-    if (pad & pCon.left) /** Inc = 128 , max 2048 **/
+    if (player->pad & pCon.left) /** Inc = 128 , max 2048 **/
     {
-        if (playerShip->vhdg >= 0)
-            playerShip->vhdg += headingInc;
-        else if (playerShip->vhdg < 0)
-            playerShip->vhdg += (headingInc << 1);
+        if (ship->vhdg >= 0)
+            ship->vhdg += headingInc;
+        else if (ship->vhdg < 0)
+            ship->vhdg += (headingInc << 1);
     }
-    else if (pad & pCon.right)
+    else if (player->pad & pCon.right)
     {
-        if (playerShip->vhdg <= 0)
-            playerShip->vhdg -= headingInc;
-        else if (playerShip->vhdg > 0)
-            playerShip->vhdg -= (headingInc << 1);
+        if (ship->vhdg <= 0)
+            ship->vhdg -= headingInc;
+        else if (ship->vhdg > 0)
+            ship->vhdg -= (headingInc << 1);
     }
     else
     {
-        if (playerShip->vhdg > headingInc)
-            playerShip->vhdg -= headingInc;
-        else if (playerShip->vhdg < -headingInc)
-            playerShip->vhdg += headingInc;
+        if (ship->vhdg > headingInc)
+            ship->vhdg -= headingInc;
+        else if (ship->vhdg < -headingInc)
+            ship->vhdg += headingInc;
         else
-            playerShip->vhdg = 0;
+            ship->vhdg = 0;
     }
 
-#if 0 // old limiting
-    if (playerShip->vhdg < -playerShip->maxHeading)
-        playerShip->vhdg = -playerShip->maxHeading;
-    if (playerShip->vhdg > playerShip->maxHeading)
-        playerShip->vhdg = playerShip->maxHeading;
-#else
-    maxHeading = (playerShip->maxHeading * gPadStickX) >> 8;
+#if 1 // old limiting
+    if (ship->vhdg < -ship->maxHeading)
+        ship->vhdg = -ship->maxHeading;
+    if (ship->vhdg > ship->maxHeading)
+        ship->vhdg = ship->maxHeading;
+#else // TODO
+    maxHeading = (ship->maxHeading * ship->stickX) >> 8;
 
-    if (playerShip->vhdg < -maxHeading)
+    if (ship->vhdg < -maxHeading)
     {
-        playerShip->vhdg += playerShip->headingInc;
-        if (playerShip->vhdg > -maxHeading)
-            playerShip->vhdg = -maxHeading;
+        ship->vhdg += ship->headingInc;
+        if (ship->vhdg > -maxHeading)
+            ship->vhdg = -maxHeading;
     }
 
-    if (playerShip->vhdg > maxHeading)
+    if (ship->vhdg > maxHeading)
     {
-        playerShip->vhdg -= playerShip->headingInc;
-        if (playerShip->vhdg < maxHeading)
-            playerShip->vhdg = maxHeading;
+        ship->vhdg -= ship->headingInc;
+        if (ship->vhdg < maxHeading)
+            ship->vhdg = maxHeading;
     }
 #endif
 
-    if (playerShip->attr & ELECTROED)
+    if (ship->attr & ELECTROED)
     {
-        SetShake(4);
-        playerShip->vhdg += (randy() % 600) - 300;
+        ship->vhdg += (randy() % 600) - 300;
+        ship->shakeCount = 4;
     }
 
-    if (pad & pCon.down)
-        playerShip->vpitch += vpitchInc;
-    if (pad & pCon.up)
-        playerShip->vpitch -= vpitchInc;
+    if (player->pad & pCon.down)
+        ship->vpitch += vpitchInc;
+    if (player->pad & pCon.up)
+        ship->vpitch -= vpitchInc;
 
     /**** Check for Stall and set thrust ***/
-    if (playerShip->updateCount == STALL_DELAY)
+    if (ship->updateCount == STALL_DELAY)
     {
-        if ((playerShip->thrust_mag >= 680) && (playerShip->thrust_mag <= 700))
+        if ((ship->thrust_mag >= 680) && (ship->thrust_mag <= 700))
         {
-            playerShip->thrust_mag = 1800;
+            ship->thrust_mag = 1800;
             maxThrust = 1800;
         }
-        else if (playerShip->thrust_mag < 680)
-            maxThrust = playerShip->max_thrust;
+        else if (ship->thrust_mag < 680)
+            maxThrust = ship->max_thrust;
 
         else
             maxThrust = 200;
     }
 
-    if (playerShip->updateCount > 0)
+    if (ship->updateCount > 0)
     {
-        playerShip->updateCount--;
+        ship->updateCount--;
     }
     else
-        maxThrust = playerShip->max_thrust;
+        maxThrust = ship->max_thrust;
 
     if (maxThrust < 500)
         maxThrust += (randy() % 11) >> 1;
 
-    if (pad & pCon.thrust)
+    if (player->pad & pCon.thrust)
     {
-        playerShip->thrust_mag += (FR15U + 1);
+        ship->thrust_mag += (FR15U + 1);
     }
-    else if (playerShip->thrust_mag > FR7U)
-        playerShip->thrust_mag -= (FR7U + 1);
+    else if (ship->thrust_mag > FR7U)
+        ship->thrust_mag -= (FR7U + 1);
 
-    if (playerShip->thrust_mag > maxThrust)
-        playerShip->thrust_mag = maxThrust;
+    if (ship->thrust_mag > maxThrust)
+        ship->thrust_mag = maxThrust;
 
-    if ((playerShip->attr & ELECTROED) && ((randy() % 80) == 0))
-        playerShip->thrust_mag -= playerShip->thrust_mag >> 2;
+    if ((ship->attr & ELECTROED) && ((randy() % 80) == 0))
+        ship->thrust_mag -= ship->thrust_mag >> 2;
 
-    SetBrake(playerShip, pCon.lBrake, pCon.rBrake);
-    SetView(playerShip, pCon.view);
-    SetFire(playerShip, pCon.fire, shipNo);
-    ShipTrkReaction(playerShip);
+    SetBrake(ship, pCon.lBrake, pCon.rBrake);
+    SetView(ship, pCon.view);
+    SetFire(ship, pCon.fire, shipNo);
+    ShipTrkReaction(ship);
 }
 
 /***************************************************************/
@@ -302,23 +342,22 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
 void UpdateRemoteShipStart(ShipData* shipIndex, int shipNo)
 {
     static int32 startPos;
+    ShipData* ship = shipIndex + shipNo;
 
-    shipIndex = &(shipIndex[shipNo]);
+    ship->prevShipSect = ship->nearTrkSect;
+    SectionSearch(ship);
 
-    shipIndex->prevShipSect = shipIndex->nearTrkSect;
-    SectionSearch(shipIndex);
-
-    if (shipIndex->updateCount == START_TIME)
+    if (ship->updateCount == START_TIME)
     {
-        startPos = shipIndex->pos.y;
+        startPos = ship->pos.y;
     }
 
-    shipIndex->pos.y = startPos + (rsin(shipIndex->updateCount * (80 + shipNo * 3)) >> 7);
+    ship->pos.y = startPos + (rsin(ship->updateCount * (80 + shipNo * 3)) >> 7);
 
-    shipIndex->updateCount--;
-    if (shipIndex->updateCount == 0)
+    ship->updateCount--;
+    if (ship->updateCount == 0)
     {
-        shipIndex->update = UpdateRemoteShip;
+        ship->update = UpdateRemoteShip;
     }
 }
 
@@ -365,7 +404,10 @@ void HoldCentre(vec3i* result, ShipData* shipIndex, Face* facePtr, int shipNo)
 
 void BlockShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
-    if (shipIndex[ownShip].attr & LSIDE)
+    ShipData* ship = shipIndex + shipNo;
+    ASSERT(ship->targetShip);
+
+    if (ship->targetShip->attr & LSIDE)
         HoldLeft(blockVector, shipIndex, facePtr, shipNo);
     else
         HoldRight(blockVector, shipIndex, facePtr, shipNo);
@@ -373,7 +415,10 @@ void BlockShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int shipN
 
 void AvoidShip(vec3i* blockVector, ShipData* shipIndex, Face* facePtr, int shipNo)
 {
-    if (shipIndex[ownShip].attr & LSIDE)
+    ShipData* ship = shipIndex + shipNo;
+    ASSERT(ship->targetShip);
+
+    if (ship->targetShip->attr & LSIDE)
         HoldRight(blockVector, shipIndex, facePtr, shipNo);
     else
         HoldLeft(blockVector, shipIndex, facePtr, shipNo);
@@ -441,8 +486,10 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
     offSetVector.y = 0;
     offSetVector.z = 0;
 
-    playerShip = shipIndex + ownShip;
     remoteShip = shipIndex + shipNo;
+    playerShip = GetNearestPlayerShip(remoteShip);
+
+    remoteShip->targetShip = playerShip;
 
     if (remoteShip->electroCount > 0)
     {
@@ -623,7 +670,6 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
                                     SetPitch(SFX_SP_MISSILE, SND_DEF_PITCH);
 
                                     remoteShip->weaponType = WPN_MISSILE;
-                                    remoteShip->targetShip = ownShip;
                                     FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                                 }
                             }
@@ -637,7 +683,6 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
                                     SetPitch(SFX_SP_SHOCKWAVE, SND_DEF_PITCH);
 
                                     remoteShip->weaponType = WPN_ELEC_BOLT;
-                                    remoteShip->targetShip = ownShip;
                                     FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                                 }
                             }

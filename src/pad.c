@@ -15,68 +15,111 @@ void InitPadSettings(void)
 
 void UpdatePad(void)
 {
-    opad = pad;
-    pad = gPad;
-    xpad = (pad ^ opad) & pad;
-}
+    int32 i, opad;
 
-void SetBrake(ShipData* playerShip, short padLeft, short padRight)
-{
-    // right
-    if (pad & padRight)
-        playerShip->r_brake_rot += FR32U;
-    else if (playerShip->r_brake_rot > 0)
-        playerShip->r_brake_rot -= FR32U;
-
-    if (playerShip->r_brake_rot < 0)
-        playerShip->r_brake_rot = 0;
-
-    if (playerShip->r_brake_rot > 256)
-        playerShip->r_brake_rot = 256;
-
-    // left
-    if (pad & padLeft)
-        playerShip->l_brake_rot += FR32U;
-    else if (playerShip->l_brake_rot > 0)
-        playerShip->l_brake_rot -= FR32U;
-
-    if (playerShip->l_brake_rot < 0)
-        playerShip->l_brake_rot = 0;
-
-    if (playerShip->l_brake_rot > 256)
-        playerShip->l_brake_rot = 256;
-}
-
-void SetView(ShipData* playerShip, short padView)
-{
-    if (xpad & padView)
+    for (i = 0; i < MAX_PLAYERS; i++)
     {
-        if ((playerShip->attr & VIEW_IN) == 0)
+        PlayerData* player = gPlayers + i;
+
+        if (player->Lx != 0)
         {
-            CameraUpdate = UpdateCameraRaceInternal;
-            playerShip->attr |= VIEW_IN;
+            int32 right = (player->Lx > 0) ? 1 : 0;
+            player->stickX = (abs(player->Lx) + right) >> 7;
         }
         else
         {
-            CameraUpdate = UpdateCameraRaceExternal;
-            playerShip->attr &= ~VIEW_IN;
+            player->stickX = 256;
+        }
+
+        if (player->Ly != 0)
+        {
+            int32 up = (player->Ly > 0) ? 1 : 0;
+            player->stickY = (abs(player->Ly) + up) >> 6;
+        }
+        else
+        {
+            player->stickY = 256;
+        }
+
+        if (player->stickX > 256)
+            player->stickX = 256;
+        if (player->stickY > 256)
+            player->stickY = 256;
+
+        opad = player->pad;
+        player->pad = player->buttons;
+        player->xpad = (player->pad ^ opad) & player->pad;
+    }
+}
+
+void SetBrake(ShipData* ship, short padLeft, short padRight)
+{
+    PlayerData* player = (PlayerData*)ship->player;
+    ASSERT(player);
+
+    // right
+    if (player->pad & padRight)
+        ship->r_brake_rot += FR32U;
+    else if (ship->r_brake_rot > 0)
+        ship->r_brake_rot -= FR32U;
+
+    if (ship->r_brake_rot < 0)
+        ship->r_brake_rot = 0;
+
+    if (ship->r_brake_rot > 256)
+        ship->r_brake_rot = 256;
+
+    // left
+    if (player->pad & padLeft)
+        ship->l_brake_rot += FR32U;
+    else if (ship->l_brake_rot > 0)
+        ship->l_brake_rot -= FR32U;
+
+    if (ship->l_brake_rot < 0)
+        ship->l_brake_rot = 0;
+
+    if (ship->l_brake_rot > 256)
+        ship->l_brake_rot = 256;
+}
+
+void SetView(ShipData* ship, short padView)
+{
+    PlayerData* player = (PlayerData*)ship->player;
+    ASSERT(player);
+
+    if (player->xpad & padView)
+    {
+        if ((ship->attr & VIEW_IN) == 0)
+        {
+            player->camera.update = UpdateCameraRaceInternal;
+            ship->attr |= VIEW_IN;
+        }
+        else
+        {
+            player->camera.update = UpdateCameraRaceExternal;
+            ship->attr &= ~VIEW_IN;
         }
     }
 }
 
-void SetFire(ShipData* playerShip, short padFire, int shipNo)
+void SetFire(ShipData* ship, short padFire, int shipNo)
 {
-    if ((xpad & padFire) && (playerShip->weaponType != WPN_NONE))
+    PlayerData* player = (PlayerData*)ship->player;
+    ASSERT(player);
+
+    if ((player->xpad & padFire) && (ship->weaponType != WPN_NONE))
     {
-        if ((playerShip->attr & SHIELDED) == 0)
-            FireWeapon(playerShip, shipNo, playerShip->weaponType);
+        if ((ship->attr & SHIELDED) == 0)
+            FireWeapon(ship, shipNo, ship->weaponType);
         else
             PlayNote(SFX_MENU_MOVE);
     }
 }
 
-short GetMenuKey(short key)
+int32 GetMenuKeyPlayer(int32 key, int32 playerIndex)
 {
+    int32 xpad = gPlayers[playerIndex].xpad;
+
     switch (key)
     {
         case M_UP:
@@ -97,4 +140,107 @@ short GetMenuKey(short key)
             break;
     }
     return 0;
+}
+
+int32 GetMenuKey(int32 key)
+{
+    return GetMenuKeyPlayer(key, 0);
+}
+
+PlayerData* getPlayerByJoyIndex(int32 joyIndex)
+{
+    int32 i;
+
+    if (joyIndex == -1)
+        return gPlayers + 0;
+
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        PlayerData* player = gPlayers + i;
+        if (player->joyIndex == joyIndex)
+            return player;
+    }
+
+    return NULL;
+}
+
+void padReset(int32 joyIndex)
+{
+    PlayerData* player = getPlayerByJoyIndex(joyIndex);
+    if (!player)
+        return;
+
+    player->buttons = 0;
+    player->Lx = player->Ly = 0;
+    player->Rx = player->Ry = 0;
+}
+
+void padSetKey(int32 joyIndex, int32 inputKey, int32 down)
+{
+    PlayerData* player = getPlayerByJoyIndex(joyIndex);
+    if (!player)
+        return;
+
+    if (down)
+    {
+        player->buttons |= inputKey;
+    }
+    else
+    {
+        player->buttons &= ~inputKey;
+    }
+}
+
+void padSetStick(int32 joyIndex, int32 inputKey, int32 x, int32 y)
+{
+    PlayerData* player = getPlayerByJoyIndex(joyIndex);
+    if (!player)
+        return;
+
+    if (inputKey == IN_L)
+    {
+        if (player->Lx != x)
+        {
+            if (x < 0)
+            {
+                player->buttons |= IN_LEFT;
+                player->buttons &= ~IN_RIGHT;
+            }
+            else if (x > 0)
+            {
+                player->buttons &= ~IN_LEFT;
+                player->buttons |= IN_RIGHT;
+            }
+            else
+            {
+                player->buttons &= ~(IN_LEFT | IN_RIGHT);
+            }
+        }
+
+        if (player->Ly != y)
+        {
+            if (y < 0)
+            {
+                player->buttons |= IN_DOWN;
+                player->buttons &= ~IN_UP;
+            }
+            else if (y > 0)
+            {
+                player->buttons &= ~IN_DOWN;
+                player->buttons |= IN_UP;
+            }
+            else
+            {
+                player->buttons &= ~(IN_DOWN | IN_UP);
+            }
+        }
+
+        player->Lx = x;
+        player->Ly = y;
+    }
+    else if (inputKey == IN_R)
+    {
+        player->Rx = x;
+        player->Ry = y;
+    }
 }

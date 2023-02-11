@@ -73,9 +73,7 @@ typedef struct ShipData
     int16 DPASectDiff;
 
     /***** Weapon Attributes *****/
-    uint8 weaponType;
-    uint8 targetShip;
-    int16 haveFired;
+    int16 weaponType;
     int16 electroCount;
     int16 revConCount;
     int16 specialCount;
@@ -88,7 +86,14 @@ typedef struct ShipData
     int32 lapTimes[5];
     int32 updateCount;
 
+    int32 crossedLine;
+    int32 shakeCount;
+
     uint32 color;
+
+    void* player;
+
+    struct ShipData* targetShip;
 
     /***** Control Routines *****/
     void (*updateControl)(vec3i*, struct ShipData*, Face*, int);
@@ -97,5 +102,5 @@ typedef struct ShipData
 } ShipData;
 
 void LoadShipData(ShipData* shipIndex, Object** shipShapes);
-void DrawShips(ShipData* shipIndex, Object** shipShapes, int camShip);
+void DrawShips(ShipData* shipIndex, Object** shipShapes);
 void InitShipData(TrackSection* section, ShipData* shipIndex);

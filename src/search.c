@@ -3,7 +3,7 @@
 #define LOOK_BACK 3
 #define LOOK_AHEAD 6
 
-void SectionSearch(ShipData* playerShip)
+void SectionSearch(ShipData* ship)
 {
     TrackSection *trk, *nearest_section;
     int smallest_magSq;
@@ -13,7 +13,7 @@ void SectionSearch(ShipData* playerShip)
     short juncChecked = 0;
     TrackSection* junc = NULL;
 
-    trk = playerShip->nearTrkSect;
+    trk = ship->nearTrkSect;
 
     /****** Start search several sections before current section ******/
 
@@ -25,9 +25,9 @@ void SectionSearch(ShipData* playerShip)
     /****** Find vector from ship centre to track section under  ******/
     /******                     consideration                    ******/
 
-    cent2ship.x = playerShip->pos.x - trk->centre.x;
-    cent2ship.y = (playerShip->pos.y - trk->centre.y) >> 2;
-    cent2ship.z = playerShip->pos.z - trk->centre.z;
+    cent2ship.x = ship->pos.x - trk->centre.x;
+    cent2ship.y = (ship->pos.y - trk->centre.y) >> 2;
+    cent2ship.z = ship->pos.z - trk->centre.z;
 
     smallest_magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
@@ -49,9 +49,9 @@ void SectionSearch(ShipData* playerShip)
             juncChecked = 1;
         }
 
-        cent2ship.x = playerShip->pos.x - trk->centre.x;
-        cent2ship.y = (playerShip->pos.y - trk->centre.y) >> 2;
-        cent2ship.z = playerShip->pos.z - trk->centre.z;
+        cent2ship.x = ship->pos.x - trk->centre.x;
+        cent2ship.y = (ship->pos.y - trk->centre.y) >> 2;
+        cent2ship.z = ship->pos.z - trk->centre.z;
         magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
         if (magSq < smallest_magSq)
@@ -67,9 +67,9 @@ void SectionSearch(ShipData* playerShip)
 
         for (i = 0; i < LOOK_AHEAD; i++)
         {
-            cent2ship.x = playerShip->pos.x - trk->centre.x;
-            cent2ship.y = (playerShip->pos.y - trk->centre.y) >> 2;
-            cent2ship.z = playerShip->pos.z - trk->centre.z;
+            cent2ship.x = ship->pos.x - trk->centre.x;
+            cent2ship.y = (ship->pos.y - trk->centre.y) >> 2;
+            cent2ship.z = ship->pos.z - trk->centre.z;
             magSq = ((cent2ship.x * cent2ship.x) + (cent2ship.y * cent2ship.y) + (cent2ship.z * cent2ship.z));
 
             if (magSq < smallest_magSq)
@@ -86,14 +86,14 @@ void SectionSearch(ShipData* playerShip)
 
     if (smallest_magSq > (3700 * 3700))
     {
-        playerShip->attr |= FLYING;
+        ship->attr |= FLYING;
     }
     else
     {
-        playerShip->attr &= ~FLYING;
+        ship->attr &= ~FLYING;
     }
 
-    playerShip->nearTrkSect = nearest_section;
+    ship->nearTrkSect = nearest_section;
 }
 
 TrackSection* FindNearestSection(TrackSection* trk, const vec3i* pos)

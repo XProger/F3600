@@ -298,7 +298,6 @@ void collectTrackSectionGeometry(const TrackSection* section)
 
 void collectTrackGeometry(void)
 {
-    int32 i;
     const TrackSection* section = gTrack.sections;
 
     trackVertexCount = 0;

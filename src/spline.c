@@ -23,68 +23,76 @@ short startIceText;
 short startFireText;
 short textY;
 
-const char str_c1[] = "AWESOME";
-const char str_c2[] = " ";
-const char str_c3[] = "YOU HAVE BEATEN";
-const char str_c4[] = " ";
-const char str_c5[] = "WIPEOUT";
-const char str_c6[] = " ";
-const char str_c7[] = "YOU ARE A TRULY";
-const char str_c8[] = " ";
-const char str_c9[] = "AMAZING PILOT";
-const char str_c10[] = " ";
-const char str_c11[] = " ";
-const char str_c12[] = " ";
-const char str_c13[] = "CONGRATULATIONS";
-const char str_c14[] = " ";
-const char str_c15[] = " ";
-const char str_c16[] = " ";
-const char str_c17[] = " ";
-const char str_c18[] = "A BIG THANKS";
-const char str_c19[] = " ";
-const char str_c20[] = "FROM ALL OF US ON THE TEAM";
-const char str_c21[] = " ";
-const char str_c22[] = "LOOK OUT FOR";
-const char str_c23[] = " ";
-const char str_c24[] = "WIPEOUT II";
-const char str_c25[] = " ";
-const char str_c26[] = "COMING SOON";
-
-const char str_i1[] = "CONGRATULATIONS";
-const char str_i2[] = " ";
-const char str_i3[] = "RAPIER CLASS";
-const char str_i4[] = " ";
-const char str_i5[] = "COMPETENCE ACHIEVED";
-const char str_i6[] = " ";
-const char str_i7[] = "YOU NOW HAVE ACCESS TO THE";
-const char str_i8[] = " ";
-const char str_i9[] = "FULL VENOM AND RAPIER";
-const char str_i10[] = " ";
-const char str_i11[] = "CHAMPIONSHIPS WITH THE ";
-const char str_i12[] = " ";
-const char str_i13[] = "NEWLY CONSTRUCTED CIRCUIT";
-const char str_i14[] = " ";
-const char str_i15[] = "FIRESTAR";
-const char str_i16[] = " ";
-const char str_i17[] = "WE RECOMMEND YOU";
-const char str_i18[] = " ";
-const char str_i19[] = "SAVE";
-const char str_i20[] = " ";
-const char str_i21[] = "YOUR CURRENT GAME";
-const char str_i22[] = " ";
-const char str_i23[] = "GOOD LUCK";
-
-typedef struct name
-{
-    const char* words;
-    short colour;
-    short size;
-} Congrats;
-
-Congrats con[30];
-
 #define Red 0
 #define White 1
+
+typedef struct
+{
+    uint16 str;
+    uint8 size;
+    uint8 colour;
+} Congrats;
+
+const Congrats* con;
+
+const Congrats gRepierCongrats[] = 
+{
+    { STR_REPIER_COMP_1  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_2  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_3  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_4  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_5  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_6  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_7  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_8  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_9  , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_10 , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_11 , 8, White },
+    { STR_EMPTY          , 8, White },
+    { STR_REPIER_COMP_12 , 8, White },
+    { 0, 0, 0 }
+};
+
+const Congrats gGameCongrats[] = 
+{
+    { STR_GAME_COMP_1  ,  8, Red   },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_2  ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_3  ,  8, Red   },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_4  ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_5  ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_6  , 16, Red   },
+    { STR_EMPTY        ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_7  ,  8, Red   },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_8  ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_9  ,  8, White },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_10 ,  8, Red   },
+    { STR_EMPTY        ,  8, White },
+    { STR_GAME_COMP_11 ,  8, White },
+    { 0, 0, 0 }
+};
 
 #define GlobalDistance 32767
 
@@ -551,21 +559,25 @@ void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueD
     int32 temp;
     vec4i targetVector;
 
-    camera->section = ship[ownShip].nearTrkSect;
+    ship += ownShip;
+
+    camera->section = ship->nearTrkSect;
 
     timeOut--;
     if (timeOut <= 0)
     {
-        CameraUpdate = UpdateCameraExtroAttract;
+        PlayerData* player = (PlayerData*)ship->player;
+        ASSERT(player);
+        player->camera.update = UpdateCameraExtroAttract;
     }
 
-    camera->pos.x = ship[ownShip].pos.x - camVx;
-    camera->pos.y = ship[ownShip].pos.y - camVy;
-    camera->pos.z = ship[ownShip].pos.z - camVz;
+    camera->pos.x = ship->pos.x - camVx;
+    camera->pos.y = ship->pos.y - camVy;
+    camera->pos.z = ship->pos.z - camVz;
 
-    targetVector.x = ship[ownShip].pos.x - camera->pos.x;
-    targetVector.y = ship[ownShip].pos.y - camera->pos.y;
-    targetVector.z = ship[ownShip].pos.z - camera->pos.z;
+    targetVector.x = ship->pos.x - camera->pos.x;
+    targetVector.y = ship->pos.y - camera->pos.y;
+    targetVector.z = ship->pos.z - camera->pos.z;
 
     temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -582,20 +594,24 @@ void UpdateCameraStationary(TrackCamera* camera, ShipData* ship, RescueData* res
 {
     int32 temp;
     vec4i targetVector;
+    
+    ship += ownShip;
 
     timeOut--;
     if (timeOut <= 0)
     {
-        CameraUpdate = UpdateCameraExtroAttract;
+        PlayerData* player = (PlayerData*)ship->player;
+        ASSERT(player);
+        player->camera.update = UpdateCameraExtroAttract;
     }
 
     camera->pos.x = camera->section->centre.x - camVx;
     camera->pos.y = camera->section->centre.y - camVy;
     camera->pos.z = camera->section->centre.z - camVz;
 
-    targetVector.x = ship[ownShip].pos.x - camera->pos.x;
-    targetVector.y = ship[ownShip].pos.y - camera->pos.y;
-    targetVector.z = ship[ownShip].pos.z - camera->pos.z;
+    targetVector.x = ship->pos.x - camera->pos.x;
+    targetVector.y = ship->pos.y - camera->pos.y;
+    targetVector.z = ship->pos.z - camera->pos.z;
 
     temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -724,7 +740,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 timeOut = FR30 * 13;
 
-                CameraUpdate = UpdateCameraHighUp;
+                camera->update = UpdateCameraHighUp;
                 camShip[ownShip].attr &= ~VIEW_IN;
                 break;
 
@@ -1059,8 +1075,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 timeOut = FR30 * 3;
 
                 camera->section = startSection + 12;
-
-                CameraUpdate = UpdateCameraStationary;
+                camera->update = UpdateCameraStationary;
                 camShip[ownShip].attr &= ~VIEW_IN;
                 break;
 
@@ -1099,8 +1114,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 timeOut = FR30 * 6;
 
                 camera->section = startSection + 12;
-
-                CameraUpdate = UpdateCameraStationary;
+                camera->update = UpdateCameraStationary;
                 camShip[ownShip].attr &= ~VIEW_IN;
                 break;
 
@@ -1144,7 +1158,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 timeOut = FR30 * 6;
 
-                CameraUpdate = UpdateCameraHighUp;
+                camera->update = UpdateCameraHighUp;
                 camShip[ownShip].attr &= ~VIEW_IN;
                 break;
 
@@ -1338,7 +1352,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 timeOut = FR30 * 7;
 
-                CameraUpdate = UpdateCameraHighUp;
+                camera->update = UpdateCameraHighUp;
                 camShip[ownShip].attr &= ~VIEW_IN;
                 break;
 
@@ -1356,266 +1370,38 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
     if (!finishedExtro)
     {
-        (CameraUpdate)(camera, camShip, rescueDroid);
+        (camera->update)(camera, camShip, rescueDroid);
     }
 }
 
 void InitFireCongratulations(void)
 {
-    /*TODO const array*/
-    con[0].words = str_c1;
-    con[0].colour = Red;
-    con[0].size = 8;
-
-    con[1].words = str_c2;
-    con[1].colour = White;
-    con[1].size = 8;
-
-    con[2].words = str_c3;
-    con[2].colour = White;
-    con[2].size = 8;
-
-    con[3].words = str_c4;
-    con[3].colour = White;
-    con[3].size = 8;
-
-    con[4].words = str_c5;
-    con[4].colour = Red;
-    con[4].size = 8;
-
-    con[5].words = str_c6;
-    con[5].colour = White;
-    con[5].size = 8;
-
-    con[6].words = str_c7;
-    con[6].colour = White;
-    con[6].size = 8;
-
-    con[7].words = str_c8;
-    con[7].colour = White;
-    con[7].size = 8;
-
-    con[8].words = str_c9;
-    con[8].colour = White;
-    con[8].size = 8;
-
-    con[9].words = str_c10;
-    con[9].colour = White;
-    con[9].size = 8;
-
-    con[10].words = str_c11;
-    con[10].colour = White;
-    con[10].size = 8;
-
-    con[11].words = str_c12;
-    con[11].colour = White;
-    con[11].size = 8;
-
-    con[12].words = str_c13;
-    con[12].colour = Red;
-    con[12].size = 16;
-
-    con[13].words = str_c14;
-    con[13].colour = White;
-    con[13].size = 8;
-
-    con[14].words = str_c15;
-    con[14].colour = White;
-    con[14].size = 8;
-
-    con[15].words = str_c16;
-    con[15].colour = White;
-    con[15].size = 8;
-
-    con[16].words = str_c17;
-    con[16].colour = White;
-    con[16].size = 8;
-
-    con[17].words = str_c18;
-    con[17].colour = Red;
-    con[17].size = 8;
-
-    con[18].words = str_c19;
-    con[18].colour = White;
-    con[18].size = 8;
-
-    con[19].words = str_c20;
-    con[19].colour = White;
-    con[19].size = 8;
-
-    con[20].words = str_c21;
-    con[20].colour = White;
-    con[20].size = 8;
-
-    con[21].words = str_c22;
-    con[21].colour = White;
-    con[21].size = 8;
-
-    con[22].words = str_c23;
-    con[22].colour = White;
-    con[22].size = 8;
-
-    con[23].words = str_c24;
-    con[23].colour = Red;
-    con[23].size = 8;
-
-    con[24].words = str_c25;
-    con[24].colour = White;
-    con[24].size = 8;
-
-    con[25].words = str_c26;
-    con[25].colour = White;
-    con[25].size = 8;
+    con = gGameCongrats;
 }
 
 void InitIceCongratulations(void)
 {
-    con[0].words = str_i1;
-    con[0].colour = White;
-    con[0].size = 8;
-
-    con[1].words = str_i2;
-    con[1].colour = White;
-    con[1].size = 8;
-
-    con[2].words = str_i3;
-    con[2].colour = White;
-    con[2].size = 8;
-
-    con[3].words = str_i4;
-    con[3].colour = White;
-    con[3].size = 8;
-
-    con[4].words = str_i5;
-    con[4].colour = White;
-    con[4].size = 8;
-
-    con[5].words = str_i6;
-    con[5].colour = White;
-    con[5].size = 8;
-
-    con[6].words = str_i7;
-    con[6].colour = White;
-    con[6].size = 8;
-
-    con[7].words = str_i8;
-    con[7].colour = White;
-    con[7].size = 8;
-
-    con[8].words = str_i9;
-    con[8].colour = White;
-    con[8].size = 8;
-
-    con[9].words = str_i10;
-    con[9].colour = White;
-    con[9].size = 8;
-
-    con[10].words = str_i11;
-    con[10].colour = White;
-    con[10].size = 8;
-
-    con[11].words = str_i12;
-    con[11].colour = White;
-    con[11].size = 8;
-
-    con[12].words = str_i13;
-    con[12].colour = White;
-    con[12].size = 8;
-
-    con[13].words = str_i14;
-    con[13].colour = White;
-    con[13].size = 8;
-
-    con[14].words = str_i15;
-    con[14].colour = White;
-    con[14].size = 8;
-
-    con[15].words = str_i16;
-    con[15].colour = White;
-    con[15].size = 8;
-
-    con[16].words = str_i17;
-    con[16].colour = White;
-    con[16].size = 8;
-
-    con[17].words = str_i18;
-    con[17].colour = White;
-    con[17].size = 8;
-
-    con[18].words = str_i19;
-    con[18].colour = White;
-    con[18].size = 8;
-
-    con[19].words = str_i20;
-    con[19].colour = White;
-    con[19].size = 8;
-
-    con[20].words = str_i21;
-    con[20].colour = White;
-    con[20].size = 8;
-
-    con[21].words = str_i22;
-    con[21].colour = White;
-    con[21].size = 8;
-
-    con[22].words = str_i23;
-    con[22].colour = White;
-    con[22].size = 8;
+    con = gRepierCongrats;
 }
 
-/*TODO ShowCongratulations(con, count)*/
-void ShowFireCongratulations(void)
+void ShowCongratulations(void)
 {
-    short lineY;
-    short i;
+    int32 lineY = textY;
+    const Congrats* c = con;
 
-    for (i = 0; i < 26; i++)
+    while (c->size)
     {
-        lineY = textY + i * 12;
-
         if ((lineY > -10) && (lineY < 270))
         {
-            if (con[i].colour == White)
-            {
-                CentreText(con[i].words, text_data(0, lineY, con[i].size), TEXT_COLOR_WHITE);
-            }
-            else
-            {
-                CentreText(con[i].words, text_data(0, lineY, con[i].size), TEXT_COLOR_HIGHLIGHT);
-            }
+            CentreText(c->str, text_data(0, lineY, c->size), (c->colour == White) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT);
         }
+
+        lineY += 12;
+        c++;
     }
 
     if (textY > -350)
     {
-        textY -= 3;
-    }
-}
-
-void ShowIceCongratulations(void)
-{
-    short lineY;
-    short i;
-
-    for (i = 0; i < 23; i++)
-    {
-        lineY = textY + i * 12;
-
-        if ((lineY > -10) && (lineY < 270))
-        {
-            if (con[i].colour == White)
-            {
-                CentreText(con[i].words, text_data(0, lineY, con[i].size), TEXT_COLOR_WHITE);
-            }
-            else
-            {
-                CentreText(con[i].words, text_data(0, lineY, con[i].size), TEXT_COLOR_HIGHLIGHT);
-            }
-        }
-    }
-
-    if (textY > -350)
-    {
-        textY -= 3;
+        textY -= (gFrameIndex - gLastFrameIndex);
     }
 }

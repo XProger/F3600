@@ -146,6 +146,11 @@ typedef struct TrackCamera
     vec3i _pos;
     int32 _pitch, _hdg, _roll;
 #endif
+
+    int32 fov;
+    int32 fovTarget;
+
+    void (*update)(struct TrackCamera*, struct ShipData*, struct RescueData*);
 } TrackCamera;
 
 TrackSection* NextIndexSection(TrackSection* section);

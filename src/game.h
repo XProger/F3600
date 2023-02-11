@@ -2,6 +2,7 @@
 #define _GAME_H_INCLUDED_
 
 #include "standard.h"
+#include "lang.h"
 #include "render.h"
 #include "track.h"
 #include "ships.h"

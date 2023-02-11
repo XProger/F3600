@@ -160,12 +160,12 @@ void ShowCredits(int attractDelay)
     for (i = 0; i < sizeof(credits) / sizeof(credits[0]); i++)
     {
         if ((place > -10) && (place < 264))
-            CentreText(credits[i].title, text_data(230, place, 8), TEXT_COLOR_HIGHLIGHT);
+            CentreTextStr(credits[i].title, text_data(0, place, 8), TEXT_COLOR_HIGHLIGHT);
         place += 16;
         for (j = 0; j < credits[i].noOfNames; j++)
         {
             if ((place > -10) && (place < 264))
-                CentreText(credits[i].name[j], text_data(230, place, 8), TEXT_COLOR_WHITE);
+                CentreTextStr(credits[i].name[j], text_data(0, place, 8), TEXT_COLOR_WHITE);
             place += 12;
         }
         place += 16;

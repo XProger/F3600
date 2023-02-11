@@ -355,18 +355,18 @@ void DrawShadows(ShipData* shipIndex)
     int i, px, py, pz, nx, ny, nz, dx, dy, dz, rx, ry, rz;
     int alpha, intensity;
     const vec3i* facePoint;
-    ShipData* playerShip;
+    ShipData* ship;
 
     matrixSetCameraSpace();
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        playerShip = shipIndex + i;
+        ship = shipIndex + i;
 
-        if (!((playerShip->attr & VISIBLE) && ((playerShip->attr & FLYING) == 0)))
+        if (!((ship->attr & VISIBLE) && ((ship->attr & FLYING) == 0)))
             continue;
 
-        facePtr = gTrack.faces + playerShip->nearTrkSect->faceStart;
+        facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
 
         while (!(facePtr->flags & TRACK_BASE))
         {
@@ -375,9 +375,9 @@ void DrawShadows(ShipData* shipIndex)
 
         facePoint = gTrack.vertices + facePtr->vertex[0];
 
-        dx = playerShip->unitVecNose.x;
-        dy = playerShip->unitVecNose.y;
-        dz = playerShip->unitVecNose.z;
+        dx = ship->unitVecNose.x;
+        dy = ship->unitVecNose.y;
+        dz = ship->unitVecNose.z;
 
         nx = facePtr->normal.x;
         ny = facePtr->normal.y;
@@ -403,9 +403,9 @@ void DrawShadows(ShipData* shipIndex)
         dz = (nx * ry - ny * rx) >> FIXED_SHIFT;
 
         // get the shadow pivot point
-        px = FRAME_LERP_POS(playerShip->_pos.x, playerShip->pos.x);
-        py = FRAME_LERP_POS(playerShip->_pos.y, playerShip->pos.y);
-        pz = FRAME_LERP_POS(playerShip->_pos.z, playerShip->pos.z);
+        px = FRAME_LERP_POS(ship->_pos.x, ship->pos.x);
+        py = FRAME_LERP_POS(ship->_pos.y, ship->pos.y);
+        pz = FRAME_LERP_POS(ship->_pos.z, ship->pos.z);
 
         alpha = (nx * (px - facePoint->x) + ny * (py - facePoint->y) + nz * (pz - facePoint->z)) >> FIXED_SHIFT;
 
@@ -429,30 +429,32 @@ void DrawShadows(ShipData* shipIndex)
     }
 }
 
-int shakeCount = 0;
-
-void SetShake(int duration)
+void ShakeUpdate(ShipData* ship)
 {
-    shakeCount = duration;
+    int32 shakeCount = ship->shakeCount;
+
+    if (shakeCount > 0)
+    {
+        PlayerData* player = (PlayerData*)ship->player;
+        ASSERT(player);
+
+        osJoyVibrate(player->joyIndex, shakeCount, shakeCount);
+        ship->shakeCount = shakeCount - 1;
+    }
 }
 
-void ShakeScreen(void)
+void ShakeOffset(ShipData* ship)
 {
-    if (shakeCount == 0)
-        return;
+    int32 shakeCount = ship->shakeCount;
 
-    if (shakeCount > 1)
+    if (shakeCount > 0)
     {
         renderOffset(-(randy() % shakeCount) + (shakeCount >> 1), -(randy() % shakeCount) + (shakeCount >> 1));
-        shakeCount--;
     }
-    else if (shakeCount == 1)
+    else
     {
         renderOffset(0, 0);
-        shakeCount--;
     }
-
-    osJoyVibrate(0, shakeCount, shakeCount);
 }
 
 #ifdef USE_VERTEX_COLOR

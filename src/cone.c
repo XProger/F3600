@@ -114,10 +114,12 @@ void UpdateCone(Cone* cone)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        if (!(cone->ship[i]->attr & VISIBLE))
+        ShipData* ship = cone->ship[i];
+
+        if (!(ship->attr & VISIBLE))
             continue;
 
-        if (i == ownShip)
+        if (ship->player)
         {
             /* get the z displacement related to speed or thrust */
             disp = cone->ship[i]->thrust_mag >> 4;

@@ -349,11 +349,11 @@ void LoadCommonOld(void)
     weaponTextures = gTexturePtr;
     LoadCompressedTextureSequence("wipeout/common/mine.cmp", 1);
 
-    ctrlweaponShapes[WEAPON_SHAPE_ROCKET]  = LoadPrm("wipeout/common/rock.prm", weaponTextures, NULL, NULL);
-    ctrlweaponShapes[WEAPON_SHAPE_MINE]    = LoadPrm("wipeout/common/mine.prm", weaponTextures, NULL, NULL);
-    ctrlweaponShapes[WEAPON_SHAPE_MISSILE] = LoadPrm("wipeout/common/miss.prm", weaponTextures, NULL, NULL);
-    ctrlweaponShapes[WEAPON_SHAPE_SHIELD]  = LoadPrm("wipeout/common/shld.prm", weaponTextures, NULL, NULL);
-    ctrlweaponShapes[WEAPON_SHAPE_EBOLT]   = LoadPrm("wipeout/common/ebolt.prm", weaponTextures, NULL, NULL);
+    gWeaponShapes[WEAPON_SHAPE_ROCKET]  = LoadPrm("wipeout/common/rock.prm", weaponTextures, NULL, NULL);
+    gWeaponShapes[WEAPON_SHAPE_MINE]    = LoadPrm("wipeout/common/mine.prm", weaponTextures, NULL, NULL);
+    gWeaponShapes[WEAPON_SHAPE_MISSILE] = LoadPrm("wipeout/common/miss.prm", weaponTextures, NULL, NULL);
+    gWeaponShapes[WEAPON_SHAPE_SHIELD]  = LoadPrm("wipeout/common/shld.prm", weaponTextures, NULL, NULL);
+    gWeaponShapes[WEAPON_SHAPE_EBOLT]   = LoadPrm("wipeout/common/ebolt.prm", weaponTextures, NULL, NULL);
 
     HACK_TEX_FILTER = 1;
     gTargetTex = LoadTexture("wipeout/textures/target2.tim");
@@ -365,6 +365,8 @@ void LoadCommonOld(void)
     writeWAD("wipeout/common.wad", firstTex, gTexturePtr, firstObj, gObjectPtr);
 #endif
 }
+
+//#define VER_PSX
 
 void LoadMainMenuOld(void)
 {
@@ -564,7 +566,7 @@ void InitVertices(const char* fileName)
 
 void InitFaces(const char* fileName)
 {
-    int32 i, r, g, b, a;
+    int32 r, g, b;
     Face* face;
     Face* last;
 

@@ -36,7 +36,7 @@ typedef struct
 
 void HighScore(void);
 void AddEntry2Table(int, char[]);
-char CheckLapRecord(ShipData*, int);
+int32 CheckLapRecord(ShipData* ship);
 void DisplayHiScore(char);
 void InitHiScoreData(HiScoreData*);
 int CheckHiScore(HiScoreData*);

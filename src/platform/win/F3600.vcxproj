@@ -34,6 +34,8 @@
     <ClCompile Include="..\..\hiscores.c" />
     <ClCompile Include="..\..\hud.c" />
     <ClCompile Include="..\..\init.c" />
+    <ClCompile Include="..\..\lang_en.c" />
+    <ClCompile Include="..\..\lang_es.c" />
     <ClCompile Include="..\..\lzss.c" />
     <ClCompile Include="..\..\menus.c" />
     <ClCompile Include="..\..\options.c" />
@@ -67,6 +69,7 @@
     <ClInclude Include="..\..\hiscores.h" />
     <ClInclude Include="..\..\hud.h" />
     <ClInclude Include="..\..\init.h" />
+    <ClInclude Include="..\..\lang.h" />
     <ClInclude Include="..\..\lzss.h" />
     <ClInclude Include="..\..\menus.h" />
     <ClInclude Include="..\..\options.h" />

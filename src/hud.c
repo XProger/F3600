@@ -16,7 +16,6 @@ Glyph glyphEnd;
 Glyph glyphDel;
 
 extern HiScores scoreTable[];
-extern ChampionShip winTable[];
 
 extern int short startLinePos[];
 
@@ -222,7 +221,7 @@ void AddTime(int time, TEXT_DATA* pos_data, uint32 colour)
     renderGlyph(charSet + tenths + 26, x, y, 8, TEXT_COLOR_WHITE);
 }
 
-void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
+void AddTextStr(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
 {
     uint8 letter;
     int x, y;
@@ -240,26 +239,36 @@ void AddText(const char* text_ptr, TEXT_DATA* pos_data, uint32 colour)
 
     while (1)
     {
-        letter = *text_ptr;
-        text_ptr++;
+        letter = *text_ptr++;
 
-        if (letter != 32)
+        if (letter == 0)
+            break;
+
+        if (letter == '\'') // TODO special chars
+            continue;
+
+        if (letter == ' ')
         {
-            if (letter == 0)
-                return;
-
-            if (letter >= '0' && letter <= '9')
-                j = letter - '0' + 26;
-            else
-                j = letter - 'A';
-
-            x += renderGlyph(charSet + j, x, y, pos_data->size, colour);
-        }
-        else
-        {
+        #ifdef USE_FONT_SCALE
+            x += 8 * pos_data->size / 8;
+        #else
             x += 8;
+        #endif
+            continue;
         }
+
+        if (letter >= '0' && letter <= '9')
+            j = letter - '0' + 26;
+        else
+            j = letter - 'A';
+
+        x += renderGlyph(charSet + j, x, y, pos_data->size, colour);
     }
+}
+
+void AddText(int32 strId, TEXT_DATA* pos_data, uint32 colour)
+{
+    AddTextStr(STR[strId], pos_data, colour);
 }
 
 void AddNumber(int num, TEXT_DATA* pos_data, uint32 colour)
@@ -363,37 +372,36 @@ TEXT_DATA* text_data(int start_pos_x, int start_pos_y, int size)
     return (&text);
 }
 
-void UpdateShipSecNo(ShipData* shipIndex, int32 idx)
+void UpdateShipSecNo(ShipData* ship)
 {
     int32 secNo;
-    ShipData* ship = shipIndex + idx;
 
-    if (idx == ownShip)
+    if (ship->player)
     {
         if ((ship->prevSecNo == (startLinePos[trackNo] + 1)) && (ship->nearSecNo <= startLinePos[trackNo]))
         {
-            crossedLine--;
+            ship->crossedLine--;
         }
     }
 
     if ((ship->prevSecNo == startLinePos[trackNo]) && ((ship->nearSecNo > startLinePos[trackNo]) && (ship->nearSecNo < (startLinePos[trackNo] + 10))))
     {
-        if (idx == ownShip)
+        if (ship->player)
         {
-            if (ship->lapNo == crossedLine)
+            if (ship->lapNo == ship->crossedLine)
             {
                 ship->lapNo++;
 
                 if ((ship->lapNo > 1) && (ship->lapNo <= END_LAP + 1))
                 {
-                    if (CheckLapRecord(shipIndex, ownShip))
+                    if (CheckLapRecord(ship))
                     {
-                        gConfig.newLapRecord = 1;
+                        gConfig.newLapRecord = 1; // TODO ship attr?
                     }
                 }
             }
 
-            crossedLine++;
+            ship->crossedLine++;
             if (gConfig.raceType == TIME_TRIAL)
             {
                 ship->weaponType = WPN_TURBO;
@@ -412,15 +420,15 @@ void UpdateShipSecNo(ShipData* shipIndex, int32 idx)
 
     secNo = ship->nearSecNo - (startLinePos[trackNo] + 1);
 
-    if (idx == ownShip)
+    if (ship->player)
     {
         if (secNo < 0)
         {
-            secNo = secNo + (crossedLine * NoOfMainSections);
+            secNo = secNo + (ship->crossedLine * NoOfMainSections);
         }
         else
         {
-            secNo = secNo + ((crossedLine - 1) * NoOfMainSections);
+            secNo = secNo + ((ship->crossedLine - 1) * NoOfMainSections);
         }
     }
     else
@@ -440,215 +448,66 @@ void UpdateShipSecNo(ShipData* shipIndex, int32 idx)
 
 void UpdateRaceHud(ShipData* shipIndex, int choice)
 {
-    int i, j;
-    SortTable sortTable[NO_OF_SHIPS];
-    char tempShip;
-    char tempPoints;
+    int32 i, end;
 
     if (gConfig.raceType != TIME_TRIAL)
     {
         for (i = 0; i < NO_OF_SHIPS; i++)
         {
-            UpdateShipSecNo(shipIndex, i);
+            UpdateShipSecNo(shipIndex + i);
         }
         CalcPosition(shipIndex);
     }
     else
     {
-        UpdateShipSecNo(shipIndex, ownShip);
+        for (i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (gPlayers[i].ship)
+            {
+                UpdateShipSecNo(gPlayers[i].ship);
+            }
+        }
     }
 
-    if (shipIndex[ownShip].lapNo > 0)
+    end = 1;
+    for (i = 0; i < MAX_PLAYERS; i++)
     {
-        if ((choice == -1) && (shipIndex[ownShip].lapNo < END_LAP + 1))
+        PlayerData* player = gPlayers + i;
+        ShipData* ship = player->ship;
+        if (!ship)
+            continue;
+
+        if (ship->lapNo > 0)
         {
-            shipIndex[ownShip].lapTimes[(shipIndex[ownShip].lapNo - 1)] += 2;
-        }
-    }
-
-    /************ HAVE FINISHED RACE *****************/
-    if (shipIndex[ownShip].lapNo > END_LAP && (shipIndex[ownShip].attr & RACING))
-    {
-        gConfig.Position = winTable[ownShip].racePosition;
-
-        gConfig.EndOfGame = 1;
-
-        if (gConfig.raceType == SINGLE_RACE || gConfig.raceType == TIME_TRIAL)
-        {
-            gConfig.showPilotCount = 120;
-        }
-
-        if (gConfig.raceType == CHAMPIONSHIP)
-        {
-            gConfig.showPilotCount = 120;
-
-            if ((gConfig.Position >= 1 && gConfig.Position <= 3) && gConfig.lives > 0)
+            if ((choice == -1) && (ship->lapNo < END_LAP + 1))
             {
-
-                /* Find position during race */
-                for (i = 0; i < NO_OF_SHIPS; i++)
-                {
-                    switch (winTable[i].racePosition)
-                    {
-                        case 1:
-                            winTable[i].points += 9;
-                            winTable[i].racePoints = 9;
-                            break;
-
-                        case 2:
-                            winTable[i].points += 7;
-                            winTable[i].racePoints = 7;
-                            break;
-
-                        case 3:
-                            winTable[i].points += 5;
-                            winTable[i].racePoints = 5;
-                            break;
-
-                        case 4:
-                            winTable[i].points += 3;
-                            winTable[i].racePoints = 3;
-                            break;
-
-                        case 5:
-                            winTable[i].points += 2;
-                            winTable[i].racePoints = 2;
-                            break;
-
-                        case 6:
-                            winTable[i].points += 1;
-                            winTable[i].racePoints = 1;
-                            break;
-
-                        case 7:
-                            winTable[i].points += 0;
-                            winTable[i].racePoints = 0;
-                            break;
-
-                        case 8:
-                            winTable[i].points += 0;
-                            winTable[i].racePoints = 0;
-                            break;
-                    }
-                }
-
-                for (i = 0; i < NO_OF_SHIPS; i++)
-                {
-                    sortTable[i].shipNum = i;
-                    sortTable[i].points = winTable[i].points;
-                }
-
-                for (i = 0; i < NO_OF_SHIPS; i++)
-                {
-
-                    for (j = 0; j < (NO_OF_SHIPS - 1); j++)
-                    {
-                        if (sortTable[j].points < sortTable[j + 1].points)
-                        {
-                            tempShip = sortTable[j].shipNum;
-                            tempPoints = sortTable[j].points;
-
-                            sortTable[j].shipNum = sortTable[j + 1].shipNum;
-                            sortTable[j].points = sortTable[j + 1].points;
-
-                            sortTable[j + 1].shipNum = tempShip;
-                            sortTable[j + 1].points = tempPoints;
-                        }
-                    }
-                }
-
-                for (i = 0; i < NO_OF_SHIPS; i++)
-                {
-                    winTable[(sortTable[i].shipNum)].position = (i + 1);
-                }
-
-                gConfig.showPointCount = 120;
-                gConfig.showChampCount = 120;
-            }
-
-            gConfig.gameOverCount = 120;
-
-            if (gConfig.Position > 3)
-            {
-                gConfig.lives--;
-                gConfig.trackInc = 0;
-            }
-            else
-            {
-                if (gConfig.trackNum == NumTracks)
-                {
-                    if (winTable[ownShip].position == 1)
-                    {
-                        gConfig.rapierClass = 1;
-                        gConfig.raceClass = 1;
-                        if (gConfig.showBonusTrack == 0)
-                        {
-                            gConfig.trackNum += 2;
-                            gConfig.trackInc = 2;
-                        }
-                        else
-                        {
-                            gConfig.trackNum++;
-                            gConfig.trackInc = 1;
-                        }
-                        gConfig.actTrackNum = gTrackList[(gConfig.trackNum - 1)];
-                        gConfig.venomComplete = 1;
-                        gConfig.gotoMenu = 1;
-                    }
-                    else
-                    {
-                        gConfig.lostGame = 1;
-                        gConfig.trackInc = 0;
-                    }
-                }
-                else
-                {
-                    if (gConfig.trackNum == totalTracks)
-                    {
-                        if (winTable[ownShip].position == 1)
-                        {
-                            gConfig.gameComplete = 1;
-                            totalTracks = 14;
-                            NumTracks = 7;
-                            gConfig.showBonusTrack = 1;
-                        }
-                        else
-                        {
-                            gConfig.lostGame = 1;
-                            gConfig.trackInc = 0;
-                        }
-                    }
-                    else
-                    {
-                        gConfig.trackInc = 1;
-                        gConfig.trackNum++;
-                        gConfig.actTrackNum = gTrackList[(gConfig.trackNum - 1)];
-                    }
-                }
+                ship->lapTimes[ship->lapNo - 1] += 2;
             }
         }
 
-        shipIndex[ownShip].update = UpdateRemoteShip;
-        shipIndex[ownShip].updateCount = 0;
-        shipIndex[ownShip].remoteMaxThrust = 3160;
-        shipIndex[ownShip].remoteThrustMag = 32;
-        shipIndex[ownShip].speed = 3160;
-        shipIndex[ownShip].attr &= ~SHIELDED;
-        shipIndex[ownShip].attr &= ~VIEW_IN;
-        shipIndex[ownShip].attr &= ~RACING;
+        if (ship->lapNo > END_LAP)
+        {
+            if (ship->attr & RACING)
+            {
+                ship->update = UpdateRemoteShip;
+                ship->updateCount = 0;
+                ship->remoteMaxThrust = 3160;
+                ship->remoteThrustMag = 32;
+                ship->speed = 3160;
+                ship->attr &= ~(SHIELDED | VIEW_IN | RACING);
 
-        CameraUpdate = UpdateCameraAttractMode;
-
-        tempLapTimes[0] = shipIndex[ownShip].lapTimes[0];
-        tempLapTimes[1] = shipIndex[ownShip].lapTimes[1];
-        tempLapTimes[2] = shipIndex[ownShip].lapTimes[2];
-        tempLapTimes[3] = shipIndex[ownShip].lapTimes[3];
-        tempLapTimes[4] = shipIndex[ownShip].lapTimes[4];
-
-        if (gConfig.raceType == CHAMPIONSHIP)
-            attractDelay = 1;
+                player->camera.update = UpdateCameraAttractMode;
+            }
+        }
         else
-            attractDelay = 300;
+        {
+            end = 0;
+        }
+    }
+
+    if (end)
+    {
+        raceEnd();
     }
 }
 
@@ -714,7 +573,7 @@ int ComparePosision(ShipData* a, ShipData* b)
     return 0;
 }
 
-int CalcPosition(ShipData* shipIndex)
+void CalcPosition(ShipData* shipIndex)
 {
     int i, swapped;
 
@@ -737,8 +596,6 @@ int CalcPosition(ShipData* shipIndex)
     {
         winTable[gRacePos[i]].racePosition = i + 1;
     }
-
-    return winTable[ownShip].racePosition;
 }
 
 int32 GetTextWidth(Glyph* charSet, const char* text, int32 size)
@@ -748,29 +605,35 @@ int32 GetTextWidth(Glyph* charSet, const char* text, int32 size)
 
     while ((c = *text++) != 0)
     {
-        if (c != 32)
-        {
-            if (c >= '0' && c <= '9')
-                index = c - '0' + 26;
-            else
-                index = c - 'A';
+        if (c == '\'') // TODO special chars
+            continue;
 
-        #ifdef USE_FONT_SCALE
-            width += glyphs[2][index].w * size / 16;
-        #else
-            width += charSet[index].w;
-        #endif
-        }
-        else
+        if (c == ' ')
         {
+        #ifdef USE_FONT_SCALE
+            width += 8 * size / 8;
+        #else
             width += 8;
+        #endif
+            continue;
         }
+
+        if (c >= '0' && c <= '9')
+            index = c - '0' + 26;
+        else
+            index = c - 'A';
+
+    #ifdef USE_FONT_SCALE
+        width += glyphs[2][index].w * size / 16;
+    #else
+        width += charSet[index].w;
+    #endif
     }
 
     return width;
 }
 
-void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
+void CentreTextStr(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
 {
     uint8 letter = 0;
     const char* tmpPtr;
@@ -779,40 +642,52 @@ void CentreText(const char* the_text_ptr, TEXT_DATA* pos_data, uint32 colour)
 
     y = pos_data->start_pos_y;
 
+#ifdef USE_FONT_SCALE
+    charSet = glyphs[2];
+#else
     charSet = glyphs[(pos_data->size - 8) >> 2];
+#endif
 
     tmpPtr = the_text_ptr;
 
     width = GetTextWidth(charSet, the_text_ptr, pos_data->size);
 
-#ifdef USE_FONT_SCALE
-    charSet = glyphs[2];
-#endif
 
-    x = 160 - (width >> 1);
+    x = 160 - (width >> 1) + pos_data->start_pos_x;
 
     tmpPtr = the_text_ptr;
     while (1)
     {
         letter = *tmpPtr++;
 
-        if (letter != 32)
-        {
-            if (letter == 0)
-                return;
+        if (letter == 0)
+            break;
 
-            if (letter >= '0' && letter <= '9')
-                j = letter - '0' + 26;
-            else
-                j = letter - 'A';
+        if (letter == '\'') // TODO special chars
+            continue;
 
-            x += renderGlyph(charSet + j, x, y, pos_data->size, colour);
-        }
-        else
+        if (letter == ' ')
         {
+        #ifdef USE_FONT_SCALE
+            x += 8 * pos_data->size / 8;
+        #else
             x += 8;
+        #endif
+            continue;
         }
+
+        if (letter >= '0' && letter <= '9')
+            j = letter - '0' + 26;
+        else
+            j = letter - 'A';
+
+        x += renderGlyph(charSet + j, x, y, pos_data->size, colour);
     }
+}
+
+void CentreText(int32 strId, TEXT_DATA* pos_data, uint32 colour)
+{
+    CentreTextStr(STR[strId], pos_data, colour);
 }
 
 void DisplayLives(void)
@@ -836,53 +711,55 @@ void InitChampTable(void)
         winTable[i].position = 1;
     }
 
-    strcpy(winTable[0].pilot, "JOHN DEKKA");
-    strcpy(winTable[1].pilot, "DANIEL CHANG");
-    strcpy(winTable[2].pilot, "ARIAL TETSUO");
-    strcpy(winTable[3].pilot, "ANASTASIA CHEROVOSKI");
-    strcpy(winTable[4].pilot, "KEL SOLAAR");
-    strcpy(winTable[5].pilot, "ARIAN TETSUO");
-    strcpy(winTable[6].pilot, "SOFIA DE LA RENTE");
-    strcpy(winTable[7].pilot, "PAUL JACKSON");
+    strcpy(winTable[0].pilot, STR[STR_PILOT_JOHN]);
+    strcpy(winTable[1].pilot, STR[STR_PILOT_DANIEL]);
+    strcpy(winTable[2].pilot, STR[STR_PILOT_ARIAL]);
+    strcpy(winTable[3].pilot, STR[STR_PILOT_ANASTASIA]);
+    strcpy(winTable[4].pilot, STR[STR_PILOT_KEL]);
+    strcpy(winTable[5].pilot, STR[STR_PILOT_ARIAN]);
+    strcpy(winTable[6].pilot, STR[STR_PILOT_SOFIA]);
+    strcpy(winTable[7].pilot, STR[STR_PILOT_PAUL]);
 }
 
 void DisplayChampTable(void)
 {
-    int i;
+    int32 i;
+    uint32 color;
 
-    CentreText("CHAMPIONSHIP TABLE", text_data(60, 40, 8), TEXT_COLOR_HIGHLIGHT);
-    AddText("PILOT NAME", text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
-    AddText("POINTS", text_data(240, 65, 8), TEXT_COLOR_HIGHLIGHT);
+    CentreText(STR_CHAMPIONSHIP_TABLE, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText(STR_PILOT_NAME, text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText(STR_POINTS, text_data(240, 65, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        int color = ((gFrameIndex & 1) || (i != ownShip)) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
+        color = ((gFrameIndex & 1) || !ctrlshipIndex[i].player) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
 
-        AddText(winTable[i].pilot, text_data(35, 80 + ((winTable[i].position) * 15), 8), color);
+        AddTextStr(winTable[i].pilot, text_data(35, 80 + ((winTable[i].position) * 15), 8), color);
         AddNumber(winTable[i].points, text_data(255, 80 + ((winTable[i].position) * 15), 8), color);
     }
 }
 
 void DisplayRacePoints(void)
 {
-    int i;
+    int32 i;
+    uint32 color;
 
-    CentreText("RACE POINTS", text_data(60, 40, 8), TEXT_COLOR_HIGHLIGHT);
-    AddText("PILOT NAME", text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
-    AddText("POINTS", text_data(240, 65, 8), TEXT_COLOR_HIGHLIGHT);
+    CentreText(STR_RACE_POINTS, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText(STR_PILOT_NAME, text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText(STR_POINTS, text_data(240, 65, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        int color = ((gFrameIndex & 1) || (i != ownShip)) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
+        color = ((gFrameIndex & 1) || !ctrlshipIndex[i].player) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
 
-        AddText(winTable[i].pilot, text_data(35, 80 + ((winTable[i].racePosition) * 15), 8), color);
+        AddTextStr(winTable[i].pilot, text_data(35, 80 + ((winTable[i].racePosition) * 15), 8), color);
         AddNumber(winTable[i].racePoints, text_data(255, 80 + ((winTable[i].racePosition) * 15), 8), color);
     }
 }
 
-void DrawWeaponSprtIcons(ShipData* playerShip)
+void DrawWeaponIcon(ShipData* ship)
 {
-    int icon = playerShip->weaponType;
+    int icon = ship->weaponType;
 
     if (icon != WPN_NONE)
     {
@@ -893,28 +770,26 @@ void DrawWeaponSprtIcons(ShipData* playerShip)
 
 void DisplayVenomComplete(void)
 {
-    CentreText("WELL DONE", text_data(60, 40, 8), TEXT_COLOR_WHITE);
-
-    CentreText("VENOM CLASS", text_data(85, 65, 8), TEXT_COLOR_WHITE);
-    CentreText("COMPETENCE ACHIEVED", text_data(85, 77, 8), TEXT_COLOR_WHITE);
-    CentreText("YOU HAVE NOW QUALIFIED", text_data(240, 89, 8), TEXT_COLOR_WHITE);
-    CentreText("FOR THE ULTRA FAST", text_data(240, 101, 8), TEXT_COLOR_WHITE);
-    CentreText("RAPIER CLASS", text_data(240, 125, 8), TEXT_COLOR_WHITE);
-    CentreText("WE RECOMMEND YOU", text_data(240, 200, 8), TEXT_COLOR_WHITE);
-    CentreText("SAVE YOUR CURRENT GAME", text_data(240, 212, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_COMP_1, text_data(0, 40, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_COMP_2, text_data(0, 65, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_COMP_3, text_data(0, 77, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_COMP_4, text_data(0, 89, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_COMP_5, text_data(0, 101, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_COMP_6, text_data(0, 125, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_COMP_7, text_data(0, 200, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_COMP_8, text_data(0, 212, 8), TEXT_COLOR_WHITE);
 }
 
 void DisplayAllVenomComplete(void)
 {
-    CentreText("AMAZING", text_data(60, 40, 8), TEXT_COLOR_HIGHLIGHT);
-
-    CentreText("YOU HAVE COMPLETED THE FULL", text_data(85, 65, 8), TEXT_COLOR_WHITE);
-    CentreText("VENOM CLASS CHAMPIONSHIP", text_data(240, 77, 8), TEXT_COLOR_WHITE);
-    CentreText("WELL DONE", text_data(240, 89, 8), TEXT_COLOR_WHITE);
-    CentreText("YOU ARE A GREAT PILOT", text_data(240, 114, 8), TEXT_COLOR_WHITE);
-    CentreText("NOW TAKE ON THE FULL", text_data(240, 126, 8), TEXT_COLOR_WHITE);
-    CentreText("RAPIER CLASS CHAMPIONSHIP", text_data(240, 138, 8), TEXT_COLOR_WHITE);
-    CentreText("KEEP GOING", text_data(240, 162, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_ALL_1, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
+    CentreText(STR_VENOM_ALL_2, text_data(0, 65, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_ALL_3, text_data(0, 77, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_ALL_4, text_data(0, 89, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_ALL_5, text_data(0, 114, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_ALL_6, text_data(0, 126, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_ALL_7, text_data(0, 138, 8), TEXT_COLOR_WHITE);
+    CentreText(STR_VENOM_ALL_8, text_data(0, 162, 8), TEXT_COLOR_WHITE);
 }
 
 void DisplayWinLose(int32 index)
@@ -926,16 +801,16 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
 {
     int32 i;
 
-    AddText("RACE STATISTICS", text_data(15, 80, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText(STR_RACE_STATISTICS, text_data(15, 80, 8), TEXT_COLOR_HIGHLIGHT);
 
     for (i = 0; i < 3; i++)
     {
-        AddText("LAP", text_data(25, 95 + (i * 12), 8), TEXT_COLOR_HIGHLIGHT);
+        AddText(STR_LAP, text_data(25, 95 + (i * 12), 8), TEXT_COLOR_HIGHLIGHT);
         AddNumber((i + 1), text_data(65, 95 + (i * 12), 8), TEXT_COLOR_HIGHLIGHT);
         AddTime(tempLapTimes[i], text_data(85, 95 + (i * 12), 8), TEXT_COLOR_WHITE);
     }
 
-    AddText("RACE POSITION", text_data(15, 50, 8), TEXT_COLOR_HIGHLIGHT);
+    AddText(STR_RACE_POSITION, text_data(15, 50, 8), TEXT_COLOR_HIGHLIGHT);
     AddNumber(gConfig.Position, text_data(155, 50, 8), TEXT_COLOR_WHITE);
 
     /*TODO make some beauty*/
@@ -945,13 +820,13 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
         {
             if (BLINK_SLOW)
             {
-                AddText("RACE RECORD", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+                AddText(STR_RACE_RECORD, text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
                 AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
             }
         }
         else
         {
-            AddText("RACE TIME", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+            AddText(STR_RACE_TIME, text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
             AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
         }
     }
@@ -961,13 +836,13 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
         {
             if (BLINK_SLOW)
             {
-                AddText("RACE RECORD", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+                AddText(STR_RACE_RECORD, text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
                 AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
             }
         }
         else
         {
-            AddText("RACE TIME", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+            AddText(STR_RACE_TIME, text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
             AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
         }
     }
@@ -977,13 +852,13 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
         {
             if (BLINK_SLOW)
             {
-                AddText("RACE RECORD", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+                AddText(STR_RACE_RECORD, text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
                 AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
             }
         }
         else
         {
-            AddText("RACE TIME", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+            AddText(STR_RACE_TIME, text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
             AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
         }
     }
@@ -993,13 +868,13 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
         {
             if (BLINK_SLOW)
             {
-                AddText("RACE RECORD", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+                AddText(STR_RACE_RECORD, text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
                 AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
             }
         }
         else
         {
-            AddText("RACE TIME", text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
+            AddText(STR_RACE_TIME, text_data(15, 170, 8), TEXT_COLOR_HIGHLIGHT);
             AddTime(hiScoreData->bestLap, text_data(25, 182, 8), TEXT_COLOR_WHITE);
         }
     }
@@ -1008,7 +883,7 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
     {
         if ((gConfig.newLapRecord != 1) || BLINK_SLOW)
         {
-            AddText("LAP RECORD", text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
+            AddText(STR_LAP_RECORD, text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
             AddTime(scoreTable[((gConfig.trackNum - 1) - gConfig.trackInc)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
@@ -1016,7 +891,7 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
     {
         if ((gConfig.newLapRecord != 1) || BLINK_SLOW)
         {
-            AddText("LAP RECORD", text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
+            AddText(STR_LAP_RECORD, text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
             AddTime(scoreTable[((gConfig.trackNum - 1) + HiScoreTracks)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
@@ -1024,55 +899,54 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
     {
         if ((gConfig.newLapRecord != 1) || BLINK_SLOW)
         {
-            AddText("LAP RECORD", text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
+            AddText(STR_LAP_RECORD, text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
             AddTime(scoreTable[(gConfig.trackNum - 1)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
 }
 
-void DrawHud(ShipData* shipIndex, int choice)
+void DrawHud(ShipData* ship)
 {
     int i;
     int width;
-    ShipData* playerShip = shipIndex + ownShip;
 
     if (gConfig.raceType == CHAMPIONSHIP)
         DisplayLives();
 
-    DrawWeaponSprtIcons(playerShip);
+    DrawWeaponIcon(ship);
 
-    if (playerShip->lapNo > 0) // gone past start line
+    if (ship->lapNo > 0) // gone past start line
     {
-        if (playerShip->attr & RACING) // in race mode
+        if (ship->attr & RACING) // in race mode
         {
-            if (playerShip->lapNo < END_LAP + 1) // not the last lap
-                AddTime(playerShip->lapTimes[playerShip->lapNo - 1], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
+            if (ship->lapNo < END_LAP + 1) // not the last lap
+                AddTime(ship->lapTimes[ship->lapNo - 1], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
             else
-                AddTime(playerShip->lapTimes[2], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
+                AddTime(ship->lapTimes[2], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
         }
     }
-    if (playerShip->attr & RACING)
+    if (ship->attr & RACING)
     {
-        if (playerShip->lapNo > 1)
+        if (ship->lapNo > 1)
         {
-            for (i = 1; i < playerShip->lapNo; i++)
+            for (i = 1; i < ship->lapNo; i++)
             {
                 if (i < END_LAP)
                 {
-                    AddTime(playerShip->lapTimes[i - 1], text_data(guiL + 16, guiB - (240 - 205) - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
+                    AddTime(ship->lapTimes[i - 1], text_data(guiL + 16, guiB - (240 - 205) - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
                 }
             }
         }
     }
 
-    if (playerShip->attr & RACING)
+    if (ship->attr & RACING)
     {
-        AddText("LAP", text_data(guiL + 15, guiT + 8, 8), TEXT_COLOR_HIGHLIGHT);
-        AddNumber(playerShip->lapNo, text_data(guiL + 10, guiT + 19, 16), TEXT_COLOR_WHITE);
+        AddText(STR_LAP, text_data(guiL + 15, guiT + 8, 8), TEXT_COLOR_HIGHLIGHT);
+        AddNumber(ship->lapNo, text_data(guiL + 10, guiT + 19, 16), TEXT_COLOR_WHITE);
 
-        width = glyphPos[2][(playerShip->lapNo + 26)] % 100; // 16
+        width = glyphPos[2][(ship->lapNo + 26)] % 100; // 16
 
-        AddText("OF", text_data(guiL + (10 + width), guiT + 27, 8), TEXT_COLOR_HIGHLIGHT);
+        AddText(STR_LAP_OF, text_data(guiL + (10 + width), guiT + 27, 8), TEXT_COLOR_HIGHLIGHT);
 
         width += 22;
 
@@ -1085,24 +959,24 @@ void DrawHud(ShipData* shipIndex, int choice)
         #else
             #define POS_TEXT_OFFSET 230
         #endif
-            AddText("POSITION", text_data(guiR - (320 - POS_TEXT_OFFSET), guiT + 8, 8), TEXT_COLOR_HIGHLIGHT);
-            AddNumber(winTable[ownShip].racePosition, text_data(guiR - (320 - 260), guiT + 19, 16), TEXT_COLOR_WHITE);
+            AddText(STR_POSITION, text_data(guiR - (320 - POS_TEXT_OFFSET), guiT + 8, 8), TEXT_COLOR_HIGHLIGHT);
+            AddNumber(winTable[ship - ctrlshipIndex].racePosition, text_data(guiR - (320 - 260), guiT + 19, 16), TEXT_COLOR_WHITE);
         }
 
-        AddText("LAP RECORD", text_data(guiL + 15, guiT + 43, 8), TEXT_COLOR_HIGHLIGHT);
+        AddText(STR_LAP_RECORD, text_data(guiL + 15, guiT + 43, 8), TEXT_COLOR_HIGHLIGHT);
         if (gConfig.raceType == TIME_TRIAL)
             AddTime(scoreTable[((gConfig.trackNum - 1) + HiScoreTracks)].lapRecord, text_data(guiL + 15, guiT + 55, 8), TEXT_COLOR_WHITE);
         else
             AddTime(scoreTable[(gConfig.trackNum - 1)].lapRecord, text_data(guiL + 15, guiT + 55, 8), TEXT_COLOR_WHITE);
-        if ((playerShip->attr & DIRECTION) == 0)
+        if ((ship->attr & DIRECTION) == 0)
         {
-            CentreText("WRONG WAY", text_data(0, 110, 16), TEXT_COLOR_HIGHLIGHT);
+            CentreText(STR_WRONG_WAY, text_data(0, 110, 16), TEXT_COLOR_HIGHLIGHT);
         }
     }
 
-    if (playerShip->attr & RACING)
+    if (ship->attr & RACING)
     {
-        DisplaySpeedo(playerShip->speed, playerShip->thrust_mag);
+        DisplaySpeedo(ship->speed, ship->thrust_mag);
         renderImage(gSpeedoTex, speedo_x, speedo_y);
     }
 }
@@ -1125,8 +999,8 @@ void UpdateGameDisplay(int32 width, int32 height)
         scale = 1;
     }
 
-    dx = ((gWidth - scale * 320) + scale - 1) / scale;
-    dy = ((gHeight - scale * 240) + scale - 1) / scale;
+    dx = ((width - scale * 320) + scale - 1) / scale;
+    dy = ((height - scale * 240) + scale - 1) / scale;
 
     guiL = -(dx >> 1);
     guiT = -(dy >> 1);
@@ -1136,7 +1010,7 @@ void UpdateGameDisplay(int32 width, int32 height)
 #ifdef USE_WIDE_STRETCH
     {
         extern float gAspect;
-        float f = gAspect * gHeight / gWidth;
+        float f = gAspect * height / width;
         int32 w = (int32)((guiR - guiL) * (f - 1.0f) * 0.5f);
         guiL -= w;
         guiR += w;

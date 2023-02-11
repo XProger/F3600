@@ -14,5 +14,5 @@ void SfxFree(void);
 
 void AdjustDirectionalNote(enum SfxType id, int32 x, int32 z);
 void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes);
-void AdjustEngineSound(ShipData* playerShip, TrackCamera* camera);
+void AdjustEngineSound(ShipData* ship, TrackCamera* camera);
 int PlayDirectionalNote(enum SfxType id, const vec3i* pos);
