@@ -10,7 +10,7 @@ void InitShadow(void);
 void DrawShadows(ShipData* shipIndex);
 
 void ShakeUpdate(ShipData* ship);
-void ShakeOffset(ShipData* ship);
+void ShakeOffset(int32 shakeCount);
 
 void InitAuroraBorialis(Object* object);
 void AuroraBorialis(Object* object);

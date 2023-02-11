@@ -34,9 +34,6 @@ HiScoreData ctrlhiScoreData;
 int ctrlchoiceData;
 char ctrlshowGameOver;
 
-extern int32 ctrlmode;
-extern int32 ctrlGameLoop;
-
 /*          Andy Y's additions*/
 int32 ctrlNeedEndText;
 int32 ctrlNeedWinLose;
@@ -1113,8 +1110,16 @@ void raceLoop(void)
 
 void raceDemo(void)
 {
+    int32 i;
+
     ctrlmode = ATTRACT;
     ownShip = randy() % 8;
+
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        PlayerData* player = gPlayers + i;
+        player->shipNum = -1;
+    }
     gPlayers[0].shipNum = ownShip;
 
     gConfig.raceType = SINGLE_RACE;

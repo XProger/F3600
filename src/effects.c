@@ -443,10 +443,8 @@ void ShakeUpdate(ShipData* ship)
     }
 }
 
-void ShakeOffset(ShipData* ship)
+void ShakeOffset(int32 shakeCount)
 {
-    int32 shakeCount = ship->shakeCount;
-
     if (shakeCount > 0)
     {
         renderOffset(-(randy() % shakeCount) + (shakeCount >> 1), -(randy() % shakeCount) + (shakeCount >> 1));

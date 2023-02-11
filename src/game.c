@@ -1,8 +1,5 @@
 #include "game.h"
 
-int32 ctrlmode;
-int32 ctrlGameLoop;
-
 Texture* titleScreen;
 int gTimeout;
 

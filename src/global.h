@@ -66,6 +66,9 @@ extern short finishedExtro;
 
 extern ConfigData gConfig;
 
+extern int32 ctrlmode;
+extern int32 ctrlGameLoop;
+
 extern Object* ctrlshipShapes[];
 extern ShipData ctrlshipIndex[];
 

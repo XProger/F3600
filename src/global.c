@@ -37,6 +37,9 @@ short finishedExtro;
 
 ConfigData gConfig;
 
+int32 ctrlmode;
+int32 ctrlGameLoop;
+
 Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
 ShipData ctrlshipIndex[NO_OF_SHIPS];
 

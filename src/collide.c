@@ -1,7 +1,5 @@
 #include "game.h"
 
-extern int32 ctrlmode;
-
 void ForceFeedback(int32 joyIndex, int32 mag)
 {
     int32 rumble;

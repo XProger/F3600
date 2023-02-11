@@ -1,8 +1,5 @@
 #include "game.h"
 
-extern int32 ctrlmode;
-extern int32 ctrlGameLoop;
-
 Texture* menuScreen;
 
 extern HiScores scoreTable[];

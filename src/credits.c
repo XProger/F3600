@@ -1,173 +1,127 @@
 #include "game.h"
 
-const char Mds[]        = "MANAGING DIRECTORS";
-const char DirDev[]     = "DIRECTOR OF DEVELOPMENT";
-const char Prod[]       = "PRODUCERS";
-const char ProdMan[]    = "PRODUCT MANAGER";
-const char TeamL[]      = "TEAM LEADER";
-const char GameD[]      = "GAME DESIGNER";
-
-const char PSX[]        = "PLAYSTATION VERSION";
-const char w95[]        = "ATI 3D RAGE VERSION";
-const char F3600[]      = "F3600 VERSION";
-const char bsd[]        = "BROADSWORD INTERACTIVE LTD";
-const char pro[]        = "PRODUCER";
-const char atidev[]     = "DEVELOPED BY";
-const char ati[]        = "ATI LIASON";
-const char ati2[]       = "ATI QA";
-const char Prog[]       = "PROGRAMMERS";
-const char Artists[]    = "ORIGINAL ARTISTS";
-const char Intro[]      = "INTRO SEQUENCE";
-const char Concept[]    = "CONCEPTUAL ARTIST";
-const char GDesign[]    = "ADDITIONAL GRAPHIC DESIGN";
-const char Music[]      = "MUSIC";
-const char MusicL[]     = "MUSIC LIAISON";
-const char Sound[]      = "SOUND EFFECTS";
-const char Manual[]     = "MANUAL WRITTEN BY";
-const char Pack[]       = "PACKAGING DESIGN";
-const char Tech[]       = "TECHNICAL ASSISTANT";
-const char Sec[]        = "DEVELOPMENT SECRETARY";
-const char QA[]         = "QUALITY ASSURANCE";
-const char Thanks[]     = "SPECIAL THANKS TO";
-const char LOrbital[]   = "ORBITAL";
-const char LChem[]      = "CHEMICAL BROTHERS";
-const char LLeft[]      = "LEFTFIELD";
-
-const char blank[]      = "";
-const char PCVersion[]  = "PC VERSION";
-const char PCArtists[]  = "CONVERSION ARTISTS";
-const char PCSndProg[]  = "SOUND PROGRAMMING";
-const char PCNetwork[]  = "NETWORK PROGRAMMING";
-const char PCMovies[]   = "MOVIE PROGRAMMING";
-
-const char PCAndyY[]    = "ANDY YELLAND";
-const char PCAndyS[]    = "ANDY SATTERTHWAITE";
-const char PCDaveS[]    = "DAVE SMITH";
-const char PCJedA[]     = "JED ADAMS";
-const char PCMarkK[]    = "MARK KELLY";
-const char PCSteveW[]   = "STEVE WARD";
-const char PCChrisE[]   = "CHRIS EDEN";
-const char PCSalim[]    = "SALIM SIWANI";
-const char PCAndyC[]    = "ANDY CROWLEY";
-const char PCSteveD[]   = "STEVE DAVIES";
-const char PCMikeA[]    = "MIKE ANTHONY";
-const char PCGaryB[]    = "GARY BURLEY";
-const char PCJohnD[]    = "JOHN DWYER";
-const char ATISteve[]   = "STEPHEN ROSE";
-const char ATIJohn[]    = "JOHN JONES STEELE";
-const char ATIBill[]    = "BILL ALLEN";
-
-const char Dave[]       = "DAVE ROSE";
-const char Stu[]        = "STEWART SOCKETT";
-const char Rob[]        = "ROB SMITH";
-const char Jas[]        = "JASON DENTON";
-const char IanH[]       = "IAN HETHERINGTON";
-const char JohnE[]      = "JONATHAN ELLIS";
-const char JohnW[]      = "JOHN WHITE";
-const char Dom[]        = "DOMINIC MALLINSON";
-const char Sue[]        = "SUE CAMPBELL";
-const char Nicky[]      = "NICKY CARUS WESTCOTT";
-const char Nik[]        = "NICK BURCOMBE";
-const char Laura[]      = "LAURA GRIEVE";
-const char Lou[]        = "LOUISE SMITH";
-const char Darren[]     = "DARREN DOUGLAS";
-const char Pol[]        = "POL SIGERSON";
-const char Lee[]        = "LEE CARUS WESTCOTT";
-const char Jim[]        = "JIM BOWERS";
-const char DR[]         = "THE DESIGNERS REPUBLIC";
-const char Orbital[]    = "ORBITAL";
-const char ChemBro[]    = "THE CHEMICAL BROTHERS";
-const char LeftF[]      = "LEFTFIELD";
-const char ColdS[]      = "COLD STORAGE";
-const char PaulMG[]     = "PAUL MCGARVEY";
-const char TimW[]       = "TIM WRIGHT";
-const char Damon[]      = "DAMON FAIRCLOUGH";
-const char Keith[]      = "KEITH HOPWOOD";
-const char Paul[]       = "PAUL CHARSLEY";
-const char Jen[]        = "JENNIFER REES";
-const char XProger[]    = "TIMUR GAGIEV";
-
-const char Test0[]      = "STUART ALLEN";
-const char Test1[]      = "CHRIS GRAHAM";
-const char Test2[]      = "THOMAS REES";
-const char Test3[]      = "BRIAN WALSH";
-const char Test4[]      = "CARL BERRY";
-const char Test5[]      = "MARK INMAN";
-const char Test6[]      = "PAUL TWEEDLE";
-const char Test7[]      = "ANTHONY CROSS";
-const char Test8[]      = "EDWARD HAY";
-const char Test9[]      = "ROB WOLFE";
-
-const char Hack[]       = "THE HACKERS TEAM MGM";
-const char Soft[]       = "SOFTIMAGE";
-const char SGI[]        = "SGI";
-const char Glen[]       = "GLEN OCONNELL";
-const char Jo[]         = "JOANNE GALVIN";
-const char All[]        = "ALL AT PSYGNOSIS";
-const char Pizza[]      = "PERFECT PIZZA";
-
-typedef struct Title
-{
-    const char* title;
-    int         noOfNames;
-    const char* name[10];
-} Title;
-
-const Title credits[] = {
-    { Mds,         2,    IanH, JohnE },
-    { DirDev,      1,    JohnW },
-    { Prod,        2,    Dom, PCAndyY },
-    { ProdMan,     1,    Sue },
-    { GameD,       6,    Nik, blank, blank, blank, blank, blank },
-
-    { w95,         0 },
-    { pro,         1,    ATIBill },
-    { atidev,      0 },
-    { bsd,         2,    ATISteve, ATIJohn },
-    { PCVersion,   0 },
-    { Prog,        8,    PCAndyY, PCAndyS, PCDaveS, PCMarkK, PCJedA, PCSteveW, PCChrisE, PCSalim },
-    { PCSndProg,   1,    PCAndyC },
-    { PCMovies,    1,    PCMikeA },
-    { PCArtists,   7,    PCJohnD, PCGaryB, blank, blank, blank, blank, blank },
-
-    { Intro,       1,    Lee },
-    { Concept,     1,    Jim },
-    { GDesign,     1,    DR },
-    { Music,       1,    ColdS },
-    { Sound,       1,    TimW },
-    { Manual,      2,    Damon, Nik },
-    { Pack,        2,    DR, Keith },
-    { Sec,         6,    Jen, blank, blank, blank, blank, blank },
-
-    { PSX,         0 },
-    { Prog,        4,    Dave, Rob, Jas, Stu },
-    { Artists,     10,   Nicky, Laura, Lou, Darren, Pol, blank, blank, blank, blank, blank },
-
-    { QA,          10,   Test0, Test1, Test2, Test3, Test4, Test5, Test6, Test7, Test8, Test9 },
-
-    { Thanks,      9,    Hack, Soft, SGI, Glen, Jo, All, blank, blank, blank },
-
-    { F3600,       0 },
-    { Prog,        1,    XProger },
+const char *creditsText[] = {
+  " MANAGING DIRECTORS"
+, "IAN HETHERINGTON"
+, "JONATHAN ELLIS"
+, " DIRECTOR OF DEVELOPMENT"
+, "JOHN WHITE"
+, " PRODUCERS"
+, "DOMINIC MALLINSON"
+, "ANDY YELLAND"
+, " PRODUCT MANAGER"
+, "SUE CAMPBELL"
+, " GAME DESIGNER"
+, "NICK BURCOMBE"
+, ""
+, ""
+, " ATI 3D RAGE VERSION"
+, " PRODUCER"
+, "BILL ALLEN"
+, " DEVELOPED BY"
+, " BROADSWORD INTERACTIVE LTD"
+, "STEPHEN ROSE"
+, "JOHN JONES STEELE"
+, " PC VERSION"
+, " PROGRAMMERS"
+, "ANDY YELLAND"
+, "ANDY SATTERTHWAITE"
+, "DAVE SMITH"
+, "MARK KELLY"
+, "JED ADAMS"
+, "STEVE WARD"
+, "CHRIS EDEN"
+, "SALIM SIWANI"
+, " SOUND PROGRAMMING"
+, "ANDY CROWLEY"
+, " MOVIE PROGRAMMING"
+, "MIKE ANTHONY"
+, " CONVERSION ARTISTS"
+, "JOHN DWYER"
+, "GARY BURLEY"
+, ""
+, ""
+, " INTRO SEQUENCE"
+, "LEE CARUS WESTCOTT"
+, " CONCEPTUAL ARTIST"
+, "JIM BOWERS"
+, " ADDITIONAL GRAPHIC DESIGN"
+, "THE DESIGNERS REPUBLIC"
+, " MUSIC"
+, "COLD STORAGE"
+, "LEFTFIELD" // was hidden
+, "CHEMICAL BROTHERS" // was hidden
+, "ORBITAL" // was hidden
+, " SOUND EFFECTS"
+, "TIM WRIGHT"
+, " MANUAL WRITTEN BY"
+, "DAMON FAIRCLOUGH"
+, "NICK BURCOMBE"
+, " PACKAGING DESIGN"
+, "THE DESIGNERS REPUBLIC"
+, "KEITH HOPWOOD"
+, " DEVELOPMENT SECRETARY"
+, "JENNIFER REES"
+, ""
+, ""
+, " PLAYSTATION VERSION"
+, " PROGRAMMERS"
+, "DAVE ROSE"
+, "ROB SMITH"
+, "JASON DENTON"
+, "STEWART SOCKETT"
+, " ORIGINAL ARTISTS"
+, "NICKY CARUS WESTCOTT"
+, "LAURA GRIEVE"
+, "LOUISE SMITH"
+, "DARREN DOUGLAS"
+, "POL SIGERSON"
+, ""
+, ""
+, " QUALITY ASSURANCE"
+, "STUART ALLEN"
+, "CHRIS GRAHAM"
+, "THOMAS REES"
+, "BRIAN WALSH"
+, "CARL BERRY"
+, "MARK INMAN"
+, "PAUL TWEEDLE"
+, "ANTHONY CROSS"
+, "EDWARD HAY"
+, "ROB WOLFE"
+, " SPECIAL THANKS TO"
+, "THE HACKERS TEAM MGM"
+, "SOFTIMAGE"
+, "SGI"
+, "GLEN OCONNELL"
+, "JOANNE GALVIN"
+, "ALL AT PSYGNOSIS"
+, "PERFECT PIZZA" // was hidden
 };
 
 void ShowCredits(int attractDelay)
 {
-    int i, j;
-    int place;
+    int32 i, y;
+    int32 isTitle;
+    const char* str;
 
-    place = attractDelay - (60 * FR30); // whats set in race.c -400
-    for (i = 0; i < sizeof(credits) / sizeof(credits[0]); i++)
+    y = attractDelay - (60 * FR30) - 16; // whats set in race.c -400
+    for (i = 0; i < sizeof(creditsText) / sizeof(creditsText[0]); i++)
     {
-        if ((place > -10) && (place < 264))
-            CentreTextStr(credits[i].title, text_data(0, place, 8), TEXT_COLOR_HIGHLIGHT);
-        place += 16;
-        for (j = 0; j < credits[i].noOfNames; j++)
+        str = creditsText[i];
+        isTitle = (str[0] == ' ');
+
+        if (isTitle)
         {
-            if ((place > -10) && (place < 264))
-                CentreTextStr(credits[i].name[j], text_data(0, place, 8), TEXT_COLOR_WHITE);
-            place += 12;
+            str++;
+            y += 12; // was 16
         }
-        place += 16;
+
+        if ((y > -10) && (y < 264))
+        {
+            CentreTextStr(str, text_data(0, y, 8), isTitle ? TEXT_COLOR_HIGHLIGHT : TEXT_COLOR_WHITE);
+        }
+
+        y += isTitle ? 16 : 12;
     }
 }

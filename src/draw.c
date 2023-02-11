@@ -103,7 +103,14 @@ void DrawView(int32 playerIndex)
     gCameraFOV = cam->fov;
     gCameraRotY = ry;
 
-    ShakeOffset(player->ship);
+    if (ctrlmode != ATTRACT)
+    {
+        ShakeOffset(player->ship->shakeCount);
+    }
+    else
+    {
+        ShakeOffset(0);
+    }
 
     renderSetMode(RENDER_MODE_3D);
 
@@ -127,9 +134,9 @@ void DrawView(int32 playerIndex)
 
     renderSetMode(RENDER_MODE_2D);
 
-    if (player->ship->targetShip)
-    { 
-        DrawTargetIcon(player->ship->targetShip); 
+    if ((ctrlmode != ATTRACT) && player->ship->targetShip)
+    {
+        DrawTargetIcon(player->ship->targetShip);
     }
 
     if (player->ship->attr & RACING)
