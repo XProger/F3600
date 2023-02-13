@@ -58,13 +58,13 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
         ship2React.y = (vc.y - ship2->vel.y) >> 1;
         ship2React.z = (vc.z - ship2->vel.z) >> 1;
 
-        ship1->pos.x -= ship1->vel.x >> VELOCITY_SHIFT;
-        ship1->pos.y -= ship1->vel.y >> VELOCITY_SHIFT;
-        ship1->pos.z -= ship1->vel.z >> VELOCITY_SHIFT;
+        ship1->pos.x -= sar(ship1->vel.x, VELOCITY_SHIFT);
+        ship1->pos.y -= sar(ship1->vel.y, VELOCITY_SHIFT);
+        ship1->pos.z -= sar(ship1->vel.z, VELOCITY_SHIFT);
 
-        ship2->pos.x -= ship2->vel.x >> VELOCITY_SHIFT;
-        ship2->pos.y -= ship2->vel.y >> VELOCITY_SHIFT;
-        ship2->pos.z -= ship2->vel.z >> VELOCITY_SHIFT;
+        ship2->pos.x -= sar(ship2->vel.x, VELOCITY_SHIFT);
+        ship2->pos.y -= sar(ship2->vel.y, VELOCITY_SHIFT);
+        ship2->pos.z -= sar(ship2->vel.z, VELOCITY_SHIFT);
 
         ship1->vel.x = vc.x + ship1React.x;
         ship1->vel.y = vc.y + ship1React.y;
@@ -86,13 +86,13 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
         ship1->vel.y -= ship2ship.y << 2;
         ship1->vel.z -= ship2ship.z << 2;
 
-        ship1->pos.x += ship1->vel.x >> VELOCITY_SHIFT;
-        ship1->pos.y += ship1->vel.y >> VELOCITY_SHIFT;
-        ship1->pos.z += ship1->vel.z >> VELOCITY_SHIFT;
+        ship1->pos.x += sar(ship1->vel.x, VELOCITY_SHIFT);
+        ship1->pos.y += sar(ship1->vel.y, VELOCITY_SHIFT);
+        ship1->pos.z += sar(ship1->vel.z, VELOCITY_SHIFT);
 
-        ship2->pos.x += ship2->vel.x >> VELOCITY_SHIFT;
-        ship2->pos.y += ship2->vel.y >> VELOCITY_SHIFT;
-        ship2->pos.z += ship2->vel.z >> VELOCITY_SHIFT;
+        ship2->pos.x += sar(ship2->vel.x, VELOCITY_SHIFT);
+        ship2->pos.y += sar(ship2->vel.y, VELOCITY_SHIFT);
+        ship2->pos.z += sar(ship2->vel.z, VELOCITY_SHIFT);
 
         if (((ship1->attr | ship2->attr) & SHIP_COLL) == 0)
         {

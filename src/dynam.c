@@ -60,9 +60,9 @@ void ShipTrkReaction(ShipData* ship)
 
     ship->speed = velMag;
 
-    velDOF.x = (velMag * ship->unitVecNose.x) >> 12;
-    velDOF.y = (velMag * ship->unitVecNose.y) >> 12;
-    velDOF.z = (velMag * ship->unitVecNose.z) >> 12;
+    velDOF.x = sar(velMag * ship->unitVecNose.x, 12);
+    velDOF.y = sar(velMag * ship->unitVecNose.y, 12);
+    velDOF.z = sar(velMag * ship->unitVecNose.z, 12);
 
     if (ship->nearTrkSect->flags & Jump)
     {
@@ -212,9 +212,9 @@ void ShipTrkReaction(ShipData* ship)
         ship->vel.y -= ship->vel.y * tmp >> 16;
         ship->vel.z -= ship->vel.z * tmp >> 16;
 
-        ship->pos.x += ship->vel.x >> VELOCITY_SHIFT;
-        ship->pos.y += ship->vel.y >> VELOCITY_SHIFT;
-        ship->pos.z += ship->vel.z >> VELOCITY_SHIFT;
+        ship->pos.x += sar(ship->vel.x, VELOCITY_SHIFT);
+        ship->pos.y += sar(ship->vel.y, VELOCITY_SHIFT);
+        ship->pos.z += sar(ship->vel.z, VELOCITY_SHIFT);
 
         nosePos.x = (ship->unitVecNose.x >> 5) + ship->pos.x;
         nosePos.y = (ship->unitVecNose.y >> 5) + ship->pos.y;
@@ -234,12 +234,12 @@ void ShipTrkReaction(ShipData* ship)
         }
 
         ship->vpitch -= ship->vpitch >> 2;
-        brake = (ship->r_brake_rot - ship->l_brake_rot) >> 3;
+        brake = sar(ship->r_brake_rot - ship->l_brake_rot, 3);
 
-        ship->hdg += (brake * ship->speed) >> 15;
+        ship->hdg += sar(brake * ship->speed, 15);
 
-        ship->vroll += ship->vhdg >> 5;
-        ship->vroll -= ship->vroll >> 1;
+        ship->vroll += sar(ship->vhdg, 5);
+        ship->vroll -= sar(ship->vroll, 1);
     }
 
     /***************************************************************************/
@@ -301,20 +301,20 @@ void ShipTrkReaction(ShipData* ship)
         ship->vel.y -= ship->vel.y * tmp >> 16;
         ship->vel.z -= ship->vel.z * tmp >> 16;
 
-        ship->pos.x += ship->vel.x >> VELOCITY_SHIFT;
-        ship->pos.y += ship->vel.y >> VELOCITY_SHIFT;
-        ship->pos.z += ship->vel.z >> VELOCITY_SHIFT;
+        ship->pos.x += sar(ship->vel.x, VELOCITY_SHIFT);
+        ship->pos.y += sar(ship->vel.y, VELOCITY_SHIFT);
+        ship->pos.z += sar(ship->vel.z, VELOCITY_SHIFT);
 
         ship->vpitch -= FR50;
         ship->vpitch -= ship->vpitch >> 2;
 
-        brake = (ship->r_brake_rot - ship->l_brake_rot) >> 3;
-        ship->hdg += (brake * ship->speed) >> 15;
+        brake = sar(ship->r_brake_rot - ship->l_brake_rot, 3);
+        ship->hdg += sar(brake * ship->speed, 15);
 
-        ship->vroll += ship->vhdg >> 5;
-        ship->vroll -= ship->vroll >> 1;
+        ship->vroll += sar(ship->vhdg, 5);
+        ship->vroll -= sar(ship->vroll, 1);
     }
-    ship->hdg += ship->vhdg >> 6;
+    ship->hdg += sar(ship->vhdg, 6);
 
     ship->pitch += ship->vpitch >> 4;
 

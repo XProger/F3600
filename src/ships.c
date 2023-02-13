@@ -133,10 +133,10 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes)
     int32 i;
     int32 dist, dx, dy, dz, vz;
     Object* obj;
-    ShipData* ship;
+    ShipData* ship = shipIndex;
     int32 attr;
 
-    for (i = 0; i < NO_OF_SHIPS; i++)
+    for (i = 0; i < NO_OF_SHIPS; i++, ship++)
     {
         ship = shipIndex + i;
 

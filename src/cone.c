@@ -116,14 +116,16 @@ void UpdateCone(Cone* cone)
     {
         ShipData* ship = cone->ship[i];
 
+    #if (MAX_PLAYERS == 1)
         if (!(ship->attr & VISIBLE))
             continue;
+    #endif
 
         if (ship->player)
         {
             /* get the z displacement related to speed or thrust */
-            disp = cone->ship[i]->thrust_mag >> 4;
-            disp += cone->ship[i]->speed >> 8;
+            disp = ship->thrust_mag >> 4;
+            disp += ship->speed >> 8;
             disp += 31;
         }
         else

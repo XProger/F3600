@@ -300,7 +300,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
 
         remoteShip->pitch += remoteShip->vpitch >> 4;
 
-        remoteShip->vroll += remoteShip->vhdg >> 2;
+        remoteShip->vroll += sar(remoteShip->vhdg, 2);
         remoteShip->vroll -= remoteShip->vroll >> 1;
 
         remoteShip->roll += remoteShip->vroll;

@@ -355,14 +355,12 @@ void DrawShadows(ShipData* shipIndex)
     int i, px, py, pz, nx, ny, nz, dx, dy, dz, rx, ry, rz;
     int alpha, intensity;
     const vec3i* facePoint;
-    ShipData* ship;
+    ShipData* ship = shipIndex;
 
     matrixSetCameraSpace();
 
-    for (i = 0; i < NO_OF_SHIPS; i++)
+    for (i = 0; i < NO_OF_SHIPS; i++, ship++)
     {
-        ship = shipIndex + i;
-
         if (!((ship->attr & VISIBLE) && ((ship->attr & FLYING) == 0)))
             continue;
 

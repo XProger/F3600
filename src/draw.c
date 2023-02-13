@@ -126,9 +126,9 @@ void DrawView(int32 playerIndex)
     DrawSky();
     DrawLandscape(player->camera.section);
     DrawTrack(playerIndex);
-    DrawShadows(ctrlshipIndex);
     DrawShips(ctrlshipIndex, ctrlshipShapes);
     DrawDroid(ctrlshipShapes[RESCUE_DROID], &player->droid);
+    DrawShadows(ctrlshipIndex);
     DrawWeapons();
     DrawEffects();
 

@@ -81,4 +81,6 @@ void matrixRotateYXZ(int32 angleX, int32 angleY, int32 angleZ);
 
 #define matrixPop() gMatrixPtr--
 
+#define sar(x, shift) (((x) + ((x) < 0)) >> shift)
+
 #endif

@@ -22,6 +22,7 @@ void InitCamera(TrackCamera* camera, TrackSection* section)
     camera->vel.z = 0;
 
     camera->update = UpdateCameraRaceStart;
+    FRAME_LERP_INIT(camera);
 
     ResetFOV(camera);
 }
@@ -73,9 +74,9 @@ void UpdateCameraRaceExternal(TrackCamera* camera, ShipData* camShip, RescueData
     camera->vel.y -= acc.y >> 6;
     camera->vel.z -= acc.z >> 6;
 
-    camera->vel.x -= camera->vel.x >> 3;
-    camera->vel.y -= camera->vel.y >> 3;
-    camera->vel.z -= camera->vel.z >> 3;
+    camera->vel.x -= sar(camera->vel.x, 3);
+    camera->vel.y -= sar(camera->vel.y, 3);
+    camera->vel.z -= sar(camera->vel.z, 3);
 
     camera->pos.x += camera->vel.x;
     camera->pos.y += camera->vel.y;
@@ -137,7 +138,7 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
     targetVector.y = camShip->pos.y - camera->pos.y;
     targetVector.z = camShip->pos.z - camera->pos.z;
 
-    camera->pitch = camShip->pitch >> 1;
+    ASSERT(camera->pitch == 0);
     camera->hdg = -ratan2(targetVector.x, targetVector.z);
 
     if (camShip->updateCount == SWITCH_TO_RACE_VIEW)
@@ -147,6 +148,8 @@ void UpdateCameraRaceStart(TrackCamera* camera, ShipData* camShip, RescueData* r
         // CameraUpdate = UpdateCameraRaceInternal;
         camShip->attr &= ~VIEW_IN;
         camera->update = UpdateCameraRaceExternal;
+
+        FRAME_LERP_INIT(camera);
     }
 
     ResetFOV(camera);
@@ -280,6 +283,7 @@ void UpdateCameraAttractMode(TrackCamera* camera, ShipData* camShip, RescueData*
     target = 0;
     camShip->attr &= ~VIEW_IN;
     (camera->update)(camera, camShip, rescueDroid);
+    FRAME_LERP_INIT(camera);
 
     ResetFOV(camera);
 }

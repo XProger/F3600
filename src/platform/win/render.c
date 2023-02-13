@@ -979,6 +979,31 @@ void setTexture(const Texture* texture)
     glBindTexture((texture == &gTrackTexArray) ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D, texture ? texture->id : whiteTex);
 }
 
+void setMatrix(const Matrix* matrix)
+{
+    flush();
+
+    mView.e[0][0] = matrix->e00 * i4096;
+    mView.e[0][1] = matrix->e10 * i4096;
+    mView.e[0][2] = matrix->e20 * i4096;
+    mView.e[0][3] = 0.0f;
+
+    mView.e[1][0] = matrix->e01 * i4096;
+    mView.e[1][1] = matrix->e11 * i4096;
+    mView.e[1][2] = matrix->e21 * i4096;
+    mView.e[1][3] = 0.0f;
+
+    mView.e[2][0] = matrix->e02 * i4096;
+    mView.e[2][1] = matrix->e12 * i4096;
+    mView.e[2][2] = matrix->e22 * i4096;
+    mView.e[2][3] = 0.0f;
+
+    mView.e[3][0] = matrix->e03;
+    mView.e[3][1] = matrix->e13;
+    mView.e[3][2] = matrix->e23;
+    mView.e[3][3] = 1.0f;
+}
+
 void setShader(const Shader* shader)
 {
     flush();
@@ -1109,6 +1134,7 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
 
     setDepthWrite(0);
     renderSetBlend(BLEND_MUL);
+    setMatrix(gMatrixPtr);
     setShader(&shader_blob);
     setTexture(gShadowTex);
 
@@ -1212,31 +1238,6 @@ void fillTrackTex(uint16* data)
 void renderPrepare(void)
 {
     prepareTrack();
-}
-
-void setMatrix(const Matrix* matrix)
-{
-    flush();
-
-    mView.e[0][0] = matrix->e00 * i4096;
-    mView.e[0][1] = matrix->e10 * i4096;
-    mView.e[0][2] = matrix->e20 * i4096;
-    mView.e[0][3] = 0.0f;
-
-    mView.e[1][0] = matrix->e01 * i4096;
-    mView.e[1][1] = matrix->e11 * i4096;
-    mView.e[1][2] = matrix->e21 * i4096;
-    mView.e[1][3] = 0.0f;
-
-    mView.e[2][0] = matrix->e02 * i4096;
-    mView.e[2][1] = matrix->e12 * i4096;
-    mView.e[2][2] = matrix->e22 * i4096;
-    mView.e[2][3] = 0.0f;
-
-    mView.e[3][0] = matrix->e03;
-    mView.e[3][1] = matrix->e13;
-    mView.e[3][2] = matrix->e23;
-    mView.e[3][3] = 1.0f;
 }
 
 void renderFrameBegin(void)
