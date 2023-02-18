@@ -496,7 +496,6 @@ void UpdateRaceHud(ShipData* shipIndex, int choice)
                 ship->remoteThrustMag = 32;
                 ship->speed = 3160;
                 ship->attr &= ~(SHIELDED | VIEW_IN | RACING);
-                ship->targetShip = NULL;
 
                 player->camera.update = UpdateCameraAttractMode;
             }

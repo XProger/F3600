@@ -1266,6 +1266,7 @@ void drawSection(const TrackSection* section, int32 specialed)
     uint32 color1, color2;
     uint16 flags;
     int32 texture;
+    int32 angle;
 
     while (face < last)
     {
@@ -1288,15 +1289,17 @@ void drawSection(const TrackSection* section, int32 specialed)
         {
             if (flags & TRACK_FACE_SPEED)
             {
-                color1 = speedColor((gFrameIndex + 2) << 9);
-                color2 = speedColor((gFrameIndex) << 9);
+                angle = (section - gTrack.sections) * 2 - gFrameIndex;
+                color1 = speedColor((angle) << 9);
+                color2 = speedColor((angle + 2) << 9);
             }
             else
             {
                 int32 weapon = GET_TRACK_FACE_WEAPON(flags);
                 if (weapon > 0 && weapon < 0xFF)
                 {
-                    color1 = color2 = weaponColor((gFrameIndex + (face - gTrack.faces) * 64) * 32);
+                    angle = (gFrameIndex + (face - gTrack.faces) * 64) * 32;
+                    color1 = color2 = weaponColor(angle);
                 }
             }
         }

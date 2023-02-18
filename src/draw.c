@@ -134,13 +134,13 @@ void DrawView(int32 playerIndex)
 
     renderSetMode(RENDER_MODE_2D);
 
-    if ((ctrlmode != ATTRACT) && player->ship->targetShip)
-    {
-        DrawTargetIcon(player->ship->targetShip);
-    }
-
     if (player->ship->attr & RACING)
     {
+        if (player->ship->targetShip)
+        {
+            DrawTargetIcon(player->ship->targetShip);
+        }
+
         DrawHud(player->ship);
     }
 }
