@@ -227,6 +227,36 @@ void padSetStick(int32 joyIndex, int32 inputKey, int32 x, int32 y)
     }
     else if (inputKey == IN_R)
     {
+        if (player->Rx != x)
+        {
+            if (x < -0x4000)
+            {
+                player->buttons |= IN_LT;
+                player->buttons &= ~IN_RT;
+            }
+            else if (x > 0x4000)
+            {
+                player->buttons &= ~IN_LT;
+                player->buttons |= IN_RT;
+            }
+            else
+            {
+                player->buttons &= ~(IN_LT | IN_RT);
+            }
+        }
+
+        if (player->Ry != y)
+        {
+            if (y > 0)
+            {
+                player->buttons |= IN_A;
+            }
+            else
+            {
+                player->buttons &= ~IN_A;
+            }
+        }
+
         player->Rx = x;
         player->Ry = y;
     }

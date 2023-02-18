@@ -232,8 +232,8 @@ void InitGameData(void)
         player->joyIndex = i;
 
         player->binding.thrust = IN_A;
-        player->binding.view   = IN_Y;
-        player->binding.fire   = IN_B;
+        player->binding.view   = IN_Y | IN_LB | IN_L;
+        player->binding.fire   = IN_B | IN_RB | IN_R;
         player->binding.lBrake = IN_RT;
         player->binding.rBrake = IN_LT;
     }
