@@ -1,6 +1,6 @@
 #define NOSE_COLLISION   1
 
-void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes);
+void CallShip2ShipCollision(ShipData* shipIndex);
 int PlaneLineCollision(const vec3i* plane_point, const vec3i* ship_pos, const vec3s* normal);
 void Ship2Track(ShipData* ship, Face* facePtr);
 void WingCollision(ShipData* ship, Face* facePtr, int direction, int alpha);

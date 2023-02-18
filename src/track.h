@@ -1,10 +1,9 @@
-/* Face flags */
-#define TRACK_BASE          1
-#define WEAPON_GRID_LEFT    2
-#define FLIP_TEXTURE        4
-#define WEAPON_GRID_RIGHT   8
-#define START_GRID          16
-#define SPEED_UP            32
+#define TRACK_FACE_BASE     (1 << 0)
+#define TRACK_FACE_SPEED    (1 << 1)
+#define TRACK_FACE_FLIP     (1 << 2)
+
+#define GET_TRACK_FACE_TEXTURE(flags)   ((flags >> 3) & 31)
+#define GET_TRACK_FACE_WEAPON(flags)    (flags >> 8)
 
 #ifdef __3DO__
 typedef struct Face
@@ -20,19 +19,16 @@ typedef struct Face
 {
     int16 vertex[4];
     vec3s normal;
-    uint8 texture;
-    uint8 flags;
+    uint16 flags;
     uint32 color;
 } Face;
 #endif
 
 /* TrackSection Flags */
-#define Jump            1
-#define JunctionEnd     8
-#define JunctionStart   16
-#define JunctionSection 32
-
-#define TrackTextures   24
+#define TRACK_JUMP              (1 << 0)
+#define TRACK_JUNCTION_END      (1 << 3)
+#define TRACK_JUNCTION_START    (1 << 4)
+#define TRACK_JUNCTION          (1 << 5)
 
 typedef struct TrackRange
 {
@@ -101,11 +97,8 @@ typedef struct TrackSection
 
 typedef struct WeaponGrid
 {
-    TrackSection* section;
-    int16 attr;
-    int16 cycleCount;
-    int32 count;
-    uint32 color;
+    int16 faceIndex;
+    int16 count;
 } WeaponGrid;
 
 typedef struct TrackData
@@ -124,7 +117,7 @@ typedef struct TrackData
     vec3i* vertices;
     Face* faces;
     TrackSection* sections;
-    WeaponGrid* weapons;
+    WeaponGrid weapons[64];
     int16* viewList;
 
     Object* objects;

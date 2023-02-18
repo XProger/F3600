@@ -13,5 +13,4 @@ void ShipCalcAmbient(ShipData* ship);
 void ShipTrkReaction(ShipData* ship);
 void GetTargetPos(vec3i* result, const vec3i* pos, const vec3i* cent1, const vec3i* cent2);
 void SetUnitVectors(ShipData* ship);
-int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, int noWeaponGrids);
 void ApplyMagnet(vec3i* acc, const vec3s* normal, int32 alpha);

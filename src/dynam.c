@@ -6,16 +6,12 @@
 #ifdef USE_SHIP_AMBIENT
 void ShipCalcAmbient(ShipData* ship)
 {
-    Face* facePtr;
+    #define TRACK_AMBIENT_MASK (TRACK_FACE_BASE | TRACK_FACE_SPEED | (0xFF << 8))
 
-    facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
-
-    while (facePtr->flags != TRACK_BASE) // base track only (no speedups, weapons etc)
+    if (ship->face && (ship->face->flags & TRACK_AMBIENT_MASK) == TRACK_FACE_BASE)
     {
-        facePtr++;
+        ship->color = ship->face->color;
     }
-
-    ship->color = facePtr->color;
 }
 #endif
 
@@ -52,9 +48,9 @@ void ShipTrkReaction(ShipData* ship)
     int32 accX, accY, accZ;
 
     /***** Calculate thrust vector along principle axis of ship *****/
-    ship->thrust.x = (ship->thrust_mag * ship->unitVecNose.x) >> 6;
-    ship->thrust.y = (ship->thrust_mag * ship->unitVecNose.y) >> 6;
-    ship->thrust.z = (ship->thrust_mag * ship->unitVecNose.z) >> 6;
+    ship->thrust.x = (ship->thrustMag * ship->unitVecNose.x) >> 6;
+    ship->thrust.y = (ship->thrustMag * ship->unitVecNose.y) >> 6;
+    ship->thrust.z = (ship->thrustMag * ship->unitVecNose.z) >> 6;
 
     velMag = GetMagnitude(&ship->vel);
 
@@ -64,11 +60,11 @@ void ShipTrkReaction(ShipData* ship)
     velDOF.y = sar(velMag * ship->unitVecNose.y, 12);
     velDOF.z = sar(velMag * ship->unitVecNose.z, 12);
 
-    if (ship->nearTrkSect->flags & Jump)
+    if (ship->nearTrkSect->flags & TRACK_JUMP)
     {
         facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
 
-        while ((facePtr->flags & TRACK_BASE) == 0)
+        while ((facePtr->flags & TRACK_FACE_BASE) == 0)
         {
             facePtr++;
         }
@@ -117,33 +113,15 @@ void ShipTrkReaction(ShipData* ship)
 
     if ((ship->attr & FLYING) == 0)
     {
-        facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
-
-        while ((facePtr->flags & TRACK_BASE) == 0)
-        {
-            facePtr++;
-        }
-
+        facePtr = ship->face;
         Ship2Track(ship, facePtr);
 
         if ((ship->attr & SPECIALED) == 0)
         {
-            if (((facePtr->flags & SPEED_UP) && (ship->attr & LSIDE)))
+            if (facePtr->flags & TRACK_FACE_SPEED)
             {
                 ApplySpeedUp(ship);
             }
-            facePtr++;
-
-            if ((facePtr->flags & SPEED_UP) && ((ship->attr & LSIDE) == 0))
-            {
-                ApplySpeedUp(ship);
-            }
-            facePtr--;
-        }
-
-        if ((ship->attr & LSIDE) == 0)
-        {
-            facePtr++;
         }
 
         facePoint = gTrack.vertices + facePtr->vertex[0];
@@ -186,7 +164,7 @@ void ShipTrkReaction(ShipData* ship)
 
         force.y += 30000;
 
-        brake = (ship->r_brake_rot + ship->l_brake_rot);
+        brake = (ship->BrakeRotR + ship->BrakeRotL);
 
         tmp = FixedInvU(ship->skid + (brake >> 2));
         accX = (velDOF.x - ship->vel.x) * tmp;
@@ -234,7 +212,7 @@ void ShipTrkReaction(ShipData* ship)
         }
 
         ship->vpitch -= ship->vpitch >> 2;
-        brake = sar(ship->r_brake_rot - ship->l_brake_rot, 3);
+        brake = sar(ship->BrakeRotR - ship->BrakeRotL, 3);
 
         ship->hdg += sar(brake * ship->speed, 15);
 
@@ -275,7 +253,7 @@ void ShipTrkReaction(ShipData* ship)
             ship->attr |= RESCUE;
         }
 
-        brake = (ship->r_brake_rot + ship->l_brake_rot);
+        brake = (ship->BrakeRotR + ship->BrakeRotL);
 
         tmp = FixedInvU(MIN_RESISTANCE + (brake << 2));
         accX = (velDOF.x - ship->vel.x) * tmp;
@@ -308,7 +286,7 @@ void ShipTrkReaction(ShipData* ship)
         ship->vpitch -= FR50;
         ship->vpitch -= ship->vpitch >> 2;
 
-        brake = sar(ship->r_brake_rot - ship->l_brake_rot, 3);
+        brake = sar(ship->BrakeRotR - ship->BrakeRotL, 3);
         ship->hdg += sar(brake * ship->speed, 15);
 
         ship->vroll += sar(ship->vhdg, 5);
@@ -329,7 +307,7 @@ void ShipTrkReaction(ShipData* ship)
 
     if ((ship->attr & DIRECTION) == 0)
     {
-        if (nextSection->flags & Jump)
+        if (nextSection->flags & TRACK_JUMP)
         {
             repulseVector.x = ship->nearTrkSect->nextSection->centre.x - ship->nearTrkSect->centre.x;
             repulseVector.y = ship->nearTrkSect->nextSection->centre.y - ship->nearTrkSect->centre.y;
@@ -415,7 +393,7 @@ void SetUnitVectors(ShipData* ship)
 
     facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
 
-    while ((facePtr->flags & TRACK_BASE) == 0)
+    while ((facePtr->flags & TRACK_FACE_BASE) == 0)
     {
         facePtr++;
     }
@@ -431,68 +409,15 @@ void SetUnitVectors(ShipData* ship)
     toFace = ((direction.x * toFaceVector.x) + (direction.y * toFaceVector.y) + (direction.z * toFaceVector.z));
 
     if (toFace > 0)
+    {
         ship->attr |= LSIDE;
+        ship->face = facePtr;
+    }
     else
+    {
         ship->attr &= ~LSIDE;
-}
-
-int SetTrackAttributes(TrackSection* section, short i, WeaponGrid* weaponGrid, int noWeaponGrids)
-{
-    Face* facePtr;
-
-    facePtr = gTrack.faces + section->faceStart;
-
-    while ((facePtr->flags & TRACK_BASE) == 0)
-    {
-        facePtr++;
+        ship->face = facePtr + 1;
     }
-
-    if (facePtr->flags & WEAPON_GRID_LEFT)
-    {
-        if (gConfig.raceType != TIME_TRIAL)
-        {
-        #ifdef USE_VERTEX_COLOR
-            facePtr->color = 0xFF7523FF;
-        #endif
-        }
-        weaponGrid[noWeaponGrids].section = section;
-        weaponGrid[noWeaponGrids].count = 0;
-        weaponGrid[noWeaponGrids].attr = 0;
-        weaponGrid[noWeaponGrids].attr |= WEAPON_GRID_LEFT;
-        weaponGrid[noWeaponGrids].cycleCount = randy();
-        noWeaponGrids++;
-    }
-    else if (facePtr->flags & SPEED_UP)
-    {
-    #ifdef USE_VERTEX_COLOR
-        facePtr->color = 0xFFFF0000;
-    #endif
-    }
-
-    facePtr++;
-
-    if (facePtr->flags & WEAPON_GRID_RIGHT)
-    {
-        if (gConfig.raceType != TIME_TRIAL)
-        {
-        #ifdef USE_VERTEX_COLOR
-            facePtr->color = 0xFF75EE54;
-        #endif
-        }
-        weaponGrid[noWeaponGrids].section = section;
-        weaponGrid[noWeaponGrids].count = 0;
-        weaponGrid[noWeaponGrids].attr = 0;
-        weaponGrid[noWeaponGrids].attr |= WEAPON_GRID_RIGHT;
-        noWeaponGrids++;
-    }
-    else if (facePtr->flags & SPEED_UP)
-    {
-    #ifdef USE_VERTEX_COLOR
-        facePtr->color = 0xFFFF0000;
-    #endif
-    }
-
-    return (noWeaponGrids);
 }
 
 void ApplyMagnet(vec3i* acc, const vec3s* normal, int32 alpha)

@@ -43,7 +43,7 @@ void SceneRadiusCheck(Object* objects, int32 count)
             vector.y = object->pos.y - sectionCentre->y;
             vector.z = object->pos.z - sectionCentre->z;
 
-            if (section->flags & Jump)
+            if (section->flags & TRACK_JUMP)
             {
                 if ((abs(vector.x) < (section->globalRadius * 2)) && (abs(vector.y) < (section->globalRadius * 2)) && (abs(vector.z) < (section->globalRadius * 2)))
                 {

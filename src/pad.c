@@ -1,18 +1,5 @@
 #include "game.h"
 
-void InitPadSettings(void)
-{
-    pCon.thrust = IN_A;
-    pCon.view   = IN_Y;
-    pCon.fire   = IN_B;
-    pCon.lBrake = IN_RT;
-    pCon.rBrake = IN_LT;
-    pCon.up     = IN_UP;
-    pCon.down   = IN_DOWN;
-    pCon.left   = IN_LEFT;
-    pCon.right  = IN_RIGHT;
-}
-
 void UpdatePad(void)
 {
     int32 i, opad;
@@ -59,27 +46,27 @@ void SetBrake(ShipData* ship, short padLeft, short padRight)
 
     // right
     if (player->pad & padRight)
-        ship->r_brake_rot += FR32U;
-    else if (ship->r_brake_rot > 0)
-        ship->r_brake_rot -= FR32U;
+        ship->BrakeRotR += FR32U;
+    else if (ship->BrakeRotR > 0)
+        ship->BrakeRotR -= FR32U;
 
-    if (ship->r_brake_rot < 0)
-        ship->r_brake_rot = 0;
+    if (ship->BrakeRotR < 0)
+        ship->BrakeRotR = 0;
 
-    if (ship->r_brake_rot > 256)
-        ship->r_brake_rot = 256;
+    if (ship->BrakeRotR > 256)
+        ship->BrakeRotR = 256;
 
     // left
     if (player->pad & padLeft)
-        ship->l_brake_rot += FR32U;
-    else if (ship->l_brake_rot > 0)
-        ship->l_brake_rot -= FR32U;
+        ship->BrakeRotL += FR32U;
+    else if (ship->BrakeRotL > 0)
+        ship->BrakeRotL -= FR32U;
 
-    if (ship->l_brake_rot < 0)
-        ship->l_brake_rot = 0;
+    if (ship->BrakeRotL < 0)
+        ship->BrakeRotL = 0;
 
-    if (ship->l_brake_rot > 256)
-        ship->l_brake_rot = 256;
+    if (ship->BrakeRotL > 256)
+        ship->BrakeRotL = 256;
 }
 
 void SetView(ShipData* ship, short padView)

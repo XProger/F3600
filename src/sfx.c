@@ -171,7 +171,7 @@ void AdjustDirectionalNote(enum SfxType id, int32 x, int32 z)
     }
 }
 
-void AdjustRemoteEngineSound(ShipData* shipIndex, Object** shipShapes)
+void AdjustRemoteEngineSound(ShipData* shipIndex)
 {
     uint16 i;
     int32 dx, dz;
@@ -281,9 +281,9 @@ void AdjustEngineSound(ShipData* ship, TrackCamera* camera)
     SetPitch(SFX_ENG_AIR_INTAKE, (SND_DEF_PITCH >> 1) + pitch);
     SetVolume(SFX_ENG_AIR_INTAKE, vol, vol);
 
-    vol = 375 + ((ENG_THRUST_VOL * ship->thrust_mag) / ship->max_thrust);
+    vol = 375 + ((ENG_THRUST_VOL * ship->thrustMag) / ship->maxThrust);
 
-    pitch = (0x7ff * ship->thrust_mag) / ship->max_thrust;
+    pitch = (0x7ff * ship->thrustMag) / ship->maxThrust;
     pitch += ship->speed >> 5;
 
     /***        Pitch Increment 2048             ***/
@@ -302,8 +302,8 @@ void AdjustEngineSound(ShipData* ship, TrackCamera* camera)
 
     vol = ship->speed >> 1;
     SetVolume(SFX_TURBULENCE,
-        (vol >> 2) + ((vol * ship->r_brake_rot) >> 9),
-        (vol >> 2) + ((vol * ship->l_brake_rot) >> 9));
+        (vol >> 2) + ((vol * ship->BrakeRotR) >> 9),
+        (vol >> 2) + ((vol * ship->BrakeRotL) >> 9));
 }
 
 int PlayDirectionalNote(enum SfxType id, const vec3i* pos)

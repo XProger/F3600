@@ -324,12 +324,10 @@ typedef struct SkeletonPSX
 
     int super_dummy; /* Parent Skeleton */
 
-    /*TODO unused, remove from the custom file format*/
     int sub_dummy; /* First Child Skeleton of this Skeleton */
     int next_dummy; /* Next Child Skeleton of Parent Skeleton */
 } SkeletonPSX;
 
-/* TODO dumbest thing I've ever seen */
 typedef struct ObjectPSX
 {
    char  name[16];

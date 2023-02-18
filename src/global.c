@@ -3,8 +3,6 @@
 int ownShip;
 int NoOfMainSections;
 
-PadInfo pCon;
-
 Object* gStartBoom[4];
 short gStartBoomCount = 0;
 
@@ -13,7 +11,6 @@ int32 gNumPlayers;
 
 PlayerData gPlayers[MAX_PLAYERS];
 
-int trackNo;
 char NumTracks = 6;
 char totalTracks = 13;
 int tempLapTimes[5]; // TODO END_LAP
@@ -40,10 +37,10 @@ ConfigData gConfig;
 int32 ctrlmode;
 int32 ctrlGameLoop;
 
-Object* ctrlshipShapes[(NO_OF_SHIPS * 2) + 1];
+Object* ctrlshipShapes;
 ShipData ctrlshipIndex[NO_OF_SHIPS];
 
-Object* gWeaponShapes[WEAPON_SHAPE_MAX];
+Object* gWeaponShapes;
 
 int32 gMusicTracksCount;
 int32 gMusicTrack;
@@ -63,7 +60,7 @@ int32 dbg_frameTime;
 int32 dbg_v;
 int32 dbg_f;
 
-const char gTrackList[15] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14, 15 }; // TODO 15?
+const char gTrackList[14] = { 2, 4, 1, 12, 8, 9, 10, 3, 5, 6, 7, 11, 13, 14 };
 
 uint8* gDRAM;
 uint8* gVRAM;

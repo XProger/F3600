@@ -94,7 +94,7 @@ extern Cone ctrlcone;
 
 extern Glyph glyphEnd;
 extern Glyph glyphDel;
-extern const short shipShapeOrder[];
+
 extern Texture* gShadowTex;
 extern Texture* gSpeedoTex;
 extern Texture* gWinLoseTex;
@@ -126,16 +126,16 @@ TexTemplate* ctrltexTemplate;
 int32 ctrlnumLib;
 int32 ctrllibraryTextures;
 
-WeaponGrid gWeaponGrid[64]; // TODO remove
-
-void LoadShipData(ShipData* shipIndex, Object** shipShapes)
+void LoadShipData(void)
 {
+    const short shipShapeOrder[8] = { 7, 3, 5, 6, 1, 4, 0, 2 };
+
     Texture* shipTextures;
     Texture* droidTextures;
     Texture* colTextures;
     Object* obj;
+    Object objBuf[NO_OF_SHIPS];
     int32 i, objCount;
-    int32 count = 0;
 
     /******************************************************/
     /** Load compressed texture files, first to allow    **/
@@ -148,12 +148,13 @@ void LoadShipData(ShipData* shipIndex, Object** shipShapes)
     obj = LoadPrm("wipeout/common/allsh.prm", shipTextures, &objCount, NULL);
     ASSERT(objCount == NO_OF_SHIPS);
 
+    ctrlshipShapes = obj;
+
+    // for some reason the original game has unordered objects... reorder them to eat less spaghetti
+    memcpy(objBuf, obj, sizeof(Object) * NO_OF_SHIPS);
     for (i = 0; i < objCount; i++)
     {
-        shipIndex[count].highResTableIndex = shipShapeOrder[count];
-        shipShapes[count] = obj + i;
-
-        count += 1;
+        obj[i] = objBuf[shipShapeOrder[i]];
     }
 
     colTextures = gTexturePtr;
@@ -162,23 +163,22 @@ void LoadShipData(ShipData* shipIndex, Object** shipShapes)
     obj = LoadPrm("wipeout/common/alcol.prm", colTextures, &objCount, NULL);
     ASSERT(objCount == NO_OF_SHIPS);
 
+    // for LODs too... but need to make sure TODO
+    memcpy(objBuf, obj, sizeof(Object) * NO_OF_SHIPS);
     for (i = 0; i < objCount; i++)
     {
-        shipIndex[count - NO_OF_SHIPS].lowResTableIndex = count;
-        shipShapes[count] = obj + i;
-
-        count += 1;
+        obj[i] = objBuf[shipShapeOrder[i]];
     }
 
     droidTextures = gTexturePtr;
     LoadCompressedTextureSequence("wipeout/common/rescu.cmp", 1);
 
-    shipShapes[RESCUE_DROID] = LoadPrm("wipeout/common/rescu.prm", droidTextures, NULL, NULL);
+    LoadPrm("wipeout/common/rescu.prm", droidTextures, NULL, NULL);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        ctrlcone.object[i] = shipShapes[shipIndex[i].highResTableIndex];
-        ctrlcone.ship[i] = &shipIndex[i];
+        ctrlcone.object[i] = ctrlshipShapes + i;
+        ctrlcone.ship[i] = &ctrlshipIndex[i];
     }
 
     InitCone(&ctrlcone);
@@ -336,7 +336,7 @@ void LoadCommonOld(void)
 
     LoadCompressedTextureSequence("wipeout/textures/drfonts.cmp", 0);
 
-    LoadShipData(ctrlshipIndex, ctrlshipShapes);
+    LoadShipData();
 
     gSpeedoTex = LoadTexture("wipeout/textures/speedo.tim");
 
@@ -349,11 +349,15 @@ void LoadCommonOld(void)
     weaponTextures = gTexturePtr;
     LoadCompressedTextureSequence("wipeout/common/mine.cmp", 1);
 
-    gWeaponShapes[WEAPON_SHAPE_ROCKET]  = LoadPrm("wipeout/common/rock.prm", weaponTextures, NULL, NULL);
-    gWeaponShapes[WEAPON_SHAPE_MINE]    = LoadPrm("wipeout/common/mine.prm", weaponTextures, NULL, NULL);
-    gWeaponShapes[WEAPON_SHAPE_MISSILE] = LoadPrm("wipeout/common/miss.prm", weaponTextures, NULL, NULL);
-    gWeaponShapes[WEAPON_SHAPE_SHIELD]  = LoadPrm("wipeout/common/shld.prm", weaponTextures, NULL, NULL);
-    gWeaponShapes[WEAPON_SHAPE_EBOLT]   = LoadPrm("wipeout/common/ebolt.prm", weaponTextures, NULL, NULL);
+    gWeaponShapes = gObjectPtr;
+
+    LoadPrm("wipeout/common/rock.prm", weaponTextures, NULL, NULL);
+    LoadPrm("wipeout/common/mine.prm", weaponTextures, NULL, NULL);
+    LoadPrm("wipeout/common/miss.prm", weaponTextures, NULL, NULL);
+    LoadPrm("wipeout/common/shld.prm", weaponTextures, NULL, NULL);
+    LoadPrm("wipeout/common/ebolt.prm", weaponTextures, NULL, NULL);
+
+    ASSERT(gObjectPtr - gWeaponShapes == WEAPON_SHAPE_MAX);
 
     HACK_TEX_FILTER = 1;
     gTargetTex = LoadTexture("wipeout/textures/target2.tim");
@@ -490,16 +494,14 @@ void InitObjects(uint8* types)
     gTrack.donkey = gTrack.red + gTrack.redCount;
 }
 
-void InitWeaponGrids(void)
+void InitSecNo(void)
 {
     int32 i, j;
     int32 ctrlcheck = 1;
     int32 ctrljcheck = 1;
-    int32 weaponsCount;
     TrackSection* ctrlsection;
     TrackSection* ctrljsection;
 
-    weaponsCount = 0;
     ctrlsection = gTrack.sections;
 
     i = 0;
@@ -508,7 +510,6 @@ void InitWeaponGrids(void)
     // TODO pre-calc secNo and weapon grids for 3DO
     while (ctrlcheck)
     {
-        weaponsCount = SetTrackAttributes(ctrlsection, i, gTrack.weapons, weaponsCount);
         ctrlsection->secNo = i;
         if (ctrlsection->junction)
         {
@@ -518,7 +519,6 @@ void InitWeaponGrids(void)
             while (ctrljcheck)
             {
                 i++;
-                weaponsCount = SetTrackAttributes(ctrlsection, i, gTrack.weapons, weaponsCount);
                 ctrlsection->secNo = i;
                 ctrlsection = ctrlsection->nextSection;
                 if (ctrlsection->junction)
@@ -534,8 +534,23 @@ void InitWeaponGrids(void)
         if (ctrlsection == gTrack.sections)
             ctrlcheck = 0;
     }
+}
 
-    gTrack.weaponsCount = weaponsCount;
+void InitWeaponGrids(void)
+{
+    int32 i;
+    Face* face;
+
+    if (gConfig.raceType != TIME_TRIAL)
+        return;
+
+    for (i = 0; i < gTrack.weaponsCount; i++)
+    {
+        face = gTrack.faces + gTrack.weapons[i].faceIndex;
+        face->flags |= (0xFF << 8);
+    }
+
+    gTrack.weaponsCount = 0;
 }
 
 void InitVertices(const char* fileName)
@@ -564,11 +579,33 @@ void InitVertices(const char* fileName)
     }
 }
 
+typedef struct FacePSX
+{
+    int16 vertex[4];
+    vec3s normal;
+    uint8 texture;
+    uint8 flags;
+    uint32 color;
+} FacePSX;
+
+/* OLD Face flags */
+#define OLD_TRACK_BASE          1
+#define OLD_WEAPON_GRID_LEFT    2
+#define OLD_FLIP_TEXTURE        4
+#define OLD_WEAPON_GRID_RIGHT   8
+#define OLD_START_GRID          16
+#define OLD_SPEED_UP            32
+
 void InitFaces(const char* fileName)
 {
+    int32 i;
     int32 r, g, b;
     Face* face;
     Face* last;
+    uint16 flags;
+    uint8 old_texture;
+    uint8 old_flags;
+    int32 weaponsCount = 0;
 
     int32 size = osLoadFile(fileName, pDRAM);
     gTrack.faces = (Face*)allocDRAM(size);
@@ -591,14 +628,53 @@ void InitFaces(const char* fileName)
 
         swap32p(&face->color);
     #endif
+        
+        old_texture = ((FacePSX*)face)->texture;
+        old_flags = ((FacePSX*)face)->flags;
 
-        b = 0xFF & (face->color >> 8);
-        g = 0xFF & (face->color >> 16);
-        r = 0xFF & (face->color >> 24);
-        face->color = r | (g << 8) | (b << 16) | 0xFF000000;
+        flags = old_texture << 3;
+        
+        if (old_flags & OLD_TRACK_BASE)
+        {
+            flags |= TRACK_FACE_BASE;
+        }
+        
+        if (old_flags & OLD_SPEED_UP)
+        {
+            flags |= TRACK_FACE_SPEED;
+        }
+        
+        if (old_flags & OLD_FLIP_TEXTURE)
+        {
+            flags |= TRACK_FACE_FLIP;
+        }
+
+        if (old_flags & (OLD_WEAPON_GRID_LEFT | OLD_WEAPON_GRID_RIGHT))
+        {
+            flags |= (weaponsCount + 1) << 8;
+            gTrack.weapons[weaponsCount].faceIndex = (face - gTrack.faces);
+            gTrack.weapons[weaponsCount].count = 0;
+            weaponsCount++;
+        }
+        
+        face->flags = flags;
+
+        if ((flags & TRACK_FACE_SPEED) || GET_TRACK_FACE_WEAPON(flags))
+        {
+            face->color = 0x00808080;
+        }
+        else
+        {
+            b = 0xFF & (face->color >> 8);
+            g = 0xFF & (face->color >> 16);
+            r = 0xFF & (face->color >> 24);
+            face->color = r | (g << 8) | (b << 16);
+        }
 
         face++;
     }
+
+    gTrack.weaponsCount = weaponsCount;
 }
 
 void InitSections(const char* fileName)
@@ -1334,7 +1410,7 @@ void LoadSceneOld(int32 trackNum)
     getPath(trackPath, trackNum, "/track.vew");
     InitViewList(trackPath);
 
-    gTrack.weapons = gWeaponGrid;
+    InitSecNo();
     InitWeaponGrids();
 
     sceneTextures = gTexturePtr;
@@ -1345,11 +1421,6 @@ void LoadSceneOld(int32 trackNum)
 
     SortObjects(types);
     InitObjects(types);
-
-    if (gTrack.redCount)
-    {
-        ASSERT((trackNo == 8) || (trackNo == 11) || (trackNo == 1));
-    }
 
     skyTextures = gTexturePtr;
     getPath(trackPath, trackNum, "/sky.cmp");
@@ -1362,7 +1433,7 @@ void LoadSceneOld(int32 trackNum)
     SceneRadiusCheck(gTrack.objects, gTrack.objCount);
 
     /* silverstream */
-    if (trackNo == 13)
+    if (gConfig.trackNum == 12)
     {
         camSpline[4] = LoadPrm("wipeout/common/cam5s.prm", NULL, NULL, NULL);
         shipSpline[4] = LoadPrm("wipeout/common/shp5s.prm", NULL, NULL, NULL);
@@ -1375,7 +1446,7 @@ void LoadSceneOld(int32 trackNum)
     }
 
     /* firestar */
-    if (trackNo == 14)
+    if (gConfig.trackNum == 13)
     {
         camSpline[0] = LoadPrm("wipeout/common/cam1s.prm", NULL, NULL, NULL);
         shipSpline[0] = LoadPrm("wipeout/common/shp1s.prm", NULL, NULL, NULL);
@@ -1451,7 +1522,7 @@ void LoadScene(int32 trackNum)
 
     LoadSceneOld(trackNum);
 
-    if (trackNo == 13)
+    if (gConfig.trackNum == 12) // TODO Venom silverstream?
     {
         InitAuroraBorialis(gTrack.sky);
     }

@@ -38,9 +38,7 @@ extern PlayerData gPlayers[MAX_PLAYERS];
 
 extern int ownShip;
 extern int NoOfMainSections;
-extern PadInfo pCon;
 
-extern int trackNo;
 extern char NumTracks;
 extern char totalTracks;
 extern int attractDelay;
@@ -69,8 +67,10 @@ extern ConfigData gConfig;
 extern int32 ctrlmode;
 extern int32 ctrlGameLoop;
 
-extern Object* ctrlshipShapes[];
+extern Object* ctrlshipShapes;
 extern ShipData ctrlshipIndex[];
+
+extern Object* gWeaponShapes;
 
 extern int32 gMusicTracksCount;
 extern int32 gMusicTrack;
@@ -129,7 +129,7 @@ extern int32 gEnableFrameLerp;
 #define FR7U    (7 * 30 / frameRate30)
 #define FR32U   (32 * 30 / frameRate30)
 
-extern const char gTrackList[15];
+extern const char gTrackList[14];
 
 #define DRAM_BLOCK_SIZE (32 * 1024)
 #define VRAM_BLOCK_SIZE (16 * 1024)

@@ -70,10 +70,10 @@ void DrawLandscape(TrackSection* section)
     }
 }
 
-void DrawTrack(int32 playerIndex)
+void DrawTrack(int32 playerIndex, int32 specialed)
 {
     matrixSetCameraSpace();
-    renderTrack(playerIndex);
+    renderTrack(playerIndex, specialed);
 }
 
 void DrawObject(Object* obj, int x, int y, int z, short hdg, short pitch, short roll)
@@ -125,9 +125,9 @@ void DrawView(int32 playerIndex)
 
     DrawSky();
     DrawLandscape(player->camera.section);
-    DrawTrack(playerIndex);
-    DrawShips(ctrlshipIndex, ctrlshipShapes);
-    DrawDroid(ctrlshipShapes[RESCUE_DROID], &player->droid);
+    DrawTrack(playerIndex, (player->ship->attr & SPECIALED));
+    DrawShips(ctrlshipIndex);
+    DrawDroid(ctrlshipShapes + RESCUE_DROID, &player->droid);
     DrawShadows(ctrlshipIndex);
     DrawWeapons();
     DrawEffects();

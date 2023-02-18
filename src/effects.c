@@ -361,16 +361,13 @@ void DrawShadows(ShipData* shipIndex)
 
     for (i = 0; i < NO_OF_SHIPS; i++, ship++)
     {
+        if (!ship->face) // disabled (TIME_TRIAL etc.)
+            return;
+
         if (!((ship->attr & VISIBLE) && ((ship->attr & FLYING) == 0)))
             continue;
 
-        facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
-
-        while (!(facePtr->flags & TRACK_BASE))
-        {
-            facePtr++;
-        }
-
+        facePtr = ship->face;
         facePoint = gTrack.vertices + facePtr->vertex[0];
 
         dx = ship->unitVecNose.x;

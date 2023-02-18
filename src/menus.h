@@ -71,8 +71,8 @@ typedef struct ConfigData
 
     char gameMode;
     char trackNum;
-    char actTrackNum;
-    char padding_unused;
+    char padding_unused_0;
+    char padding_unused_1;
 
     char Position;
     char EndOfGame;
@@ -122,7 +122,6 @@ void InitGameData(void);
 void InitChampionship(void);
 void DrawContinueGameConfirm(int32 lConfirm);
 void DrawRestartGameConfirm(int32 lConfirm);
-void SetNormPadPresets(void);
 
 void GoPrevMusic(void);
 void GoNextMusic(void);

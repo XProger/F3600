@@ -1675,6 +1675,35 @@ uint32 rsqrt(uint32 x)
     return y;
 }
 
+uint32 speedColor(int32 angle)
+{
+    int32 b;
+    b = (rsin(angle) >> 5) + 128 + 64;
+    if (b > 255)
+        b = 255;
+    return (b << 16);
+}
+
+uint32 weaponColor(int32 angle)
+{
+    int32 r, g, b;
+
+    rsincos(angle, r, g);
+    b = -r;
+    r = (r >> 5) + 128;
+    g = (g >> 5) + 128;
+    b = (b >> 5) + 128;
+
+    if (r > 255)
+        r = 255;
+    if (g > 255)
+        g = 255;
+    if (b > 255)
+        b = 255;
+
+    return r | (g << 8) | (b << 16);
+}
+
 void MulMatrix0(const MATRIX* m0, const MATRIX* m1, MATRIX* ret)
 {
     ret->m[0][0] = (((int32)m0->m[0][0] * (int32)m1->m[0][0]) + ((int32)m0->m[0][1] * (int32)m1->m[1][0]) + ((int32)m0->m[0][2] * (int32)m1->m[2][0])) >> FIXED_SHIFT;

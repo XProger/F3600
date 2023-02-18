@@ -77,7 +77,7 @@ void SectionSearch(ShipData* ship)
                 smallest_magSq = magSq;
                 nearest_section = trk;
             }
-            if (junc->flags & JunctionStart)
+            if (junc->flags & TRACK_JUNCTION_START)
                 trk = trk->nextSection;
             else
                 trk = trk->prevSection;
@@ -168,7 +168,7 @@ TrackSection* FindNearestSection(TrackSection* trk, const vec3i* pos)
                 smallest_magSq = magSq;
                 nearest_section = trk;
             }
-            if (junc->flags & JunctionStart)
+            if (junc->flags & TRACK_JUNCTION_START)
                 trk = trk->nextSection;
             else
                 trk = trk->prevSection;

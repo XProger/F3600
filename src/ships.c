@@ -4,120 +4,131 @@
 
 #include "game.h"
 
-const short startLinePos[16] = {
-    27,     /* NULL             */
-    27,     /* V - TerrorMax    */
-    27,     /* V - Altima VII   */
-    27,     /* R - Altima VII   */
-    16,     /* V - Karbonis     */
-    16,     /* R - Karbonis     */
-    27,     /* R - TerrorMax    */
-    16,     /* R - Korrodera    */
-    16,     /* V - Arridos IV   */
-    16,     /* V - SilverStream */
-    27,     /* V - FireStar     */
-    16,     /* R - Arridos IV   */
-    16,     /* V - Korrodera    */
-    16,     /* R - SilverStream */
-    27,     /* R - FireStar     */
-    27 };   /* NULL             */
+const short startLinePos[14] = {
+// Venom
+    27,     /* Altima VII   */
+    16,     /* Karbonis     */
+    27,     /* TerrorMax    */
+    16,     /* Korrodera    */
+    16,     /* Arridos IV   */
+    16,     /* SilverStream */
+    27,     /* FireStar     */
+// Rapier
+    27,     /* Altima VII   */
+    16,     /* Karbonis     */
+    27,     /* TerrorMax    */
+    16,     /* Korrodera    */
+    16,     /* Arridos IV   */
+    16,     /* SilverStream */
+    27      /* FireStar     */
+};
 
-const short behindSpeed[16] = {
-    100,    /* NULL             */
-    350,    /* V - TerrorMax    */
-    300,    /* V - Altima VII   */
-    500,    /* R - Altima VII   */
-    200,    /* V - Karbonis     */
-    500,    /* R - Karbonis     */
-    500,    /* R - TerrorMax    */
-    500,    /* R - Korrodera    */
-    350,    /* V - Arridos IV   */
-    150,    /* V - SilverStream */
-    200,    /* V - FireStar     */
-    450,    /* R - Arridos IV   */
-    450,    /* V - Korrodera    */
-    10,     /* R - SilverStream */
-    500,    /* R - FireStar     */
-    200 };  /* NULL             */
+typedef struct
+{
+    int16 maxThrust;
+    int16 headingInc;
+    int16 maxHeading;
+    uint8 resistance;
+    uint8 skid;
+} ShipSpecs;
 
-const short shipShapeOrder[8] = { 7, 3, 5, 6, 1, 4, 0, 2 };
+const ShipSpecs SHIP_SPECS[2][4] =
+{
+    { // Venom
+        { 790, 160, 2560, 140, 12 },
+        { 850, 140, 1920, 134, 20 },
+        { 850, 120, 1920, 140, 24 },
+        { 790, 180, 2560, 134, 12 }
+    },
+    { // Rapier
+        { 1200, 160, 2560, 140, 10 },
+        { 1400, 120, 1920, 140, 14 },
+        { 1400, 140, 1920, 130, 16 },
+        { 1200, 180, 2560, 130, 8  }
+    }
+};
 
-/****                                        Team Specific                                     ****/
-/**** Ship No                     0       1       2       3       4       5       6       7    ****/
-const short maxThrustBeg[8]   = { 790,    790,    850,    850,    850,    850,    790,    790     };
-const short resistanceBeg[8]  = { 140,    140,    134,    134,    140,    140,    134,    134     };
-const short headingIncBeg[8]  = { 160,    160,    140,    140,    120,    120,    180,    180     };
-const short maxHeadingBeg[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
-const short skidBeg[8]        = { 12,     12,     20,     20,     24,     24,     12,     12      };
+typedef struct
+{
+    int16 maxThrust;
+    int16 thrustMag;
+} RemoteShipSpecs;
 
-const short maxThrustPro[8]   = { 1200,   1200,   1400,   1400,   1400,   1400,   1200,   1200    };
-const short resistancePro[8]  = { 140,    140,    140,    140,    130,    130,    130,    130     };
-const short headingIncPro[8]  = { 160,    160,    120,    120,    140,    140,    180,    180     };
-const short maxHeadingPro[8]  = { 2560,   2560,   1920,   1920,   1920,   1920,   2560,   2560    };
-const short skidPro[8]        = { 10,     10,     14,     14,     16,     16,     8,      8       };
-
-/****                            Remote Control Specific                               ****/
-/**** Ship No                     0       1       2       3       4       5       6    ****/
-const short RMaxThrustBeg[7]  = { 2550,   2600,   2630,   2660,   2700,   2720,   2750    };
-const short RThrustMagBeg[7]  = { 44,     45,     45,     46,     47,     48,     49      };
-const short fightBackBeg[7]   = { 1,      1,      1,      1,      1,      1,      1       };
-
-const short RMaxThrustPro[7]  = { 3750,   3780,   3800,   3850,   3900,   3950,   4000    };
-const short RThrustMagPro[7]  = { 50,     53,     55,     57,     60,     62,     65      };
-const short fightBackPro[7]   = { 1,      1,      1,      1,      1,      1,      1       };
+const RemoteShipSpecs REMOTE_SHIP_SPECS[2][8] =
+{
+    { // Venom
+        { 2520, 43 },
+        { 2550, 44 },
+        { 2600, 45 },
+        { 2630, 45 },
+        { 2660, 46 },
+        { 2700, 47 },
+        { 2720, 48 },
+        { 2750, 49 }
+    },
+    { // Rapier
+        { 3720, 47 },
+        { 3750, 50 },
+        { 3780, 53 },
+        { 3800, 55 },
+        { 3850, 57 },
+        { 3900, 60 },
+        { 3950, 62 },
+        { 4000, 65 }
+    }
+};
 
 short championOrder[8];
-short raceOrder[8];
 short shipOrder[8];
 
-void SetSpread(ShipData* ship, int position)
+int32 SetSpread(int32 position)
 {
     int32 speed;
 
     position--;
 
-    switch (gConfig.actTrackNum)
+    switch (gConfig.trackNum)
     {
-        case 1:
-            speed = 60 + position * 11;
-            break;
-        case 2:
+        case 0:
             speed = 80 + position * 20;
             break;
+        case 1:
+            speed = 10 + position * 8;
+            break;
+        case 2:
+            speed = 60 + position * 11;
+            break;
         case 3:
-            speed = 80 + position * 11;
+            speed = 40 + position * 11;
             break;
         case 4:
-            speed = 10 + position * 8;
+            speed = 80 + position * 15;
             break;
         case 5:
             speed = 10 + position * 8;
             break;
         case 6:
-            speed = 60 + position * 8;
+            speed = 40 + position * 11;
             break;
         case 7:
-            speed = 30 + position * 11;
+            speed = 80 + position * 11;
             break;
         case 8:
-            speed = 80 + position * 15;
-            break;
-        case 9:
             speed = 10 + position * 8;
             break;
+        case 9:
+            speed = 60 + position * 8;
+            break;
         case 10:
-            speed = 40 + position * 11;
+            speed = 30 + position * 11;
             break;
         case 11:
             speed = 30 + position * 11;
             break;
         case 12:
-            speed = 40 + position * 11;
-            break;
-        case 13:
             speed = 10 + position * 8;
             break;
-        case 14:
+        case 13:
             speed = 40 + position * 11;
             break;
         default:
@@ -125,10 +136,10 @@ void SetSpread(ShipData* ship, int position)
             ASSERT(0);
     }
 
-    ship->numtospeed = speed * position;
+    return speed * position;
 }
 
-void DrawShips(ShipData* shipIndex, Object** shipShapes)
+void DrawShips(ShipData* shipIndex)
 {
     int32 i;
     int32 dist, dx, dy, dz, vz;
@@ -159,11 +170,11 @@ void DrawShips(ShipData* shipIndex, Object** shipShapes)
             {
             #ifdef USE_SHIP_LODS
                 if (dist < SHIP_LOD_DIST)
-                    obj = shipShapes[ship->highResTableIndex];
+                    obj = ship->shape;
                 else
-                    obj = shipShapes[ship->lowResTableIndex];
+                    obj = ship->shape + NO_OF_SHIPS;
             #else
-                obj = shipShapes[ship->highResTableIndex];
+                obj = ship->shape;
             #endif
 
                 if (!(attr & VIEW_IN) || (attr & REMOTE_VIEW))
@@ -206,12 +217,16 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
     TrackSection* nextSection;
     vec4i facePoint;
     TrackSection* startSection[8];
-    short position = 1;
+    int32 position;
     short used[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    short raceOrder[8];
     int index;
     ShipData* ship;
+    int32 startSecNo = startLinePos[gConfig.trackNum];
+    const ShipSpecs* specs;
+    const RemoteShipSpecs* remoteSpecs;
 
-    if (((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 1)) || ((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 8)) || (gConfig.raceType != CHAMPIONSHIP))
+    if (((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 0)) || ((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 7)) || (gConfig.raceType != CHAMPIONSHIP))
     {
         for (i = 0; i < NO_OF_SHIPS; i++)
         {
@@ -282,7 +297,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         raceOrder[0] = ownShip;
     }
 
-    for (i = 0; i < startLinePos[gConfig.actTrackNum] - 15; i++)
+    for (i = 0; i < startSecNo - 15; i++)
     {
         section = section->nextSection;
     }
@@ -291,7 +306,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
     {
         startSection[i] = section;
         section = section->nextSection;
-        if ((i % 2) == 0)
+        if ((i & 1) == 0)
             section = section->nextSection;
     }
 
@@ -299,6 +314,7 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
     {
         ship = shipIndex + i;
 
+        ship->shape = ctrlshipShapes + i;
         ship->vel.x = 0;
         ship->vel.y = 0;
         ship->vel.z = 0;
@@ -309,14 +325,10 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->vpitch = 0;
         ship->vroll = 0;
         ship->ahdg = 0;
-        ship->thrust_mag = 0;
-        ship->r_brake_rot = 0;
-        ship->l_brake_rot = 0;
-        ship->attr = 0;
-        ship->attr |= RACING;
-        ship->attr |= VISIBLE;
-        ship->attr |= DIRECTION;
-        ship->combatAttr = 0;
+        ship->thrustMag = 0;
+        ship->BrakeRotR = 0;
+        ship->BrakeRotL = 0;
+        ship->attr = RACING | VISIBLE | DIRECTION;
         ship->weaponType = WPN_NONE;
         ship->lapNo = 0;
         ship->speed = 0;
@@ -324,38 +336,13 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->revConCount = 0;
         ship->crossedLine = 0;
 
-        if (gConfig.raceClass == 0)
-        {
-            ship->max_thrust = maxThrustBeg[i];
-            ship->skid = skidBeg[i];
-        }
-        else
-        {
-            ship->max_thrust = maxThrustPro[i];
-            ship->skid = skidPro[i];
-        }
+        specs = SHIP_SPECS[gConfig.raceClass] + (i >> 1); // team = index / 2
 
-        if (gConfig.raceClass == 0)
-        {
-            ship->headingInc = headingIncBeg[i];
-            ship->maxHeading = maxHeadingBeg[i];
-        }
-        else
-        {
-            ship->headingInc = headingIncPro[i];
-            ship->maxHeading = maxHeadingPro[i];
-        }
-
-        if (gConfig.raceClass == 0)
-        {
-            ship->resistance = resistanceBeg[i];
-            ship->fightBack = fightBackBeg[i];
-        }
-        else
-        {
-            ship->resistance = resistancePro[i];
-            ship->fightBack = fightBackPro[i];
-        }
+        ship->maxThrust = specs->maxThrust;
+        ship->headingInc = specs->headingInc;
+        ship->maxHeading = specs->maxHeading;
+        ship->resistance = specs->resistance;
+        ship->skid = specs->skid;
 
         for (j = 0; j < 5; j++)
             ship->lapTimes[j] = 0;
@@ -363,45 +350,35 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->updateCount = START_TIME;
         ship->targetShip = NULL;
 
+        position = shipOrder[i];
+
         if (ship->player)
         {
             ship->update = UpdatePlayerShipNormStart;
 
-            position = 0;
-            ship->position = position;
             ship->remoteMaxThrust = 2900;
             ship->remoteThrustMag = 46;
-            ship->fightBack = 0;
         }
         else
         {
             ship->update = UpdateRemoteShipStart;
 
-            position = shipOrder[i];
-            ship->position = position;
+            remoteSpecs = REMOTE_SHIP_SPECS[gConfig.raceClass] + position;
+            ship->remoteMaxThrust = remoteSpecs->maxThrust;
+            ship->remoteThrustMag = remoteSpecs->thrustMag;
 
-            if (gConfig.raceClass == 0)
-            {
-                ship->remoteMaxThrust = RMaxThrustBeg[position - 1];
-                ship->remoteThrustMag = RThrustMagBeg[position - 1];
-                ship->fightBack = fightBackBeg[position - 1];
-            }
-            else
-            {
-                ship->remoteMaxThrust = RMaxThrustPro[position - 1];
-                ship->remoteThrustMag = RThrustMagPro[position - 1];
-                ship->fightBack = fightBackPro[position - 1];
-            }
+            ship->numtospeed = SetSpread(position);
         }
 
         ship->nearTrkSect = startSection[position];
         ship->prevShipSect = startSection[position];
-        SetSpread(ship, position);
 
-        face = gTrack.faces + startSection[position]->faceStart;
-        face++;
-        if ((position % 2) != 0)
-            face++;
+        face = gTrack.faces + startSection[position]->faceStart; // left border face
+        face++; // left side
+        if (position & 1)
+        {
+            face++; // right side
+        }
 
         facePoint.x = (gTrack.vertices[(face->vertex[0])].x + gTrack.vertices[(face->vertex[2])].x) >> 1;
         facePoint.y = (gTrack.vertices[(face->vertex[0])].y + gTrack.vertices[(face->vertex[2])].y) >> 1;

@@ -1,6 +1,23 @@
 #include "game.h"
 
-extern short behindSpeed[];
+const short behindSpeed[16] = {
+    100,    /* NULL             */
+    350,    /* V - TerrorMax    */
+    300,    /* V - Altima VII   */
+    500,    /* R - Altima VII   */
+    200,    /* V - Karbonis     */
+    500,    /* R - Karbonis     */
+    500,    /* R - TerrorMax    */
+    500,    /* R - Korrodera    */
+    350,    /* V - Arridos IV   */
+    150,    /* V - SilverStream */
+    200,    /* V - FireStar     */
+    450,    /* R - Arridos IV   */
+    450,    /* V - Korrodera    */
+    10,     /* R - SilverStream */
+    500,    /* R - FireStar     */
+    200 };  /* NULL             */
+
 extern short shipOrder[];
 
 /**********************************************************************/
@@ -15,6 +32,8 @@ void UpdateShips(ShipData* shipIndex)
     {
         ship = shipIndex + i;
 
+        ship->face = NULL;
+
         if (!(ship->player || (gConfig.raceType != TIME_TRIAL)))
             continue;
 
@@ -23,6 +42,8 @@ void UpdateShips(ShipData* shipIndex)
         FRAME_LERP_INIT(ship);
 
         (ship->update)(shipIndex, i);
+
+        ASSERT(ship->face);
     }
 }
 
@@ -39,7 +60,7 @@ ShipData* GetNearestPlayerShip(ShipData* remoteShip)
         return minShip;
     }
 
-    for (i = 1; i < MAX_PLAYERS; i++)
+    for (i = 0; i < MAX_PLAYERS; i++)
     {
         ShipData* ship = gPlayers[i].ship;
 
@@ -156,18 +177,18 @@ void UpdatePlayerShipNormStart(ShipData* shipIndex, int shipNo)
         }
     }
 
-    SetBrake(ship, pCon.lBrake, pCon.rBrake);
+    SetBrake(ship, player->binding.lBrake, player->binding.rBrake);
 
     if (ship->attr & RACING)
-        SetView(ship, pCon.view);
+        SetView(ship, player->binding.view);
 
-    if (player->pad & pCon.thrust)
-        ship->thrust_mag += (FR15U + 1);
-    else if (ship->thrust_mag > FR15U)
-        ship->thrust_mag -= (FR15U + 1);
+    if (player->pad & player->binding.thrust)
+        ship->thrustMag += (FR15U + 1);
+    else if (ship->thrustMag > FR15U)
+        ship->thrustMag -= (FR15U + 1);
 
-    if (ship->thrust_mag > ship->max_thrust)
-        ship->thrust_mag = ship->max_thrust;
+    if (ship->thrustMag > ship->maxThrust)
+        ship->thrustMag = ship->maxThrust;
 }
 
 /**************************************************************************/
@@ -178,10 +199,8 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
     ShipData* ship;
     int32 headingInc;
     int32 vpitchInc;
-    static int maxThrust;
-    static short revLeft = 0;
-    static short revRight = 0;
     PlayerData* player;
+    int32 iLeft, iRight, iLBrake, iRBrake;
 
     ship = shipIndex + shipNo;
     ASSERT(ship->player);
@@ -199,46 +218,42 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
     {
         ship->revConCount--;
         if (ship->revConCount == 0)
-            ship->combatAttr &= ~REVCONNED;
+            ship->attr &= ~REVCONNED;
     }
 
     if (ship->specialCount > 0)
     {
         ship->specialCount--;
         if (ship->specialCount == 0)
-            ship->combatAttr &= ~SPECIALED;
+            ship->attr &= ~SPECIALED;
     }
 
-    if ((ship->combatAttr & REVCONNED) && (revLeft == 0))
+    if ((ship->attr & REVCONNED) == 0)
     {
-        pCon.left = IN_RIGHT;
-        pCon.right = IN_LEFT;
-        revLeft = pCon.lBrake;
-        revRight = pCon.rBrake;
-        pCon.lBrake = revRight;
-        pCon.rBrake = revLeft;
+        iLeft = IN_LEFT;
+        iRight = IN_RIGHT;
+        iLBrake = player->binding.lBrake;
+        iRBrake = player->binding.rBrake;
     }
-    else if (((ship->combatAttr & REVCONNED) == 0) && (revLeft != 0))
+    else
     {
-        pCon.left = IN_LEFT;
-        pCon.right = IN_RIGHT;
-        pCon.lBrake = revLeft;
-        pCon.rBrake = revRight;
-        revLeft = 0;
-        revRight = 0;
+        iLeft = IN_RIGHT;
+        iRight = IN_LEFT;
+        iLBrake = player->binding.rBrake;
+        iRBrake = player->binding.lBrake;
     }
 
     headingInc = (ship->headingInc * player->stickX) >> 8;
     vpitchInc = (player->stickY * 30) >> 8;
 
-    if (player->pad & pCon.left) /** Inc = 128 , max 2048 **/
+    if (player->pad & iLeft) /** Inc = 128 , max 2048 **/
     {
         if (ship->vhdg >= 0)
             ship->vhdg += headingInc;
         else if (ship->vhdg < 0)
             ship->vhdg += (headingInc << 1);
     }
-    else if (player->pad & pCon.right)
+    else if (player->pad & iRight)
     {
         if (ship->vhdg <= 0)
             ship->vhdg -= headingInc;
@@ -284,24 +299,23 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
         ship->shakeCount = 4;
     }
 
-    if (player->pad & pCon.down)
+    if (player->pad & IN_DOWN)
         ship->vpitch += vpitchInc;
-    if (player->pad & pCon.up)
+    if (player->pad & IN_UP)
         ship->vpitch -= vpitchInc;
 
     /**** Check for Stall and set thrust ***/
     if (ship->updateCount == STALL_DELAY)
     {
-        if ((ship->thrust_mag >= 680) && (ship->thrust_mag <= 700))
+        if ((ship->thrustMag >= 680) && (ship->thrustMag <= 700))
         {
-            ship->thrust_mag = 1800;
-            maxThrust = 1800;
+            ship->thrustMag = 1800;
+            ship->startThrust = 1800;
         }
-        else if (ship->thrust_mag < 680)
-            maxThrust = ship->max_thrust;
-
+        else if (ship->thrustMag < 680)
+            ship->startThrust = ship->maxThrust;
         else
-            maxThrust = 200;
+            ship->startThrust = 200;
     }
 
     if (ship->updateCount > 0)
@@ -309,27 +323,31 @@ void UpdatePlayerShipNorm(ShipData* shipIndex, int shipNo)
         ship->updateCount--;
     }
     else
-        maxThrust = ship->max_thrust;
-
-    if (maxThrust < 500)
-        maxThrust += (randy() % 11) >> 1;
-
-    if (player->pad & pCon.thrust)
     {
-        ship->thrust_mag += (FR15U + 1);
+        ship->startThrust = ship->maxThrust;
     }
-    else if (ship->thrust_mag > FR7U)
-        ship->thrust_mag -= (FR7U + 1);
 
-    if (ship->thrust_mag > maxThrust)
-        ship->thrust_mag = maxThrust;
+    if (ship->startThrust < 500)
+    {
+        ship->startThrust += (randy() % 11) >> 1;
+    }
+
+    if (player->pad & player->binding.thrust)
+    {
+        ship->thrustMag += (FR15U + 1);
+    }
+    else if (ship->thrustMag > FR7U)
+        ship->thrustMag -= (FR7U + 1);
+
+    if (ship->thrustMag > ship->startThrust)
+        ship->thrustMag = ship->startThrust;
 
     if ((ship->attr & ELECTROED) && ((randy() % 80) == 0))
-        ship->thrust_mag -= ship->thrust_mag >> 2;
+        ship->thrustMag -= ship->thrustMag >> 2;
 
-    SetBrake(ship, pCon.lBrake, pCon.rBrake);
-    SetView(ship, pCon.view);
-    SetFire(ship, pCon.fire, shipNo);
+    SetBrake(ship, iLBrake, iRBrake);
+    SetView(ship, player->binding.view);
+    SetFire(ship, player->binding.fire, shipNo);
     ShipTrkReaction(ship);
 }
 
@@ -481,6 +499,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
     vec3i force;
     int gap_mag, decide;
     short DPASectDiff;
+    int32 trackNo = gTrackList[gConfig.trackNum];
 
     offSetVector.x = 0;
     offSetVector.y = 0;
@@ -501,12 +520,6 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
     if ((remoteShip->attr & FLYING) == 0)
     {
         /*** Find First track base section ***/
-        facePtr = gTrack.faces + remoteShip->nearTrkSect->faceStart;
-        while ((facePtr->flags & TRACK_BASE) == 0)
-        {
-            facePtr++;
-        }
-
         DPASectDiff = remoteShip->DPASectDiff - playerShip->DPASectDiff;
 
         remoteShip->attr &= ~JUST_IN_FRONT;
@@ -571,37 +584,32 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
                     decide = randy() % 64; /* 12 */
 
                     remoteShip->updateCount = JUST_FRONT_DELAY;
-                    if (remoteShip->fightBack) /**** Ship wants to make life difficult ****/
-                    {
-                        if ((decide < 40) || (remoteShip->weaponType == WPN_NONE)) /*** Ship will try to block you ***/
-                        {
-                            remoteShip->updateControl = BlockShip;
-                        }
-                        else if ((decide >= 40) && (decide < 52)) /*** Ship will attempt to drop mines in your path ***/
-                        {
-                            remoteShip->updateControl = BlockShip;
-                            if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
-                            {
-                                PlayNote(SFX_SP_MINES);
-                                SetPitch(SFX_SP_MINES, SND_DEF_PITCH);
 
-                                remoteShip->weaponType = WPN_MINE;
-                                FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
-                            }
-                        }
-                        else if ((decide >= 52) && (decide < 64)) /*** Ship will raise its shield ***/
+                    /**** Ship wants to make life difficult ****/
+                    if ((decide < 40) || (remoteShip->weaponType == WPN_NONE)) /*** Ship will try to block you ***/
+                    {
+                        remoteShip->updateControl = BlockShip;
+                    }
+                    else if ((decide >= 40) && (decide < 52)) /*** Ship will attempt to drop mines in your path ***/
+                    {
+                        remoteShip->updateControl = BlockShip;
+                        if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                         {
-                            remoteShip->updateControl = BlockShip;
-                            if ((remoteShip->attr & SHIELDED) == 0)
-                            {
-                                remoteShip->weaponType = WPN_SHIELD;
-                                FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
-                            }
+                            PlayNote(SFX_SP_MINES);
+                            SetPitch(SFX_SP_MINES, SND_DEF_PITCH);
+
+                            remoteShip->weaponType = WPN_MINE;
+                            FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                         }
                     }
-                    else /**** Let the first ships be easy to pass ****/
+                    else if ((decide >= 52) && (decide < 64)) /*** Ship will raise its shield ***/
                     {
-                        remoteShip->updateControl = AvoidShip;
+                        remoteShip->updateControl = BlockShip;
+                        if ((remoteShip->attr & SHIELDED) == 0)
+                        {
+                            remoteShip->weaponType = WPN_SHIELD;
+                            FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
+                        }
                     }
                 }
 
@@ -632,69 +640,59 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
                 {
                     remoteShip->updateCount = JUST_BEHIND_DELAY;
 
-                    if (remoteShip->fightBack) /**** Ship wants you to say "Outside Now!" ****/
+                    /**** Ship wants you to say "Outside Now!" ****/
+                    if (remoteShip->weaponType == WPN_NONE)
                     {
-                        if (remoteShip->weaponType == WPN_NONE)
+                        remoteShip->updateControl = AvoidShip;
+                        remoteShip->attr |= OVERTAKE;
+                    }
+                    else
+                    {
+                        decide = randy() % 64;
+
+                        if (decide < 48)
+                        {
+                            remoteShip->updateControl = BlockShip;
+                        }
+                        else if ((decide >= 40) && (decide < 54))
                         {
                             remoteShip->updateControl = AvoidShip;
-                            remoteShip->attr |= OVERTAKE;
+                            remoteShip->attr &= ~OVERTAKE;
+                            if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
+                            {
+                                PlayNote(SFX_SP_ROCKET);
+                                SetPitch(SFX_SP_ROCKET, SND_DEF_PITCH);
+
+                                remoteShip->weaponType = WPN_ROCKET;
+                                FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
+                            }
                         }
-                        else
+                        else if ((decide >= 54) && (decide < 60))
                         {
-                            decide = randy() % 64;
-
-                            if (decide < 48)
+                            remoteShip->updateControl = AvoidShip;
+                            remoteShip->attr &= ~OVERTAKE;
+                            if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
                             {
-                                remoteShip->updateControl = BlockShip;
-                            }
-                            else if ((decide >= 40) && (decide < 54))
-                            {
-                                remoteShip->updateControl = AvoidShip;
-                                remoteShip->attr &= ~OVERTAKE;
-                                if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
-                                {
-                                    PlayNote(SFX_SP_ROCKET);
-                                    SetPitch(SFX_SP_ROCKET, SND_DEF_PITCH);
+                                PlayNote(SFX_SP_MISSILE);
+                                SetPitch(SFX_SP_MISSILE, SND_DEF_PITCH);
 
-                                    remoteShip->weaponType = WPN_ROCKET;
-                                    FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
-                                }
-                            }
-                            else if ((decide >= 54) && (decide < 60))
-                            {
-                                remoteShip->updateControl = AvoidShip;
-                                remoteShip->attr &= ~OVERTAKE;
-                                if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
-                                {
-                                    PlayNote(SFX_SP_MISSILE);
-                                    SetPitch(SFX_SP_MISSILE, SND_DEF_PITCH);
-
-                                    remoteShip->weaponType = WPN_MISSILE;
-                                    FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
-                                }
-                            }
-                            else if ((decide >= 60) && (decide < 64))
-                            {
-                                remoteShip->updateControl = AvoidShip;
-                                remoteShip->attr &= ~OVERTAKE;
-                                if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
-                                {
-                                    PlayNote(SFX_SP_SHOCKWAVE);
-                                    SetPitch(SFX_SP_SHOCKWAVE, SND_DEF_PITCH);
-
-                                    remoteShip->weaponType = WPN_ELEC_BOLT;
-                                    FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
-                                }
+                                remoteShip->weaponType = WPN_MISSILE;
+                                FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
                             }
                         }
-                    }
-                    else /**** If ship destined to be tail-ender then slow down ****/
-                    {
-                        remoteShip->remoteMaxThrust = 2100;
-                        remoteShip->remoteThrustMag = 25;
-                        remoteShip->speed = 2100;
-                        remoteShip->updateControl = AvoidShip;
-                        remoteShip->attr &= ~OVERTAKE;
+                        else if ((decide >= 60) && (decide < 64))
+                        {
+                            remoteShip->updateControl = AvoidShip;
+                            remoteShip->attr &= ~OVERTAKE;
+                            if (((remoteShip->attr & SHIELDED) == 0) && (remoteShip->attr & RACING))
+                            {
+                                PlayNote(SFX_SP_SHOCKWAVE);
+                                SetPitch(SFX_SP_SHOCKWAVE, SND_DEF_PITCH);
+
+                                remoteShip->weaponType = WPN_ELEC_BOLT;
+                                FireWeapon(remoteShip, shipNo, remoteShip->weaponType);
+                            }
+                        }
                     }
                 }
 
@@ -812,7 +810,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
             }
         }
 
-        (remoteShip->updateControl)(&offSetVector, shipIndex, facePtr, shipNo);
+        (remoteShip->updateControl)(&offSetVector, shipIndex, remoteShip->face, shipNo);
 
         /***************************************************************************/
         /***************************************************************************/
@@ -828,7 +826,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
 
         if (section->junction)
         {
-            if (section->junction->flags & JunctionStart)
+            if (section->junction->flags & TRACK_JUNCTION_START)
             {
                 decide = randy() % 2;
                 if (decide == 0)
@@ -844,7 +842,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
         {
             if (section->junction)
             {
-                if (section->junction->flags & JunctionStart)
+                if (section->junction->flags & TRACK_JUNCTION_START)
                 {
                     if (remoteShip->attr & JUNC_LEFT)
                     {
@@ -871,7 +869,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
         remoteShip->speed -= abs(remoteShip->speed * remoteShip->vhdg) >> 14;
         remoteShip->speed -= abs(remoteShip->speed * remoteShip->vpitch) >> 14;
 
-        if (remoteShip->nearTrkSect->flags & Jump) /**** Cure for ships getting stuck on hump lip ****/
+        if (remoteShip->nearTrkSect->flags & TRACK_JUMP) /**** Cure for ships getting stuck on hump lip ****/
         {
             targetVector.x = remoteShip->nearTrkSect->centre.x - remoteShip->nearTrkSect->prevSection->centre.x;
             targetVector.y = remoteShip->nearTrkSect->centre.y - remoteShip->nearTrkSect->prevSection->centre.y;
@@ -916,13 +914,8 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
         /***** Can use control routine to determine position now *****/
         /***** should use actual position finally                *****/
 
-        if ((facePtr->flags & SPEED_UP) && ((remoteShip->updateControl == HoldLeft) || (remoteShip->updateControl == HoldCentre)))
-        {
-            remoteShip->speed += 200;
-        }
-        facePtr++;
-
-        if ((facePtr->flags & SPEED_UP) && ((remoteShip->updateControl == HoldRight) || (remoteShip->updateControl == HoldCentre)))
+        facePtr = remoteShip->face;
+        if (facePtr->flags & TRACK_FACE_SPEED)
         {
             remoteShip->speed += 200;
         }
@@ -973,7 +966,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
         nextSection = section->nextSection;
 
         remoteShip->updateControl = HoldCentre;
-        (remoteShip->updateControl)(&offSetVector, playerShip, facePtr, shipNo);
+        (remoteShip->updateControl)(&offSetVector, playerShip, remoteShip->face, shipNo);
 
         if (remoteShip->remoteMaxThrust > remoteShip->speed)
         {

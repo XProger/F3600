@@ -375,16 +375,17 @@ TEXT_DATA* text_data(int start_pos_x, int start_pos_y, int size)
 void UpdateShipSecNo(ShipData* ship)
 {
     int32 secNo;
+    int32 startSecNo = startLinePos[gConfig.trackNum];
 
     if (ship->player)
     {
-        if ((ship->prevSecNo == (startLinePos[trackNo] + 1)) && (ship->nearSecNo <= startLinePos[trackNo]))
+        if ((ship->prevSecNo == (startSecNo + 1)) && (ship->nearSecNo <= startSecNo))
         {
             ship->crossedLine--;
         }
     }
 
-    if ((ship->prevSecNo == startLinePos[trackNo]) && ((ship->nearSecNo > startLinePos[trackNo]) && (ship->nearSecNo < (startLinePos[trackNo] + 10))))
+    if ((ship->prevSecNo == startSecNo) && ((ship->nearSecNo > startSecNo) && (ship->nearSecNo < (startSecNo + 10))))
     {
         if (ship->player)
         {
@@ -418,7 +419,7 @@ void UpdateShipSecNo(ShipData* ship)
         }
     }
 
-    secNo = ship->nearSecNo - (startLinePos[trackNo] + 1);
+    secNo = ship->nearSecNo - (startSecNo + 1);
 
     if (ship->player)
     {
@@ -495,6 +496,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice)
                 ship->remoteThrustMag = 32;
                 ship->speed = 3160;
                 ship->attr &= ~(SHIELDED | VIEW_IN | RACING);
+                ship->targetShip = NULL;
 
                 player->camera.update = UpdateCameraAttractMode;
             }
@@ -884,7 +886,7 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
         if ((gConfig.newLapRecord != 1) || BLINK_SLOW)
         {
             AddText(STR_LAP_RECORD, text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
-            AddTime(scoreTable[((gConfig.trackNum - 1) - gConfig.trackInc)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
+            AddTime(scoreTable[gConfig.trackNum - gConfig.trackInc].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
     else if (gConfig.raceType == TIME_TRIAL)
@@ -892,7 +894,7 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
         if ((gConfig.newLapRecord != 1) || BLINK_SLOW)
         {
             AddText(STR_LAP_RECORD, text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
-            AddTime(scoreTable[((gConfig.trackNum - 1) + HiScoreTracks)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
+            AddTime(scoreTable[gConfig.trackNum + HiScoreTracks].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
     else
@@ -900,7 +902,7 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
         if ((gConfig.newLapRecord != 1) || BLINK_SLOW)
         {
             AddText(STR_LAP_RECORD, text_data(15, 194, 8), TEXT_COLOR_HIGHLIGHT);
-            AddTime(scoreTable[(gConfig.trackNum - 1)].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
+            AddTime(scoreTable[gConfig.trackNum].lapRecord, text_data(25, 206, 8), TEXT_COLOR_WHITE);
         }
     }
 }
@@ -964,10 +966,12 @@ void DrawHud(ShipData* ship)
         }
 
         AddText(STR_LAP_RECORD, text_data(guiL + 15, guiT + 43, 8), TEXT_COLOR_HIGHLIGHT);
+
         if (gConfig.raceType == TIME_TRIAL)
-            AddTime(scoreTable[((gConfig.trackNum - 1) + HiScoreTracks)].lapRecord, text_data(guiL + 15, guiT + 55, 8), TEXT_COLOR_WHITE);
+            AddTime(scoreTable[gConfig.trackNum + HiScoreTracks].lapRecord, text_data(guiL + 15, guiT + 55, 8), TEXT_COLOR_WHITE);
         else
-            AddTime(scoreTable[(gConfig.trackNum - 1)].lapRecord, text_data(guiL + 15, guiT + 55, 8), TEXT_COLOR_WHITE);
+            AddTime(scoreTable[gConfig.trackNum].lapRecord, text_data(guiL + 15, guiT + 55, 8), TEXT_COLOR_WHITE);
+
         if ((ship->attr & DIRECTION) == 0)
         {
             CentreText(STR_WRONG_WAY, text_data(0, 110, 16), TEXT_COLOR_HIGHLIGHT);
@@ -976,7 +980,7 @@ void DrawHud(ShipData* ship)
 
     if (ship->attr & RACING)
     {
-        DisplaySpeedo(ship->speed, ship->thrust_mag);
+        DisplaySpeedo(ship->speed, ship->thrustMag);
         renderImage(gSpeedoTex, speedo_x, speedo_y);
     }
 }

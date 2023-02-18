@@ -6,60 +6,7 @@ WeaponData* gWeaponsActive;
 
 extern Texture* gTargetTex;
 
-void UpdateWeapons(ShipData* shipIndex, Object** weaponShapes)
-{
-    WeaponData* weapon = gWeaponsActive;
-
-    while (weapon)
-    {
-        WeaponData* next = weapon->next;
-
-        FRAME_LERP_INIT(weapon);
-
-        (weapon->updateWeapon)(shipIndex, weaponShapes, weapon);
-        weapon = next;
-    }
-}
-
-void DrawWeapons(void)
-{
-    Object* obj;
-    WeaponData* weapon = gWeaponsActive;
-
-    while (weapon)
-    {
-        int32 px = weapon->pos.x;
-        int32 py = weapon->pos.y;
-        int32 pz = weapon->pos.z;
-        int32 rx = weapon->pitch;
-        int32 ry = weapon->hdg;
-        int32 rz = weapon->roll;
-
-        obj = gWeaponShapes[weapon->currentWeapon];
-
-        matrixPush();
-
-        FRAME_LERP(weapon);
-
-        matrixTranslate(px, py, pz);
-        matrixRotateYXZ(rx, ry, rz);
-
-        if (weapon->type == WPN_SHIELD)
-        {
-            renderShield(obj, weapon->count);
-        }
-        else
-        {
-            renderObject(obj);
-        }
-
-        matrixPop();
-
-        weapon = weapon->next;
-    }
-}
-
-void MissileLock(ShipData* ship, ShipData* shipIndex, Object** shipShapes)
+void MissileLock(ShipData* ship, ShipData* shipIndex)
 {
     int32 i;
     int32 distance, shortestDistance;
@@ -76,10 +23,10 @@ void MissileLock(ShipData* ship, ShipData* shipIndex, Object** shipShapes)
             continue;
 
         /*** Is Player ship upon a junction branch **/
-        if (ship->nearTrkSect->flags & JunctionSection)
+        if (ship->nearTrkSect->flags & TRACK_JUNCTION)
         {
             /*** If remote ship on same branch the attempt to target ***/
-            if (targetShip->nearTrkSect->flags & JunctionSection)
+            if (targetShip->nearTrkSect->flags & TRACK_JUNCTION)
             {
                 distance = targetShip->nearTrkSect->secNo - ship->nearTrkSect->secNo;
 
@@ -111,7 +58,7 @@ void MissileLock(ShipData* ship, ShipData* shipIndex, Object** shipShapes)
         }
         else
         {
-            if (targetShip->nearTrkSect->flags & JunctionSection)
+            if (targetShip->nearTrkSect->flags & TRACK_JUNCTION)
             {
                 section = ship->nearTrkSect;
                 for (distance = 0; distance < 10; distance++)
@@ -274,13 +221,11 @@ void Weapon2Mine(WeaponData* weapon)
 }
 
 
-void UpdateMine(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void UpdateMine(ShipData* shipIndex, WeaponData* weapon)
 {
     vec3i distance;
     int32 ossilation;
     int32 i, magSq;
-    int32 r;
-    ObjFace* face;
 
     weapon->count--;
     if (weapon->count == 0)
@@ -294,23 +239,6 @@ void UpdateMine(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
     weapon->pos.x += ossilation;
     weapon->hdg += 128;
     weapon->pitch = 0;
-
-#ifdef USE_VERTEX_COLOR
-    face = weaponShapes[weapon->currentWeapon]->faces;
-
-    r = (rsin(weapon->count * 140) >> 6) + 230;
-    if (r > 255)
-        r = 255;
-
-    for (i = 0; i < 8; i++, face++) // the original hack, first 8 triangles (top & bottom) are lit
-    {
-        ASSERT(!FACE_QUAD(face));
-        face->color[0] =
-        face->color[1] =
-        face->color[2] =
-        face->color[3] = r | 0xFF004000;
-    }
-#endif
 
     /***********************************************************/
     /****   Perform collision checks against other ships     ***/
@@ -355,7 +283,7 @@ void UpdateMine(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
     }
 }
 
-void InitMine(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void InitMine(ShipData* shipIndex, WeaponData* weapon)
 {
     if (weapon->count == 1)
     {
@@ -371,7 +299,7 @@ void InitMine(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
         weapon->roll = 0;
         FRAME_LERP_INIT(weapon);
 
-        weapon->updateWeapon = UpdateMine;
+        weapon->update = UpdateMine;
         weapon->count = MINE_DURATION;
 
         if (ship->player)
@@ -386,7 +314,7 @@ void InitMine(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
 }
 
 
-void UpdateMissile(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void UpdateMissile(ShipData* shipIndex, WeaponData* weapon)
 {
     vec3i distance;
     vec3i targetVector;
@@ -452,7 +380,7 @@ void UpdateMissile(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapo
 
     facePtr = gTrack.faces + weapon->nearTrkSect->faceStart;
 
-    while ((facePtr->flags & TRACK_BASE) == 0)
+    while ((facePtr->flags & TRACK_FACE_BASE) == 0)
     {
         facePtr++;
     }
@@ -546,7 +474,7 @@ void UpdateMissile(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapo
     Weapon2Mine(weapon);
 }
 
-void InitMissile(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void InitMissile(ShipData* shipIndex, WeaponData* weapon)
 {
     Face* facePtr;
     ShipData* ship = weapon->fireShip;
@@ -575,7 +503,7 @@ void InitMissile(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
 
     facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
 
-    while ((facePtr->flags & TRACK_BASE) == 0)
+    while ((facePtr->flags & TRACK_FACE_BASE) == 0)
     {
         facePtr++;
     }
@@ -594,10 +522,10 @@ void InitMissile(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
     weapon->roll = 0;
     FRAME_LERP_INIT(weapon);
 
-    weapon->updateWeapon = UpdateMissile;
+    weapon->update = UpdateMissile;
 }
 
-void UpdateRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void UpdateRocket(ShipData* shipIndex, WeaponData* weapon)
 {
     vec3i distance;
     Face* facePtr;
@@ -609,7 +537,7 @@ void UpdateRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
 
     facePtr = gTrack.faces + weapon->nearTrkSect->faceStart;
 
-    while ((facePtr->flags & TRACK_BASE) == 0)
+    while ((facePtr->flags & TRACK_FACE_BASE) == 0)
     {
         facePtr++;
     }
@@ -705,7 +633,7 @@ void UpdateRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
 
     facePtr = gTrack.faces + weapon->nearTrkSect->faceStart;
 
-    if ((weapon->nearTrkSect->flags & Jump) == 0)
+    if ((weapon->nearTrkSect->flags & TRACK_JUMP) == 0)
     {
         for (i = 0; i < weapon->nearTrkSect->faceCount; i++)
         {
@@ -727,7 +655,7 @@ void UpdateRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
     Weapon2Mine(weapon);
 }
 
-void InitRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void InitRocket(ShipData* shipIndex, WeaponData* weapon)
 {
     Face* facePtr;
     ShipData* ship = weapon->fireShip;
@@ -754,7 +682,7 @@ void InitRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
 
     facePtr = gTrack.faces + ship->nearTrkSect->faceStart;
 
-    while ((facePtr->flags & TRACK_BASE) == 0)
+    while ((facePtr->flags & TRACK_FACE_BASE) == 0)
     {
         facePtr++;
     }
@@ -773,11 +701,11 @@ void InitRocket(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
     weapon->roll = 0;
     FRAME_LERP_INIT(weapon);
 
-    weapon->updateWeapon = UpdateRocket;
+    weapon->update = UpdateRocket;
 }
 
 
-void InitSpecial(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void InitSpecial(ShipData* shipIndex, WeaponData* weapon)
 {
     int32 i;
     for (i = 0; i < NO_OF_SHIPS; i++)
@@ -786,7 +714,7 @@ void InitSpecial(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
 
         if (ship != weapon->fireShip)
         {
-            ship->combatAttr |= SPECIALED;
+            ship->attr |= SPECIALED;
             ship->specialCount = SPECIAL_DURATION;
         }
     }
@@ -795,7 +723,7 @@ void InitSpecial(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
 }
 
 
-void UpdateElecBolt(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void UpdateElecBolt(ShipData* shipIndex, WeaponData* weapon)
 {
     int i;
     vec3i distance;
@@ -861,7 +789,7 @@ void UpdateElecBolt(ShipData* shipIndex, Object** weaponShapes, WeaponData* weap
 
     facePtr = gTrack.faces + weapon->nearTrkSect->faceStart;
 
-    while ((facePtr->flags & TRACK_BASE) == 0)
+    while ((facePtr->flags & TRACK_FACE_BASE) == 0)
     {
         facePtr++;
     }
@@ -942,7 +870,7 @@ void UpdateElecBolt(ShipData* shipIndex, Object** weaponShapes, WeaponData* weap
     Weapon2Mine(weapon);
 }
 
-void InitElecBolt(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void InitElecBolt(ShipData* shipIndex, WeaponData* weapon)
 {
     ShipData* ship = weapon->fireShip;
 
@@ -984,11 +912,11 @@ void InitElecBolt(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
     weapon->roll = 0;
     FRAME_LERP_INIT(weapon);
 
-    weapon->updateWeapon = UpdateElecBolt;
+    weapon->update = UpdateElecBolt;
 }
 
 
-void UpdateRevCon(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void UpdateRevCon(ShipData* shipIndex, WeaponData* weapon)
 {
     vec3i distance;
     vec3i targetVector;
@@ -1053,7 +981,7 @@ void UpdateRevCon(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
 
     facePtr = gTrack.faces + weapon->nearTrkSect->faceStart;
 
-    while ((facePtr->flags & TRACK_BASE) == 0)
+    while ((facePtr->flags & TRACK_FACE_BASE) == 0)
     {
         facePtr++;
     }
@@ -1099,7 +1027,7 @@ void UpdateRevCon(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
         {
             if ((ship->attr & SHIELDED) == 0)
             {
-                ship->combatAttr |= REVCONNED;
+                ship->attr |= REVCONNED;
                 ship->revConCount = REV_CON_DURATION;
             }
 
@@ -1134,7 +1062,7 @@ void UpdateRevCon(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
     Weapon2Mine(weapon);
 }
 
-void InitRevCon(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void InitRevCon(ShipData* shipIndex, WeaponData* weapon)
 {
     ShipData* ship = weapon->fireShip;
 
@@ -1176,7 +1104,7 @@ void InitRevCon(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
     weapon->roll = 0;
     FRAME_LERP_INIT(weapon);
 
-    weapon->updateWeapon = UpdateRevCon;
+    weapon->update = UpdateRevCon;
 }
 
 
@@ -1232,7 +1160,7 @@ void UpdateShieldColors(Object* object, int32 counter)
 }
 #endif
 
-void UpdateShield(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void UpdateShield(ShipData* shipIndex, WeaponData* weapon)
 {
     ShipData* ship = weapon->fireShip;
     int32 px = ship->pos.x;
@@ -1268,11 +1196,11 @@ void UpdateShield(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon
     }
 
 #ifdef USE_OLD_SHIELD
-    UpdateShieldColors(gWeaponShapes[weapon->currentWeapon], weapon->count);
+    UpdateShieldColors(gWeaponShapes + weapon->currentWeapon, weapon->count);
 #endif
 }
 
-void InitShield(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
+void InitShield(ShipData* shipIndex, WeaponData* weapon)
 {
     ShipData* ship = weapon->fireShip;
 
@@ -1292,7 +1220,7 @@ void InitShield(ShipData* shipIndex, Object** weaponShapes, WeaponData* weapon)
         PlayNote(SFX_SHIELD);
         SetPitch(SFX_SHIELD, SND_DEF_PITCH >> 1);
     }
-    weapon->updateWeapon = UpdateShield;
+    weapon->update = UpdateShield;
 }
 
 
@@ -1307,7 +1235,7 @@ void FireWeapon(ShipData* ship, int shipNo, char decision)
     {
         case WPN_ROCKET:
         {
-            weapon->updateWeapon = InitRocket;
+            weapon->update = InitRocket;
             weapon->count = WEAPON_DELAY;
             weapon->fireShip = ship;
             weapon->type = WPN_ROCKET;
@@ -1322,7 +1250,7 @@ void FireWeapon(ShipData* ship, int shipNo, char decision)
 
         case WPN_MISSILE:
         {
-            weapon->updateWeapon = InitMissile;
+            weapon->update = InitMissile;
             weapon->count = WEAPON_DELAY;
             weapon->fireShip = ship;
             weapon->type = WPN_MISSILE;
@@ -1343,7 +1271,7 @@ void FireWeapon(ShipData* ship, int shipNo, char decision)
             for (i = 0; i < MINES_COUNT; i++)
             {
                 count += MINE_RELEASE_RATE;
-                weapon->updateWeapon = InitMine;
+                weapon->update = InitMine;
                 weapon->fireShip = ship;
                 weapon->count = count;
                 weapon->type = WPN_MINE;
@@ -1362,7 +1290,7 @@ void FireWeapon(ShipData* ship, int shipNo, char decision)
 
         case WPN_SPECIAL:
         {
-            weapon->updateWeapon = InitSpecial;
+            weapon->update = InitSpecial;
             weapon->count = 1;
             weapon->fireShip = ship;
             ship->weaponType = WPN_NONE;
@@ -1371,7 +1299,7 @@ void FireWeapon(ShipData* ship, int shipNo, char decision)
 
         case WPN_ELEC_BOLT:
         {
-            weapon->updateWeapon = InitElecBolt;
+            weapon->update = InitElecBolt;
             weapon->count = WEAPON_DELAY;
             weapon->fireShip = ship;
             weapon->type = WPN_ELEC_BOLT;
@@ -1385,7 +1313,7 @@ void FireWeapon(ShipData* ship, int shipNo, char decision)
 
         case WPN_REV_CON:
         {
-            weapon->updateWeapon = InitRevCon;
+            weapon->update = InitRevCon;
             weapon->count = WEAPON_DELAY;
             weapon->fireShip = ship;
             weapon->type = WPN_REV_CON;
@@ -1399,7 +1327,7 @@ void FireWeapon(ShipData* ship, int shipNo, char decision)
 
         case WPN_SHIELD:
         {
-            weapon->updateWeapon = InitShield;
+            weapon->update = InitShield;
             weapon->count = SHIELD_DURATION;
             weapon->fireShip = ship;
             weapon->type = WPN_SHIELD;
@@ -1452,111 +1380,147 @@ int GetNewWeapon(void)
         return WPN_ELEC_BOLT;
 }
 
-void CycleWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids)
+void UpdateWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids)
 {
-    int i, j;
-    Face* facePtr;
+    int32 i;
+    uint16 weaponIndex;
+    WeaponGrid* grid;
+    ShipData* ship = shipIndex;
 
-#ifdef __3DO__ // TODO 3DO optimize
-    return;
+    for (i = 0; i < NO_OF_SHIPS; i++, ship++)
+    {
+        if (!ship->face) // ship is disabled (TIME_TRIAL etc.)
+            continue;
+
+        weaponIndex = GET_TRACK_FACE_WEAPON(ship->face->flags); // get weapon grid index + 1
+
+        if ((weaponIndex == 0) || (weaponIndex == 0xFF)) // no grid assigned or disabled for this face
+            continue;
+
+        if (ship->weaponType != WPN_NONE) // already armed
+            continue;
+
+        if ((ship->attr & SPECIALED) != 0) // was affected by special attack (multiplayer only)
+            continue;
+
+        grid = weaponGrid + (weaponIndex - 1);
+        if (grid->count >= 0)
+        {
+            Face* face = gTrack.faces + grid->faceIndex;
+            face->flags |= (0xFF << 8); // disable weapon grid
+
+            grid->count = -30;
+            if (ship->player)
+            {
+                PlayNote(SFX_POWER_UP);
+                ship->weaponType = GetNewWeapon();
+            }
+            else
+            {
+                ship->weaponType = 1;
+            }
+        }
+    }
+
+    grid = weaponGrid;
+    for (i = 0; i < noWeaponGrids; i++, grid++)
+    {
+        if (grid->count < 0)
+        {
+            grid->count++;
+
+            if (grid->count == 0)
+            {
+                Face* face = gTrack.faces + grid->faceIndex;
+                face->flags = (face->flags & 0xFF) | ((i + 1) << 8); // enable weapon grid
+            }
+        }
+    }
+}
+
+void UpdateWeapons(ShipData* shipIndex)
+{
+#ifdef USE_VERTEX_COLOR
+    int32 hasMines = 0;
+    int32 i, color;
+    ObjFace* face;
 #endif
 
-    for (i = 0; i < noWeaponGrids; i++)
+    WeaponData* weapon = gWeaponsActive;
+
+    while (weapon)
     {
-        facePtr = gTrack.faces + weaponGrid[i].section->faceStart;
+        WeaponData* next = weapon->next;
 
-        while ((facePtr->flags & TRACK_BASE) == 0)
+        FRAME_LERP_INIT(weapon);
+
+    #ifdef USE_VERTEX_COLOR
+        if (weapon->update == UpdateMine)
         {
-            facePtr++;
+            hasMines = 1;
         }
+    #endif
 
-        for (j = 0; j < NO_OF_SHIPS; j++)
+        (weapon->update)(shipIndex, weapon);
+        weapon = next;
+    }
+
+// blinking mines color
+#ifdef USE_VERTEX_COLOR // TODO do once per frame if mines exists
+    if (hasMines)
+    {
+        face = gWeaponShapes[WEAPON_SHAPE_MINE].faces;
+
+        color = (rsin(gFrameIndex * 140) >> 6) + 230;
+        if (color > 255)
         {
-            ShipData* ship = shipIndex + j;
- 
-            if ((ship->combatAttr & SPECIALED) == 0)
-            {
-                if (((facePtr->flags & WEAPON_GRID_LEFT) && (ship->attr & LSIDE)))
-                {
-                    if ((weaponGrid[i].section == ship->nearTrkSect) && (ship->weaponType == WPN_NONE) && (weaponGrid[i].count >= 0))
-                    {
-                        weaponGrid[i].count = -30;
-                        if (ship->player)
-                        {
-                            PlayNote(SFX_POWER_UP);
-                            ship->weaponType = GetNewWeapon();
-                        }
-                        else
-                        {
-                            ship->weaponType = 1;
-                        }
-                    }
-                }
-            }
-            facePtr++;
-            if ((ship->combatAttr & SPECIALED) == 0)
-            {
-                if ((facePtr->flags & WEAPON_GRID_RIGHT) && ((ship->attr & LSIDE) == 0))
-                {
-                    if ((weaponGrid[i].section == ship->nearTrkSect) && (ship->weaponType == WPN_NONE) && (weaponGrid[i].count >= 0))
-                    {
-                        weaponGrid[i].count = -30;
-                        if (ship->player)
-                        {
-                            PlayNote(SFX_POWER_UP);
-                            ship->weaponType = GetNewWeapon();
-                        }
-                        else
-                        {
-                            ship->weaponType = 1;
-                        }
-                    }
-                }
-            }
-            facePtr--;
+            color = 255;
         }
+        color |= 0xFF004000;
 
-        if ((weaponGrid[i].count >= 0) && ((shipIndex[ownShip].combatAttr & SPECIALED) == 0))
+        for (i = 0; i < 8; i++, face++) // the original hack, first 8 triangles (top & bottom) are lit
         {
-            int32 r, g, b;
-            rsincos(weaponGrid[i].cycleCount, r, g);
-            b = rsin(-weaponGrid[i].cycleCount);
-            r = (r >> 5) + 128;
-            g = (g >> 5) + 128;
-            b = (b >> 5) + 128;
+            ASSERT(!FACE_QUAD(face));
+            face->color[0] = face->color[1] = face->color[2] = face->color[3] = color;
+        }
+    }
+#endif
+}
 
-            if (r > 255)
-                r = 255;
-            if (g > 255)
-                g = 255;
-            if (b > 255)
-                b = 255;
+void DrawWeapons(void)
+{
+    Object* obj;
+    WeaponData* weapon = gWeaponsActive;
 
-            weaponGrid[i].color = r | (g << 8) | (b << 16) | 0xFF000000;
+    while (weapon)
+    {
+        int32 px = weapon->pos.x;
+        int32 py = weapon->pos.y;
+        int32 pz = weapon->pos.z;
+        int32 rx = weapon->pitch;
+        int32 ry = weapon->hdg;
+        int32 rz = weapon->roll;
+
+        obj = gWeaponShapes + weapon->currentWeapon;
+
+        matrixPush();
+
+        FRAME_LERP(weapon);
+
+        matrixTranslate(px, py, pz);
+        matrixRotateYXZ(rx, ry, rz);
+
+        if (weapon->type == WPN_SHIELD)
+        {
+            renderShield(obj, weapon->count);
         }
         else
         {
-            weaponGrid[i].color = 0xFF808080;
+            renderObject(obj);
         }
 
-        if (weaponGrid[i].count < 0)
-        {
-            weaponGrid[i].count++;
-        }
-        weaponGrid[i].cycleCount += 32;
+        matrixPop();
 
-        if (weaponGrid[i].attr & WEAPON_GRID_LEFT)
-        {
-        #ifndef __3DO__ // TODO track attribs
-            facePtr->color = weaponGrid[i].color;
-        #endif
-        }
-        if (weaponGrid[i].attr & WEAPON_GRID_RIGHT)
-        {
-            facePtr++;
-        #ifndef __3DO__ // TODO track attribs
-            facePtr->color = weaponGrid[i].color;
-        #endif
-        }
+        weapon = weapon->next;
     }
 }

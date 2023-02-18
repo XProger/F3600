@@ -1253,7 +1253,7 @@ void renderFrameEnd(void)
     flush();
 }
 
-void drawSection(const TrackSection* section)
+void drawSection(const TrackSection* section, int32 specialed)
 {
     const vec3i* vertices = gTrack.vertices;
     const Face* face = gTrack.faces + section->faceStart;
@@ -1263,17 +1263,15 @@ void drawSection(const TrackSection* section)
     int32 cy = gCameraViewPos.y;
     int32 cz = gCameraViewPos.z;
     float u0, u1;
-    uint32 color;
+    uint32 color1, color2;
+    uint16 flags;
+    int32 texture;
 
     while (face < last)
     {
-        ASSERT(face->texture < ctrlnumLib);
+        flags = face->flags;
 
-    #ifdef CHECK_UNUSED_TEX
-        texUsed[face->texture] = 1;
-    #endif
-
-        if (face->flags & FLIP_TEXTURE)
+        if (flags & TRACK_FACE_FLIP)
         {
             u0 = 0.0f;
             u1 = 1.0f;
@@ -1284,35 +1282,56 @@ void drawSection(const TrackSection* section)
             u1 = 0.0f;
         }
 
-        color = face->color;
+        color1 = color2 = face->color;
+
+        if (!specialed)
+        {
+            if (flags & TRACK_FACE_SPEED)
+            {
+                color1 = speedColor((gFrameIndex + 2) << 9);
+                color2 = speedColor((gFrameIndex) << 9);
+            }
+            else
+            {
+                int32 weapon = GET_TRACK_FACE_WEAPON(flags);
+                if (weapon > 0 && weapon < 0xFF)
+                {
+                    color1 = color2 = weaponColor((gFrameIndex + (face - gTrack.faces) * 64) * 32);
+                }
+            }
+        }
+
+        texture = GET_TRACK_FACE_TEXTURE(flags);
+
         if (support.texture_array)
         {
-            color = (color & 0x00FFFFFF) | (face->texture << 24);
+            color1 |= (texture << 24);
+            color2 |= (texture << 24);
         }
         else
         {
-            setTexture(gTrackTex + face->texture);
+            setTexture(gTrackTex + texture);
         }
 
         addQuad();
 
         v = vertices + face->vertex[3];
-        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 1.0f, color);
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 1.0f, color1);
 
         v = vertices + face->vertex[2];
-        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 1.0f, color);
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 1.0f, color1);
 
         v = vertices + face->vertex[1];
-        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 0.0f, color);
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u1, 0.0f, color2);
 
         v = vertices + face->vertex[0];
-        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 0.0f, color);
+        addVertex(v->x - cx, v->y - cy, v->z - cz, u0, 0.0f, color2);
 
         face++;
     }
 }
 
-void renderTrack(int32 playerIndex)
+void renderTrack(int32 playerIndex, int32 specialed)
 {
     int32 i, j, s;
     int32 dir;
@@ -1320,13 +1339,6 @@ void renderTrack(int32 playerIndex)
     int16** sections;
     TrackSection* section;
     TrackCamera* camera = &gPlayers[playerIndex].camera;
-
-//    #define CHECK_UNUSED_TEX
-
-#ifdef CHECK_UNUSED_TEX
-    uint8 texUsed[MAX_TRACK_TEX];
-    memset(texUsed, 0, MAX_TRACK_TEX);
-#endif
 
     dir = TrackDirection(camera);
 
@@ -1358,7 +1370,7 @@ void renderTrack(int32 playerIndex)
     }
 
     section = gTrack.sections + sections[0][0];
-    drawSection(section->prevSection);
+    drawSection(section->prevSection, specialed);
 
     for (i = 0; i < 3; i++)
     {
@@ -1368,18 +1380,11 @@ void renderTrack(int32 playerIndex)
 
             for (s = 0; s < sections[i][j + 1]; s++)
             {
-                drawSection(section);
+                drawSection(section, specialed);
                 section = section->nextSection;
             }
         }
     }
-
-#ifdef CHECK_UNUSED_TEX
-    for (i = 0; i < ctrlnumLib; i++)
-    {
-        ASSERT(texUsed[i]);
-    }
-#endif
 }
 
 void renderEffects(const Effect* fx)

@@ -31,6 +31,9 @@ extern const int32 gSinCosTable[4096];
 int32 ratan2(int32 y, int32 x);
 uint32 rsqrt(uint32 x);
 
+uint32 speedColor(int32 angle);
+uint32 weaponColor(int32 angle);
+
 #define FIXED_SHIFT 12 /* number of bits to shift for 4096 */
 
 void ApplyMatrix(const MATRIX* m, const vec3s* v0, vec3i* v1);

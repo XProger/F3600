@@ -120,7 +120,7 @@ void Restart(ShipData* shipIndex)
         if (player->ship)
         {
             InitCamera(&player->camera, player->ship->nearTrkSect);
-            InitRescueDroid(&player->droid, ctrlshipShapes, player->ship);
+            InitRescueDroid(&player->droid, player->ship);
         }
     }
 
@@ -143,12 +143,9 @@ void raceInit(void)
 
     LOG("race init\n");
 
-    if (ctrlmode != ATTRACT) // not demo mode
-    {
-        trackNo = gConfig.actTrackNum;
-    }
+    //raceDemo(); // demo debug
 
-    showLoading(gConfig.actTrackNum);
+    showLoading(gTrackList[gConfig.trackNum]);
 
     attractDelay = 0;
 
@@ -173,7 +170,7 @@ void raceInit(void)
     ctrlshowGameOver = 0;
     finishedExtro = 0;
 
-    LoadScene(gConfig.actTrackNum);
+    LoadScene(gTrackList[gConfig.trackNum]);
     LoadWinLoseTex(PILOT_NAMES[gPlayers[0].shipNum]);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
@@ -235,14 +232,12 @@ void raceInit(void)
         }
     }
 
-    SetNormPadPresets();
-
-    if (gConfig.actTrackNum == 13)
+    if (gConfig.trackNum == 12)
     {
         InitIceCongratulations();
     }
 
-    if (gConfig.actTrackNum == 14)
+    if (gConfig.trackNum == 13)
     {
         InitFireCongratulations();
     }
@@ -443,7 +438,7 @@ void raceCtrl(void)
 
             { // update droid
                 FRAME_LERP_INIT(&player->droid);
-                (player->droid.droidUpdate)(&player->droid, player->ship, ctrlshipShapes);
+                (player->droid.update)(&player->droid);
             }
 
             { // update camera
@@ -466,7 +461,7 @@ void raceCtrl(void)
                 {
                     if ((ship->weaponType == WPN_MISSILE) || (ship->weaponType == WPN_ELEC_BOLT) || (ship->weaponType == WPN_REV_CON))
                     {
-                        MissileLock(ship, ctrlshipIndex, ctrlshipShapes);
+                        MissileLock(ship, ctrlshipIndex);
                     }
                     ShakeUpdate(ship);
                 }
@@ -475,11 +470,11 @@ void raceCtrl(void)
 
         UpdateCone(&ctrlcone);
 
-        UpdateWeapons(ctrlshipIndex, gWeaponShapes);
-
         if (gConfig.raceType != TIME_TRIAL)
         {
-            CallShip2ShipCollision(ctrlshipIndex, ctrlshipShapes);
+            UpdateWeapons(ctrlshipIndex);
+            CallShip2ShipCollision(ctrlshipIndex);
+            UpdateWeaponGrids(ctrlshipIndex, gTrack.weapons, gTrack.weaponsCount);
         }
 
         UpdateEffects();
@@ -488,12 +483,7 @@ void raceCtrl(void)
 
         AdjustEngineSound(&(ctrlshipIndex[ownShip]), &gPlayers[0].camera);
         AdjustCrowdSound(gTrack.lost, gTrack.lostCount);
-        AdjustRemoteEngineSound(ctrlshipIndex, ctrlshipShapes);
-
-        if (gConfig.raceType != TIME_TRIAL)
-        {
-            CycleWeaponGrids(ctrlshipIndex, gTrack.weapons, gTrack.weaponsCount);
-        }
+        AdjustRemoteEngineSound(ctrlshipIndex);
     }
 
     if ((attractDelay >= 0) && (ctrlmode == ATTRACT))
@@ -989,22 +979,22 @@ void raceLoop(void)
     renderFrameBegin();
     renderClear();
 
-    if (trackNo == 13)
+    if (gConfig.trackNum == 12)
     {
         AuroraBorialis(gTrack.sky);
     }
 
-    if ((trackNo == 8) || (trackNo == 11))
+    if ((gConfig.trackNum == 4) || (gConfig.trackNum == 11))
     {
         ColourRedLight();
         MoveDonkey();
     }
-    else if (trackNo == 1)
+    else if (gConfig.trackNum == 2)
     {
         ColourRedLight();
     }
 
-    ColourDroidLights(ctrlshipShapes[RESCUE_DROID]);
+    ColourDroidLights(ctrlshipShapes + RESCUE_DROID);
 
     if (gNumPlayers == 1)
     {
@@ -1123,8 +1113,7 @@ void raceDemo(void)
     gPlayers[0].shipNum = ownShip;
 
     gConfig.raceType = SINGLE_RACE;
-    gConfig.trackNum = 1 + (randy() % 6); // all venom
-    gConfig.actTrackNum = trackNo = gTrackList[gConfig.trackNum - 1];
+    gConfig.trackNum = (randy() % 6); // all venom
     ctrlGameLoop = GAME_LOOP_RACE_INIT;
 }
 
@@ -1206,7 +1195,7 @@ void raceEnd(void)
     }
     else
     {
-        if (gConfig.trackNum == NumTracks)
+        if (gConfig.trackNum == NumTracks - 1)
         {
             if (winTable[ownShip].position == 1)
             {
@@ -1222,7 +1211,6 @@ void raceEnd(void)
                     gConfig.trackNum++;
                     gConfig.trackInc = 1;
                 }
-                gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
                 gConfig.venomComplete = 1;
                 gConfig.gotoMenu = 1;
             }
@@ -1234,7 +1222,7 @@ void raceEnd(void)
         }
         else
         {
-            if (gConfig.trackNum == totalTracks)
+            if (gConfig.trackNum == totalTracks - 1)
             {
                 if (winTable[ownShip].position == 1)
                 {
@@ -1253,7 +1241,6 @@ void raceEnd(void)
             {
                 gConfig.trackInc = 1;
                 gConfig.trackNum++;
-                gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
             }
         }
     }

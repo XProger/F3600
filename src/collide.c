@@ -18,7 +18,7 @@ void ForceFeedback(int32 joyIndex, int32 mag)
 
 #define SHIP_RADIUS 50
 
-void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
+void Ship2ShipCollision(ShipData* shipIndex, int i, int j)
 {
     vec3i distance;
     vec3i vc;
@@ -124,7 +124,7 @@ void Ship2ShipCollision(ShipData* shipIndex, Object** shipShapes, int i, int j)
     }
 }
 
-void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
+void CallShip2ShipCollision(ShipData* shipIndex)
 {
     int32 i, j;
 
@@ -132,7 +132,7 @@ void CallShip2ShipCollision(ShipData* shipIndex, Object** shipShapes)
     {
         for (i = j + 1; i < NO_OF_SHIPS; i++)
         {
-            Ship2ShipCollision(shipIndex, shipShapes, i, j);
+            Ship2ShipCollision(shipIndex, i, j);
         }
     }
 }
@@ -159,8 +159,6 @@ void Ship2Track(ShipData* ship, Face* facePtr)
     vec3i direction;
     int downTrack;
     TrackSection* trackPtr;
-    int toFace;
-    vec3i toFaceVector;
     const vec3i* facePoint;
     int collide;
     Face* facePtr2;
@@ -186,23 +184,12 @@ void Ship2Track(ShipData* ship, Face* facePtr)
     else
         ship->attr |= DIRECTION;
 
-    toFaceVector.x = gTrack.vertices[(facePtr->vertex[0])].x - gTrack.vertices[(facePtr->vertex[1])].x;
-    toFaceVector.y = gTrack.vertices[(facePtr->vertex[0])].y - gTrack.vertices[(facePtr->vertex[1])].y;
-    toFaceVector.z = gTrack.vertices[(facePtr->vertex[0])].z - gTrack.vertices[(facePtr->vertex[1])].z;
-
-    direction.x = ship->nearTrkSect->centre.x - ship->pos.x;
-    direction.y = ship->nearTrkSect->centre.y - ship->pos.y;
-    direction.z = ship->nearTrkSect->centre.z - ship->pos.z;
-
-    toFace = ((direction.x * toFaceVector.x) + (direction.y * toFaceVector.y) + (direction.z * toFaceVector.z));
-
-    facePtr--;
-
     /******** Check against left hand side of track ********/
-
-    if (toFace > 0)
+    if (ship->attr & LSIDE)
     {
-        ship->attr |= LSIDE;
+        // prev face from left is the left border
+        facePtr--;
+
         if (1) //(facePtr == (track->faces + ship->nearTrkSect->faceStart)) || ship->nearTrkSect->junction)
         {
             facePoint = gTrack.vertices + facePtr->vertex[0];
@@ -211,7 +198,7 @@ void Ship2Track(ShipData* ship, Face* facePtr)
 
             if (alpha <= 0)
             {
-                if (ship->nearTrkSect->flags & JunctionStart)
+                if (ship->nearTrkSect->flags & TRACK_JUNCTION_START)
                 {
                     collide = CheckPolygonCollision(facePtr, &nosePos, alpha);
                     if (collide == 1)
@@ -228,7 +215,7 @@ void Ship2Track(ShipData* ship, Face* facePtr)
                         }
                     }
                 }
-                else if (ship->nearTrkSect->flags & JunctionEnd)
+                else if (ship->nearTrkSect->flags & TRACK_JUNCTION_END)
                 {
                     collide = CheckPolygonCollision(facePtr, &nosePos, alpha);
                     if (collide == 1)
@@ -254,7 +241,7 @@ void Ship2Track(ShipData* ship, Face* facePtr)
 
             if (alpha <= 0)
             {
-                if ((ship->nearTrkSect->flags & JunctionStart) || (ship->nearTrkSect->flags & JunctionEnd))
+                if (ship->nearTrkSect->flags & (TRACK_JUNCTION_START | TRACK_JUNCTION_END))
                 {
                     collide = CheckPolygonCollision(facePtr, &wingPos, alpha);
                     if (collide == 1)
@@ -274,7 +261,7 @@ void Ship2Track(ShipData* ship, Face* facePtr)
             alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
-                if ((ship->nearTrkSect->flags & JunctionStart) || (ship->nearTrkSect->flags & JunctionEnd))
+                if (ship->nearTrkSect->flags & (TRACK_JUNCTION_START | TRACK_JUNCTION_END))
                 {
                     collide = CheckPolygonCollision(facePtr, &wingPos, alpha);
                     if (collide == 1)
@@ -293,23 +280,23 @@ void Ship2Track(ShipData* ship, Face* facePtr)
     /****************************************************************************/
     else
     {
-        ship->attr &= ~LSIDE;
-
+        // next face from right side is the right border
         facePtr++;
-        while (facePtr->flags & TRACK_BASE)
+
+        while (facePtr->flags & TRACK_FACE_BASE)
         {
+            ASSERT(0); // TODO don't need the loop below
             facePtr++;
         }
 
         if ((ship->nearTrkSect->faceCount > 3) || ship->nearTrkSect->junction)
         {
-
             facePoint = gTrack.vertices + facePtr->vertex[0];
 
             alpha = PlaneLineCollision(facePoint, &nosePos, &facePtr->normal);
             if (alpha <= 0)
             {
-                if (ship->nearTrkSect->flags & JunctionStart)
+                if (ship->nearTrkSect->flags & TRACK_JUNCTION_START)
                 {
                     collide = CheckPolygonCollision(facePtr, &nosePos, alpha);
                     if (collide == 1)
@@ -327,7 +314,7 @@ void Ship2Track(ShipData* ship, Face* facePtr)
                         }
                     }
                 }
-                else if (ship->nearTrkSect->flags & JunctionEnd)
+                else if (ship->nearTrkSect->flags & TRACK_JUNCTION_END)
                 {
                     collide = CheckPolygonCollision(facePtr, &nosePos, alpha);
                     if (collide == 1)
@@ -352,7 +339,7 @@ void Ship2Track(ShipData* ship, Face* facePtr)
             alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
-                if ((ship->nearTrkSect->flags & JunctionStart) || (ship->nearTrkSect->flags & JunctionEnd))
+                if (ship->nearTrkSect->flags & (TRACK_JUNCTION_START | TRACK_JUNCTION_END))
                 {
                     collide = CheckPolygonCollision(facePtr, &wingPos, alpha);
                     if (collide == 1)
@@ -371,7 +358,7 @@ void Ship2Track(ShipData* ship, Face* facePtr)
             alpha = PlaneLineCollision(facePoint, &wingPos, &facePtr->normal);
             if (alpha <= 0)
             {
-                if ((ship->nearTrkSect->flags & JunctionStart) || (ship->nearTrkSect->flags & JunctionEnd))
+                if (ship->nearTrkSect->flags & (TRACK_JUNCTION_START | TRACK_JUNCTION_END))
                 {
                     collide = CheckPolygonCollision(facePtr, &wingPos, alpha);
                     if (collide == 1)

@@ -133,7 +133,7 @@ TrackSection* FindAllNearestSection(const vec3i* pos)
 void UpdateShipRemote(ShipData* shipIndex, int shipNo)
 {
     ShipData *playerShip, *remoteShip;
-    Face* facePtr = NULL;
+    Face* facePtr;
     TrackSection *nextSection, *section;
     int i;
     vec3i targetVector, bestPath;
@@ -152,15 +152,11 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
     playerShip = shipIndex + ownShip;
     remoteShip = shipIndex + shipNo;
 
+    facePtr = remoteShip->face;
+
     if ((remoteShip->attr & FLYING) == 0)
     {
         /*** Find First track base section ***/
-        facePtr = gTrack.faces + remoteShip->nearTrkSect->faceStart;
-        while ((facePtr->flags & TRACK_BASE) == 0)
-        {
-            facePtr++;
-        }
-
         DPASectDiff = remoteShip->DPASectDiff - playerShip->DPASectDiff;
 
         remoteShip->updateControl = HoldCentre;
@@ -191,7 +187,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
 
         if (section->junction)
         {
-            if (section->junction->flags & JunctionStart)
+            if (section->junction->flags & TRACK_JUNCTION_START)
             {
                 decide = randy() % 2;
                 if (decide == 0)
@@ -210,7 +206,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
         {
             if (section->junction)
             {
-                if (section->junction->flags & JunctionStart)
+                if (section->junction->flags & TRACK_JUNCTION_START)
                 {
                     if (remoteShip->attr & JUNC_LEFT)
                     {
@@ -237,7 +233,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
       remoteShip->speed -= (abs(remoteShip->speed * remoteShip->vhdg))>>14 ;    /* 14 */
       remoteShip->speed -= (abs(remoteShip->speed * remoteShip->vpitch))>>14 ;
 #endif
-        if (remoteShip->nearTrkSect->flags & Jump) /**** Cure for ships getting stuck on hump lip ****/
+        if (remoteShip->nearTrkSect->flags & TRACK_JUMP) /**** Cure for ships getting stuck on hump lip ****/
         {
             targetVector.x = remoteShip->nearTrkSect->centre.x - remoteShip->nearTrkSect->prevSection->centre.x;
             targetVector.y = remoteShip->nearTrkSect->centre.y - remoteShip->nearTrkSect->prevSection->centre.y;
@@ -321,7 +317,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
         nextSection = section->nextSection;
 
         remoteShip->updateControl = HoldCentre;
-        (remoteShip->updateControl)(&offSetVector, playerShip, facePtr, shipNo);
+        (remoteShip->updateControl)(&offSetVector, playerShip, remoteShip->face, shipNo);
 
         if (remoteShip->remoteMaxThrust > remoteShip->speed)
         {
@@ -632,7 +628,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     int32 temp;
 
     /* firestar */
-    if (gConfig.actTrackNum == 14)
+    if (gConfig.trackNum == 13)
     {
         switch (count)
         {
@@ -964,7 +960,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     }
 
     /* silverstream */
-    if (gConfig.actTrackNum == 13)
+    if (gConfig.trackNum == 12)
     {
         switch (count)
         {

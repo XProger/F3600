@@ -30,20 +30,6 @@ enum MenuKey
     M_START
 };
 
-typedef struct PadInfo
-{
-    uint16 thrust;
-    uint16 view;
-    uint16 fire;
-    uint16 lBrake;
-    uint16 rBrake;
-    uint16 up;
-    uint16 down;
-    uint16 left;
-    uint16 right;
-} PadInfo;
-
-void InitPadSettings(void);
 void UpdatePad(void);
 void SetBrake(ShipData* ship, short padLeft, short padRight);
 void SetView(ShipData* ship, short padView);

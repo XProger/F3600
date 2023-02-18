@@ -284,7 +284,7 @@ void renderBackFill(int32 x, int32 y, int32 w, int32 h);
 void renderPrepare(void);
 void renderFrameBegin(void);
 void renderFrameEnd(void);
-void renderTrack(int32 playerIndex);
+void renderTrack(int32 playerIndex, int32 specialed);
 void renderEffects(const Effect* fx);
 void renderObject(const Object* object);
 void renderShip(const Object* object, uint32 color);

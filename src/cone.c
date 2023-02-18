@@ -124,7 +124,7 @@ void UpdateCone(Cone* cone)
         if (ship->player)
         {
             /* get the z displacement related to speed or thrust */
-            disp = ship->thrust_mag >> 4;
+            disp = ship->thrustMag >> 4;
             disp += ship->speed >> 8;
             disp += 31;
         }

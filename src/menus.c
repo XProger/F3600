@@ -5,8 +5,11 @@ Texture* menuScreen;
 extern HiScores scoreTable[];
 
 extern const short shipShapeOrder[];
+
+// TODO reorder this shit
 const short pilotShapeOrder[8] = { 0, 4, 6, 7, 2, 5, 1, 3 };
 const short teamShapeOrder[4] = { 2, 3, 1, 0 }; // jed
+
 ChampionShip winTable[NO_OF_SHIPS];
 
 int modelHdg = 0;
@@ -223,12 +226,19 @@ void InitGameData(void)
     int32 i;
     for (i = 0; i < MAX_PLAYERS; i++)
     {
-        strcpy(gPlayers[i].name, STR[STR_DEF_NAME_1 + i]);
-        gPlayers[i].joyIndex = i;
+        PlayerData* player = gPlayers + i;
+
+        strcpy(player->name, STR[STR_DEF_NAME_1 + i]);
+        player->joyIndex = i;
+
+        player->binding.thrust = IN_A;
+        player->binding.view   = IN_Y;
+        player->binding.fire   = IN_B;
+        player->binding.lBrake = IN_RT;
+        player->binding.rBrake = IN_LT;
     }
 
     gConfig.trackNum = 0;
-    gConfig.actTrackNum = 0;
     gConfig.raceClass = 0;
     gConfig.team = 0;
     gConfig.raceType = CHAMPIONSHIP;
@@ -311,76 +321,6 @@ void DrawRestartGameConfirm(int32 lConfirm)
 
     AddText(STR_NO, text_data(215, 120, 16), lConfirm ? BLINK_TEXT : TEXT_COLOR_WHITE);
     AddText(STR_YES, text_data(68, 120, 16), lConfirm ? TEXT_COLOR_WHITE : BLINK_TEXT);
-}
-
-void SetNormPadPresets(void)
-{
-    switch (gConfig.normpadPreset)
-    {
-        case 0:
-            pCon.thrust = IN_A;
-            pCon.view = IN_Y;
-            pCon.fire = IN_B;
-            pCon.lBrake = IN_RT;
-            pCon.rBrake = IN_LT;
-            break;
-
-        case 1:
-            pCon.thrust = IN_A;
-            pCon.view = IN_Y;
-            pCon.fire = IN_X;
-            pCon.lBrake = IN_RT;
-            pCon.rBrake = IN_LT;
-            break;
-
-        case 2:
-            pCon.thrust = IN_A;
-            pCon.view = IN_LB;
-            pCon.fire = IN_RB;
-            pCon.lBrake = IN_RT;
-            pCon.rBrake = IN_LT;
-            break;
-
-        case 3:
-            pCon.thrust = IN_X;
-            pCon.view = IN_B;
-            pCon.fire = IN_A;
-            pCon.lBrake = IN_RT;
-            pCon.rBrake = IN_LT;
-            break;
-
-        case 4:
-            pCon.thrust = IN_A;
-            pCon.view = IN_Y;
-            pCon.fire = IN_B;
-            pCon.lBrake = IN_RB;
-            pCon.rBrake = IN_LB;
-            break;
-
-        case 5:
-            pCon.thrust = IN_A;
-            pCon.view = IN_Y;
-            pCon.fire = IN_X;
-            pCon.lBrake = IN_RB;
-            pCon.rBrake = IN_LB;
-            break;
-
-        case 6:
-            pCon.thrust = IN_Y;
-            pCon.view = IN_X;
-            pCon.fire = IN_B;
-            pCon.lBrake = IN_RT;
-            pCon.rBrake = IN_LT;
-            break;
-
-        case 7:
-            pCon.thrust = IN_B;
-            pCon.view = IN_X;
-            pCon.fire = IN_Y;
-            pCon.lBrake = IN_RT;
-            pCon.rBrake = IN_LT;
-            break;
-    }
 }
 
 void InitChampionship(void)
@@ -486,8 +426,7 @@ void CallMenuActivator(void)
 
         case MENU_TRACK:
         {
-            gConfig.trackNum = (gCurrOption + 1) + gConfig.raceClass * 7;
-            gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
+            gConfig.trackNum = gCurrOption + gConfig.raceClass * 7;
             GoMenu(-1);
             break;
         }
@@ -529,21 +468,11 @@ void CallMenuActivator(void)
             {
                 case STR_RACE_CHAMPIONSHIP:
                     gConfig.raceType = CHAMPIONSHIP;
-                    gConfig.trackNum = 1;
-                    gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
+                    gConfig.trackNum = gConfig.raceClass * 7;
                     InitChampTable();
                     break;
                 case STR_RACE_SINGLE:
                     gConfig.raceType = SINGLE_RACE;
-                    if (gConfig.showBonusTrack == 0)
-                    {
-                        gConfig.trackNum = NumTracks + 2;
-                    }
-                    else
-                    {
-                        gConfig.trackNum = NumTracks + 1;
-                    }
-                    break;
                 case STR_RACE_TIME_TRIAL:
                     gConfig.raceType = TIME_TRIAL;
                     break;
@@ -567,7 +496,7 @@ void CallMenuActivator(void)
         {
             gConfig.newLapRecord = 0;
             gPlayers[0].ready = 1;
-            gPlayers[0].shipNum = (gConfig.team * 2) + gCurrOption;
+            gPlayers[0].shipNum = gCurrOption + gConfig.team * 2;
             ownShip = gPlayers[0].shipNum;
 
             if (gConfig.raceType == CHAMPIONSHIP)
@@ -723,13 +652,13 @@ void DrawMenuMain(int32 index, int32 id)
 
     if (id == STR_MAIN_START_GAME)
     {
-        DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
+        DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes + 0);
     }
 
     if (id == STR_MAIN_MULTIPLAYER)
     {
-        DrawTeamShips(-450, 0, 1100, heading, ctrlshipShapes[shipShapeOrder[3]]);
-        DrawTeamShips(450, 0, 1100, -heading, ctrlshipShapes[shipShapeOrder[1]]);
+        DrawTeamShips(-450, 0, 1100, heading, ctrlshipShapes + 3);
+        DrawTeamShips(450, 0, 1100, -heading, ctrlshipShapes + 1);
     }
 
     if (id == STR_MAIN_OPTIONS)
@@ -761,7 +690,7 @@ void DrawMenuOptions(int32 index, int32 id)
             DrawObject(padShapes + 0, 0, 0, 6500, hdg, 0, 0);
             break;
         case STR_OPTION_GRAPHICS:
-            DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
+            DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes + 0);
             break;
         case STR_OPTION_AUDIO:
             DrawObject(optShapes + 3, 0, 0, 600, hdg, 0, 0);
@@ -828,8 +757,8 @@ void DrawMenuTeam(int32 index, int32 id)
 
     DrawObject(teamShapes + teamShapeOrder[index], 0, 0, 9000, hdg, 0, 0);
 
-    DrawTeamShips(-900, 800, 1500, heading, ctrlshipShapes[shipShapeOrder[index * 2]]);
-    DrawTeamShips(900, 800, 1500, heading, ctrlshipShapes[shipShapeOrder[index * 2 + 1]]);
+    DrawTeamShips(-900, 800, 1500, heading, ctrlshipShapes + (index * 2));
+    DrawTeamShips(900, 800, 1500, heading, ctrlshipShapes + (index * 2 + 1));
 
     renderSetMode(RENDER_MODE_2D);
 }
@@ -844,7 +773,7 @@ void DrawMenuPilot(int32 index, int32 id)
     renderSetMode(RENDER_MODE_3D);
 
     DrawObject(pilotShapes + pilotShapeOrder[pilotIndex], 0, -400, 11000, hdg, 0, 0);
-    DrawTeamShips(0, 700, 1300, heading, ctrlshipShapes[shipShapeOrder[pilotIndex]]);
+    DrawTeamShips(0, 700, 1300, heading, ctrlshipShapes + pilotIndex);
 
     renderSetMode(RENDER_MODE_2D);
 }
@@ -873,7 +802,7 @@ void DrawMenuGraphics(int32 index, int32 id)
     int32 heading = FRAME_LERP_STEP(10);
 
     renderSetMode(RENDER_MODE_3D);
-    DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes[shipShapeOrder[0]]);
+    DrawTeamShips(0, 0, MODELSIZE, heading, ctrlshipShapes + 0);
     renderSetMode(RENDER_MODE_2D);
 }
 
@@ -1283,7 +1212,7 @@ void DrawMenuMultiplayer(int32 index, int32 id)
         {
             renderOffset(x, -8 + 24);
             renderSetMode(RENDER_MODE_3D);
-            DrawTeamShips(0, 800, 2200, hdg, ctrlshipShapes[shipShapeOrder[gPlayers[i].shipNum]]); // gPlayers[i].shipNum
+            DrawTeamShips(0, 800, 2200, hdg, ctrlshipShapes + gPlayers[i].shipNum); // gPlayers[i].shipNum
         }
         hdg += 1024;
         x += 80;
@@ -1368,8 +1297,7 @@ void DrawMenuMultiplayer(int32 index, int32 id)
         }
 
         ownShip = gPlayers[0].shipNum;
-        gConfig.trackNum = (gConfig.trackNum + 1) + gConfig.raceClass * 7;
-        gConfig.actTrackNum = gTrackList[gConfig.trackNum - 1];
+        gConfig.trackNum = gConfig.trackNum + gConfig.raceClass * 7;
         GoMenu(-1);
     }
 }

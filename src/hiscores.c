@@ -181,7 +181,7 @@ void HighScore(void)
 
     for (i = 0; i < NumNames; i++)
     {
-        if (bestLap < scoreTable[(gConfig.trackNum - 1)].lapTimes[i])
+        if (bestLap < scoreTable[gConfig.trackNum].lapTimes[i])
         {
             highScore = 1;
         }
@@ -315,18 +315,18 @@ void HighScore(void)
         /*
                  for (i=0; i < NumNames; i++)
                  {
-                    AddText (&(scoreTable[(gConfig.trackNum-1)].names[i][0]), text_data (40, (80+(spacing*i)), 16), TEXT_COLOR_WHITE) ;
+                    AddText (&(scoreTable[gConfig.trackNum].names[i][0]), text_data (40, (80+(spacing*i)), 16), TEXT_COLOR_WHITE) ;
 
-                    if (scoreTable[(gConfig.trackNum-1)].lapTimes[i] == 2000000000)
+                    if (scoreTable[gConfig.trackNum].lapTimes[i] == 2000000000)
                        AddTime(0,
                                  text_data (165, (80+(spacing*i)), 16), TEXT_COLOR_HIGHLIGHT);
                     else
-                       AddTime(scoreTable[(gConfig.trackNum-1)].lapTimes[i],
+                       AddTime(scoreTable[gConfig.trackNum].lapTimes[i],
                                 text_data (165, (80+(spacing*i)), 16), TEXT_COLOR_HIGHLIGHT);
                  }
 
         */
-        DisplayHiScore((gConfig.trackNum - 1));
+        DisplayHiScore(gConfig.trackNum);
 
         if (userEntry)
         {
@@ -365,11 +365,11 @@ void AddEntry2Table(int bestLap, char nameEntered[])
     int scoreTrack = 0;
 
     if (gConfig.raceType == TIME_TRIAL)
-        scoreTrack = ((gConfig.trackNum - 1) + HiScoreTracks);
+        scoreTrack = (gConfig.trackNum + HiScoreTracks);
     else if (gConfig.raceType == CHAMPIONSHIP)
-        scoreTrack = ((gConfig.trackNum - 1) - gConfig.trackInc);
+        scoreTrack = (gConfig.trackNum - gConfig.trackInc);
     else
-        scoreTrack = (gConfig.trackNum - 1);
+        scoreTrack = gConfig.trackNum;
 
     for (i = 0; i < NumNames; i++)
     {
@@ -408,7 +408,7 @@ void AddEntry2Table(int bestLap, char nameEntered[])
 
 int32 CheckLapRecord(ShipData* ship)
 {
-    int32 scoreTrack = gConfig.trackNum - 1;
+    int32 scoreTrack = gConfig.trackNum;
 
     if (gConfig.raceType == TIME_TRIAL)
     {
@@ -634,11 +634,11 @@ void NewHighScoreDraw(HiScoreData* hiScoreData)
     CentreText(STR_HALL_OF_FAME, text_data(0, 20, 16), TEXT_COLOR_WHITE);
 
     if (gConfig.raceType == TIME_TRIAL)
-        DisplayHiScore(((gConfig.trackNum - 1) + HiScoreTracks));
+        DisplayHiScore((gConfig.trackNum + HiScoreTracks));
     else if (gConfig.raceType == CHAMPIONSHIP)
-        DisplayHiScore((gConfig.trackNum - 1) - gConfig.trackInc);
+        DisplayHiScore(gConfig.trackNum - gConfig.trackInc);
     else
-        DisplayHiScore((gConfig.trackNum - 1));
+        DisplayHiScore(gConfig.trackNum);
 }
 
 int CheckHiScore(HiScoreData* hiScoreData)
@@ -648,11 +648,11 @@ int CheckHiScore(HiScoreData* hiScoreData)
     int scoreTrack = 0;
 
     if (gConfig.raceType == TIME_TRIAL)
-        scoreTrack = ((gConfig.trackNum - 1) + HiScoreTracks);
+        scoreTrack = (gConfig.trackNum + HiScoreTracks);
     else if (gConfig.raceType == CHAMPIONSHIP)
-        scoreTrack = ((gConfig.trackNum - 1) - gConfig.trackInc);
+        scoreTrack = (gConfig.trackNum - gConfig.trackInc);
     else
-        scoreTrack = (gConfig.trackNum - 1);
+        scoreTrack = gConfig.trackNum;
 
     highScore = 0;
     hiScoreData->bestLap = 0;

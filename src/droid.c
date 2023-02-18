@@ -25,7 +25,7 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo)
         for (i = 0; i < 10; i++)
         {
             section = section->nextSection;
-            if (section->flags & Jump)
+            if (section->flags & TRACK_JUMP)
             {
                 break;
             }
@@ -96,7 +96,7 @@ void UpdateRescueDroid(ShipData* shipIndex, int shipNo)
 /**************************************************************************/
 /****             Rescue droid control update routine                  ****/
 /**************************************************************************/
-void UpdateDroidStart(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes)
+void UpdateDroidStart(RescueData* rescueDroid)
 {
     int32 cx, cy, sy;
 
@@ -130,19 +130,19 @@ void UpdateDroidStart(RescueData* rescueDroid, ShipData* shipIndex, Object** shi
         rescueDroid->vhdg = 8;
     }
 
-    SetDroidVectors(rescueDroid, shipShapes);
+    SetDroidVectors(rescueDroid);
 
     if (rescueDroid->updateCount == 0)
     {
         rescueDroid->updateCount = 800;
-        rescueDroid->droidUpdate = UpdateDroidCircle;
+        rescueDroid->update = UpdateDroidCircle;
         rescueDroid->pos.x = rescueDroid->section->centre.x;
         rescueDroid->pos.y = -3000;
         rescueDroid->pos.z = rescueDroid->section->centre.z;
     }
 }
 
-void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes)
+void UpdateDroidCircle(RescueData* rescueDroid)
 {
     TrackSection* nextSection;
     vec4i targetVector;
@@ -150,6 +150,7 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     short targetHdg;
     short quickestTurn, turn;
     int32 cx, cy, sy;
+    ShipData* ship = rescueDroid->ship;
 
     nextSection = rescueDroid->section->nextSection;
 
@@ -186,49 +187,50 @@ void UpdateDroidCircle(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     rescueDroid->acc.y = targetVector.y >> 6;
     rescueDroid->acc.z = (cy * cx) >> 15;
 
-    if (shipIndex->attr & RESCUE)
+    if (ship->attr & RESCUE)
     {
-        PlayerData* player = (PlayerData*)shipIndex->player;
+        PlayerData* player = (PlayerData*)ship->player;
         ASSERT(player);
 
         PlayNote(SFX_TRACTOR_BEAM);
-        rescueDroid->droidUpdate = UpdateDroidRescue;
+        rescueDroid->update = UpdateDroidRescue;
         rescueDroid->updateCount = 800;
 
-        shipIndex->attr |= REMOTE_VIEW;
+        ship->attr |= REMOTE_VIEW;
         player->camera.update = UpdateCameraDroidView;
-        if (shipIndex->nearTrkSect->flags & Jump)
-            player->camera.section = shipIndex->nearTrkSect->nextSection;
+        if (ship->nearTrkSect->flags & TRACK_JUMP)
+            player->camera.section = ship->nearTrkSect->nextSection;
         else
-            player->camera.section = shipIndex->nearTrkSect;
+            player->camera.section = ship->nearTrkSect;
     }
 
-    SetDroidVectors(rescueDroid, shipShapes);
+    SetDroidVectors(rescueDroid);
 }
 
-void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** shipShapes)
+void UpdateDroidRescue(RescueData* rescueDroid)
 {
     vec3i target;
     vec3i distance;
 
     TrackSection* nextSection;
+    ShipData* ship = rescueDroid->ship;
 
     if (rescueDroid->updateCount == 800)
     {
 
-        if ((rescueDroid->section == shipIndex->nearTrkSect) || (rescueDroid->section == shipIndex->nearTrkSect->prevSection))
+        if ((rescueDroid->section == ship->nearTrkSect) || (rescueDroid->section == ship->nearTrkSect->prevSection))
         {
-            shipIndex->attr &= ~IN_TOW;
+            ship->attr &= ~IN_TOW;
         }
         else
         {
-            rescueDroid->section = shipIndex->nearTrkSect;
+            rescueDroid->section = ship->nearTrkSect;
             nextSection = rescueDroid->section->nextSection;
 
             rescueDroid->pos.x = (rescueDroid->section->centre.x + nextSection->centre.x) >> 1;
             rescueDroid->pos.y = rescueDroid->section->centre.y - 3000;
             rescueDroid->pos.z = (rescueDroid->section->centre.z + nextSection->centre.z) >> 1;
-            shipIndex->attr &= ~IN_TOW;
+            ship->attr &= ~IN_TOW;
         }
 
         rescueDroid->vel.x = 0;
@@ -242,12 +244,12 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         rescueDroid->updateCount = 799;
     }
 
-    target.x = shipIndex->pos.x;
-    target.y = shipIndex->pos.y - 350;
-    target.z = shipIndex->pos.z;
+    target.x = ship->pos.x;
+    target.y = ship->pos.y - 350;
+    target.z = ship->pos.z;
 
     rescueDroid->vhdg = 0;
-    rescueDroid->hdg = shipIndex->hdg;
+    rescueDroid->hdg = ship->hdg;
 
     distance.x = (target.x - rescueDroid->pos.x);
     distance.y = (target.y - rescueDroid->pos.y);
@@ -271,7 +273,7 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
     if ((rescueDroid->vel.z > -129) && (rescueDroid->vel.z < 0))
         rescueDroid->vel.z = -129;
 
-    if (shipIndex->attr & IN_TOW)
+    if (ship->attr & IN_TOW)
     {
 
         rescueDroid->acc.x = 0;
@@ -287,9 +289,9 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         rescueDroid->pos.z = target.z;
     }
 
-    if ((GetMagnitudeSqr(&distance) < 1) && ((shipIndex->attr & IN_TOW) == 0))
+    if ((GetMagnitudeSqr(&distance) < 1) && ((ship->attr & IN_TOW) == 0))
     {
-        shipIndex->attr |= IN_TOW;
+        ship->attr |= IN_TOW;
 
         rescueDroid->acc.x = 0;
         rescueDroid->acc.y = 0;
@@ -304,31 +306,31 @@ void UpdateDroidRescue(RescueData* rescueDroid, ShipData* shipIndex, Object** sh
         rescueDroid->pos.z = target.z;
     }
 
-    if ((shipIndex->attr & RESCUE) == 0)
+    if ((ship->attr & RESCUE) == 0)
     {
-        PlayerData* player = (PlayerData*)shipIndex->player;
+        PlayerData* player = (PlayerData*)ship->player;
         ASSERT(player);
 
         KillNote(SFX_TRACTOR_BEAM);
-        rescueDroid->droidUpdate = UpdateDroidCircle;
+        rescueDroid->update = UpdateDroidCircle;
         rescueDroid->updateCount = 800;
-        shipIndex->attr &= ~REMOTE_VIEW;
+        ship->attr &= ~REMOTE_VIEW;
 
-        if (shipIndex->attr & VIEW_IN)
+        if (ship->attr & VIEW_IN)
             player->camera.update = UpdateCameraRaceInternal;
         else
             player->camera.update = UpdateCameraRaceExternal;
 
-        while ((rescueDroid->section->flags & Jump) == 0)
+        while ((rescueDroid->section->flags & TRACK_JUMP) == 0)
         {
             rescueDroid->section = rescueDroid->section->prevSection;
         }
     }
 
-    SetDroidVectors(rescueDroid, shipShapes);
+    SetDroidVectors(rescueDroid);
 }
 
-void SetDroidVectors(RescueData* rescueDroid, Object** shipShapes)
+void SetDroidVectors(RescueData* rescueDroid)
 {
     rescueDroid->vel.x += rescueDroid->acc.x;
     rescueDroid->vel.y += rescueDroid->acc.y;
@@ -346,20 +348,21 @@ void SetDroidVectors(RescueData* rescueDroid, Object** shipShapes)
     rescueDroid->hdg = ang(rescueDroid->hdg);
 }
 
-void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shipIndex)
+void InitRescueDroid(RescueData* rescueDroid, ShipData* ship)
 {
     rescueDroid->section = gTrack.sections;
 
     while (1)
     {
         rescueDroid->section = rescueDroid->section->nextSection;
-        if (rescueDroid->section->flags & Jump)
+        if (rescueDroid->section->flags & TRACK_JUMP)
             break;
     }
 
-    rescueDroid->pos.x = shipIndex->pos.x;
-    rescueDroid->pos.y = shipIndex->pos.y - 200;
-    rescueDroid->pos.z = shipIndex->pos.z;
+    rescueDroid->ship = ship;
+    rescueDroid->pos.x = ship->pos.x;
+    rescueDroid->pos.y = ship->pos.y - 200;
+    rescueDroid->pos.z = ship->pos.z;
 
     rescueDroid->vel.x = 0;
     rescueDroid->vel.y = 0;
@@ -375,14 +378,12 @@ void InitRescueDroid(RescueData* rescueDroid, Object** shipShapes, ShipData* shi
 
     rescueDroid->updateCount = 800;
 
-    rescueDroid->modelID = RESCUE_DROID;
-
     rescueDroid->hdg = 0;
     rescueDroid->pitch = 0;
     rescueDroid->roll = 0;
     FRAME_LERP_INIT(rescueDroid);
 
-    rescueDroid->droidUpdate = UpdateDroidStart;
+    rescueDroid->update = UpdateDroidStart;
 }
 
 void DrawDroid(Object* droid, const RescueData* rescueData)

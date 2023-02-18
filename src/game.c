@@ -124,7 +124,6 @@ void gameInit(void)
     gConfig.showBonusTrack = 1;
 #endif
 
-    InitPadSettings();
     InitChampionship();
 
     ctrlGameLoop = GAME_LOOP_MAIN;
