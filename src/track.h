@@ -128,6 +128,9 @@ typedef struct TrackData
     Object* donkey;
 } TrackData;
 
+ struct ShipData;
+ struct RescueData;
+
 typedef struct TrackCamera
 {
     TrackSection* section;

@@ -34,8 +34,9 @@
 
     // Textures
     PFNGLGENERATEMIPMAPPROC             glGenerateMipmap;
+#if !defined(__LINUX__)
     PFNGLTEXIMAGE3DPROC                 glTexImage3D;
-
+#endif
     // Shader
     PFNGLCREATEPROGRAMPROC              glCreateProgram;
     PFNGLDELETEPROGRAMPROC              glDeleteProgram;
@@ -88,12 +89,12 @@
 #endif
 
 #define EXT_DECL(v) uint8 v;
-#define EXT_CHECK(v) if (ext && strstr(ext, "_"#v)) support.##v = 1;
+#define EXT_CHECK(v) if (ext && strstr(ext, "_"#v)) support.v = 1;
 
 #define EXT_LIST(E) \
     E( texture_array    )
 
-#define CHECK_EXT(name) 
+#define CHECK_EXT(name)
 
 typedef struct
 {
@@ -177,7 +178,7 @@ typedef enum
 {
     SHADER_ATTRIBS(DECL_ENUM)
     aMAX
-} UniformType;
+} AttribType;
 
 const char* const SHADER_UNIFORM_NAMES[uMAX] = { SHADER_UNIFORMS(DECL_STR) };
 const char* const SHADER_ATTRIB_NAMES[aMAX] = { SHADER_ATTRIBS(DECL_STR) };
@@ -567,7 +568,7 @@ void initShader(Shader* shader, const char* text)
     {
         glBindAttribLocation(shader->id, i, SHADER_ATTRIB_NAMES[i]);
     }
-    
+
     glLinkProgram(shader->id);
     glGetProgramInfoLog(shader->id, sizeof(info), NULL, info);
     if (info[0] && strlen(info) > 8)
@@ -599,7 +600,7 @@ void* GetProc(const char *name)
 }
 
 #define DRAW_BEGIN(v,t,c)   gVertexPtr; gVertexPtr += c
-#define DRAW_END()          
+#define DRAW_END()
 #define VERTEX_SET(v, _x, _y, _z, _s, _t, _color) v.x = (float)_x; v.y = (float)_y; v.z = (float)_z; v.s = (float)_s; v.t = (float)_t; v.color = _color
 #define VERTEX_SET_FACE(i, face, vertices, v) VERTEX_SET(v[i], vertices[face->index[i]].x, vertices[face->index[i]].y, vertices[face->index[i]].z, face->uv[i][0] * iw, face->uv[i][1] * ih, face->color[i])
 
@@ -700,8 +701,9 @@ void renderInit()
     GetProcOGL(glGetStringi);
 
     GetProcOGL(glGenerateMipmap);
+#if !defined(__LINUX__)
     GetProcOGL(glTexImage3D);
-
+#endif
     GetProcOGL(glCreateProgram);
     GetProcOGL(glDeleteProgram);
     GetProcOGL(glLinkProgram);
@@ -1585,7 +1587,7 @@ void drawMeshShip(const Object* obj, uint32 color)
                 iw = 0.0f;
                 ih = 0.0f;
             }
-    
+
             ASSERT(FACE_QUAD(face) == 0); // triangles only
 
             addTriangle();
