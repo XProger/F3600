@@ -302,8 +302,8 @@ void AdjustEngineSound(ShipData* ship, TrackCamera* camera)
 
     vol = ship->speed >> 1;
     SetVolume(SFX_TURBULENCE,
-        (vol >> 2) + ((vol * ship->BrakeRotR) >> 9),
-        (vol >> 2) + ((vol * ship->BrakeRotL) >> 9));
+        (vol >> 2) + ((vol * ship->brakeRotR) >> 9),
+        (vol >> 2) + ((vol * ship->brakeRotL) >> 9));
 }
 
 int PlayDirectionalNote(enum SfxType id, const vec3i* pos)

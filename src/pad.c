@@ -46,27 +46,27 @@ void SetBrake(ShipData* ship, short padLeft, short padRight)
 
     // right
     if (player->pad & padRight)
-        ship->BrakeRotR += FR32U;
-    else if (ship->BrakeRotR > 0)
-        ship->BrakeRotR -= FR32U;
+        ship->brakeRotR += FR32U;
+    else if (ship->brakeRotR > 0)
+        ship->brakeRotR -= FR32U;
 
-    if (ship->BrakeRotR < 0)
-        ship->BrakeRotR = 0;
+    if (ship->brakeRotR < 0)
+        ship->brakeRotR = 0;
 
-    if (ship->BrakeRotR > 256)
-        ship->BrakeRotR = 256;
+    if (ship->brakeRotR > 256)
+        ship->brakeRotR = 256;
 
     // left
     if (player->pad & padLeft)
-        ship->BrakeRotL += FR32U;
-    else if (ship->BrakeRotL > 0)
-        ship->BrakeRotL -= FR32U;
+        ship->brakeRotL += FR32U;
+    else if (ship->brakeRotL > 0)
+        ship->brakeRotL -= FR32U;
 
-    if (ship->BrakeRotL < 0)
-        ship->BrakeRotL = 0;
+    if (ship->brakeRotL < 0)
+        ship->brakeRotL = 0;
 
-    if (ship->BrakeRotL > 256)
-        ship->BrakeRotL = 256;
+    if (ship->brakeRotL > 256)
+        ship->brakeRotL = 256;
 }
 
 void SetView(ShipData* ship, short padView)

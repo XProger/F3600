@@ -496,8 +496,8 @@ void CallMenuActivator(void)
         {
             gConfig.newLapRecord = 0;
             gPlayers[0].ready = 1;
-            gPlayers[0].shipNum = gCurrOption + gConfig.team * 2;
-            ownShip = gPlayers[0].shipNum;
+            gPlayers[0].shapeIndex = gCurrOption + gConfig.team * 2;
+            ownShip = gPlayers[0].shapeIndex;
 
             if (gConfig.raceType == CHAMPIONSHIP)
             {
@@ -546,7 +546,7 @@ void menuInit(void)
     int32 i;
     for (i = 0; i < MAX_PLAYERS; i++)
     {
-        gPlayers[i].shipNum = -1;
+        gPlayers[i].shapeIndex = -1;
         gPlayers[i].ready = 0;
     }
 
@@ -1153,11 +1153,11 @@ void DrawMenuMultiplayer(int32 index, int32 id)
     {
         int32 xpad = gPlayers[i].xpad;
 
-        if (gPlayers[i].shipNum == -1)
+        if (gPlayers[i].shapeIndex == -1)
         {
             if (xpad)
             {
-                gPlayers[i].shipNum = 0;
+                gPlayers[i].shapeIndex = 0;
             }
         }
         else
@@ -1166,16 +1166,16 @@ void DrawMenuMultiplayer(int32 index, int32 id)
             {
                 if (GetMenuKeyPlayer(M_LEFT, i))
                 {
-                    gPlayers[i].shipNum--;
-                    if (gPlayers[i].shipNum < 0)
-                        gPlayers[i].shipNum = 7;
+                    gPlayers[i].shapeIndex--;
+                    if (gPlayers[i].shapeIndex < 0)
+                        gPlayers[i].shapeIndex = 7;
                 }
 
                 if (GetMenuKeyPlayer(M_RIGHT, i))
                 {
-                    gPlayers[i].shipNum++;
-                    if (gPlayers[i].shipNum > 7)
-                        gPlayers[i].shipNum = 0;
+                    gPlayers[i].shapeIndex++;
+                    if (gPlayers[i].shapeIndex > 7)
+                        gPlayers[i].shapeIndex = 0;
                 }
 
                 if (GetMenuKeyPlayer(M_SELECT, i))
@@ -1193,7 +1193,7 @@ void DrawMenuMultiplayer(int32 index, int32 id)
             {
                 if (GetMenuKeyPlayer(M_START, i))
                 {
-                    gPlayers[i].shipNum = -1;
+                    gPlayers[i].shapeIndex = -1;
                 }
             }
         }
@@ -1208,11 +1208,11 @@ void DrawMenuMultiplayer(int32 index, int32 id)
     x = -120;
     for (i = 0; i < MAX_PLAYERS; i++)
     {
-        if (gPlayers[i].shipNum != -1)
+        if (gPlayers[i].shapeIndex != -1)
         {
             renderOffset(x, -8 + 24);
             renderSetMode(RENDER_MODE_3D);
-            DrawTeamShips(0, 800, 2200, hdg, ctrlshipShapes + gPlayers[i].shipNum); // gPlayers[i].shipNum
+            DrawTeamShips(0, 800, 2200, hdg, ctrlshipShapes + gPlayers[i].shapeIndex);
         }
         hdg += 1024;
         x += 80;
@@ -1262,10 +1262,10 @@ void DrawMenuMultiplayer(int32 index, int32 id)
         }
         else
         {
-            if (gPlayers[i].shipNum != -1)
+            if (gPlayers[i].shapeIndex != -1)
             {
                 CentreTextStr(gPlayers[i].name, text_data(x, y, 4), (opt == 4) || (i > 0) ? BLINK_TEXT : TEXT_COLOR_WHITE);
-                CentreText(STR_TEAM_AG_SYSTEMS + gPlayers[i].shipNum / 2, text_data(x, y + 8, 4), TEXT_COLOR_HIGHLIGHT);
+                CentreText(STR_TEAM_AG_SYSTEMS + (gPlayers[i].shapeIndex >> 1), text_data(x, y + 8, 4), TEXT_COLOR_HIGHLIGHT);
             }
             else
             {
@@ -1279,7 +1279,7 @@ void DrawMenuMultiplayer(int32 index, int32 id)
 
         x += 80;
 
-        if (!gPlayers[i].ready && (gPlayers[i].shipNum != -1))
+        if (!gPlayers[i].ready && (gPlayers[i].shapeIndex != -1))
         {
             done = 0;
         }
@@ -1296,7 +1296,7 @@ void DrawMenuMultiplayer(int32 index, int32 id)
             }
         }
 
-        ownShip = gPlayers[0].shipNum;
+        ownShip = gPlayers[0].shapeIndex;
         gConfig.trackNum = gConfig.trackNum + gConfig.raceClass * 7;
         GoMenu(-1);
     }

@@ -164,7 +164,7 @@ void ShipTrkReaction(ShipData* ship)
 
         force.y += 30000;
 
-        brake = (ship->BrakeRotR + ship->BrakeRotL);
+        brake = (ship->brakeRotR + ship->brakeRotL);
 
         tmp = FixedInvU(ship->skid + (brake >> 2));
         accX = (velDOF.x - ship->vel.x) * tmp;
@@ -212,7 +212,7 @@ void ShipTrkReaction(ShipData* ship)
         }
 
         ship->vpitch -= ship->vpitch >> 2;
-        brake = sar(ship->BrakeRotR - ship->BrakeRotL, 3);
+        brake = sar(ship->brakeRotR - ship->brakeRotL, 3);
 
         ship->hdg += sar(brake * ship->speed, 15);
 
@@ -253,7 +253,7 @@ void ShipTrkReaction(ShipData* ship)
             ship->attr |= RESCUE;
         }
 
-        brake = (ship->BrakeRotR + ship->BrakeRotL);
+        brake = (ship->brakeRotR + ship->brakeRotL);
 
         tmp = FixedInvU(MIN_RESISTANCE + (brake << 2));
         accX = (velDOF.x - ship->vel.x) * tmp;
@@ -286,7 +286,7 @@ void ShipTrkReaction(ShipData* ship)
         ship->vpitch -= FR50;
         ship->vpitch -= ship->vpitch >> 2;
 
-        brake = sar(ship->BrakeRotR - ship->BrakeRotL, 3);
+        brake = sar(ship->brakeRotR - ship->brakeRotL, 3);
         ship->hdg += sar(brake * ship->speed, 15);
 
         ship->vroll += sar(ship->vhdg, 5);

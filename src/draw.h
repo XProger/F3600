@@ -13,7 +13,7 @@ typedef struct
     TrackCamera camera;
     RescueData droid;
     char name[16];
-    int16 shipNum;
+    int16 shapeIndex;
     int16 ready;
     int32 pad, xpad;
     int32 joyIndex;

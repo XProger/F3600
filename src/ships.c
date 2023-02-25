@@ -4,6 +4,8 @@
 
 #include "game.h"
 
+ShipData* championShipIndex[NO_OF_SHIPS];
+
 const short startLinePos[14] = {
 // Venom
     27,     /* Altima VII   */
@@ -32,7 +34,7 @@ typedef struct
     uint8 skid;
 } ShipSpecs;
 
-const ShipSpecs SHIP_SPECS[2][4] =
+const ShipSpecs SHIP_SPECS[2][NO_OF_SHIPS / 2] =
 {
     { // Venom
         { 790, 160, 2560, 140, 12 },
@@ -54,7 +56,7 @@ typedef struct
     int16 thrustMag;
 } RemoteShipSpecs;
 
-const RemoteShipSpecs REMOTE_SHIP_SPECS[2][8] =
+const RemoteShipSpecs REMOTE_SHIP_SPECS[2][NO_OF_SHIPS] =
 {
     { // Venom
         { 2520, 43 },
@@ -78,65 +80,62 @@ const RemoteShipSpecs REMOTE_SHIP_SPECS[2][8] =
     }
 };
 
-short championOrder[8];
-short shipOrder[8];
-
-int32 SetSpread(int32 position)
+int32 SetSpread(int32 order)
 {
     int32 speed;
 
-    position--;
+    order--;
 
     switch (gConfig.trackNum)
     {
         case 0:
-            speed = 80 + position * 20;
+            speed = 80 + order * 20;
             break;
         case 1:
-            speed = 10 + position * 8;
+            speed = 10 + order * 8;
             break;
         case 2:
-            speed = 60 + position * 11;
+            speed = 60 + order * 11;
             break;
         case 3:
-            speed = 40 + position * 11;
+            speed = 40 + order * 11;
             break;
         case 4:
-            speed = 80 + position * 15;
+            speed = 80 + order * 15;
             break;
         case 5:
-            speed = 10 + position * 8;
+            speed = 10 + order * 8;
             break;
         case 6:
-            speed = 40 + position * 11;
+            speed = 40 + order * 11;
             break;
         case 7:
-            speed = 80 + position * 11;
+            speed = 80 + order * 11;
             break;
         case 8:
-            speed = 10 + position * 8;
+            speed = 10 + order * 8;
             break;
         case 9:
-            speed = 60 + position * 8;
+            speed = 60 + order * 8;
             break;
         case 10:
-            speed = 30 + position * 11;
+            speed = 30 + order * 11;
             break;
         case 11:
-            speed = 30 + position * 11;
+            speed = 30 + order * 11;
             break;
         case 12:
-            speed = 10 + position * 8;
+            speed = 10 + order * 8;
             break;
         case 13:
-            speed = 40 + position * 11;
+            speed = 40 + order * 11;
             break;
         default:
             speed = 0;
             ASSERT(0);
     }
 
-    return speed * position;
+    return speed * order;
 }
 
 void DrawShips(ShipData* shipIndex)
@@ -211,90 +210,88 @@ void DrawShips(ShipData* shipIndex)
 
 void InitShipData(TrackSection* section, ShipData* shipIndex)
 {
-    int i, j;
+    int32 i, j, t, order;
     Face* face;
-    vec4i targetVector;
-    TrackSection* nextSection;
-    vec4i facePoint;
-    TrackSection* startSection[8];
-    int32 position;
-    short used[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    short raceOrder[8];
-    int index;
+    vec3i facePoint;
+    vec3i targetVector;
     ShipData* ship;
+    TrackSection* startSection[NO_OF_SHIPS];
     int32 startSecNo = startLinePos[gConfig.trackNum];
     const ShipSpecs* specs;
     const RemoteShipSpecs* remoteSpecs;
 
-    if (((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 0)) || ((gConfig.raceType == CHAMPIONSHIP) && (gConfig.trackNum == 7)) || (gConfig.raceType != CHAMPIONSHIP))
+    int8 usedShape[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    order = 0;
+
+    for (i = 0; i < MAX_PLAYERS; i++)
     {
+        PlayerData* player = gPlayers + i;
+        if (player->shapeIndex != -1)
+        {
+            usedShape[player->shapeIndex] = 1;
+            player->ship->shape = ctrlshipShapes + player->shapeIndex;
+            player->ship->order = order++;
+        }
+    }
+
+    // shuffle players
+    for (i = 1; i < gNumPlayers; i++)
+    {
+        j = randy() % gNumPlayers;
+        t = shipIndex[i].order;
+        shipIndex[i].order = shipIndex[j].order;
+        shipIndex[j].order = t;
+    }
+
+    if ((gConfig.raceType != CHAMPIONSHIP) || (gConfig.trackNum == 0) || (gConfig.trackNum == 7))
+    {
+        for (i = gNumPlayers; i < NO_OF_SHIPS; i++)
+        {
+            for (j = 0; j < NO_OF_SHIPS; j++)
+            {
+                if (usedShape[j] == 0)
+                {
+                    usedShape[j] = 1;
+                    shipIndex[i].shape = ctrlshipShapes + j;
+                    shipIndex[i].order = order++;
+                    break;
+                }
+            }
+        }
+
+        ASSERT(order == NO_OF_SHIPS);
+
+        // shuffle enemies
+        for (i = gNumPlayers; i < NO_OF_SHIPS; i++)
+        {
+            j = gNumPlayers + (randy() % (NO_OF_SHIPS - gNumPlayers));
+            t = shipIndex[i].order;
+            shipIndex[i].order = shipIndex[j].order;
+            shipIndex[j].order = t;
+        }
+
         for (i = 0; i < NO_OF_SHIPS; i++)
         {
-            if (i != ownShip)
-            {
-                while (1)
-                {
-                    index = randy() % 8;
-                    if (index != 0)
-                    {
-                        if (used[index] == 0)
-                        {
-                            championOrder[index] = i;
-                            raceOrder[index] = i;
-                            shipOrder[i] = index;
-                            used[index] = 1;
-                            break;
-                        }
-                    }
-                }
-            }
+            championShipIndex[shipIndex[i].order] = shipIndex + i;
         }
-
-        championOrder[0] = ownShip;
-        raceOrder[0] = ownShip;
-        shipOrder[ownShip] = 0;
     }
-    else if (gConfig.raceType == CHAMPIONSHIP)
+    else
     {
-        raceOrder[7] = championOrder[7];
-        shipOrder[raceOrder[7]] = 7;
-
-        if ((randy() % 2) == 0)
+        if (randy() & 1)
         {
-            raceOrder[5] = championOrder[5];
-            raceOrder[6] = championOrder[6];
-        }
-        else
-        {
-            raceOrder[6] = championOrder[5];
-            raceOrder[5] = championOrder[6];
+            t = championShipIndex[5]->order;
+            championShipIndex[5]->order = championShipIndex[6]->order;
+            championShipIndex[6]->order = t;
         }
 
-        shipOrder[raceOrder[5]] = 5;
-        shipOrder[raceOrder[6]] = 6;
-
-        for (i = 1; i < 5; i++)
+        for (i = gNumPlayers; i < 5; i++)
         {
-            while (1)
-            {
-                index = (randy() % 4) + 1;
-                {
-                    if (used[index] == 0)
-                    {
-                        used[index] = 1;
-                        raceOrder[i] = championOrder[index];
-                        break;
-                    }
-                }
-            }
+            j = gNumPlayers + (randy() % (5 - gNumPlayers));
+            t = championShipIndex[i]->order;
+            championShipIndex[i]->order = championShipIndex[j]->order;
+            championShipIndex[j]->order = t;
         }
-        shipOrder[raceOrder[4]] = 4;
-        shipOrder[raceOrder[3]] = 3;
-        shipOrder[raceOrder[2]] = 2;
-        shipOrder[raceOrder[1]] = 1;
-
-        shipOrder[ownShip] = 0;
-        raceOrder[0] = ownShip;
     }
 
     for (i = 0; i < startSecNo - 15; i++)
@@ -314,7 +311,8 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
     {
         ship = shipIndex + i;
 
-        ship->shape = ctrlshipShapes + i;
+        ASSERT(ship->shape);
+
         ship->vel.x = 0;
         ship->vel.y = 0;
         ship->vel.z = 0;
@@ -326,8 +324,8 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->vroll = 0;
         ship->ahdg = 0;
         ship->thrustMag = 0;
-        ship->BrakeRotR = 0;
-        ship->BrakeRotL = 0;
+        ship->brakeRotR = 0;
+        ship->brakeRotL = 0;
         ship->attr = RACING | VISIBLE | DIRECTION;
         ship->weaponType = WPN_NONE;
         ship->lapNo = 0;
@@ -336,7 +334,8 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->revConCount = 0;
         ship->crossedLine = 0;
 
-        specs = SHIP_SPECS[gConfig.raceClass] + (i >> 1); // team = index / 2
+        t = (ship->shape - ctrlshipShapes) >> 1; // team
+        specs = SHIP_SPECS[gConfig.raceClass] + t;
 
         ship->maxThrust = specs->maxThrust;
         ship->headingInc = specs->headingInc;
@@ -350,7 +349,8 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->updateCount = START_TIME;
         ship->targetShip = NULL;
 
-        position = shipOrder[i];
+        order = ship->order;
+        section = startSection[order];
 
         if (ship->player)
         {
@@ -363,19 +363,18 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         {
             ship->update = UpdateRemoteShipStart;
 
-            remoteSpecs = REMOTE_SHIP_SPECS[gConfig.raceClass] + position;
+            remoteSpecs = REMOTE_SHIP_SPECS[gConfig.raceClass] + order;
             ship->remoteMaxThrust = remoteSpecs->maxThrust;
             ship->remoteThrustMag = remoteSpecs->thrustMag;
 
-            ship->numtospeed = SetSpread(position);
+            ship->numtospeed = SetSpread(order);
         }
 
-        ship->nearTrkSect = startSection[position];
-        ship->prevShipSect = startSection[position];
+        ship->nearTrkSect = ship->prevShipSect = section;
 
-        face = gTrack.faces + startSection[position]->faceStart; // left border face
+        face = gTrack.faces + section->faceStart; // left border face
         face++; // left side
-        if (position & 1)
+        if (order & 1)
         {
             face++; // right side
         }
@@ -387,14 +386,11 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->pos.y = facePoint.y + ((face->normal.y * 200) >> FIXED_SHIFT);
         ship->pos.z = facePoint.z + ((face->normal.z * 200) >> FIXED_SHIFT);
 
-        ship->nearSecNo = startSection[position]->secNo;
-        ship->prevSecNo = startSection[position]->secNo;
-        ship->DPASectDiff = startSection[position]->secNo;
+        ship->nearSecNo = ship->prevSecNo = ship->DPASectDiff = section->secNo;
 
-        nextSection = startSection[position]->nextSection;
-        targetVector.x = nextSection->centre.x - startSection[position]->centre.x;
-        targetVector.y = nextSection->centre.y - startSection[position]->centre.y;
-        targetVector.z = nextSection->centre.z - startSection[position]->centre.z;
+        targetVector.x = section->nextSection->centre.x - section->centre.x;
+        targetVector.y = section->nextSection->centre.y - section->centre.y;
+        targetVector.z = section->nextSection->centre.z - section->centre.z;
         ship->hdg = -ratan2(targetVector.x, targetVector.z);
         FRAME_LERP_INIT(ship);
     }

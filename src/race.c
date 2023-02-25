@@ -171,7 +171,7 @@ void raceInit(void)
     finishedExtro = 0;
 
     LoadScene(gTrackList[gConfig.trackNum]);
-    LoadWinLoseTex(PILOT_NAMES[gPlayers[0].shipNum]);
+    LoadWinLoseTex(PILOT_NAMES[gPlayers[0].shapeIndex]);
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
@@ -182,9 +182,9 @@ void raceInit(void)
     {
         PlayerData* player = gPlayers + i;
 
-        if (player->shipNum != -1)
+        if (player->shapeIndex != -1)
         {
-            player->ship = ctrlshipIndex + player->shipNum;
+            player->ship = ctrlshipIndex + i;
             player->ship->player = player;
         }
         else
@@ -1108,9 +1108,9 @@ void raceDemo(void)
     for (i = 0; i < MAX_PLAYERS; i++)
     {
         PlayerData* player = gPlayers + i;
-        player->shipNum = -1;
+        player->shapeIndex = -1;
     }
-    gPlayers[0].shipNum = ownShip;
+    gPlayers[0].shapeIndex = ownShip;
 
     gConfig.raceType = SINGLE_RACE;
     gConfig.trackNum = (randy() % 6); // all venom

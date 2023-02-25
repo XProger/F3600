@@ -49,7 +49,7 @@ typedef struct ShipData
 
     int16 vhdg, vpitch, vroll;
     int16 ahdg;
-    int16 BrakeRotR, BrakeRotL; /* Air brakes */
+    int16 brakeRotR, brakeRotL; /* Air brakes */
     uint16 speed; /* speed */
     int16 thrustMag; /* Thrust magnitude */
     int16 maxThrust; /* Miximum thrust */
@@ -76,6 +76,8 @@ typedef struct ShipData
 
     int16 nearSecNo;
     int16 prevSecNo;
+
+    int32 order;
 
     int32 lapTimes[5];
     int32 updateCount;

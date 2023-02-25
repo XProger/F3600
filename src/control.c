@@ -18,8 +18,6 @@ const short behindSpeed[16] = {
     500,    /* R - FireStar     */
     200 };  /* NULL             */
 
-extern short shipOrder[];
-
 /**********************************************************************/
 /***              Call update routine for each ship                 ***/
 /**********************************************************************/
@@ -66,7 +64,7 @@ ShipData* GetNearestPlayerShip(ShipData* remoteShip)
 
         if (ship)
         {
-            diff = ship->DPASectDiff - baseDiff;
+            diff = abs(baseDiff - ship->DPASectDiff);
             if (diff < minDiff)
             {
                 minDiff = diff;
@@ -724,7 +722,7 @@ void UpdateRemoteShip(ShipData* shipIndex, int shipNo)
             /**** give the weaker player a chance to catch up                    ****/
             /************************************************************************/
 
-            else if ((DPASectDiff > (shipOrder[shipNo] * 15)) && (DPASectDiff < 150)) /*** Ship well ahead, SLOW DOWN ***/
+            else if ((DPASectDiff > (remoteShip->order * 15)) && (DPASectDiff < 150)) /*** Ship well ahead, SLOW DOWN ***/
             {
                 remoteShip->speed += (remoteShip->remoteThrustMag >> 1);
                 if (remoteShip->speed > (remoteShip->remoteMaxThrust >> 1))

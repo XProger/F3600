@@ -380,7 +380,7 @@ void AddEntry2Table(int bestLap, char nameEntered[])
                 tablePos = i;
                 scoreTable[scoreTrack].position[i] = i;
                 scoreTable[scoreTrack].lapTimes[i] = bestLap;
-                scoreTable[scoreTrack].lapTimesPilot[i] = gPlayers[0].shipNum;
+                scoreTable[scoreTrack].lapTimesPilot[i] = gPlayers[0].shapeIndex;
                 strcpy(scoreTable[scoreTrack].names[i], nameEntered);
             }
             else
@@ -418,7 +418,7 @@ int32 CheckLapRecord(ShipData* ship)
     if (ship->lapTimes[ship->lapNo - 2] < scoreTable[scoreTrack].lapRecord)
     {
         scoreTable[scoreTrack].lapRecord = ship->lapTimes[ship->lapNo - 2];
-        scoreTable[scoreTrack].lapRecordPilot = gPlayers[0].shipNum;
+        scoreTable[scoreTrack].lapRecordPilot = gPlayers[0].shapeIndex;
 
         return 1;
     }
