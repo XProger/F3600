@@ -46,19 +46,6 @@ void osQuit()
 #define WND_HEIGHT  480
 
 // input
-void setDown(int32 key, int32 isDown)
-{
-    if (isDown)
-    {
-        gPad |= key;
-    }
-    else
-    {
-        gPad &= ~key;
-    }
-}
-
-#define INPUT_JOY_COUNT         1
 #define JOY_DEAD_ZONE_STICK     8192
 #define JOY_DEAD_ZONE_TRIGGER   8192
 #define JOY_MIN_UPDATE_FX_TIME  50
@@ -69,12 +56,13 @@ struct JoyDevice
     int32 fd;     // device file descriptor
     int32 fe;     // event file descriptor
     int32 Lx, Ly; // left stick axes values
+    int32 Rx, Ry; // right stick axes values
     int32 vL, vR; // current value for left/right motor vibration
     int32 oL, oR; // last applied value
     int32 time;   // time when we can send effect update
     struct ff_effect fx; // effect structure
     uint8_t axismap[ABS_CNT]; // axis mapping
-} joyDevice[INPUT_JOY_COUNT];
+} joyDevice[MAX_PLAYERS];
 
 int32 osJoyReady(int index)
 {
@@ -89,9 +77,9 @@ void osJoyVibrate(int32 index, int32 L, int32 R)
     joyDevice[index].vR = R;
 }
 
-int32 joyAxisValue(int32 value)
+int32 joyAxis(int32 value)
 {
-    if (value > -JOY_DEAD_ZONE_STICK && value < JOY_DEAD_ZONE_STICK)
+    if (abs(value) < JOY_DEAD_ZONE_STICK)
         return 0;
     return value;
 }
@@ -161,7 +149,7 @@ void inputInit()
     LOG("init gamepads:\n");
 
     char name[128];
-    for (int32 i = 0; i < INPUT_JOY_COUNT; i++)
+    for (int32 i = 0; i < MAX_PLAYERS; i++)
     {
         struct js_event event;
         struct JoyDevice* joy = joyDevice + i;
@@ -237,7 +225,7 @@ void inputInit()
 
 void inputFree()
 {
-    for (int i = 0; i < INPUT_JOY_COUNT; i++)
+    for (int i = 0; i < MAX_PLAYERS; i++)
     {
         struct JoyDevice* joy = joyDevice + i;
         if (joy->fd == -1) continue;
@@ -248,7 +236,12 @@ void inputFree()
 
 void inputReset()
 {
-    gPad = 0;
+    int32 i;
+
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        padReset(i);
+    }
 }
 
 void inputUpdate()
@@ -257,21 +250,15 @@ void inputUpdate()
         IN_A, IN_B, IN_X, IN_Y, IN_LB, IN_RB, IN_SELECT, IN_START, IN_NONE, IN_L, IN_R
     };
 
-    gPadStickX = gPadStickY = 256;
-
-    for (int i = 0; i < INPUT_JOY_COUNT; i++)
+    for (int i = 0; i < MAX_PLAYERS; i++)
     {
         struct js_event event;
         struct JoyDevice* joy = joyDevice + i;
-        int32 oldLx, oldLy;
 
         if (joy->fd == -1)
             continue;
 
         joyRumble(joy);
-
-        oldLx = joy->Lx;
-        oldLy = joy->Ly;
 
         while (read(joy->fd, &event, sizeof(event)) != -1)
         {
@@ -280,7 +267,7 @@ void inputUpdate()
             {
                 if (event.number >= 0 && event.number < COUNT(buttons))
                 {
-                    setDown(buttons[event.number], event.value == 1);
+                    padSetKey(i, buttons[event.number], event.value == 1);
                 }
             }
 
@@ -291,62 +278,43 @@ void inputUpdate()
                 {
                 // Left stick
                     case ABS_X:
-                        joy->Lx = joyAxisValue(event.value);
+                        joy->Lx = joyAxis(event.value);
                         break;
                     case ABS_Y:
-                        joy->Ly = joyAxisValue(event.value);
+                        joy->Ly = joyAxis(event.value);
                         break;
                 // Right stick
-                /*
                     case ABS_RX:
-                        joy.Rx = joyAxisValue(event.value);
+                        joy->Rx = joyAxis(event.value);
                         break;
                     case ABS_RY:
-                        joy.Ry = joyAxisValue(event.value);
+                        joy->Ry = joyAxis(event.value);
                         break;
-                */
                 // Left trigger
                     case ABS_Z:
-                        setDown(IN_LT, event.value > 0);
+                        padSetKey(i, IN_LT, event.value > 0);
                         break;
                 // Right trigger
                     case ABS_RZ:
-                        setDown(IN_RT, event.value > 0);
+                        padSetKey(i, IN_RT, event.value > 0);
                         break;
                 // D-PAD
                     case ABS_HAT0X:
                     case ABS_THROTTLE:
-                        setDown(IN_LEFT,  event.value < -0x4000);
-                        setDown(IN_RIGHT, event.value >  0x4000);
+                        padSetKey(i, IN_LEFT,  event.value < -0x4000);
+                        padSetKey(i, IN_RIGHT, event.value >  0x4000);
                         break;
                     case ABS_HAT0Y:
                     case ABS_RUDDER:
-                        setDown(IN_UP,    event.value < -0x4000);
-                        setDown(IN_DOWN,  event.value >  0x4000);
+                        padSetKey(i, IN_UP,    event.value < -0x4000);
+                        padSetKey(i, IN_DOWN,  event.value >  0x4000);
                         break;
                 }
             }
         }
 
-        if (joy->Lx != oldLx)
-        {
-            setDown(IN_LEFT,  joy->Lx < 0);
-            setDown(IN_RIGHT, joy->Lx > 0);
-        }
-
-        if (joy->Ly != oldLy)
-        {
-            setDown(IN_UP,   joy->Ly < 0);
-            setDown(IN_DOWN, joy->Ly > 0);
-        }
-
-        gPadStickX = joy->Lx ? ((abs(joy->Lx) + 1) >> 7) : 256;
-        gPadStickY = joy->Ly ? ((abs(joy->Ly) + 1) >> 6) : 256;
-
-        if (gPadStickX > 256)
-            gPadStickX = 256;
-        if (gPadStickY > 256)
-            gPadStickY = 256;
+        padSetStick(i, IN_L, joy->Lx, joy->Ly);
+        padSetStick(i, IN_R, joy->Rx, joy->Ry);
     }
 }
 
@@ -475,7 +443,7 @@ void WndProc(XEvent* e, Display* dpy, Window wnd)
                 toggle_fullscreen(dpy, wnd);
                 break;
             }
-            setDown(keyToInputKey(dpy, e->xkey), e->type == KeyPress);
+            padSetKey(0, keyToInputKey(dpy, e->xkey), e->type == KeyPress);
             break;
         }
     }
