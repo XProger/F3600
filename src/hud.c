@@ -19,7 +19,7 @@ extern HiScores scoreTable[];
 
 extern int short startLinePos[];
 
-int32 gRacePos[NO_OF_SHIPS] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+ShipData* gSortedShips[NO_OF_SHIPS];
 
 Texture* gSpeedoTex;
 Texture* gWinLoseTex;
@@ -393,9 +393,9 @@ void UpdateShipSecNo(ShipData* ship)
             {
                 ship->lapNo++;
 
-                if ((ship->lapNo > 1) && (ship->lapNo <= END_LAP + 1))
+                if (ship->player && (ship->lapNo > 1) && (ship->lapNo <= END_LAP + 1))
                 {
-                    if (CheckLapRecord(ship))
+                    if (CheckLapRecord((PlayerData*)ship->player))
                     {
                         gConfig.newLapRecord = 1; // TODO ship attr?
                     }
@@ -482,7 +482,7 @@ void UpdateRaceHud(ShipData* shipIndex, int choice)
         {
             if ((choice == -1) && (ship->lapNo < END_LAP + 1))
             {
-                ship->lapTimes[ship->lapNo - 1] += 2;
+                player->lapTimes[ship->lapNo - 1] += 2;
             }
         }
 
@@ -583,11 +583,11 @@ void CalcPosition(ShipData* shipIndex)
         swapped = 0;
         for (i = 1; i < NO_OF_SHIPS; i++)
         {
-            if (ComparePosision(shipIndex + gRacePos[i - 1], shipIndex + gRacePos[i]) > 0)
+            if (ComparePosision(gSortedShips[i - 1], gSortedShips[i]) > 0)
             {
-                int32 t = gRacePos[i - 1];
-                gRacePos[i - 1] = gRacePos[i];
-                gRacePos[i] = t;
+                ShipData* t = gSortedShips[i - 1];
+                gSortedShips[i - 1] = gSortedShips[i];
+                gSortedShips[i] = t;
                 swapped = 1;
             }
         }
@@ -595,7 +595,7 @@ void CalcPosition(ShipData* shipIndex)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        winTable[gRacePos[i]].racePosition = i + 1;
+        gSortedShips[i]->racePosition = i + 1;
     }
 }
 
@@ -708,7 +708,7 @@ void InitChampTable(void)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        winTable[i].points = 0;
+        ctrlshipIndex[i].totalPoints = 0;
         winTable[i].position = 1;
     }
 
@@ -736,7 +736,7 @@ void DisplayChampTable(void)
         color = ((gFrameIndex & 1) || !ctrlshipIndex[i].player) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
 
         AddTextStr(winTable[i].pilot, text_data(35, 80 + ((winTable[i].position) * 15), 8), color);
-        AddNumber(winTable[i].points, text_data(255, 80 + ((winTable[i].position) * 15), 8), color);
+        AddNumber(ctrlshipIndex[i].totalPoints, text_data(255, 80 + ((winTable[i].position) * 15), 8), color);
     }
 }
 
@@ -744,6 +744,7 @@ void DisplayRacePoints(void)
 {
     int32 i;
     uint32 color;
+    ShipData* ship;
 
     CentreText(STR_RACE_POINTS, text_data(0, 40, 8), TEXT_COLOR_HIGHLIGHT);
     AddText(STR_PILOT_NAME, text_data(85, 65, 8), TEXT_COLOR_HIGHLIGHT);
@@ -751,10 +752,12 @@ void DisplayRacePoints(void)
 
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
-        color = ((gFrameIndex & 1) || !ctrlshipIndex[i].player) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
+        ship = ctrlshipIndex + i;
 
-        AddTextStr(winTable[i].pilot, text_data(35, 80 + ((winTable[i].racePosition) * 15), 8), color);
-        AddNumber(winTable[i].racePoints, text_data(255, 80 + ((winTable[i].racePosition) * 15), 8), color);
+        color = ((gFrameIndex & 1) || !ship->player) ? TEXT_COLOR_WHITE : TEXT_COLOR_HIGHLIGHT;
+
+        AddTextStr(winTable[i].pilot, text_data(35, 80 + ((ship->racePosition) * 15), 8), color);
+        AddNumber(ship->racePoints, text_data(255, 80 + ((ship->racePosition) * 15), 8), color);
     }
 }
 
@@ -801,6 +804,8 @@ void DisplayWinLose(int32 index)
 void DisplayRaceInfo(HiScoreData* hiScoreData)
 {
     int32 i;
+    PlayerData* player = gPlayers; // TODO other players
+    int32 position = player->ship->racePosition;
 
     AddText(STR_RACE_STATISTICS, text_data(15, 80, 8), TEXT_COLOR_HIGHLIGHT);
 
@@ -808,16 +813,16 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
     {
         AddText(STR_LAP, text_data(25, 95 + (i * 12), 8), TEXT_COLOR_HIGHLIGHT);
         AddNumber((i + 1), text_data(65, 95 + (i * 12), 8), TEXT_COLOR_HIGHLIGHT);
-        AddTime(tempLapTimes[i], text_data(85, 95 + (i * 12), 8), TEXT_COLOR_WHITE);
+        AddTime(player->lapTimes[i], text_data(85, 95 + (i * 12), 8), TEXT_COLOR_WHITE);
     }
 
     AddText(STR_RACE_POSITION, text_data(15, 50, 8), TEXT_COLOR_HIGHLIGHT);
-    AddNumber(gConfig.Position, text_data(155, 50, 8), TEXT_COLOR_WHITE);
+    AddNumber(position, text_data(155, 50, 8), TEXT_COLOR_WHITE);
 
     /*TODO make some beauty*/
     if (gConfig.raceType == SINGLE_RACE)
     {
-        if ((CheckHiScore(hiScoreData)) && gConfig.Position == 1)
+        if ((CheckHiScore(hiScoreData, player)) && position == 1)
         {
             if (BLINK_SLOW)
             {
@@ -833,7 +838,7 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
     }
     else if (gConfig.raceType == CHAMPIONSHIP)
     {
-        if ((CheckHiScore(hiScoreData)) && (gConfig.Position >= 1 && gConfig.Position <= 3))
+        if ((CheckHiScore(hiScoreData, player)) && (position >= 1 && position <= 3))
         {
             if (BLINK_SLOW)
             {
@@ -849,7 +854,7 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
     }
     else if (gConfig.raceType == TIME_TRIAL)
     {
-        if (CheckHiScore(hiScoreData))
+        if (CheckHiScore(hiScoreData, player))
         {
             if (BLINK_SLOW)
             {
@@ -865,7 +870,7 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
     }
     else
     {
-        if (CheckHiScore(hiScoreData))
+        if (CheckHiScore(hiScoreData, player))
         {
             if (BLINK_SLOW)
             {
@@ -906,10 +911,11 @@ void DisplayRaceInfo(HiScoreData* hiScoreData)
     }
 }
 
-void DrawHud(ShipData* ship)
+void DrawHud(PlayerData* player)
 {
     int i;
     int width;
+    ShipData* ship = player->ship;
 
     if (gConfig.raceType == CHAMPIONSHIP)
         DisplayLives();
@@ -921,9 +927,9 @@ void DrawHud(ShipData* ship)
         if (ship->attr & RACING) // in race mode
         {
             if (ship->lapNo < END_LAP + 1) // not the last lap
-                AddTime(ship->lapTimes[ship->lapNo - 1], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
+                AddTime(player->lapTimes[ship->lapNo - 1], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
             else
-                AddTime(ship->lapTimes[2], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
+                AddTime(player->lapTimes[2], text_data(guiL + 16, guiB - (240 - 210), 16), TEXT_COLOR_WHITE);
         }
     }
     if (ship->attr & RACING)
@@ -934,7 +940,7 @@ void DrawHud(ShipData* ship)
             {
                 if (i < END_LAP)
                 {
-                    AddTime(ship->lapTimes[i - 1], text_data(guiL + 16, guiB - (240 - 205) - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
+                    AddTime(player->lapTimes[i - 1], text_data(guiL + 16, guiB - (240 - 205) - (10 * i), 8), TEXT_COLOR_HIGHLIGHT);
                 }
             }
         }
@@ -961,7 +967,7 @@ void DrawHud(ShipData* ship)
             #define POS_TEXT_OFFSET 230
         #endif
             AddText(STR_POSITION, text_data(guiR - (320 - POS_TEXT_OFFSET), guiT + 8, 8), TEXT_COLOR_HIGHLIGHT);
-            AddNumber(winTable[ship - ctrlshipIndex].racePosition, text_data(guiR - (320 - 260), guiT + 19, 16), TEXT_COLOR_WHITE);
+            AddNumber(ship->racePosition, text_data(guiR - (320 - 260), guiT + 19, 16), TEXT_COLOR_WHITE);
         }
 
         AddText(STR_LAP_RECORD, text_data(guiL + 15, guiT + 43, 8), TEXT_COLOR_HIGHLIGHT);

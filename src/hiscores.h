@@ -36,10 +36,10 @@ typedef struct
 
 void HighScore(void);
 void AddEntry2Table(int, char[]);
-int32 CheckLapRecord(ShipData* ship);
+int32 CheckLapRecord(PlayerData* player);
 void DisplayHiScore(char);
 void InitHiScoreData(HiScoreData*);
-int CheckHiScore(HiScoreData*);
+int CheckHiScore(HiScoreData* hiScoreData, PlayerData* player);
 void NewHighScore(HiScoreData*);
 char ChampLapRecord(ShipData*);
 void NewHighScoreDraw(HiScoreData* hiScoreData);

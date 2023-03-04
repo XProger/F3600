@@ -149,7 +149,7 @@ void UpdateShipRemote(ShipData* shipIndex, int shipNo)
     offSetVector.y = 0;
     offSetVector.z = 0;
 
-    playerShip = shipIndex + ownShip;
+    playerShip = gPlayers[0].ship;
     remoteShip = shipIndex + shipNo;
 
     facePtr = remoteShip->face;
@@ -378,6 +378,7 @@ void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo)
     PrmPSX prm;
     vec4i targetVector;
     int32 temp;
+    ShipData* ship = gPlayers[0].ship;
 
     if (shipstepCount == 8)
     {
@@ -408,50 +409,50 @@ void UpdateShipLinearInterpolateSpline(ShipData* shipIndex, int shipNo)
     step.y = (pos1.y - pos.y) >> 3;
     step.z = (pos1.z - pos.z) >> 3;
 
-    step.x = (pos.x + (step.x << 3) - shipIndex[ownShip].pos.x);
-    step.y = (pos.y + (step.y << 3) - shipIndex[ownShip].pos.y);
-    step.z = (pos.z + (step.z << 3) - shipIndex[ownShip].pos.z);
+    step.x = (pos.x + (step.x << 3) - ship->pos.x);
+    step.y = (pos.y + (step.y << 3) - ship->pos.y);
+    step.z = (pos.z + (step.z << 3) - ship->pos.z);
 
-    shipIndex[ownShip].vel.x += step.x;
-    shipIndex[ownShip].vel.y += step.y;
-    shipIndex[ownShip].vel.z += step.z;
+    ship->vel.x += step.x;
+    ship->vel.y += step.y;
+    ship->vel.z += step.z;
 
-    shipIndex[ownShip].vel.x -= shipIndex[ownShip].vel.x >> 3;
-    shipIndex[ownShip].vel.y -= shipIndex[ownShip].vel.y >> 3;
-    shipIndex[ownShip].vel.z -= shipIndex[ownShip].vel.z >> 3;
+    ship->vel.x -= ship->vel.x >> 3;
+    ship->vel.y -= ship->vel.y >> 3;
+    ship->vel.z -= ship->vel.z >> 3;
 
-    shipIndex[ownShip].pos.x += (shipIndex[ownShip].vel.x >> 7);
-    shipIndex[ownShip].pos.y += (shipIndex[ownShip].vel.y >> 7);
-    shipIndex[ownShip].pos.z += (shipIndex[ownShip].vel.z >> 7);
+    ship->pos.x += (ship->vel.x >> 7);
+    ship->pos.y += (ship->vel.y >> 7);
+    ship->pos.z += (ship->vel.z >> 7);
 
-    shipIndex[ownShip].nearTrkSect = FindAllNearestSection(&shipIndex[ownShip].pos);
+    ship->nearTrkSect = FindAllNearestSection(&ship->pos);
 
-    targetVector.x = pos1.x - shipIndex[ownShip].pos.x;
-    targetVector.y = pos1.y - shipIndex[ownShip].pos.y;
-    targetVector.z = pos1.z - shipIndex[ownShip].pos.z;
+    targetVector.x = pos1.x - ship->pos.x;
+    targetVector.y = pos1.y - ship->pos.y;
+    targetVector.z = pos1.z - ship->pos.z;
 
     temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
-    shipIndex[ownShip].vhdg = -ratan2(targetVector.x, targetVector.z) - shipIndex[ownShip].hdg;
+    ship->vhdg = -ratan2(targetVector.x, targetVector.z) - ship->hdg;
 
-    if (shipIndex[ownShip].vhdg > 2048)
+    if (ship->vhdg > 2048)
     {
-        shipIndex[ownShip].vhdg = shipIndex[ownShip].vhdg - 4096;
+        ship->vhdg = ship->vhdg - 4096;
     }
-    else if (shipIndex[ownShip].vhdg < -2048)
+    else if (ship->vhdg < -2048)
     {
-        shipIndex[ownShip].vhdg = shipIndex[ownShip].vhdg + 4096;
+        ship->vhdg = ship->vhdg + 4096;
     }
 
-    shipIndex[ownShip].vhdg -= shipIndex[ownShip].vhdg >> 3;
-    shipIndex[ownShip].hdg += shipIndex[ownShip].vhdg >> 4;
+    ship->vhdg -= ship->vhdg >> 3;
+    ship->hdg += ship->vhdg >> 4;
 
-    shipIndex[ownShip].vpitch = -ratan2(targetVector.y, temp) - shipIndex[ownShip].pitch;
-    shipIndex[ownShip].vpitch -= shipIndex[ownShip].vpitch >> 3;
-    shipIndex[ownShip].pitch += shipIndex[ownShip].vpitch >> 4;
+    ship->vpitch = -ratan2(targetVector.y, temp) - ship->pitch;
+    ship->vpitch -= ship->vpitch >> 3;
+    ship->pitch += ship->vpitch >> 4;
 
-    shipIndex[ownShip].hdg = ang(shipIndex[ownShip].hdg);
-    shipIndex[ownShip].pitch = ang(shipIndex[ownShip].pitch);
+    ship->hdg = ang(ship->hdg);
+    ship->pitch = ang(ship->pitch);
 #endif
 }
 
@@ -465,6 +466,8 @@ void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, Re
     int32 temp;
     PrmPSX prm;
     int32 vhdg, vpitch;
+
+    ship = gPlayers[0].ship;
 
     if (camerastepCount == 8)
     {
@@ -513,9 +516,9 @@ void UpdateCameraLinearInterpolateSpline(TrackCamera* camera, ShipData* ship, Re
 
     camera->section = FindNearestSection(camera->section, &pos);
 
-    targetVector.x = ship[ownShip].pos.x - pos.x;
-    targetVector.y = ship[ownShip].pos.y - pos.y;
-    targetVector.z = ship[ownShip].pos.z - pos.z;
+    targetVector.x = ship->pos.x - pos.x;
+    targetVector.y = ship->pos.y - pos.y;
+    targetVector.z = ship->pos.z - pos.z;
 
     temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -555,7 +558,7 @@ void UpdateCameraHighUp(TrackCamera* camera, ShipData* ship, RescueData* rescueD
     int32 temp;
     vec4i targetVector;
 
-    ship += ownShip;
+    ship = gPlayers[0].ship;
 
     camera->section = ship->nearTrkSect;
 
@@ -590,8 +593,8 @@ void UpdateCameraStationary(TrackCamera* camera, ShipData* ship, RescueData* res
 {
     int32 temp;
     vec4i targetVector;
-    
-    ship += ownShip;
+
+    ship = gPlayers[0].ship;
 
     timeOut--;
     if (timeOut <= 0)
@@ -626,6 +629,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
     PrmPSX prm;
 #endif
     int32 temp;
+    ShipData* ship = gPlayers[0].ship;
 
     /* firestar */
     if (gConfig.trackNum == 13)
@@ -647,19 +651,19 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 splineNumber = 0;
 
                 /* set the initial ship position */
-                camShip[ownShip].update = UpdateShipLinearInterpolateSpline;
+                ship->update = UpdateShipLinearInterpolateSpline;
 #if 0 // TODO splines
                 prm.primitive = shipSpline[splineNumber]->primitives;
 
-                camShip[ownShip].pos.x = prm.spline->position.x;
-                camShip[ownShip].pos.y = prm.spline->position.y;
-                camShip[ownShip].pos.z = prm.spline->position.z;
+                ship->pos.x = prm.spline->position.x;
+                ship->pos.y = prm.spline->position.y;
+                ship->pos.z = prm.spline->position.z;
 
-                camShip[ownShip].nearTrkSect = FindAllNearestSection(&camShip[ownShip].pos);
+                ship->nearTrkSect = FindAllNearestSection(&ship->pos);
 
                 /* reset ship direction */
-                camShip[ownShip].roll = 0;
-                camShip[ownShip].vroll = 0;
+                ship->roll = 0;
+                ship->vroll = 0;
 
                 /* set the initial camera position */
                 prm.primitive = camSpline[splineNumber]->primitives;
@@ -671,9 +675,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(&camera->pos);
 
                 /* set the camera direction */
-                targetVector.x = camShip[ownShip].pos.x - camera->pos.x;
-                targetVector.y = camShip[ownShip].pos.y - camera->pos.y;
-                targetVector.z = camShip[ownShip].pos.z - camera->pos.z;
+                targetVector.x = ship->pos.x - camera->pos.x;
+                targetVector.y = ship->pos.y - camera->pos.y;
+                targetVector.z = ship->pos.z - camera->pos.z;
 
                 temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -695,7 +699,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 /* set the camera update */
                 CameraUpdate = UpdateCameraLinearInterpolateSpline;
 #endif
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 1:
@@ -724,11 +728,11 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 startSection = gTrack.sections + 50;
 
-                camShip[ownShip].update = UpdateShipRemote;
-                camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].pos.x = startSection->centre.x;
-                camShip[ownShip].pos.y = startSection->centre.y;
-                camShip[ownShip].pos.z = startSection->centre.z;
+                ship->update = UpdateShipRemote;
+                ship->nearTrkSect = startSection;
+                ship->pos.x = startSection->centre.x;
+                ship->pos.y = startSection->centre.y;
+                ship->pos.z = startSection->centre.z;
 
                 camVx = 4350;
                 camVy = 9850;
@@ -737,7 +741,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 timeOut = FR30 * 13;
 
                 camera->update = UpdateCameraHighUp;
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 2:
@@ -760,19 +764,19 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 splineNumber = 1;
 
                 /* set the initial ship position */
-                camShip[ownShip].update = UpdateShipLinearInterpolateSpline;
+                ship->update = UpdateShipLinearInterpolateSpline;
 #if 0 // TODO splines
                 prm.primitive = shipSpline[splineNumber]->primitives;
 
-                camShip[ownShip].pos.x = prm.spline->position.x;
-                camShip[ownShip].pos.y = prm.spline->position.y;
-                camShip[ownShip].pos.z = prm.spline->position.z;
+                ship->pos.x = prm.spline->position.x;
+                ship->pos.y = prm.spline->position.y;
+                ship->pos.z = prm.spline->position.z;
 
-                camShip[ownShip].nearTrkSect = FindAllNearestSection(&camShip[ownShip].pos);
+                ship->nearTrkSect = FindAllNearestSection(&ship->pos);
 
                 /* reset ship direction */
-                camShip[ownShip].roll = 0;
-                camShip[ownShip].vroll = 0;
+                ship->roll = 0;
+                ship->vroll = 0;
 
                 /* set the initial camera position */
                 prm.primitive = camSpline[splineNumber]->primitives;
@@ -784,9 +788,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(&camera->pos);
 
                 /* set the camera direction */
-                targetVector.x = camShip[ownShip].pos.x - camera->pos.x;
-                targetVector.y = camShip[ownShip].pos.y - camera->pos.y;
-                targetVector.z = camShip[ownShip].pos.z - camera->pos.z;
+                targetVector.x = ship->pos.x - camera->pos.x;
+                targetVector.y = ship->pos.y - camera->pos.y;
+                targetVector.z = ship->pos.z - camera->pos.z;
 
                 temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -808,7 +812,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 /* set the camera update */
                 CameraUpdate = UpdateCameraLinearInterpolateSpline;
 #endif
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 3:
@@ -828,19 +832,19 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 splineNumber = 2;
 
                 /* set the initial ship position */
-                camShip[ownShip].update = UpdateShipLinearInterpolateSpline;
+                ship->update = UpdateShipLinearInterpolateSpline;
 #if 0 // TODO splines
                 prm.primitive = shipSpline[splineNumber]->primitives;
 
-                camShip[ownShip].pos.x = prm.spline->position.x;
-                camShip[ownShip].pos.y = prm.spline->position.y;
-                camShip[ownShip].pos.z = prm.spline->position.z;
+                ship->pos.x = prm.spline->position.x;
+                ship->pos.y = prm.spline->position.y;
+                ship->pos.z = prm.spline->position.z;
 
-                camShip[ownShip].nearTrkSect = FindAllNearestSection(&camShip[ownShip].pos);
+                ship->nearTrkSect = FindAllNearestSection(&ship->pos);
 
                 /* reset ship direction */
-                camShip[ownShip].roll = 0;
-                camShip[ownShip].vroll = 0;
+                ship->roll = 0;
+                ship->vroll = 0;
 
                 /* set the initial camera position */
                 prm.primitive = camSpline[splineNumber]->primitives;
@@ -852,9 +856,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(&camera->pos);
 
                 /* set the camera direction */
-                targetVector.x = camShip[ownShip].pos.x - camera->pos.x;
-                targetVector.y = camShip[ownShip].pos.y - camera->pos.y;
-                targetVector.z = camShip[ownShip].pos.z - camera->pos.z;
+                targetVector.x = ship->pos.x - camera->pos.x;
+                targetVector.y = ship->pos.y - camera->pos.y;
+                targetVector.z = ship->pos.z - camera->pos.z;
 
                 temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -876,7 +880,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 /* set the camera update */
                 CameraUpdate = UpdateCameraLinearInterpolateSpline;
 #endif
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 4:
@@ -896,19 +900,19 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 splineNumber = 3;
 
                 /* set the initial ship position */
-                camShip[ownShip].update = UpdateShipLinearInterpolateSpline;
+                ship->update = UpdateShipLinearInterpolateSpline;
 #if 0 // TODO splines
                 prm.primitive = shipSpline[splineNumber]->primitives;
 
-                camShip[ownShip].pos.x = prm.spline->position.x;
-                camShip[ownShip].pos.y = prm.spline->position.y;
-                camShip[ownShip].pos.z = prm.spline->position.z;
+                ship->pos.x = prm.spline->position.x;
+                ship->pos.y = prm.spline->position.y;
+                ship->pos.z = prm.spline->position.z;
 
-                camShip[ownShip].nearTrkSect = FindAllNearestSection(&camShip[ownShip].pos);
+                ship->nearTrkSect = FindAllNearestSection(&ship->pos);
 
                 /* reset ship direction */
-                camShip[ownShip].roll = 0;
-                camShip[ownShip].vroll = 0;
+                ship->roll = 0;
+                ship->vroll = 0;
 
                 /* set the initial camera position */
                 prm.primitive = camSpline[splineNumber]->primitives;
@@ -920,9 +924,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(&camera->pos);
 
                 /* set the camera direction */
-                targetVector.x = camShip[ownShip].pos.x - camera->pos.x;
-                targetVector.y = camShip[ownShip].pos.y - camera->pos.y;
-                targetVector.z = camShip[ownShip].pos.z - camera->pos.z;
+                targetVector.x = ship->pos.x - camera->pos.x;
+                targetVector.y = ship->pos.y - camera->pos.y;
+                targetVector.z = ship->pos.z - camera->pos.z;
 
                 temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -944,7 +948,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 /* set the camera update */
                 CameraUpdate = UpdateCameraLinearInterpolateSpline;
 #endif
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 5:
@@ -981,19 +985,19 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 splineNumber = 4;
 
                 /* set the initial ship position */
-                camShip[ownShip].update = UpdateShipLinearInterpolateSpline;
+                ship->update = UpdateShipLinearInterpolateSpline;
 #if 0 // TODO splines
                 prm.primitive = shipSpline[splineNumber]->primitives;
 
-                camShip[ownShip].pos.x = prm.spline->position.x;
-                camShip[ownShip].pos.y = prm.spline->position.y;
-                camShip[ownShip].pos.z = prm.spline->position.z;
+                ship->pos.x = prm.spline->position.x;
+                ship->pos.y = prm.spline->position.y;
+                ship->pos.z = prm.spline->position.z;
 
-                camShip[ownShip].nearTrkSect = FindAllNearestSection(&camShip[ownShip].pos);
+                ship->nearTrkSect = FindAllNearestSection(&ship->pos);
 
                 /* reset ship direction */
-                camShip[ownShip].roll = 0;
-                camShip[ownShip].vroll = 0;
+                ship->roll = 0;
+                ship->vroll = 0;
 
                 /* set the initial camera position */
                 prm.primitive = camSpline[splineNumber]->primitives;
@@ -1005,9 +1009,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(&camera->pos);
 
                 /* set the camera direction */
-                targetVector.x = camShip[ownShip].pos.x - camera->pos.x;
-                targetVector.y = camShip[ownShip].pos.y - camera->pos.y;
-                targetVector.z = camShip[ownShip].pos.z - camera->pos.z;
+                targetVector.x = ship->pos.x - camera->pos.x;
+                targetVector.y = ship->pos.y - camera->pos.y;
+                targetVector.z = ship->pos.z - camera->pos.z;
 
                 temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -1029,7 +1033,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 /* set the camera update */
                 CameraUpdate = UpdateCameraLinearInterpolateSpline;
 #endif
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 1:
@@ -1058,11 +1062,11 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 startSection = gTrack.sections + 75;
 
-                camShip[ownShip].update = UpdateShipRemote;
-                camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].pos.x = startSection->centre.x;
-                camShip[ownShip].pos.y = startSection->centre.y;
-                camShip[ownShip].pos.z = startSection->centre.z;
+                ship->update = UpdateShipRemote;
+                ship->nearTrkSect = startSection;
+                ship->pos.x = startSection->centre.x;
+                ship->pos.y = startSection->centre.y;
+                ship->pos.z = startSection->centre.z;
 
                 camVx = 2000;
                 camVy = 2750;
@@ -1072,7 +1076,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 camera->section = startSection + 12;
                 camera->update = UpdateCameraStationary;
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 2:
@@ -1097,11 +1101,11 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 startSection = gTrack.sections + 120;
 
-                camShip[ownShip].update = UpdateShipRemote;
-                camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].pos.x = startSection->centre.x;
-                camShip[ownShip].pos.y = startSection->centre.y;
-                camShip[ownShip].pos.z = startSection->centre.z;
+                ship->update = UpdateShipRemote;
+                ship->nearTrkSect = startSection;
+                ship->pos.x = startSection->centre.x;
+                ship->pos.y = startSection->centre.y;
+                ship->pos.z = startSection->centre.z;
 
                 camVx = 2250;
                 camVy = 1500;
@@ -1111,7 +1115,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 camera->section = startSection + 12;
                 camera->update = UpdateCameraStationary;
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 3:
@@ -1136,17 +1140,17 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 startSection = gTrack.sections + 193;
 
-                camShip[ownShip].update = UpdateShipRemote;
-                camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].pos.x = startSection->centre.x;
-                camShip[ownShip].pos.y = startSection->centre.y;
-                camShip[ownShip].pos.z = startSection->centre.z;
+                ship->update = UpdateShipRemote;
+                ship->nearTrkSect = startSection;
+                ship->pos.x = startSection->centre.x;
+                ship->pos.y = startSection->centre.y;
+                ship->pos.z = startSection->centre.z;
 
                 nextSection = startSection->nextSection;
                 targetVector.x = nextSection->centre.x - startSection->centre.x;
                 targetVector.y = nextSection->centre.y - startSection->centre.y;
                 targetVector.z = nextSection->centre.z - startSection->centre.z;
-                camShip[ownShip].hdg = -ratan2(targetVector.x, targetVector.z);
+                ship->hdg = -ratan2(targetVector.x, targetVector.z);
 
                 camVx = 350;
                 camVy = 11100;
@@ -1155,7 +1159,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 timeOut = FR30 * 6;
 
                 camera->update = UpdateCameraHighUp;
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 4:
@@ -1178,26 +1182,26 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 splineNumber = 5;
 
                 /* set the initial ship position */
-                camShip[ownShip].update = UpdateShipLinearInterpolateSpline;
+                ship->update = UpdateShipLinearInterpolateSpline;
 #if 0 // TODO splines
                 prm.primitive = shipSpline[splineNumber]->primitives;
 
-                camShip[ownShip].pos.x = prm.spline->position.x;
-                camShip[ownShip].pos.y = prm.spline->position.y;
-                camShip[ownShip].pos.z = prm.spline->position.z;
+                ship->pos.x = prm.spline->position.x;
+                ship->pos.y = prm.spline->position.y;
+                ship->pos.z = prm.spline->position.z;
 
-                camShip[ownShip].nearTrkSect = FindAllNearestSection(&camShip[ownShip].pos);
+                ship->nearTrkSect = FindAllNearestSection(&ship->pos);
 
                 /* reset ship direction */
-                camShip[ownShip].roll = 0;
-                camShip[ownShip].vroll = 0;
+                ship->roll = 0;
+                ship->vroll = 0;
 
-                startSection = camShip[ownShip].nearTrkSect;
+                startSection = ship->nearTrkSect;
                 nextSection = startSection->nextSection;
                 targetVector.x = nextSection->centre.x - startSection->centre.x;
                 targetVector.y = nextSection->centre.y - startSection->centre.y;
                 targetVector.z = nextSection->centre.z - startSection->centre.z;
-                camShip[ownShip].hdg = -ratan2(targetVector.x, targetVector.z);
+                ship->hdg = -ratan2(targetVector.x, targetVector.z);
 
                 /* set the initial camera position */
                 prm.primitive = camSpline[splineNumber]->primitives;
@@ -1209,9 +1213,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(&camera->pos);
 
                 /* set the camera direction */
-                targetVector.x = camShip[ownShip].pos.x - camera->pos.x;
-                targetVector.y = camShip[ownShip].pos.y - camera->pos.y;
-                targetVector.z = camShip[ownShip].pos.z - camera->pos.z;
+                targetVector.x = ship->pos.x - camera->pos.x;
+                targetVector.y = ship->pos.y - camera->pos.y;
+                targetVector.z = ship->pos.z - camera->pos.z;
 
                 temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -1233,7 +1237,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 /* set the camera update */
                 CameraUpdate = UpdateCameraLinearInterpolateSpline;
 #endif
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 5:
@@ -1253,19 +1257,19 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 splineNumber = 6;
 
                 /* set the initial ship position */
-                camShip[ownShip].update = UpdateShipLinearInterpolateSpline;
+                ship->update = UpdateShipLinearInterpolateSpline;
 #if 0 // TODO splines
                 prm.primitive = shipSpline[splineNumber]->primitives;
 
-                camShip[ownShip].pos.x = prm.spline->position.x;
-                camShip[ownShip].pos.y = prm.spline->position.y;
-                camShip[ownShip].pos.z = prm.spline->position.z;
+                ship->pos.x = prm.spline->position.x;
+                ship->pos.y = prm.spline->position.y;
+                ship->pos.z = prm.spline->position.z;
 
-                camShip[ownShip].nearTrkSect = FindAllNearestSection(&camShip[ownShip].pos);
+                ship->nearTrkSect = FindAllNearestSection(&ship->pos);
 
                 /* reset ship direction */
-                camShip[ownShip].roll = 0;
-                camShip[ownShip].vroll = 0;
+                ship->roll = 0;
+                ship->vroll = 0;
 
                 /* set the initial camera position */
                 prm.primitive = camSpline[splineNumber]->primitives;
@@ -1277,9 +1281,9 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 camera->section = FindAllNearestSection(&camera->pos);
 
                 /* set the camera direction */
-                targetVector.x = camShip[ownShip].pos.x - camera->pos.x;
-                targetVector.y = camShip[ownShip].pos.y - camera->pos.y;
-                targetVector.z = camShip[ownShip].pos.z - camera->pos.z;
+                targetVector.x = ship->pos.x - camera->pos.x;
+                targetVector.y = ship->pos.y - camera->pos.y;
+                targetVector.z = ship->pos.z - camera->pos.z;
 
                 temp = rsqrt(targetVector.x * targetVector.x + targetVector.z * targetVector.z);
 
@@ -1301,7 +1305,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 /* set the camera update */
                 CameraUpdate = UpdateCameraLinearInterpolateSpline;
 #endif
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 6:
@@ -1326,21 +1330,21 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 
                 startSection = gTrack.sections + 335;
 
-                camShip[ownShip].update = UpdateShipRemote;
-                camShip[ownShip].nearTrkSect = startSection;
-                camShip[ownShip].pos.x = startSection->centre.x;
-                camShip[ownShip].pos.y = startSection->centre.y;
-                camShip[ownShip].pos.z = startSection->centre.z;
+                ship->update = UpdateShipRemote;
+                ship->nearTrkSect = startSection;
+                ship->pos.x = startSection->centre.x;
+                ship->pos.y = startSection->centre.y;
+                ship->pos.z = startSection->centre.z;
 
                 nextSection = startSection->nextSection;
                 targetVector.x = nextSection->centre.x - startSection->centre.x;
                 targetVector.y = nextSection->centre.y - startSection->centre.y;
                 targetVector.z = nextSection->centre.z - startSection->centre.z;
-                camShip[ownShip].hdg = -ratan2(targetVector.x, targetVector.z);
+                ship->hdg = -ratan2(targetVector.x, targetVector.z);
 
-                camShip[ownShip].vel.x = targetVector.x >> 2;
-                camShip[ownShip].vel.y = targetVector.y >> 2;
-                camShip[ownShip].vel.z = targetVector.z >> 2;
+                ship->vel.x = targetVector.x >> 2;
+                ship->vel.y = targetVector.y >> 2;
+                ship->vel.z = targetVector.z >> 2;
 
                 camVx = 1100;
                 camVy = 7850;
@@ -1349,7 +1353,7 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
                 timeOut = FR30 * 7;
 
                 camera->update = UpdateCameraHighUp;
-                camShip[ownShip].attr &= ~VIEW_IN;
+                ship->attr &= ~VIEW_IN;
                 break;
 
             case 7:

@@ -77,9 +77,11 @@ typedef struct ShipData
     int16 nearSecNo;
     int16 prevSecNo;
 
-    int32 order;
+    int8 order;
+    int8 racePosition;
+    int8 racePoints;
+    int8 totalPoints;
 
-    int32 lapTimes[5];
     int32 updateCount;
 
     int32 crossedLine;

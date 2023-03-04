@@ -20,6 +20,8 @@ typedef struct
     int32 buttons, obuttons, Lx, Ly, Rx, Ry; // input
     int32 stickX, stickY;
     Binding binding;
+
+    uint32 lapTimes[8];
 } PlayerData;
 
 char TrackDirection(const TrackCamera* camera);

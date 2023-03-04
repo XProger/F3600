@@ -74,7 +74,7 @@ typedef struct ConfigData
     char padding_unused_0;
     char padding_unused_1;
 
-    char Position;
+    char padding_unused;
     char EndOfGame;
     char gameComplete;
     char rapierClass;
@@ -100,11 +100,8 @@ typedef struct SelectionData
 
 typedef struct ChampionShip
 {
-    uint8 points;
-    uint8 racePoints;
+    char pilot[23];
     uint8 position;
-    uint8 racePosition;
-    char pilot[24];
 } ChampionShip;
 
 typedef struct SortTable

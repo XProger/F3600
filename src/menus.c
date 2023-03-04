@@ -242,8 +242,6 @@ void InitGameData(void)
     gConfig.raceClass = 0;
     gConfig.team = 0;
     gConfig.raceType = CHAMPIONSHIP;
-    gConfig.lives = 3;
-    gConfig.Position = NO_OF_SHIPS;
     gConfig.rapierClass = 0;
     gConfig.gameComplete = 0;
     gConfig.showPilotCount = 0;
@@ -497,7 +495,6 @@ void CallMenuActivator(void)
             gConfig.newLapRecord = 0;
             gPlayers[0].ready = 1;
             gPlayers[0].shapeIndex = gCurrOption + gConfig.team * 2;
-            ownShip = gPlayers[0].shapeIndex;
 
             if (gConfig.raceType == CHAMPIONSHIP)
             {
@@ -1296,7 +1293,6 @@ void DrawMenuMultiplayer(int32 index, int32 id)
             }
         }
 
-        ownShip = gPlayers[0].shapeIndex;
         gConfig.trackNum = gConfig.trackNum + gConfig.raceClass * 7;
         GoMenu(-1);
     }

@@ -343,9 +343,6 @@ void InitShipData(TrackSection* section, ShipData* shipIndex)
         ship->resistance = specs->resistance;
         ship->skid = specs->skid;
 
-        for (j = 0; j < 5; j++)
-            ship->lapTimes[j] = 0;
-
         ship->updateCount = START_TIME;
         ship->targetShip = NULL;
 

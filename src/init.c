@@ -226,12 +226,13 @@ void InitShadow(void)
 void InitShadow(void)
 {
     const char* name;
+    int32 index = gPlayers[0].shapeIndex;
 
-    if (ownShip < 2)
+    if (index < 2)
         name = "wipeout/textures/shad1.tim";
-    else if (ownShip < 4)
+    else if (index < 4)
         name = "wipeout/textures/shad2.tim";
-    else if (ownShip < 6)
+    else if (index < 6)
         name = "wipeout/textures/shad3.tim";
     else
         name = "wipeout/textures/shad4.tim";

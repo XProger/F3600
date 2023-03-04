@@ -36,14 +36,11 @@ extern TrackData gTrack;
 extern int32 gNumPlayers;
 extern PlayerData gPlayers[MAX_PLAYERS];
 
-extern int ownShip;
 extern int NoOfMainSections;
 
 extern char NumTracks;
 extern char totalTracks;
 extern int attractDelay;
-
-extern int tempLapTimes[];
 
 extern Object* startBoom[];
 extern short startBoomCount;

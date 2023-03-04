@@ -141,6 +141,6 @@ void DrawView(int32 playerIndex)
             DrawTargetIcon(player->ship->targetShip);
         }
 
-        DrawHud(player->ship);
+        DrawHud(player);
     }
 }

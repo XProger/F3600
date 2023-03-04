@@ -406,7 +406,7 @@ void AddEntry2Table(int bestLap, char nameEntered[])
     }
 }
 
-int32 CheckLapRecord(ShipData* ship)
+int32 CheckLapRecord(PlayerData* player)
 {
     int32 scoreTrack = gConfig.trackNum;
 
@@ -415,9 +415,9 @@ int32 CheckLapRecord(ShipData* ship)
         scoreTrack += HiScoreTracks;
     }
 
-    if (ship->lapTimes[ship->lapNo - 2] < scoreTable[scoreTrack].lapRecord)
+    if (player->lapTimes[player->ship->lapNo - 2] < scoreTable[scoreTrack].lapRecord)
     {
-        scoreTable[scoreTrack].lapRecord = ship->lapTimes[ship->lapNo - 2];
+        scoreTable[scoreTrack].lapRecord = player->lapTimes[player->ship->lapNo - 2];
         scoreTable[scoreTrack].lapRecordPilot = gPlayers[0].shapeIndex;
 
         return 1;
@@ -641,7 +641,7 @@ void NewHighScoreDraw(HiScoreData* hiScoreData)
         DisplayHiScore(gConfig.trackNum);
 }
 
-int CheckHiScore(HiScoreData* hiScoreData)
+int CheckHiScore(HiScoreData* hiScoreData, PlayerData* player)
 {
     int i, j;
     int highScore = 0;
@@ -659,7 +659,7 @@ int CheckHiScore(HiScoreData* hiScoreData)
 
     for (j = 0; j < 3; j++)
     {
-        hiScoreData->bestLap += tempLapTimes[j];
+        hiScoreData->bestLap += player->lapTimes[j];
     }
 
     for (i = 0; i < NumNames; i++)

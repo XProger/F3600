@@ -7,12 +7,6 @@ typedef struct
     int size;
 } TEXT_DATA;
 
-typedef struct
-{
-    char pilot[25];
-    short x, y;
-} PilotData;
-
 void DisplaySpeedo(int32 speed, int32 thrust);
 void AddNumber(int, TEXT_DATA*, uint32);
 void AddTime(int, TEXT_DATA*, uint32);
@@ -33,6 +27,6 @@ void DisplayVenomComplete(void);
 void DisplayAllVenomComplete(void);
 void DisplayWinLose(int32 index);
 void DisplayRaceInfo(HiScoreData* hiScoreData);
-void DrawHud(ShipData* ship);
+void DrawHud(PlayerData* player);
 void DrawWeaponIcon(ShipData* ship);
 void UpdateGameDisplay(int32 width, int32 height);

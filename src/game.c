@@ -113,9 +113,6 @@ void gameInit(void)
        LoadCardData(lfilename, 0, &gConfig, (SelectionData *) 0);
     */
 
-    gConfig.lives = 3;
-    gConfig.Position = 8;
-
     /*TODO cheats*/
 #if 1
     gConfig.rapierClass = 1;

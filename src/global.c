@@ -1,6 +1,5 @@
 #include "game.h"
 
-int ownShip;
 int NoOfMainSections;
 
 Object* gStartBoom[4];
@@ -13,7 +12,6 @@ PlayerData gPlayers[MAX_PLAYERS];
 
 char NumTracks = 6;
 char totalTracks = 13;
-int tempLapTimes[5]; // TODO END_LAP
 int attractDelay;
 
 int32 gWidth, gHeight;

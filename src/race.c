@@ -121,6 +121,7 @@ void Restart(ShipData* shipIndex)
         {
             InitCamera(&player->camera, player->ship->nearTrkSect);
             InitRescueDroid(&player->droid, player->ship);
+            memset(player->lapTimes, 0, sizeof(player->lapTimes));
         }
     }
 
@@ -148,12 +149,6 @@ void raceInit(void)
     showLoading(gTrackList[gConfig.trackNum]);
 
     attractDelay = 0;
-
-    tempLapTimes[0] = 0;
-    tempLapTimes[1] = 0;
-    tempLapTimes[2] = 0;
-    tempLapTimes[3] = 0;
-    tempLapTimes[4] = 0;
 
     gConfig.newLapRecord = 0;
 
@@ -200,7 +195,6 @@ void raceInit(void)
     InitHiScoreData(&ctrlhiScoreData);
 
     gConfig.lives = 3;
-    gConfig.Position = NO_OF_SHIPS;
     gConfig.gameOverCount = 0;
 
     ctrlhiScoreData.confirm = 2;
@@ -248,6 +242,8 @@ void raceInit(void)
 void raceCtrl(void)
 {
     int32 i;
+    PlayerData* player = gPlayers; // TODO other players
+    int32 Position = player->ship->racePosition;
 
     // Reset all of my little Drawing markers // TODO HUD states instead of this shit
     ctrlNeedEndText = 0;
@@ -265,11 +261,11 @@ void raceCtrl(void)
     ctrlNeedInGameConfirm = 0;
     ctrlNeedInSingleGameConfirm = 0;
 
-    //ctrlshipIndex[ownShip].weaponType = WPN_ROCKET; // fx debug
+    //shipIndex[0].weaponType = WPN_ROCKET; // fx debug
 
     UpdatePad();
 
-    if (ctrlshipIndex[ownShip].attr & RACING)
+    if (gPlayers[0].ship->attr & RACING) // TODO other players
     {
         if ((GetMenuKey(M_START)) && (ctrlchoice == -1))
         {
@@ -481,7 +477,7 @@ void raceCtrl(void)
 
         SetVolume(SFX_SHIELD, SND_MAX_VOLUME, SND_MAX_VOLUME);
 
-        AdjustEngineSound(&(ctrlshipIndex[ownShip]), &gPlayers[0].camera);
+        AdjustEngineSound(gPlayers[0].ship, &gPlayers[0].camera);
         AdjustCrowdSound(gTrack.lost, gTrack.lostCount);
         AdjustRemoteEngineSound(ctrlshipIndex);
     }
@@ -505,23 +501,19 @@ void raceCtrl(void)
             attractDelay = 1;
             if (gConfig.showPilotCount != 0)
             {
-                if (gConfig.Position == 1)
+                ctrlNeedWinLose = 1;
+                ctrlNeedEndText = 1;
+                ctrlNeedBackPoly = 1;
+                ctrlNeedRaceInfo = 1;
+                ctrlNeedDeSelectScreen = 1;
+
+                if (Position == 1)
                 {
-                    ctrlNeedWinLose = 1;
-                    ctrlNeedEndText = 1;
-                    ctrlNeedBackPoly = 1;
-                    ctrlNeedRaceInfo = 1;
-                    ctrlNeedDeSelectScreen = 1;
                     ctrlNeedEndTextVar = 1;
                     ctrlNeedWinLoseVar = 1;
                 }
                 else
                 {
-                    ctrlNeedWinLose = 1;
-                    ctrlNeedEndText = 1;
-                    ctrlNeedBackPoly = 1;
-                    ctrlNeedRaceInfo = 1;
-                    ctrlNeedDeSelectScreen = 1;
                     ctrlNeedEndTextVar = 2;
                     ctrlNeedWinLoseVar = 0;
                 }
@@ -539,9 +531,9 @@ void raceCtrl(void)
 
                 if (gConfig.EndOfGame)
                 {
-                    if (gConfig.Position == 1)
+                    if (Position == 1)
                     {
-                        ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData);
+                        ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData, player);
                     }
                 }
 
@@ -625,7 +617,7 @@ void raceCtrl(void)
                 {
                     gConfig.newLapRecord = 0;
                     if (gConfig.EndOfGame)
-                        ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData);
+                        ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData, player);
 
                     if (ctrlhiScoreData.highScore)
                     {
@@ -737,23 +729,19 @@ void raceCtrl(void)
                 {
                     if (gConfig.showPilotCount != 0)
                     {
-                        if (gConfig.Position >= 1 && gConfig.Position <= 3)
+                        ctrlNeedWinLose = 1;
+                        ctrlNeedEndText = 1;
+                        ctrlNeedBackPoly = 1;
+                        ctrlNeedRaceInfo = 1;
+                        ctrlNeedDeSelectScreen = 1;
+
+                        if (Position >= 1 && Position <= 3)
                         {
-                            ctrlNeedWinLose = 1;
-                            ctrlNeedEndText = 1;
-                            ctrlNeedBackPoly = 1;
-                            ctrlNeedRaceInfo = 1;
-                            ctrlNeedDeSelectScreen = 1;
                             ctrlNeedEndTextVar = 1;
                             ctrlNeedWinLoseVar = 1;
                         }
                         else
                         {
-                            ctrlNeedWinLose = 1;
-                            ctrlNeedEndText = 1;
-                            ctrlNeedBackPoly = 1;
-                            ctrlNeedRaceInfo = 1;
-                            ctrlNeedDeSelectScreen = 1;
                             ctrlNeedEndTextVar = 3;
                             ctrlNeedWinLoseVar = 0;
                         }
@@ -768,7 +756,7 @@ void raceCtrl(void)
                     }
                     else if (gConfig.showPointCount != 0)
                     {
-                        if (gConfig.Position >= 1 && gConfig.Position <= 3)
+                        if (Position >= 1 && Position <= 3)
                         {
                             ctrlNeedRacePoints = 1;
                             ctrlNeedDeSelectScreen = 1;
@@ -782,7 +770,7 @@ void raceCtrl(void)
                     }
                     else if (gConfig.showChampCount != 0)
                     {
-                        if (gConfig.Position >= 1 && gConfig.Position <= 3)
+                        if (Position >= 1 && Position <= 3)
                         {
                             ctrlNeedChampTable = 1;
                             ctrlNeedDeSelectScreen = 1;
@@ -812,10 +800,10 @@ void raceCtrl(void)
                     }
                     else
                     {
-                        if (gConfig.Position >= 1 && gConfig.Position <= 3)
+                        if (Position >= 1 && Position <= 3)
                         {
                             if (gConfig.EndOfGame)
-                                ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData);
+                                ctrlhiScoreData.highScore = CheckHiScore(&ctrlhiScoreData, player);
                         }
 
                         if (ctrlhiScoreData.highScore)
@@ -894,7 +882,7 @@ void raceCtrl(void)
                                     }
 
                                     InitHiScoreData(&ctrlhiScoreData);
-                                    if (gConfig.Position >= 1 && gConfig.Position <= 3)
+                                    if (Position >= 1 && Position <= 3)
                                     {
                                         QuitGame();
                                         ctrl_says_quit = 1;
@@ -1103,14 +1091,13 @@ void raceDemo(void)
     int32 i;
 
     ctrlmode = ATTRACT;
-    ownShip = randy() % 8;
 
     for (i = 0; i < MAX_PLAYERS; i++)
     {
         PlayerData* player = gPlayers + i;
         player->shapeIndex = -1;
     }
-    gPlayers[0].shapeIndex = ownShip;
+    gPlayers[0].shapeIndex = randy() % NO_OF_SHIPS;
 
     gConfig.raceType = SINGLE_RACE;
     gConfig.trackNum = (randy() % 6); // all venom
@@ -1122,38 +1109,37 @@ void raceEnd(void)
     static const uint8 RACE_POINTS[] = { 0, 9, 7, 5, 3, 2, 1, 0, 0 };
     SortTable sortTable[NO_OF_SHIPS];
     int32 i, j, swapped;
+    int32 position;
+    ShipData* ship;
+    PlayerData* player = gPlayers; // TODO other players
 
     if (gConfig.EndOfGame)
         return;
 
-    gConfig.Position = winTable[ownShip].racePosition;
     gConfig.EndOfGame = 1;
 
-    /* TODO lap times
-    tempLapTimes[0] = shipIndex[ownShip].lapTimes[0];
-    tempLapTimes[1] = shipIndex[ownShip].lapTimes[1];
-    tempLapTimes[2] = shipIndex[ownShip].lapTimes[2];
-    tempLapTimes[3] = shipIndex[ownShip].lapTimes[3];
-    tempLapTimes[4] = shipIndex[ownShip].lapTimes[4];
-    */
     gConfig.showPilotCount = 120;
     attractDelay = 300;
 
     if (gConfig.raceType != CHAMPIONSHIP)
         return;
 
+    position = player->ship->racePosition;
+
     attractDelay = 1;
 
-    if ((gConfig.Position >= 1 && gConfig.Position <= 3) && gConfig.lives > 0)
+    if ((position >= 1 && position <= 3) && gConfig.lives > 0)
     {
         /* Find position during race */
         for (i = 0; i < NO_OF_SHIPS; i++)
         {
-            winTable[i].racePoints = RACE_POINTS[winTable[i].racePosition];
-            winTable[i].points += winTable[i].racePoints;
+            ship = ctrlshipIndex + i;
+
+            ship->racePoints = RACE_POINTS[ship->racePosition];
+            ship->totalPoints += ship->racePoints;
 
             sortTable[i].shipNum = i;
-            sortTable[i].points = winTable[i].points;
+            sortTable[i].points = ship->totalPoints;
         }
 
         do
@@ -1188,7 +1174,7 @@ void raceEnd(void)
 
     gConfig.gameOverCount = 120;
 
-    if (gConfig.Position > 3)
+    if (position > 3)
     {
         gConfig.lives--;
         gConfig.trackInc = 0;
@@ -1197,7 +1183,7 @@ void raceEnd(void)
     {
         if (gConfig.trackNum == NumTracks - 1)
         {
-            if (winTable[ownShip].position == 1)
+            if (position == 1)
             {
                 gConfig.rapierClass = 1;
                 gConfig.raceClass = 1;
@@ -1224,7 +1210,7 @@ void raceEnd(void)
         {
             if (gConfig.trackNum == totalTracks - 1)
             {
-                if (winTable[ownShip].position == 1)
+                if (position == 1)
                 {
                     gConfig.gameComplete = 1;
                     totalTracks = 14;
