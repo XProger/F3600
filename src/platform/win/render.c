@@ -1058,8 +1058,8 @@ int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
     float v1 = (g->y + g->h) * t->ih;
     float x0 = x;
     float y0 = y;
-    float x1 = x + g->w * size >> 4;
-    float y1 = y + g->h * size >> 4;
+    float x1 = x + (g->w * size >> 4);
+    float y1 = y + (g->h * size >> 4);
 
     setTexture(t);
 
