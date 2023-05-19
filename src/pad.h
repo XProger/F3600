@@ -30,6 +30,18 @@ enum MenuKey
     M_START
 };
 
+enum CtrlKey
+{
+    CTRL_LEFT   = (1 << 0),
+    CTRL_DOWN   = (1 << 1),
+    CTRL_RIGHT  = (1 << 2),
+    CTRL_UP     = (1 << 3),
+    CTRL_THRUST = (1 << 4),
+    CTRL_FIRE   = (1 << 5),
+    CTRL_LBRAKE = (1 << 6),
+    CTRL_RBRAKE = (1 << 7)
+};
+
 void UpdatePad(void);
 void SetBrake(ShipData* ship, short padLeft, short padRight);
 void SetView(ShipData* ship, short padView);

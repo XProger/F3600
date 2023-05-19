@@ -16,9 +16,6 @@ int gPadStickY;
 
 int lastKey;
 
-int gFrameIndex;
-int gLastFrameIndex;
-
 int32 osGetSystemTimeMS(void)
 {
     return GetMSecTime(irqTimer);
@@ -29,7 +26,7 @@ void osQuit()
     //
 }
 
-void osJoyVibrate(int index, int L, int R)
+void osJoyVibrate(int32 index, int32 L, int32 R)
 {
     //
 }

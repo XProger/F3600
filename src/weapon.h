@@ -72,7 +72,7 @@ typedef struct WeaponData
 extern WeaponData* gWeaponsActive;
 
 void UpdateWeapons(ShipData* shipIndex);
-void FireWeapon(ShipData* ship, int shipNo, char decision);
+void FireWeapon(ShipData* ship, int32 shipNo, int32 decision);
 void MissileLock(ShipData* ship, ShipData* shipIndex);
 void ResetWeapons(void);
 void UpdateWeaponGrids(ShipData* shipIndex, WeaponGrid* weaponGrid, int noWeaponGrids);

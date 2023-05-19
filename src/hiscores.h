@@ -9,7 +9,7 @@ typedef struct
     int lapTimes[NumNames]; /* 20 */
     signed char lapTimesPilot[NumNames]; /* 5  */
     short position[NumNames]; /* 10 */
-    int lapRecord; /*  4 */
+    uint32 lapRecord; /*  4 */
     signed char lapRecordPilot; /*  1 */
 } HiScores; /* 64 */
 

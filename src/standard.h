@@ -40,6 +40,7 @@
     #define USE_VERTEX_COLOR
     #define USE_COMPRESSION
     #define USE_SHIP_AMBIENT
+    #define USE_SHIP_GHOST
     #define MENU_HAS_QUIT
 #endif
 
@@ -93,7 +94,7 @@ typedef unsigned int        uint32;
     #define LOG(...)        printf(__VA_ARGS__)
     #define ASSERT(expr)    if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); __debugbreak(); }
 #else
-    #define LOG(...)        //printf(__VA_ARGS__); fflush(stdout)
+    #define LOG(a)          //printf(__VA_ARGS__); fflush(stdout)
     #define ASSERT(expr)    //if (!(expr)) { LOG("ASSERT:\n  %s:%d\n  %s => %s\n", __FILE__, __LINE__, __FUNCTION__, #expr); }
 #endif
 

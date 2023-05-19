@@ -54,6 +54,27 @@ int32 ctrlNeedInGameConfirm;
 
 int32 ctrl_says_quit;
 
+ShipData* gSortedShips[NO_OF_SHIPS];
+
+const short startLinePos[14] = {
+// Venom
+    27,     /* Altima VII   */
+    16,     /* Karbonis     */
+    27,     /* TerrorMax    */
+    16,     /* Korrodera    */
+    16,     /* Arridos IV   */
+    16,     /* SilverStream */
+    27,     /* FireStar     */
+// Rapier
+    27,     /* Altima VII   */
+    16,     /* Karbonis     */
+    27,     /* TerrorMax    */
+    16,     /* Korrodera    */
+    16,     /* Arridos IV   */
+    16,     /* SilverStream */
+    27      /* FireStar     */
+};
+
 const char* const PILOT_NAMES[] =
 {
     "dekka",
@@ -122,6 +143,7 @@ void Restart(ShipData* shipIndex)
             InitCamera(&player->camera, player->ship->nearTrkSect);
             InitRescueDroid(&player->droid, player->ship);
             memset(player->lapTimes, 0, sizeof(player->lapTimes));
+            memset(&player->replay, 0, sizeof(player->replay) - sizeof(player->replay.data));
         }
     }
 
@@ -136,6 +158,260 @@ void Restart(ShipData* shipIndex)
 void QuitGame()
 {
     KillNotes();
+}
+
+int ComparePosision(ShipData* a, ShipData* b)
+{
+    if (((a->attr | b->attr) & RACING) == 0)
+        return 0;
+
+    if ((a->attr & RACING) == 0)
+        return -1;
+
+    if ((b->attr & RACING) == 0)
+        return 1;
+
+    if (a->DPASectDiff < b->DPASectDiff)
+    {
+        return 1;
+    }
+
+    if (a->DPASectDiff > b->DPASectDiff)
+    {
+        return -1;
+    }
+
+    // a->DPASectDiff == b->DPASectDiff
+    if (a->nearTrkSect == b->nearTrkSect)
+    {
+        vec3i ca, cb, dir;
+        int32 da, db;
+        int32 cx, cy, cz;
+
+        cx = a->nearTrkSect->centre.x;
+        cy = a->nearTrkSect->centre.y;
+        cz = a->nearTrkSect->centre.z;
+
+        //ASSERT(a->nearTrkSect == b->nearTrkSect);
+
+        ca.x = a->pos.x - cx;
+        ca.y = a->pos.y - cy;
+        ca.z = a->pos.z - cz;
+
+        cb.x = b->pos.x - cx;
+        cb.y = b->pos.y - cy;
+        cb.z = b->pos.z - cz;
+
+        dir.x = a->nearTrkSect->nextSection->centre.x - cx;
+        dir.y = a->nearTrkSect->nextSection->centre.y - cy;
+        dir.z = a->nearTrkSect->nextSection->centre.z - cz;
+
+        da = GetMagnitude(&ca);
+        db = GetMagnitude(&cb);
+
+        da = da ? (dot(&ca, &dir) / da) : 0;
+        db = db ? (dot(&cb, &dir) / db) : 0;
+
+        if (da < db)
+            return 1;
+
+        if (da > db)
+            return -1;
+    }
+
+    return 0;
+}
+
+void CalcPosition(ShipData* shipIndex)
+{
+    int i, swapped;
+
+    do
+    {
+        swapped = 0;
+        for (i = 1; i < NO_OF_SHIPS; i++)
+        {
+            if (ComparePosision(gSortedShips[i - 1], gSortedShips[i]) > 0)
+            {
+                ShipData* t = gSortedShips[i - 1];
+                gSortedShips[i - 1] = gSortedShips[i];
+                gSortedShips[i] = t;
+                swapped = 1;
+            }
+        }
+    } while (swapped);
+
+    for (i = 0; i < NO_OF_SHIPS; i++)
+    {
+        gSortedShips[i]->racePosition = i + 1;
+    }
+}
+
+#ifdef USE_SHIP_GHOST
+void replayRecord(PlayerData* player)
+{
+    uint8 ctrl = player->ctrl;
+    uint8 stickX = player->stickX - 1;
+    uint8 stickY = player->stickY - 1;
+    Replay* replay = &player->replay;
+
+    if ((replay->ctrl != ctrl) || (replay->tick == 255) || (replay->stickX != stickX) || (replay->stickY != stickY))
+    {
+        if (replay->pos + 4 <= MAX_REPLAY_SIZE)
+        {
+            replay->size += 4;
+            LOG("%d\t%d\n", replay->tick, replay->size);
+            replay->ctrl = ctrl;
+            replay->tick = 0;
+            replay->stickX = stickX;
+            replay->stickY = stickY;
+        }
+    }
+
+    replay->tick++;
+}
+#endif
+
+void UpdateShipSecNo(ShipData* ship)
+{
+    int32 secNo;
+    int32 startSecNo = startLinePos[gConfig.trackNum];
+
+    if (ship->player)
+    {
+        if ((ship->prevSecNo == (startSecNo + 1)) && (ship->nearSecNo <= startSecNo))
+        {
+            ship->crossedLine--;
+        }
+    }
+
+    if ((ship->prevSecNo == startSecNo) && ((ship->nearSecNo > startSecNo) && (ship->nearSecNo < (startSecNo + 10))))
+    {
+        if (ship->player)
+        {
+            if (ship->lapNo == ship->crossedLine)
+            {
+                ship->lapNo++;
+
+                if (ship->player && (ship->lapNo > 1) && (ship->lapNo <= END_LAP + 1))
+                {
+                    if (CheckLapRecord((PlayerData*)ship->player))
+                    {
+                        gConfig.newLapRecord = 1; // TODO ship attr?
+                    }
+                }
+            }
+
+            ship->crossedLine++;
+            if (gConfig.raceType == TIME_TRIAL)
+            {
+                ship->weaponType = WPN_TURBO;
+            }
+        }
+        else
+        {
+            ship->lapNo++;
+
+            if ((ship->lapNo > END_LAP) && (ship->attr & RACING))
+            {
+                ship->attr &= ~RACING;
+            }
+        }
+    }
+
+    secNo = ship->nearSecNo - (startSecNo + 1);
+
+    if (ship->player)
+    {
+        if (secNo < 0)
+        {
+            secNo = secNo + (ship->crossedLine * NoOfMainSections);
+        }
+        else
+        {
+            secNo = secNo + ((ship->crossedLine - 1) * NoOfMainSections);
+        }
+    }
+    else
+    {
+        if (secNo < 0)
+        {
+            secNo = secNo + (ship->lapNo * NoOfMainSections);
+        }
+        else
+        {
+            secNo = secNo + ((ship->lapNo - 1) * NoOfMainSections);
+        }
+    }
+
+    ship->DPASectDiff = secNo;
+}
+
+void UpdateRaceHud(ShipData* shipIndex, int choice)
+{
+    int32 i, end;
+
+    if (gConfig.raceType != TIME_TRIAL)
+    {
+        for (i = 0; i < NO_OF_SHIPS; i++)
+        {
+            UpdateShipSecNo(shipIndex + i);
+        }
+        CalcPosition(shipIndex);
+    }
+    else
+    {
+        for (i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (gPlayers[i].ship)
+            {
+                UpdateShipSecNo(gPlayers[i].ship);
+            }
+        }
+    }
+
+    end = 1;
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        PlayerData* player = gPlayers + i;
+        ShipData* ship = player->ship;
+        if (!ship)
+            continue;
+
+        if (ship->lapNo > 0)
+        {
+            if ((choice == -1) && (ship->lapNo < END_LAP + 1))
+            {
+                player->lapTimes[ship->lapNo - 1] += 2;
+            }
+        }
+
+        if (ship->lapNo > END_LAP)
+        {
+            if (ship->attr & RACING)
+            {
+                ship->update = UpdateRemoteShip;
+                ship->updateCount = 0;
+                ship->remoteMaxThrust = 3160;
+                ship->remoteThrustMag = 32;
+                ship->speed = 3160;
+                ship->attr &= ~(SHIELDED | VIEW_IN | RACING);
+
+                LOG("replaySize: %d\n", player->replay.size);
+
+                player->camera.update = UpdateCameraAttractMode;
+            }
+        }
+        else
+        {
+            end = 0;
+        }
+    }
+
+    if (end)
+    {
+        raceEnd();
+    }
 }
 
 void raceInit(void)
@@ -171,6 +447,7 @@ void raceInit(void)
     for (i = 0; i < NO_OF_SHIPS; i++)
     {
         ctrlshipIndex[i].player = NULL;
+        gSortedShips[i] = ctrlshipIndex + i;
     }
 
     for (i = 0; i < MAX_PLAYERS; i++)
@@ -455,6 +732,8 @@ void raceCtrl(void)
 
                 if (ship->attr & RACING)
                 {
+                    replayRecord(player);
+
                     if ((ship->weaponType == WPN_MISSILE) || (ship->weaponType == WPN_ELEC_BOLT) || (ship->weaponType == WPN_REV_CON))
                     {
                         MissileLock(ship, ctrlshipIndex);

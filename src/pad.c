@@ -2,7 +2,7 @@
 
 void UpdatePad(void)
 {
-    int32 i, opad;
+    int32 i, pad, opad, ctrl;
 
     for (i = 0; i < MAX_PLAYERS; i++)
     {
@@ -28,14 +28,39 @@ void UpdatePad(void)
             player->stickY = 256;
         }
 
+        if (player->stickX < 1)
+            player->stickX = 1;
+        if (player->stickY < 1)
+            player->stickY = 1;
+
         if (player->stickX > 256)
             player->stickX = 256;
         if (player->stickY > 256)
             player->stickY = 256;
 
+        pad = player->buttons;
         opad = player->pad;
-        player->pad = player->buttons;
+        player->pad = pad;
         player->xpad = (player->pad ^ opad) & player->pad;
+
+        ctrl = 0;
+        if (pad & IN_LEFT)
+            ctrl |= CTRL_LEFT;
+        if (pad & IN_DOWN)
+            ctrl |= CTRL_DOWN;
+        if (pad & IN_RIGHT)
+            ctrl |= CTRL_RIGHT;
+        if (pad & IN_UP)
+            ctrl |= CTRL_UP;
+        if (pad & player->binding.thrust)
+            ctrl |= CTRL_THRUST;
+        if (pad & player->binding.fire)
+            ctrl |= CTRL_FIRE;
+        if (pad & player->binding.lBrake)
+            ctrl |= CTRL_LBRAKE;
+        if (pad & player->binding.rBrake)
+            ctrl |= CTRL_RBRAKE;
+        player->ctrl = ctrl;
     }
 }
 

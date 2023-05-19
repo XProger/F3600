@@ -1224,7 +1224,7 @@ void InitShield(ShipData* shipIndex, WeaponData* weapon)
 }
 
 
-void FireWeapon(ShipData* ship, int shipNo, char decision)
+void FireWeapon(ShipData* ship, int32 shipNo, int32 decision)
 {
     WeaponData* weapon = CreateWeapon();
 

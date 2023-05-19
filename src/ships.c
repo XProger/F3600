@@ -6,24 +6,7 @@
 
 ShipData* championShipIndex[NO_OF_SHIPS];
 
-const short startLinePos[14] = {
-// Venom
-    27,     /* Altima VII   */
-    16,     /* Karbonis     */
-    27,     /* TerrorMax    */
-    16,     /* Korrodera    */
-    16,     /* Arridos IV   */
-    16,     /* SilverStream */
-    27,     /* FireStar     */
-// Rapier
-    27,     /* Altima VII   */
-    16,     /* Karbonis     */
-    27,     /* TerrorMax    */
-    16,     /* Korrodera    */
-    16,     /* Arridos IV   */
-    16,     /* SilverStream */
-    27      /* FireStar     */
-};
+extern const short startLinePos[14];
 
 typedef struct
 {

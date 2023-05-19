@@ -628,7 +628,6 @@ void UpdateCameraExtroAttract(TrackCamera* camera, ShipData* camShip, RescueData
 #if 0 // TODO splines
     PrmPSX prm;
 #endif
-    int32 temp;
     ShipData* ship = gPlayers[0].ship;
 
     /* firestar */

@@ -391,7 +391,6 @@ void CallMenuSelector(void)
 
 void CallMenuActivator(void)
 {
-    int32 i;
     int32 id = gMenuSystem[gCurrMenu].options[gCurrOption];
 
     switch (gCurrMenu)
@@ -471,6 +470,7 @@ void CallMenuActivator(void)
                     break;
                 case STR_RACE_SINGLE:
                     gConfig.raceType = SINGLE_RACE;
+                    break;
                 case STR_RACE_TIME_TRIAL:
                     gConfig.raceType = TIME_TRIAL;
                     break;

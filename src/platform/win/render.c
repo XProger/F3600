@@ -1000,9 +1000,9 @@ void setMatrix(const Matrix* matrix)
     mView.e[2][2] = matrix->e22 * i4096;
     mView.e[2][3] = 0.0f;
 
-    mView.e[3][0] = matrix->e03;
-    mView.e[3][1] = matrix->e13;
-    mView.e[3][2] = matrix->e23;
+    mView.e[3][0] = (float)matrix->e03;
+    mView.e[3][1] = (float)matrix->e13;
+    mView.e[3][2] = (float)matrix->e23;
     mView.e[3][3] = 1.0f;
 }
 
@@ -1058,8 +1058,8 @@ int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
     float v1 = (g->y + g->h) * t->ih;
     float x0 = x;
     float y0 = y;
-    float x1 = x + g->w * size / 16;
-    float y1 = y + g->h * size / 16;
+    float x1 = x + g->w * size >> 4;
+    float y1 = y + g->h * size >> 4;
 
     setTexture(t);
 
@@ -1069,7 +1069,7 @@ int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
     addVertex(x1, y1, 0, u1, v1, color);
     addVertex(x0, y1, 0, u0, v1, color);
 
-    return g->w * size / 16;
+    return g->w * size >> 4;
 }
 
 void renderImage(const Texture* t, int32 x, int32 y)
@@ -1658,7 +1658,7 @@ void renderTargetIcon(Texture* tex)
     px = guiL + (px / pz * 0.5f + 0.5f) * (guiR - guiL);
     py = guiT + (0.5f - py / pz * 0.5f) * (guiB - guiT);
 
-    size = tex->width >> 1;
+    size = (float)(tex->width >> 1);
 
     renderSetBlend(BLEND_ADD);
     setTexture(tex);

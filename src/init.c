@@ -599,7 +599,6 @@ typedef struct FacePSX
 
 void InitFaces(const char* fileName)
 {
-    int32 i;
     int32 r, g, b;
     Face* face;
     Face* last;

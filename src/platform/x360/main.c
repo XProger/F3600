@@ -179,7 +179,7 @@ void inputUpdate()
         if (state.Gamepad.sThumbLX > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
         {
             curMask |= IN_RIGHT;
-            gPadStickX = state.Gamepad.sThumbLX >> 7;
+            gPadStickX = (state.Gamepad.sThumbLX + 1) >> 7;
         }
 
         if (gPadStickX > 256)

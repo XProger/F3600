@@ -559,8 +559,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-#define WND_WIDTH   854
-#define WND_HEIGHT  480
+#define WND_WIDTH   1280
+#define WND_HEIGHT  720
 #define WND_CLASS   "F3600Wnd"
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)

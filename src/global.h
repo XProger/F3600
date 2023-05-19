@@ -1,5 +1,7 @@
 #include "pad.h"
 
+#define END_LAP     3
+
 #define SHIP_LOD_DIST 8000
 
 #define INTERACTIVE 0

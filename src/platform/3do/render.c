@@ -261,9 +261,9 @@ void renderSwap(void)
     screenItem = screen.sc_ScreenItems[screenPage];
 }
 
-void renderResize(int width, int height) {}
+void renderResize(int32 width, int32 height) {}
 
-void renderOffset(int x, int y)
+void renderOffset(int32 x, int32 y)
 {
     xOffset = (x + (FRAME_WIDTH >> 1)) << 16;
     yOffset = (y + (FRAME_HEIGHT >> 1)) << 16;
@@ -522,7 +522,7 @@ void ccbMap4_shadow(FaceCEL* face, const vec3i* v0, const vec3i* v1, const vec3i
     face->ccb_PRE1 = PRE1_TLLSB_PDC0;
 }
 
-void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
+int32 renderGlyph(const Glyph* g, int32 x, int32 y, int32 size, uint32 color)
 {
     // Texture must be 4-bpp >= 16 px width
     int32 woffset, skipx;
@@ -530,7 +530,7 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
     const Texture* t = g->texture;
 
     if (!t->plut)
-        return; // TODO temporary for 8-bpp and 16-bpp
+        return 0; // TODO temporary for 8-bpp and 16-bpp
 
     woffset = ((t->width << 2) + 31) >> 5; // bitmap pitch in 32-bit words
     skipx = g->x & 7;
@@ -565,6 +565,8 @@ void renderGlyph(const Glyph* g, int32 x, int32 y, uint32 color)
     face->ccb_HDDX = 0;
     face->ccb_HDDY = 0;
     face->ccb_PIXC = PPMPC_MF_8 | PPMPC_SF_8;
+
+    return g->w;
 }
 
 void renderImage(const Texture* t, int32 x, int32 y)
@@ -734,7 +736,7 @@ void renderShadow(int32 type, int32 intensity, int32 px, int32 py, int32 pz, int
 void renderColorQuad(const ColorQuad* q) {}
 void renderBillboard(const Billboard* b) {}
 
-void renderBackFill(int x, int y, int w, int h)
+void renderBackFill(int32 x, int32 y, int32 w, int32 h)
 {
     // TODO perf compare with 16-bpp
     FaceCEL* face;
@@ -975,7 +977,7 @@ void renderSectionsMed(const TrackRange* ranges)
             p30 = p + 3;
             pM = p + 4;
 
-            if (trackFace->flags & FLIP_TEXTURE)
+            if (trackFace->flags & TRACK_FACE_FLIP)
             {
                 ccbMap4_track(faceAdd(maxZ), p0, p01, pM, p30, gTextures[ctrltexTemplate[trackFace->texture].tex4[0] + ctrllibraryTextures].data, trackFace->plut);
                 ccbMap4_track(faceAdd(maxZ), p01, p1, p12, pM, gTextures[ctrltexTemplate[trackFace->texture].tex4[1] + ctrllibraryTextures].data, trackFace->plut);
@@ -1035,7 +1037,7 @@ void renderSectionsLow(const TrackRange* ranges)
             texture = gTextures + ctrltexTemplate[trackFace->texture].tex1[0] + ctrllibraryTextures;
 
             // TODO pre-compute flipped indices
-            if (trackFace->flags & FLIP_TEXTURE)
+            if (trackFace->flags & TRACK_FACE_FLIP)
             {
                 ccbMap4_track(face, p0, p1, p2, p3, texture->data, trackFace->plut);
             }
@@ -1047,8 +1049,10 @@ void renderSectionsLow(const TrackRange* ranges)
     }
 }
 
-void renderTrack(void)
+void renderTrack(int32 playerIndex, int32 specialed)
 {
+    TrackCamera* camera = &gPlayers[playerIndex].camera;
+
     // TODO pre-shift track coords?
     gMatrixPtr->e00 <<= 4;
     gMatrixPtr->e10 <<= 4;
@@ -1060,9 +1064,9 @@ void renderTrack(void)
     gMatrixPtr->e12 <<= 4;
     gMatrixPtr->e22 <<= 4;
 
-    renderSectionsMed(gCamera.section->visRange[0]);
+    renderSectionsMed(camera->section->visRange[0]);
     yOffset += (1 << 15); // HACK to hide gaps between LODs (precision problem)
-    renderSectionsLow(gCamera.section->visRange[1]);
+    renderSectionsLow(camera->section->visRange[1]);
     yOffset -= (1 << 15);
 
     gMatrixPtr->e00 >>= 4;
@@ -1119,10 +1123,8 @@ void renderSky(const Object* object)
     //renderObject(object);
 }
 
-void renderSetMode(int renderMode) {}
-void renderSetBlend(int blend) {}
-void renderDepthWrite(int enable) {}
-void renderNextLayer(void) {}
+void renderSetMode(int32 renderMode) {}
+void renderSetBlend(int32 blend) {}
 
 Texture* renderCreateTexture(uint8* ptr)
 {
