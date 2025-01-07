@@ -1,0 +1,3 @@
+set -e
+gcc -Os -s -fno-exceptions -fno-rtti -ffunction-sections -fdata-sections -Wl,--gc-sections -Wno-invalid-source-encoding -DNDEBUG -D__LINUX__=1 -D_POSIX_THREADS -D_POSIX_READER_WRITER_LOCKS main.c ../win/render.c ../win/sound.c ../../*.c -I../../ -I../../libs/ -lX11 -lGL -lm -lpthread -lpulse-simple -lpulse -o ../../../bin/F3600
+strip ../../../bin/F3600 --strip-all --remove-section=.comment --remove-section=.note
